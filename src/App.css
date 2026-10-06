@@ -109,5 +109,11 @@ hr {
 @media (max-width: 600px) {
   .day-details {
     grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .day-details input {
+    width: 100%;
+    box-sizing: border-box;
   }
 }
