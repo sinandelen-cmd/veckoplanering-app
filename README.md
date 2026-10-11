@@ -1,16 +1,33 @@
-# React + Vite
+# Årsplanering
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Lärarportal + publik elevvy för årsplanering.
 
-Currently, two official plugins are available:
+## Funktioner
+- Lärarinloggning med Supabase
+- Skapa och redigera årsplaneringar
+- Importera Excel (.xlsx/.xls), Word (.docx), PDF, CSV/TXT
+- Klistra in material
+- Fördela importerat material över veckor för granskning
+- Spara utkast
+- Publicera planering och skapa elevlänk
+- Elevvy utan inloggning
+- Klona planering och byta ämne
+- Radera planering
+- Responsiv grön design
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Lokal körning
+1. Kopiera `.env.example` till `.env.local` och fyll i Supabase URL + publishable key.
+2. Kör `npm install`.
+3. Kör `npm run dev`.
 
-## React Compiler
+## Supabase
+Kör `supabase-migration.sql` i SQL Editor i projektet. Befintlig tabell `veckoplanering` återanvänds.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Netlify
+Byggkommando: `npm run build`
+Publiceringsmapp: `dist`
 
-## Expanding the Oxlint configuration
+`public/_redirects` innehåller SPA-routing för elevlänkar.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Viktigt om import
+Importen gör en första automatisk fördelning över veckor. Läraren ska alltid granska och justera innan publicering. PDF:er med enbart inskannade bilder kräver OCR och text kan då saknas.
