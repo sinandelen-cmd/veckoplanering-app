@@ -62,6 +62,7 @@ function makeWeeks(plan, count = plan.weeks) {
     weekStart: addWeeks(plan.startDate, index),
     title: `Vecka ${index + 1}`,
     content: '',
+    pages: [], assignments: [], links: [],
     items: [],
   }))
 }
@@ -202,8 +203,28 @@ function sanitizeForStudents(plan) {
         weekStart: typeof week.weekStart === 'string' ? week.weekStart : '',
         title: typeof week.title === 'string' ? week.title : '',
         content: typeof week.content === 'string' ? week.content : '',
+        pages: Array.isArray(week.pages) ? week.pages.filter(v => typeof v === 'string' && v.trim()).slice(0, 100) : [],
+        assignments: Array.isArray(week.assignments) ? week.assignments.filter(v => typeof v === 'string' && v.trim()).slice(0, 100) : [],
+        links: Array.isArray(week.links) ? week.links.filter(v => typeof v === 'string' && resourceInfo(v)).slice(0, 100) : [],
       })),
   }
+}
+
+function resourceInfo(url) {
+  const value = String(url || '').trim()
+  try {
+    const parsed = new URL(value)
+    if (!['https:', 'http:'].includes(parsed.protocol)) return null
+    const host = parsed.hostname.toLowerCase()
+    const path = parsed.pathname.toLowerCase()
+    if (host === 'youtube.com' || host.endsWith('.youtube.com') || host === 'youtu.be') return { label: 'YouTube', icon: '▶', kind: 'youtube' }
+    if (/\.(pptx?|ppsx?)(?:$)/i.test(path)) return { label: 'PPTX', icon: 'P', kind: 'pptx' }
+    if (/\.(pdf)(?:$)/i.test(path)) return { label: 'PDF', icon: 'PDF', kind: 'pdf' }
+    if (/\.(docx?)(?:$)/i.test(path)) return { label: 'Word', icon: 'W', kind: 'word' }
+    if (/\.(xlsx?)(?:$)/i.test(path)) return { label: 'Excel', icon: 'X', kind: 'excel' }
+    if (host.includes('drive.google.com') || host.includes('onedrive') || host.includes('sharepoint')) return { label: 'Fil', icon: '↗', kind: 'file' }
+    return { label: 'Länk', icon: '↗', kind: 'link' }
+  } catch { return null }
 }
 
 function buildSlug(plan) {
@@ -252,7 +273,8 @@ function StudentView({ plan, error }) {
       {plan.weeksData.map(week => <article className="week-card" key={`${week.weekNumber}-${week.weekStart}`}>
         <div className="week-top"><strong>Vecka {week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
         <h3>{week.title}</h3>
-        <div className="week-content">{week.content || 'Ingen planering angiven ännu.'}</div>
+        <div className="week-content">{week.content || (!week.pages?.length && !week.assignments?.length && !week.links?.length ? 'Ingen planering angiven ännu.' : '')}</div>
+        <WeekDetails week={week} />
       </article>)}
     </section>
   </main>
@@ -285,7 +307,7 @@ function TeacherApp({ session }) {
   useEffect(() => { loadPlans() }, [])
 
   function updateWeek(index, changes) {
-    setPlan(p => ({ ...p, weeksData: weeks.map((week, i) => i === index ? { ...week, ...changes } : week) }))
+    setPlan(p => ({ ...p, weeksData: (p.weeksData.length ? p.weeksData : makeWeeks(p)).map((week, i) => i === index ? { ...week, ...changes } : week) }))
   }
 
   async function save(publish) {
@@ -502,6 +524,7 @@ function TeacherApp({ session }) {
           <div className="week-top"><strong>Vecka {week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
           <input className="week-title" value={week.title} onChange={e => updateWeek(index, { title: e.target.value })} />
           <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />
+          <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
         </article>)}
       </div>
       <div className="sticky-actions button-row">
@@ -580,3 +603,36 @@ function AnnualApp() {
 }
 
 export default function App() { return <><Navigation /><AnnualApp /></> }
+
+function WeekDetails({ week, onChange }) {
+  const pages = Array.isArray(week.pages) ? week.pages : []
+  const assignments = Array.isArray(week.assignments) ? week.assignments : []
+  const links = Array.isArray(week.links) ? week.links : []
+  const editable = typeof onChange === 'function'
+  const updateList = (field, value) => onChange({ [field]: value })
+  const listEditor = (field, entries, title, placeholder) => <div className="week-detail-column">
+    <h4>{title}</h4>
+    {entries.map((entry, index) => editable
+      ? <div className="week-detail-entry" key={index}><input aria-label={`${title} ${index + 1}`} value={entry} placeholder={placeholder} onChange={e => updateList(field, entries.map((item, i) => i === index ? e.target.value : item))} /><button type="button" className="remove-small" aria-label={`Ta bort ${title.toLowerCase()} ${index + 1}`} onClick={() => updateList(field, entries.filter((_, i) => i !== index))}>×</button></div>
+      : <p className="week-detail-text" key={index}>{entry}</p>)}
+    {editable && <button type="button" className="add-detail" onClick={() => updateList(field, [...entries, ''])}>+ Lägg till {field === 'pages' ? 'sida' : 'uppgift'}</button>}
+  </div>
+  return <div className="week-details">
+    {(editable || pages.length > 0 || assignments.length > 0) && <div className="week-detail-grid">
+      {listEditor('pages', pages, 'Sidor', 'Ex. Sidan 12–15')}
+      {listEditor('assignments', assignments, 'Uppgifter', 'Ex. Uppgift 1–8')}
+    </div>}
+    {(editable || links.length > 0) && <div className="week-links">
+      {links.map((url, index) => {
+        const info = resourceInfo(url)
+        return <div className="week-link-entry" key={index}>
+          {editable && <input type="url" aria-label={`Länk ${index + 1}`} placeholder="Klistra in länk till YouTube, PPTX, PDF, fil..." value={url} onChange={e => updateList('links', links.map((item, i) => i === index ? e.target.value : item))} />}
+          {info && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon">{info.icon}</span><span>{info.label}</span></a>}
+          {editable && <button type="button" className="remove-small" aria-label={`Ta bort länk ${index + 1}`} onClick={() => updateList('links', links.filter((_, i) => i !== index))}>×</button>}
+        </div>
+      })}
+      {editable && <button type="button" className="add-detail" onClick={() => updateList('links', [...links, ''])}>+ Lägg till länk eller filadress</button>}
+    </div>}
+  </div>
+}
+
