@@ -9,7 +9,7 @@ import Navigation from './Navigation.jsx'
 
 const APP_TITLE = 'Årsplanering'
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker
-const DEFAULT_WEEKS = 40
+const DEFAULT_WEEKS = 1
 
 function toIsoDate(date) {
   const d = new Date(date)
