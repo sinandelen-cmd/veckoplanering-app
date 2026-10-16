@@ -605,12 +605,12 @@ function TeacherApp({ session }) {
           const hasCustomNumbers = weeks.some((week, index) => Number(week.weekNumber) !== (Number(plan.startWeek) || 1) + index)
           if (hasCustomNumbers && !window.confirm('Du har ändrat veckonummer manuellt. Om du byter första veckans nummer skrivs de över. Vill du fortsätta?')) return
           setStatus('')
-          setPlan(p => ({ ...p, startWeek, weeksData: (p.weeksData.length ? p.weeksData : makeWeeks(p)).map((week, index) => ({ ...week, weekNumber: startWeek + index, title: /^Vecka \d+$/.test(week.title || '') ? `Vecka ${startWeek + index}` : week.title })) }))
+          setPlan(p => ({ ...p, startWeek, weeksData: (Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)).map((week, index) => ({ ...week, weekNumber: startWeek + index, title: /^Vecka \d+$/.test(week.title || '') ? `Vecka ${startWeek + index}` : week.title })) }))
         }} /></label>
         <label>Planera efter<select value={plan.entryType || 'lektion'} onChange={e => {
           const entryType = e.target.value
           setPlan(p => {
-            const currentWeeks = p.weeksData.length ? p.weeksData : makeWeeks(p)
+            const currentWeeks = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
             const isSafeToRename = week => !week.daysCustomized && (week.lessons || []).every(lesson =>
               !lesson.topics?.length && (!lesson.name || /^(Lektion \\d+|Dag \\d+|Måndag|Tisdag|Onsdag|Torsdag|Fredag)$/.test(lesson.name))
             )
@@ -683,7 +683,7 @@ function TeacherApp({ session }) {
             <button type="button" className="remove-small" disabled={weeks.length <= 1} onClick={() => {
               if (hasWeekWork(week, index) && !window.confirm(`Ta bort vecka ${week.weekNumber} och allt innehåll i veckan?`)) return
               setPlan(p => {
-                const current = p.weeksData.length ? p.weeksData : makeWeeks(p)
+                const current = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
                 const remaining = current.filter((_, i) => i !== index)
                 return { ...p, weeks: remaining.length, weeksData: remaining, startWeek: Number(remaining[0]?.weekNumber) || p.startWeek }
               })
@@ -713,7 +713,7 @@ function TeacherApp({ session }) {
       </div>
       <div className="button-row week-add-actions">
         <button type="button" className="secondary" disabled={weeks.length >= 52} onClick={() => setPlan(p => {
-          const existing = p.weeksData.length ? p.weeksData : makeWeeks(p)
+          const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
           const nextNumber = Math.max(...existing.map(w => Number(w.weekNumber) || 0)) + 1
           if (nextNumber > 53) { setStatus('Det går inte att lägga till fler veckor efter vecka 53.'); return p }
           const latest = [...existing].sort((a, b) => Number(b.weekNumber) - Number(a.weekNumber))[0]
