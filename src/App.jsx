@@ -610,7 +610,7 @@ function TeacherApp({ session }) {
           const entryType = e.target.value
           setPlan(p => {
             const currentWeeks = p.weeksData.length ? p.weeksData : makeWeeks(p)
-            const canRename = currentWeeks.every(week => (week.lessons || []).every(lesson =>
+            const canRename = currentWeeks.every(week => !week.daysCustomized && (week.lessons || []).every(lesson =>
               !lesson.topics?.length && (!lesson.name || /^(Lektion \d+|Dag \d+|Måndag|Tisdag|Onsdag|Torsdag|Fredag)$/.test(lesson.name))
             ))
             const weeksData = canRename ? currentWeeks.map(week => ({
@@ -621,7 +621,7 @@ function TeacherApp({ session }) {
                     ...(week.lessons?.[i] || { topics: [] }), name: `Lektion ${i + 1}`
                   }))
             })) : currentWeeks
-            if (!canRename) setStatus('Indelningen ändrades. Befintliga dagar och lektioner med innehåll behålls oförändrade.')
+            if (!canRename) setStatus('Indelningen ändrades. Befintliga dagar och lektioner som du har ändrat eller fyllt i behålls oförändrade.')
             return { ...p, entryType, weeksData }
           })
         }}><option value="lektion">Lektion</option><option value="dag">Dag</option></select></label>
