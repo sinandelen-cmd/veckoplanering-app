@@ -534,8 +534,8 @@ function TeacherApp({ session }) {
     <section className="card">
       <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
       <div className="year-grid">
-        {weeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${index}`}>
-          {week.chapter?.trim() && (index === 0 || week.chapter !== weeks[index - 1]?.chapter) && <h3 className={`chapter-heading chapter-tone-${index % 4}`}>{week.chapter}</h3>}
+        {weeks.map((week, index) => ({ week, index })).sort((a, b) => Number(a.week.weekNumber) - Number(b.week.weekNumber)).map(({ week, index }, displayIndex, ordered) => <div className="chapter-week-group" key={`${week.weekNumber}-${index}`}>
+          {week.chapter?.trim() && (displayIndex === 0 || week.chapter !== ordered[displayIndex - 1]?.week.chapter) && <h3 className={`chapter-heading chapter-tone-${displayIndex % 4}`}>{week.chapter}</h3>}
           <article className="week-card">
           <div className="week-top"><strong>Vecka {week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
           <label className="week-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} /> Visa för elever vid publicering</label>
