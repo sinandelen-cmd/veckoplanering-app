@@ -179,3 +179,25 @@ h3 { margin: 8px 0; color: var(--green-900); }
 /* Ankarlänkarna i den fasta huvudmenyn ska inte dölja rubriker. */
 #lararvy, #elevvy, #mina-arsplaneringar { scroll-margin-top: 90px; }
 
+
+
+/* Zoom: kalenderöversikt över det valda läsårets planerade veckor. */
+.calendar-overlay { position: relative; z-index: 20; max-width: 1440px; margin: 16px auto; padding: 20px; background: #f8faf9; border: 1px solid #d6e6dd; border-radius: 16px; box-shadow: 0 8px 28px rgba(0,0,0,.1); }
+.calendar-top { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 18px; }
+.calendar-top h2 { margin: 0 0 4px; }
+.calendar-top p { margin: 0; color: #64786f; }
+.calendar-months { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; }
+.calendar-month { min-width: 0; overflow: hidden; border: 1px solid #d5dadd; border-radius: 12px; background: white; }
+.calendar-month h3 { margin: 0; padding: 10px; text-align: center; background: #c91f24; color: white; font-size: 18px; text-transform: capitalize; }
+.calendar-days { display: grid; grid-template-columns: 30px repeat(7,minmax(0,1fr)); padding: 7px; gap: 2px; font-size: 12px; text-align: center; }
+.calendar-days > strong { padding: 5px 0; font-size: 11px; }
+.calendar-week-row { display: contents; }
+.calendar-week-number, .calendar-date { display: flex; justify-content: center; align-items: center; min-height: 32px; border: 1px solid #edf0f0; font-size: 12px; }
+.calendar-week-number { color: #64786f; font-style: italic; }
+.calendar-week-link { width: 100%; padding: 0; background: #e7f3eb; border-color: #c3dfcd; color: #075b46; font-weight: 700; cursor: pointer; }
+.calendar-week-link:hover, .calendar-week-link:focus-visible { background: #b9e2c8; outline: 2px solid #075b46; }
+.calendar-date.calendar-planned { background: #e8f4ee; font-weight: 650; }
+.calendar-date.calendar-weekend { background: #f1f2f3; }
+@media (max-width: 1100px) { .calendar-months { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+@media (max-width: 780px) { .calendar-months { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 510px) { .calendar-months { grid-template-columns: 1fr; } .calendar-overlay { padding: 10px; margin: 10px; } }
