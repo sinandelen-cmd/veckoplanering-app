@@ -379,6 +379,7 @@ function TeacherApp({ session }) {
         setSelectedId(data.id)
         const refreshed = await loadPlans()
         // Ändringar som gjorts medan nätverksanropet pågick får inte skrivas över.
+        savedPlanRef.current = JSON.stringify(payload)
         const newerEdits = latestPlanRef.current !== plan
         setPlan(current => current === plan ? payload : current)
         const message = !refreshed ? 'Sparad, men listan kunde inte uppdateras. Ladda om för att kontrollera.' : publish
