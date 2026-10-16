@@ -50,7 +50,7 @@ function slugify(value) {
 function emptyPlan() {
   return {
     title: '', subject: '', schoolYear: '', className: '',
-    startDate: mondayOf(), startWeek: 1, weeks: DEFAULT_WEEKS, weeksData: [],
+    startDate: mondayOf(), startWeek: 1, lessonsPerWeek: 3, weeks: DEFAULT_WEEKS, weeksData: [],
     published: false, publicSlug: '',
   }
 }
@@ -64,7 +64,7 @@ function makeWeeks(plan, count = plan.weeks) {
     chapter: '',
     content: '',
     pages: [], assignments: [], links: [],
-    items: [], lessons: [],
+    items: [], lessons: Array.from({ length: Math.max(1, Math.min(8, Number(plan.lessonsPerWeek) || 3)) }, (_, i) => ({ name: `Lektion ${i + 1}`, topics: [] })),
   }))
 }
 
@@ -85,7 +85,7 @@ function reconcileWeeks(plan, startDate, count) {
 function hasWeekWork(week, index) {
   return Boolean(
     String(week.content || '').trim() ||
-    week.items?.length ||
+    week.items?.length || week.lessons?.some(lesson => lesson.topics?.length || (lesson.name && !/^Lektion \\d+$/.test(lesson.name))) ||
     (week.title && week.title !== `Vecka ${index + 1}`) ||
     String(week.teacherNotes || '').trim() || week.hidden
   )
@@ -505,6 +505,7 @@ function TeacherApp({ session }) {
           const startWeek = Math.max(1, Math.min(53, Number(e.target.value) || 1))
           setPlan(p => ({ ...p, startWeek, weeksData: (p.weeksData.length ? p.weeksData : makeWeeks(p)).map((week, index) => ({ ...week, weekNumber: startWeek + index, title: /^Vecka \\d+$/.test(week.title || '') ? `Vecka ${startWeek + index}` : week.title })) }))
         }} /></label>
+        <label>Lektioner per ny vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek || 3} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 3)) }))} /></label>
         <label>Antal veckor<input type="number" min="1" max="52" value={plan.weeks} onChange={e => {
           const count = Math.max(1, Math.min(52, Number(e.target.value) || 1))
           const discarded = weeks.slice(count)
@@ -703,6 +704,6 @@ function LessonDetails({ week, onChange }) {
       })}
       {editable && <button type="button" className="secondary" onClick={() => changeLesson(i, { ...lesson, topics: [...(lesson.topics || []), { name: '', pages: [], assignments: [], links: [] }] })}>+ Moment</button>}
     </section>)}
-    {editable && <button type="button" className="secondary" onClick={() => changeLessons([...lessons, { name: `Lektion ${lessons.length + 1}`, topics: [{ name: '', pages: [], assignments: [], links: [] }] }])}>+ Lägg till lektion</button>}
+    {editable && <button type="button" className="secondary" onClick={() => changeLessons([...lessons, { name: `Lektion ${lessons.length + 1}`, topics: [] }])}>+ Lägg till lektion</button>}
   </div>
 }
