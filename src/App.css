@@ -171,7 +171,7 @@ h3 { margin: 8px 0; color: var(--green-900); }
 .import-preview-week pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; margin: 6px 0 0; }
 
 /* Snabbsparning är tillgänglig även när läraren arbetar långt ner bland veckorna. */
-.quick-save-bar { position: fixed; z-index: 40; bottom: 14px; right: 18px; display: flex; align-items: center; flex-wrap: wrap; gap: 10px; max-width: min(580px, calc(100vw - 36px)); padding: 10px 14px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 4px 22px rgba(0,0,0,.15); font-size: 13px; }
+.quick-save-bar { position: fixed; z-index: 40; bottom: 12px; right: 12px; display: flex; align-items: center; gap: 8px; width: max-content; max-width: calc(100vw - 24px); padding: 6px 9px; background: rgba(255,255,255,.97); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 2px 9px rgba(0,0,0,.09); font-size: 12px; }
 .quick-save-bar button { white-space: nowrap; }
 .quick-save-message { flex-basis: 100%; overflow-wrap: anywhere; }
-@media (max-width: 600px) { .quick-save-bar { left: 10px; right: 10px; bottom: 10px; max-width: none; justify-content: space-between; } }
+@media (max-width: 600px) { .quick-save-bar { left: auto; right: 8px; bottom: 8px; max-width: calc(100vw - 16px); } .quick-save-bar > span:first-child { max-width: 110px; } }
