@@ -893,7 +893,11 @@ function LessonDetails({ week, onChange, entryType = 'lektion' }) {
         const missing = WEEKDAYS.find(day => !lessons.some(lesson => lesson.name === day))
         if (!missing) return
         const next = [...lessons, { name: missing, topics: [] }]
-        changeLessons(next.sort((a, b) => WEEKDAYS.indexOf(a.name) - WEEKDAYS.indexOf(b.name)))
+        changeLessons(next.sort((a, b) => {
+          const aIndex = WEEKDAYS.indexOf(a.name)
+          const bIndex = WEEKDAYS.indexOf(b.name)
+          return aIndex < 0 || bIndex < 0 ? 0 : aIndex - bIndex
+        }))
       } else {
         const used = new Set(lessons.map(lesson => lesson.name))
         let number = 1
