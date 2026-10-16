@@ -312,9 +312,59 @@ function StudentView({ plan, error, preview = false }) {
   </main>
 }
 
+function YearCalendar({ weeks, onClose }) {
+  const validWeeks = weeks.filter(week => /^\\d{4}-\\d{2}-\\d{2}$/.test(week.weekStart || ''))
+  const dates = validWeeks.map(week => new Date(`${week.weekStart}T12:00:00`)).filter(date => !Number.isNaN(date.getTime()))
+  const first = dates.length ? new Date(Math.min(...dates.map(date => date.getTime()))) : new Date()
+  const last = dates.length ? new Date(Math.max(...dates.map(date => date.getTime()))) : first
+  const months = []
+  for (let year = first.getFullYear(), month = first.getMonth(); year < last.getFullYear() || (year === last.getFullYear() && month <= last.getMonth()); month++) {
+    if (month === 12) { year++; month = 0 }
+    const firstDay = new Date(year, month, 1, 12)
+    const offset = (firstDay.getDay() + 6) % 7
+    const days = new Date(year, month + 1, 0).getDate()
+    const cells = Array.from({ length: Math.ceil((offset + days) / 7) * 7 }, (_, index) => {
+      const day = index - offset + 1
+      return day >= 1 && day <= days ? day : null
+    })
+    months.push({ year, month, cells })
+  }
+  const weekByDate = new Map()
+  for (const week of validWeeks) {
+    const start = new Date(`${week.weekStart}T12:00:00`)
+    for (let day = 0; day < 7; day++) {
+      const date = new Date(start)
+      date.setDate(date.getDate() + day)
+      weekByDate.set(toIsoDate(date), week)
+    }
+  }
+  return <section className="calendar-overlay" aria-label="Årskalender">
+    <div className="calendar-top"><div><h2>Årskalender</h2><p>Alla planeringens veckor i månadsöversikt</p></div><button type="button" className="secondary" onClick={onClose}>✕ Stäng</button></div>
+    <div className="calendar-months">{months.map(({ year, month, cells }) => <section className="calendar-month" key={`${year}-${month}`}>
+      <h3>{new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeric' }).format(new Date(year, month, 1))}</h3>
+      <div className="calendar-days">{['V', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör', 'Sön'].map(day => <strong key={day}>{day}</strong>)}
+        {Array.from({ length: cells.length / 7 }, (_, row) => {
+          const monday = new Date(year, month, cells[row * 7] || 1, 12)
+          monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
+          const week = weekByDate.get(toIsoDate(monday))
+          return <div className="calendar-week-row" key={row}>
+            <span className="calendar-week-number">{week ? week.weekNumber : '–'}</span>
+            {cells.slice(row * 7, row * 7 + 7).map((day, index) => {
+              const date = day ? toIsoDate(new Date(year, month, day, 12)) : ''
+              const planned = weekByDate.get(date)
+              return <span className={`calendar-date ${planned ? 'calendar-planned' : ''} ${index > 4 ? 'calendar-weekend' : ''}`} title={planned ? `Vecka ${planned.weekNumber}: ${planned.title || ''}` : ''} key={index}>{day || ''}</span>
+            })}
+          </div>
+        })}
+      </div>
+    </section>)}</div>
+  </section>
+}
+
 function TeacherApp({ session }) {
   const [plan, setPlan] = useState(emptyPlan())
   const [plans, setPlans] = useState([])
+  const [calendarOpen, setCalendarOpen] = useState(false)
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
@@ -558,7 +608,7 @@ function TeacherApp({ session }) {
     }
   }
 
-  return <><Navigation plans={plans} onOpenPlan={loadPlan} selectedId={selectedId} /><main className="shell" id="lararvy">
+  return <><Navigation plans={plans} onOpenPlan={loadPlan} selectedId={selectedId} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} />{calendarOpen && <YearCalendar weeks={weeks} onClose={() => setCalendarOpen(false)} />}<main className="shell" id="lararvy">
     <header className="topbar">
       <div><p className="eyebrow">LÄRARVY</p><h1>{APP_TITLE}</h1><p className="muted">{session.user.email}</p></div>
       <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
