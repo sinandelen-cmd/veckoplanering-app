@@ -519,7 +519,7 @@ function TeacherApp({ session }) {
         }} /></label>
         <label>Första veckans nummer<input type="number" min="1" max="53" value={plan.startWeek || 1} onChange={e => {
           const startWeek = Math.max(1, Math.min(53, Number(e.target.value) || 1))
-          setPlan(p => ({ ...p, startWeek, weeksData: (p.weeksData.length ? p.weeksData : makeWeeks(p)).map((week, index) => ({ ...week, weekNumber: startWeek + index, title: /^Vecka \\d+$/.test(week.title || '') ? `Vecka ${startWeek + index}` : week.title })) }))
+          setPlan(p => ({ ...p, startWeek, weeksData: (p.weeksData.length ? p.weeksData : makeWeeks(p)).map((week, index) => ({ ...week, weekNumber: startWeek + index, title: /^Vecka \d+$/.test(week.title || '') ? `Vecka ${startWeek + index}` : week.title })) }))
         }} /></label>
         <label>Lektioner per ny vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek || 3} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 3)) }))} /></label>
         <label>Antal veckor<input type="number" min="1" max="52" value={plan.weeks} onChange={e => {
@@ -574,7 +574,7 @@ function TeacherApp({ session }) {
               setStatus('Veckonumret används redan i den här planeringen.')
               return
             }
-            const title = /^Vecka \\d+$/.test(week.title || '') ? `Vecka ${number}` : week.title
+            const title = /^Vecka \d+$/.test(week.title || '') ? `Vecka ${number}` : week.title
             updateWeek(index, { weekNumber: number, title })
             setStatus('')
           }} /></label>
