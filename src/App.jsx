@@ -864,7 +864,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion' }) {
                   while (next.length <= row) next.push('')
                   next[row] = e.target.value
                   updateTopic({ ...topic, [field]: next })
-                }} /><button className="remove-small" type="button" aria-label="Ta bort rad" onClick={() => updateTopic({ ...topic, [field]: (field === 'pages' ? pages : assignments).filter((_, index) => index !== row) })}>×</button></> : <span>{(field === 'pages' ? pages : assignments)[row] || ' '}</span>}
+                }} /><button className="remove-small" type="button" aria-label={`Ta bort ${field === "pages" ? "sida" : "uppgift"} på rad ${row + 1}`} onClick={() => updateTopic({ ...topic, [field]: (field === 'pages' ? pages : assignments).filter((_, index) => index !== row) })}>×</button></> : <span>{(field === 'pages' ? pages : assignments)[row] || ' '}</span>}
               </div>)}
               {editable && <button type="button" className="add-detail" onClick={() => updateTopic({ ...topic, [field]: [...(field === 'pages' ? pages : assignments), ''] })}>+ {field === 'pages' ? 'Sida' : 'Uppgift'}</button>}
             </div>)}
