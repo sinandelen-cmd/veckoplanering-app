@@ -555,16 +555,6 @@ function TeacherApp({ session }) {
       }}>Ny planering</button></div>
     </section>
 
-    <section className="card saved-plans-shortcut" aria-label="Öppna sparad årsplanering">
-      <h3>Mina sparade planeringar</h3>
-      {!plans.length ? <p className="muted">Inga sparade årsplaneringar ännu.</p> : <div className="saved-plans-shortcut-list">
-        {plans.map(row => <button key={row.id} type="button" className={selectedId === row.id ? 'saved-plan-shortcut active' : 'saved-plan-shortcut'} disabled={busy} onClick={() => loadPlan(row)}>
-          <span>{row.title || 'Utan namn'}</span>
-          <small>{row.published ? 'Publicerad' : 'Utkast'}{selectedId === row.id ? ' · Öppen' : ''}</small>
-        </button>)}
-      </div>}
-    </section>
-
     {(isDirty || busy) && <div className="quick-save-bar" role="region" aria-label="Snabbspara årsplanering">
       <span aria-live="polite">{busy ? "Sparar…" : "Osparade ändringar"}</span>
       <button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
