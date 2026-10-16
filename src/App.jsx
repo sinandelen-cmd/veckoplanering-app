@@ -50,7 +50,7 @@ function slugify(value) {
 function emptyPlan() {
   return {
     title: '', subject: '', schoolYear: '', className: '',
-    startDate: mondayOf(), weeks: DEFAULT_WEEKS, weeksData: [],
+    startDate: mondayOf(), startWeek: 1, weeks: DEFAULT_WEEKS, weeksData: [],
     published: false, publicSlug: '',
   }
 }
@@ -58,9 +58,9 @@ function emptyPlan() {
 function makeWeeks(plan, count = plan.weeks) {
   const total = Math.max(1, Math.min(52, Number(count) || DEFAULT_WEEKS))
   return Array.from({ length: total }, (_, index) => ({
-    weekNumber: index + 1,
+    weekNumber: (Number(plan.startWeek) || 1) + index,
     weekStart: addWeeks(plan.startDate, index),
-    title: `Vecka ${index + 1}`,
+    title: `Vecka ${(Number(plan.startWeek) || 1) + index}`,
     content: '',
     pages: [], assignments: [], links: [],
     items: [],
@@ -75,7 +75,7 @@ function reconcileWeeks(plan, startDate, count) {
   return fresh.map((week, index) => ({
     ...week,
     ...(previous[index] || {}),
-    weekNumber: index + 1,
+    weekNumber: (Number(plan.startWeek) || 1) + index,
     weekStart: week.weekStart,
   }))
 }
@@ -494,6 +494,10 @@ function TeacherApp({ session }) {
             const startDate = mondayOf(`${e.target.value}T12:00:00`)
             return { ...p, startDate, weeksData: reconcileWeeks(p, startDate, p.weeks) }
           })
+        }} /></label>
+        <label>Första veckans nummer<input type="number" min="1" max="53" value={plan.startWeek || 1} onChange={e => {
+          const startWeek = Math.max(1, Math.min(53, Number(e.target.value) || 1))
+          setPlan(p => ({ ...p, startWeek, weeksData: (p.weeksData.length ? p.weeksData : makeWeeks(p)).map((week, index) => ({ ...week, weekNumber: startWeek + index, title: /^Vecka \\d+$/.test(week.title || '') ? `Vecka ${startWeek + index}` : week.title })) }))
         }} /></label>
         <label>Antal veckor<input type="number" min="1" max="52" value={plan.weeks} onChange={e => {
           const count = Math.max(1, Math.min(52, Number(e.target.value) || 1))
