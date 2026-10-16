@@ -295,6 +295,7 @@ function TeacherApp({ session }) {
   const [busy, setBusy] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
   const [pasteText, setPasteText] = useState('')
+  const [pendingImport, setPendingImport] = useState(null)
   const [previewStudents, setPreviewStudents] = useState(false)
   const latestPlanRef = useRef(plan)
   useEffect(() => { latestPlanRef.current = plan }, [plan])
@@ -406,7 +407,7 @@ function TeacherApp({ session }) {
   }
 
   async function importFile(file) {
-    if (!file || !confirmReplacingWeeks(plan)) return
+    if (!file) return
     setBusy(true); setStatus(`Läser ${file.name}...`)
     try {
       const text = await extractText(file)
@@ -414,17 +415,16 @@ function TeacherApp({ session }) {
       const parsed = file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')
         ? lines.map(line => line.includes('|') ? line : line).join('\n')
         : text
-      setPlan(p => ({ ...p, weeksData: distributeText(p, parsed) }))
-      setStatus('Import klar. Granska veckorna innan du sparar eller publicerar.')
+      setPendingImport({ source: file.name, weeksData: distributeText(plan, parsed) })
+      setStatus('Importen är klar för förhandsgranskning. Inget har ersatts ännu.')
     } catch (error) { setStatus(error.message || 'Importen misslyckades.') }
     setBusy(false)
   }
 
   function distributePastedText() {
     if (!pasteText.trim()) return setStatus('Klistra in text innan du fördelar den över veckorna.')
-    if (!confirmReplacingWeeks(plan)) return
-    setPlan(p => ({ ...p, weeksData: distributeText(p, pasteText) }))
-    setStatus('Texten har fördelats över veckorna. Granska innan du sparar.')
+    setPendingImport({ source: 'Inklistrad text', weeksData: distributeText(plan, pasteText) })
+    setStatus('Texten är klar för förhandsgranskning. Inget har ersatts ännu.')
   }
 
   function loadPlan(row) {
@@ -529,6 +529,20 @@ function TeacherApp({ session }) {
       }} />
       <textarea value={pasteText} placeholder="Eller klistra in kursplan, kapitel, uppgifter och sidor här..." onChange={e => setPasteText(e.target.value)} />
       <button type="button" className="secondary" disabled={busy} onClick={distributePastedText}>Fördela inklistrad text över veckorna</button>
+      {pendingImport && <div className="import-preview">
+        <h3>Förhandsgranska import: {pendingImport.source}</h3>
+        <p className="muted">Inget har ersatts. De första fem veckorna visas nedan.</p>
+        {pendingImport.weeksData.slice(0, 5).map((week, i) => <div className="import-preview-week" key={i}><strong>Vecka {week.weekNumber}</strong><pre>{week.content || '(Tom vecka)'}</pre></div>)}
+        <div className="button-row">
+          <button type="button" className="primary" onClick={() => {
+            if (!confirmReplacingWeeks(plan)) return
+            setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length }))
+            setPendingImport(null)
+            setStatus('Importen har lagts i redigeraren. Granska innan du sparar.')
+          }}>Använd import</button>
+          <button type="button" className="secondary" onClick={() => { setPendingImport(null); setStatus('Importen avbröts.') }}>Avbryt</button>
+        </div>
+      </div>
     </section>
 
     <section className="card">
