@@ -266,13 +266,13 @@ function Login({ email, password, setEmail, setPassword, onSubmit, status }) {
   </main>
 }
 
-function StudentView({ plan, error }) {
+function StudentView({ plan, error, preview = false }) {
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
   return <main className="shell student-shell">
     <header className="student-header">
-      <div><p className="eyebrow">PUBLICERAD ÅRSPLANERING</p><h1>{plan.title}</h1><p className="muted">{[plan.subject, plan.className, plan.schoolYear].filter(Boolean).join(' · ')}</p></div>
-      <span className="public-badge">Publicerad</span>
+      <div><p className="eyebrow">{preview ? 'FÖRHANDSVISNING' : 'PUBLICERAD ÅRSPLANERING'}</p><h1>{plan.title}</h1><p className="muted">{[plan.subject, plan.className, plan.schoolYear].filter(Boolean).join(' · ')}</p></div>
+      <span className="public-badge">{preview ? "Förhandsvisning" : "Publicerad"}</span>
     </header>
     <section className="year-grid">
       {plan.weeksData.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
@@ -280,7 +280,7 @@ function StudentView({ plan, error }) {
         <article className="week-card">
         <div className="week-top"><strong>Vecka {week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
         <h3>{week.title}</h3>
-        <div className="week-content">{week.content || (!week.pages?.length && !week.assignments?.length && !week.links?.length ? 'Ingen planering angiven ännu.' : '')}</div>
+        <div className="week-content">{week.content || (!week.pages?.length && !week.assignments?.length && !week.links?.length && !week.lessons?.some(lesson => lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.length || topic.assignments?.length || topic.links?.length)) ? 'Ingen planering angiven ännu.' : '')}</div>
         <LessonDetails week={week} />
         <WeekDetails week={week} />
       </article></div>)}
@@ -554,7 +554,7 @@ function TeacherApp({ session }) {
       {status && <p className="status">{status}</p>}
     </section>
 
-    {previewStudents && <section className="card preview-panel"><h2>Förhandsvisning för elever</h2><p className="muted">Detta är endast en förhandsvisning. Inget publiceras.</p><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} /></section>}
+    {previewStudents && <section className="card preview-panel"><h2>Förhandsvisning för elever</h2><p className="muted">Detta är endast en förhandsvisning. Inget publiceras.</p><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
 
     <section className="card">
       <div className="section-heading"><div><p className="eyebrow">BIBLIOTEK</p><h2>Mina årsplaneringar</h2></div></div>
