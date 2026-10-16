@@ -126,3 +126,27 @@ h3 { margin: 8px 0; color: var(--green-900); }
 .chapter-tone-3 { background: #ffe3c5; color: #75401d; }
 .chapter-editor { margin-top: 12px; font-size: 13px; }
 .chapter-editor input { font-weight: 600; }
+
+.lessons { display: grid; gap: 14px; margin: 14px 0; }
+.lesson { border: 1px solid #cad8df; background: rgba(255,255,255,.76); border-radius: 12px; padding: 14px; }
+.lesson-heading { display: flex; align-items: center; gap: 10px; justify-content: space-between; margin-bottom: 12px; }
+.lesson-heading input { max-width: 260px; font-weight: 700; }
+.lesson-heading h4 { margin: 0; font-size: 17px; }
+.topic { padding: 12px 0; border-top: 1px solid #dce5e9; }
+.topic-grid { display: grid; grid-template-columns: minmax(140px,1.3fr) minmax(140px,1fr) minmax(140px,1fr); gap: 10px; }
+.topic-name { padding: 12px 4px; }
+.topic-name strong, .topic-name input { color: #111; font-size: 18px; font-weight: 700; }
+.topic-column { border-radius: 9px; padding: 10px; min-width: 0; }
+.topic-column.pages { background: #ffeded; }
+.topic-column.assignments { background: #e9f2ff; }
+.topic-column h5 { margin: 0 0 9px; font-size: 15px; }
+.topic-cell { min-height: 43px; display: flex; align-items: center; gap: 4px; margin-bottom: 6px; }
+.topic-cell input { min-width: 0; padding: 7px; }
+.topic-cell span { display: block; width: 100%; min-height: 34px; padding: 8px; border-radius: 7px; font-size: 16px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.pages .topic-cell input, .pages .topic-cell span { background: #f8d4d4; }
+.assignments .topic-cell input, .assignments .topic-cell span { background: #d2e3ff; }
+.topic-links { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 9px 0; }
+.topic-link { display: inline-flex; align-items: center; flex-wrap: nowrap; gap: 5px; max-width: 100%; }
+.topic-link input { width: 130px; min-width: 0; padding: 6px; font-size: 13px; }
+.topic-link .resource-chip { flex-shrink: 0; }
+@media(max-width:640px) { .topic-grid { grid-template-columns: minmax(0,1fr) minmax(0,1fr); } .topic-name { grid-column: 1/-1; } }
