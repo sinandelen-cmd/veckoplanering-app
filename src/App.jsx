@@ -266,6 +266,13 @@ function Login({ email, password, setEmail, setPassword, onSubmit, status }) {
   </main>
 }
 
+function chapterTone(chapter) {
+  const value = String(chapter || '').trim().toLocaleLowerCase('sv-SE')
+  let hash = 0
+  for (const char of value) hash = (hash * 31 + char.codePointAt(0)) >>> 0
+  return hash % 4
+}
+
 function StudentView({ plan, error, preview = false }) {
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
@@ -276,7 +283,7 @@ function StudentView({ plan, error, preview = false }) {
     </header>
     <section className="year-grid">
       {plan.weeksData.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
-        {week.chapter?.trim() && (index === 0 || week.chapter !== plan.weeksData[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${index % 4}`}>{week.chapter}</h2>}
+        {week.chapter?.trim() && (index === 0 || week.chapter !== plan.weeksData[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
         <article className="week-card">
         <div className="week-top"><strong>Vecka {week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
         <h3>{week.title}</h3>
@@ -564,7 +571,7 @@ function TeacherApp({ session }) {
       <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
       <div className="year-grid">
         {weeks.map((week, index) => ({ week, index })).sort((a, b) => Number(a.week.weekNumber) - Number(b.week.weekNumber)).map(({ week, index }, displayIndex, ordered) => <div className="chapter-week-group" key={`${week.weekNumber}-${index}`}>
-          {week.chapter?.trim() && (displayIndex === 0 || week.chapter !== ordered[displayIndex - 1]?.week.chapter) && <h3 className={`chapter-heading chapter-tone-${displayIndex % 4}`}>{week.chapter}</h3>}
+          {week.chapter?.trim() && (displayIndex === 0 || week.chapter !== ordered[displayIndex - 1]?.week.chapter) && <h3 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h3>}
           <article className="week-card">
           <div className="week-top"><strong>Vecka {week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
           <label className="week-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} /> Visa för elever vid publicering</label>
