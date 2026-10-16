@@ -573,7 +573,15 @@ function TeacherApp({ session }) {
         {weeks.map((week, index) => ({ week, index })).sort((a, b) => Number(a.week.weekNumber) - Number(b.week.weekNumber)).map(({ week, index }, displayIndex, ordered) => <div className="chapter-week-group" key={`${week.weekNumber}-${index}`}>
           {week.chapter?.trim() && (displayIndex === 0 || week.chapter !== ordered[displayIndex - 1]?.week.chapter) && <h3 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h3>}
           <article className="week-card">
-          <div className="week-top"><strong>Vecka {week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
+          <div className="week-top"><strong>Vecka {week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span>
+            <button type="button" className="remove-small" disabled={weeks.length <= 1} onClick={() => {
+              if (hasWeekWork(week, index) && !window.confirm(`Ta bort vecka ${week.weekNumber} och allt innehåll i veckan?`)) return
+              setPlan(p => {
+                const current = p.weeksData.length ? p.weeksData : makeWeeks(p)
+                const remaining = current.filter((_, i) => i !== index)
+                return { ...p, weeks: remaining.length, weeksData: remaining }
+              })
+            }}>× Ta bort vecka</button></div>
           <label className="week-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} /> Visa för elever vid publicering</label>
           <label className="chapter-editor">Kapitel / tema (valfritt)<input value={week.chapter || ''} placeholder="Exempel: Kapitel 5 – Taluppfattning" onChange={e => updateWeek(index, { chapter: e.target.value })} /></label>
           <label className="week-number-editor">Veckonummer<input type="number" min="1" max="53" value={week.weekNumber} onChange={e => {
