@@ -100,7 +100,7 @@ function reconcileWeeks(plan, startDate, count) {
 function hasWeekWork(week, index) {
   return Boolean(
     String(week.content || '').trim() ||
-    week.items?.length || week.lessons?.some(lesson => lesson.topics?.length || (lesson.name && !/^(?:Lektion \d+|Dag \d+|Måndag|Tisdag|Onsdag|Torsdag|Fredag)$/.test(lesson.name))) ||
+    week.daysCustomized || week.items?.length || week.lessons?.some(lesson => lesson.topics?.length || (lesson.name && !/^(?:Lektion \d+|Dag \d+|Måndag|Tisdag|Onsdag|Torsdag|Fredag)$/.test(lesson.name))) ||
     (week.title && week.title !== `Vecka ${week.weekNumber || index + 1}`) ||
     String(week.chapter || '').trim() || week.pages?.length || week.assignments?.length || week.links?.length ||
     String(week.teacherNotes || '').trim() || week.hidden
