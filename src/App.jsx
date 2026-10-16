@@ -402,6 +402,7 @@ function TeacherApp({ session }) {
       if (error) setStatus(`Kunde inte spara: ${error.message}`)
       else {
         setSelectedId(data.id)
+        try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(data.id)) } catch { /* Lagring kan vara blockerad */ }
         const refreshed = await loadPlans()
         // Ändringar som gjorts medan nätverksanropet pågick får inte skrivas över.
         savedPlanRef.current = JSON.stringify(payload)
