@@ -332,6 +332,20 @@ function TeacherApp({ session }) {
     }
     const annualPlans = (data || []).filter(isAnnualRow)
     setPlans(annualPlans)
+    if (!selectedId && !isDirty) {
+      try {
+        const lastId = window.sessionStorage.getItem(`arsplanering-last-open-${session.user.id}`)
+        const lastPlan = annualPlans.find(row => String(row.id) === lastId)
+        if (lastPlan) {
+          const restored = planFromRow(lastPlan)
+          setSelectedId(lastPlan.id)
+          savedPlanRef.current = JSON.stringify(restored)
+          setSavedRevision(revision => revision + 1)
+          setPlan(restored)
+          setStatus('Senast öppnade årsplanering har hämtats igen.')
+        }
+      } catch { /* Lagring kan vara blockerad */ }
+    }
     return true
   }
 
