@@ -64,7 +64,7 @@ function makeWeeks(plan, count = plan.weeks) {
     chapter: '',
     content: '',
     pages: [], assignments: [], links: [],
-    items: [],
+    items: [], lessons: [],
   }))
 }
 
@@ -204,6 +204,7 @@ function sanitizeForStudents(plan) {
         weekStart: typeof week.weekStart === 'string' ? week.weekStart : '',
         title: typeof week.title === 'string' ? week.title : '',
         chapter: typeof week.chapter === 'string' ? week.chapter.slice(0, 160) : '',
+        lessons: Array.isArray(week.lessons) ? week.lessons.map(lesson => ({ name: String(lesson.name || ''), topics: Array.isArray(lesson.topics) ? lesson.topics.map(topic => ({ name: String(topic.name || ''), pages: Array.isArray(topic.pages) ? topic.pages.map(String) : [], assignments: Array.isArray(topic.assignments) ? topic.assignments.map(String) : [], links: Array.isArray(topic.links) ? topic.links.filter(link => link && resourceInfo(typeof link === 'string' ? link : link.url)).map(link => typeof link === 'string' ? { url: link, label: resourceInfo(link).label } : { url: String(link.url), label: String(link.label || resourceInfo(link.url).label) }) : [] })) : [] })) : [],
         content: typeof week.content === 'string' ? week.content : '',
         pages: Array.isArray(week.pages) ? week.pages.filter(v => typeof v === 'string' && v.trim()).slice(0, 100) : [],
         assignments: Array.isArray(week.assignments) ? week.assignments.filter(v => typeof v === 'string' && v.trim()).slice(0, 100) : [],
@@ -278,6 +279,7 @@ function StudentView({ plan, error }) {
         <div className="week-top"><strong>Vecka {week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
         <h3>{week.title}</h3>
         <div className="week-content">{week.content || (!week.pages?.length && !week.assignments?.length && !week.links?.length ? 'Ingen planering angiven ännu.' : '')}</div>
+        <LessonDetails week={week} />
         <WeekDetails week={week} />
       </article></div>)}
     </section>
@@ -535,6 +537,7 @@ function TeacherApp({ session }) {
           <label className="chapter-editor">Kapitel / tema (valfritt)<input value={week.chapter || ''} placeholder="Exempel: Kapitel 5 – Taluppfattning" onChange={e => updateWeek(index, { chapter: e.target.value })} /></label>
           <input className="week-title" value={week.title} onChange={e => updateWeek(index, { title: e.target.value })} />
           <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />
+          <LessonDetails week={week} onChange={changes => updateWeek(index, changes)} />
           <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
         </article></div>)}
       </div>
@@ -647,3 +650,59 @@ function WeekDetails({ week, onChange }) {
   </div>
 }
 
+
+function LessonDetails({ week, onChange }) {
+  const lessons = Array.isArray(week.lessons) ? week.lessons : []
+  const editable = typeof onChange === 'function'
+  const changeLessons = next => onChange?.({ lessons: next })
+  const changeLesson = (i, next) => changeLessons(lessons.map((lesson, index) => index === i ? next : lesson))
+  return <div className="lessons">
+    {lessons.map((lesson, i) => <section className="lesson" key={i}>
+      <div className="lesson-heading">
+        {editable ? <input aria-label="Lektionens namn" value={lesson.name || ''} onChange={e => changeLesson(i, { ...lesson, name: e.target.value })} /> : <h4>{lesson.name || `Lektion ${i + 1}`}</h4>}
+        {editable && <button type="button" className="remove-small" onClick={() => { if (window.confirm('Ta bort lektionen och allt innehåll i den?')) changeLessons(lessons.filter((_, index) => index !== i)) }}>× Ta bort lektion</button>}
+      </div>
+      {(lesson.topics || []).map((topic, j) => {
+        const updateTopic = next => changeLesson(i, { ...lesson, topics: lesson.topics.map((item, index) => index === j ? next : item) })
+        const pages = Array.isArray(topic.pages) ? topic.pages : []
+        const assignments = Array.isArray(topic.assignments) ? topic.assignments : []
+        const links = Array.isArray(topic.links) ? topic.links : []
+        const rows = Math.max(pages.length, assignments.length)
+        return <div className="topic" key={j}>
+          <div className="topic-grid">
+            <div className="topic-name">{editable ? <input aria-label="Momentets namn" placeholder="Exempel: Procent" value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong>{topic.name}</strong>}</div>
+            {['pages', 'assignments'].map(field => <div className={`topic-column ${field}`} key={field}>
+              <h5>{field === 'pages' ? 'Sida' : 'Uppgift'}</h5>
+              {Array.from({ length: rows }, (_, row) => <div className="topic-cell" key={row}>
+                {editable ? <><input aria-label={`${field === 'pages' ? 'Sida' : 'Uppgift'} rad ${row + 1}`} value={(field === 'pages' ? pages : assignments)[row] || ''} onChange={e => {
+                  const next = [...(field === 'pages' ? pages : assignments)]
+                  while (next.length <= row) next.push('')
+                  next[row] = e.target.value
+                  updateTopic({ ...topic, [field]: next })
+                }} /><button className="remove-small" type="button" aria-label="Ta bort rad" onClick={() => updateTopic({ ...topic, [field]: (field === 'pages' ? pages : assignments).filter((_, index) => index !== row) })}>×</button></> : <span>{(field === 'pages' ? pages : assignments)[row] || ' '}</span>}
+              </div>)}
+              {editable && <button type="button" className="add-detail" onClick={() => updateTopic({ ...topic, [field]: [...(field === 'pages' ? pages : assignments), ''] })}>+ {field === 'pages' ? 'Sida' : 'Uppgift'}</button>}
+            </div>)}
+          </div>
+          <div className="topic-links">
+            {links.map((link, k) => {
+              const url = typeof link === 'string' ? link : link.url || ''
+              const label = typeof link === 'string' ? resourceInfo(link)?.label || '' : link.label || ''
+              const info = resourceInfo(url)
+              const changeLink = next => updateTopic({ ...topic, links: links.map((item, index) => index === k ? next : item) })
+              return <div className="topic-link" key={k}>
+                {editable && <><input aria-label="Länkens namn" placeholder="Namn" value={label} onChange={e => changeLink({ url, label: e.target.value })} /><input aria-label="Länkadress" placeholder="https://..." value={url} onChange={e => changeLink({ url: e.target.value, label })} /></>}
+                {info && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon">{info.icon}</span>{label || info.label}</a>}
+                {editable && <button type="button" className="remove-small" onClick={() => updateTopic({ ...topic, links: links.filter((_, index) => index !== k) })}>×</button>}
+              </div>
+            })}
+            {editable && <button type="button" className="add-detail" onClick={() => updateTopic({ ...topic, links: [...links, { label: '', url: '' }] })}>+ Länk</button>}
+          </div>
+          {editable && <button type="button" className="remove-small" onClick={() => { if (window.confirm('Ta bort momentet?')) changeLesson(i, { ...lesson, topics: lesson.topics.filter((_, index) => index !== j) }) }}>× Ta bort moment</button>}
+        </div>
+      })}
+      {editable && <button type="button" className="secondary" onClick={() => changeLesson(i, { ...lesson, topics: [...(lesson.topics || []), { name: '', pages: [], assignments: [], links: [] }] })}>+ Moment</button>}
+    </section>)}
+    {editable && <button type="button" className="secondary" onClick={() => changeLessons([...lessons, { name: `Lektion ${lessons.length + 1}`, topics: [{ name: '', pages: [], assignments: [], links: [] }] }])}>+ Lägg till lektion</button>}
+  </div>
+}
