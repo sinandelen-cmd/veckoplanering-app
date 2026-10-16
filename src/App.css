@@ -98,3 +98,15 @@ h3 { margin: 8px 0; color: var(--green-900); }
 .resource-icon::first-letter { font-size: 0; }
 .resource-chip .resource-icon { background: rgba(255,255,255,.7); color: inherit; font-size: 12px; font-weight: 900; }
 @media(max-width:480px) { .week-detail-grid { grid-template-columns: 1fr; } .week-detail-column + .week-detail-column { border-left: 0; border-top: 1px solid #cbded4; } }
+
+/* Årsplaneringen läses uppifrån och ned: en hel vecka per rad. */
+.year-grid { grid-template-columns: minmax(0, 1fr); }
+.week-card { min-width: 0; }
+/* Sida och uppgift har fasta igenkännbara färger i hela planeringen. */
+.week-detail-column:first-child { background: #fff0f0; }
+.week-detail-column:first-child h4 { color: #a61b1b; }
+.week-detail-column:nth-child(2) { background: #edf4ff; }
+.week-detail-column:nth-child(2) h4 { color: #175cd3; }
+.week-detail-column:first-child .week-detail-entry input { background: #f8d5d5; color: #8c1515; }
+.week-detail-column:nth-child(2) .week-detail-entry input { background: #d5e6ff; color: #164fa0; }
+.resource-chip { white-space: nowrap; width: max-content; max-width: 100%; }
