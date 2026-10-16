@@ -542,7 +542,7 @@ function TeacherApp({ session }) {
           }}>Använd import</button>
           <button type="button" className="secondary" onClick={() => { setPendingImport(null); setStatus('Importen avbröts.') }}>Avbryt</button>
         </div>
-      </div>
+      </div>}
     </section>
 
     <section className="card">
