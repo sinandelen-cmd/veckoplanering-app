@@ -509,7 +509,7 @@ function TeacherApp({ session }) {
       <div><p className="eyebrow">PLANERA</p><h2>{selectedId ? "Redigera sparad årsplanering" : "Ny årsplanering – ännu inte sparad"}</h2><p className="muted">{selectedId ? `Öppen planering: ${plan.title || "Utan namn"}. Efter F5 öppnar du den igen via Mina årsplaneringar → Öppna.` : "Du arbetar med en ny planering. Välj Spara utkast för att behålla den."}</p></div>
       <button className="secondary" disabled={busy} onClick={() => {
         if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
-        setPlan(emptyPlan()); setSelectedId(null); setStatus('Ny planering klar.')
+        const fresh = emptyPlan(); setPlan(fresh); setSelectedId(null); savedPlanRef.current = JSON.stringify(fresh); setSavedRevision(revision => revision + 1); setStatus('Ny planering klar. Spara utkast när du har fyllt i din planering.')
       }}>Ny planering</button>
     </section>
 
