@@ -590,7 +590,11 @@ function TeacherApp({ session }) {
           <input className="week-title" value={week.title} onChange={e => updateWeek(index, { title: e.target.value })} />
           <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />
           <LessonDetails week={week} onChange={changes => updateWeek(index, changes)} />
-          <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
+          <details className="legacy-week-details" open={Boolean(week.pages?.length || week.assignments?.length || week.links?.length) || undefined}>
+            <summary>Extra veckomaterial (sidor, uppgifter och länkar)</summary>
+            <p className="muted">Använd i första hand momenten under varje lektion. Här kan du även lägga material för hela veckan.</p>
+            <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
+          </details>
         </article></div>)}
       </div>
       <div className="button-row week-add-actions">
