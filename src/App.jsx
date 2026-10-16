@@ -205,7 +205,7 @@ function planFromRow(row) {
 // Elevkopian innehåller bara fält som faktiskt visas för elever.
 // En spärrlista för teacherNotes räcker inte: andra interna fält kan tillkomma.
 function sanitizeForStudents(plan) {
-  const sourceWeeks = Array.isArray(plan?.weeksData) ? plan.weeksData : []
+  const sourceWeeks = Array.isArray(plan?.weeksData) ? (plan.entryType === 'dag' ? displayWeeks(plan) : plan.weeksData) : []
   return {
     kind: 'arsplanering-v2',
     title: String(plan?.title || ''),
@@ -213,6 +213,7 @@ function sanitizeForStudents(plan) {
     className: String(plan?.className || ''),
     schoolYear: String(plan?.schoolYear || ''),
     published: true,
+    entryType: plan?.entryType === 'dag' ? 'dag' : 'lektion',
     weeksData: sourceWeeks
       .filter(week => week && typeof week === 'object' && !week.hidden)
       .sort((a, b) => (Number(b.weekNumber) || 0) - (Number(a.weekNumber) || 0))
@@ -303,7 +304,7 @@ function StudentView({ plan, error, preview = false }) {
         <div className="week-top"><strong>Vecka {week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
         <h3>{week.title}</h3>
         <div className="week-content">{week.content || (!week.pages?.length && !week.assignments?.length && !week.links?.length && !week.lessons?.some(lesson => lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.length || topic.assignments?.length || topic.links?.length)) ? 'Ingen planering angiven ännu.' : '')}</div>
-        <LessonDetails week={week} />
+        <LessonDetails week={week} entryType={plan.entryType || 'lektion'} />
         <WeekDetails week={week} />
       </article></div>)}
     </section>
