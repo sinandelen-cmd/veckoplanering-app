@@ -541,7 +541,7 @@ function TeacherApp({ session }) {
     }
   }
 
-  return <main className="shell" id="lararvy">
+  return <><Navigation plans={plans} onOpenPlan={loadPlan} /><main className="shell" id="lararvy">
     <header className="topbar">
       <div><p className="eyebrow">LÄRARVY</p><h1>{APP_TITLE}</h1><p className="muted">{session.user.email}</p></div>
       <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
@@ -718,7 +718,7 @@ function TeacherApp({ session }) {
         </article>)}
       </div>}
     </section>
-  </main>
+  </main></>
 }
 
 function AnnualApp() {
@@ -765,13 +765,13 @@ function AnnualApp() {
     else { setPassword(''); setStatus('') }
   }
 
-  if (loading) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar...</p></section></main>
-  if (studentSlug) return <StudentView plan={studentPlan} error={studentError} />
-  if (!session) return <Login email={email} password={password} setEmail={setEmail} setPassword={setPassword} onSubmit={login} status={status} />
+  if (loading) return <><Navigation /><main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar...</p></section></main></>
+  if (studentSlug) return <><Navigation /><StudentView plan={studentPlan} error={studentError} /></>
+  if (!session) return <><Navigation /><Login email={email} password={password} setEmail={setEmail} setPassword={setPassword} onSubmit={login} status={status} /></>
   return <TeacherApp key={session.user.id} session={session} />
 }
 
-export default function App() { return <><Navigation /><AnnualApp /></> }
+export default function App() { return <AnnualApp /> }
 
 function WeekDetails({ week, onChange }) {
   const pages = Array.isArray(week.pages) ? week.pages : []
