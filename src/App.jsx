@@ -77,7 +77,7 @@ function displayWeeks(plan) {
     if (week.daysCustomized) return week
     const lessons = week.lessons || []
     const isEmptyDefault = lessons.every(lesson =>
-      !lesson.topics?.length && (!lesson.name || /^(Lektion \\d+|Dag \\d+|Måndag|Tisdag|Onsdag|Torsdag|Fredag)$/.test(lesson.name))
+      !lesson.topics?.length && (!lesson.name || /^(Lektion \d+|Dag \d+|Måndag|Tisdag|Onsdag|Torsdag|Fredag)$/.test(lesson.name))
     )
     if (!isEmptyDefault) return week
     return { ...week, lessons: WEEKDAYS.map((name, i) => ({ ...(lessons[i] || { topics: [] }), name })) }
@@ -100,7 +100,7 @@ function reconcileWeeks(plan, startDate, count) {
 function hasWeekWork(week, index) {
   return Boolean(
     String(week.content || '').trim() ||
-    week.items?.length || week.lessons?.some(lesson => lesson.topics?.length || (lesson.name && !/^Lektion \\d+$/.test(lesson.name))) ||
+    week.items?.length || week.lessons?.some(lesson => lesson.topics?.length || (lesson.name && !/^(?:Lektion \d+|Dag \d+|Måndag|Tisdag|Onsdag|Torsdag|Fredag)$/.test(lesson.name))) ||
     (week.title && week.title !== `Vecka ${week.weekNumber || index + 1}`) ||
     String(week.chapter || '').trim() || week.pages?.length || week.assignments?.length || week.links?.length ||
     String(week.teacherNotes || '').trim() || week.hidden
