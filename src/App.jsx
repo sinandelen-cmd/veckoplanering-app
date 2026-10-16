@@ -300,6 +300,7 @@ function TeacherApp({ session }) {
   const latestPlanRef = useRef(plan)
   useEffect(() => { latestPlanRef.current = plan }, [plan])
   const savedPlanRef = useRef(JSON.stringify(plan))
+  const [savedRevision, setSavedRevision] = useState(0)
   const isDirty = JSON.stringify(plan) !== savedPlanRef.current
   useEffect(() => {
     const warnBeforeLeave = event => {
@@ -380,6 +381,7 @@ function TeacherApp({ session }) {
         const refreshed = await loadPlans()
         // Ändringar som gjorts medan nätverksanropet pågick får inte skrivas över.
         savedPlanRef.current = JSON.stringify(payload)
+        setSavedRevision(revision => revision + 1)
         const newerEdits = latestPlanRef.current !== plan
         setPlan(current => current === plan ? payload : current)
         const message = !refreshed ? 'Sparad, men listan kunde inte uppdateras. Ladda om för att kontrollera.' : publish
@@ -443,7 +445,7 @@ function TeacherApp({ session }) {
   function loadPlan(row) {
     if (busy) return
     if (hasPlanWork(plan) && !window.confirm('Nuvarande planering i redigeraren ersätts. Har du sparat dina ändringar?')) return
-    setSelectedId(row.id); savedPlanRef.current = JSON.stringify(planFromRow(row)); setPlan(planFromRow(row)); setStatus('Planeringen är öppnad.'); window.scrollTo({ top: 0, behavior: 'smooth' })
+    setSelectedId(row.id); savedPlanRef.current = JSON.stringify(planFromRow(row)); setSavedRevision(revision => revision + 1); setPlan(planFromRow(row)); setStatus('Planeringen är öppnad.'); window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function clonePlan(row) {
