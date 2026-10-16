@@ -593,7 +593,7 @@ function TeacherApp({ session }) {
               setPlan(p => {
                 const current = p.weeksData.length ? p.weeksData : makeWeeks(p)
                 const remaining = current.filter((_, i) => i !== index)
-                return { ...p, weeks: remaining.length, weeksData: remaining }
+                return { ...p, weeks: remaining.length, weeksData: remaining, startWeek: Number(remaining[0]?.weekNumber) || p.startWeek }
               })
             }}>× Ta bort vecka</button></div>
           <label className="week-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} /> Visa för elever vid publicering</label>
