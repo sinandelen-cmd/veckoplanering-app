@@ -61,6 +61,7 @@ function makeWeeks(plan, count = plan.weeks) {
     weekNumber: (Number(plan.startWeek) || 1) + index,
     weekStart: addWeeks(plan.startDate, index),
     title: `Vecka ${(Number(plan.startWeek) || 1) + index}`,
+    chapter: '',
     content: '',
     pages: [], assignments: [], links: [],
     items: [],
@@ -202,6 +203,7 @@ function sanitizeForStudents(plan) {
         weekNumber: Number.isInteger(week.weekNumber) ? week.weekNumber : index + 1,
         weekStart: typeof week.weekStart === 'string' ? week.weekStart : '',
         title: typeof week.title === 'string' ? week.title : '',
+        chapter: typeof week.chapter === 'string' ? week.chapter.slice(0, 160) : '',
         content: typeof week.content === 'string' ? week.content : '',
         pages: Array.isArray(week.pages) ? week.pages.filter(v => typeof v === 'string' && v.trim()).slice(0, 100) : [],
         assignments: Array.isArray(week.assignments) ? week.assignments.filter(v => typeof v === 'string' && v.trim()).slice(0, 100) : [],
@@ -270,12 +272,14 @@ function StudentView({ plan, error }) {
       <span className="public-badge">Publicerad</span>
     </header>
     <section className="year-grid">
-      {plan.weeksData.map(week => <article className="week-card" key={`${week.weekNumber}-${week.weekStart}`}>
+      {plan.weeksData.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
+        {week.chapter?.trim() && (index === 0 || week.chapter !== plan.weeksData[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${index % 4}`}>{week.chapter}</h2>}
+        <article className="week-card">
         <div className="week-top"><strong>Vecka {week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
         <h3>{week.title}</h3>
         <div className="week-content">{week.content || (!week.pages?.length && !week.assignments?.length && !week.links?.length ? 'Ingen planering angiven ännu.' : '')}</div>
         <WeekDetails week={week} />
-      </article>)}
+      </article></div>)}
     </section>
   </main>
 }
@@ -524,12 +528,15 @@ function TeacherApp({ session }) {
     <section className="card">
       <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
       <div className="year-grid">
-        {weeks.map((week, index) => <article className="week-card" key={`${week.weekNumber}-${index}`}>
+        {weeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${index}`}>
+          {week.chapter?.trim() && (index === 0 || week.chapter !== weeks[index - 1]?.chapter) && <h3 className={`chapter-heading chapter-tone-${index % 4}`}>{week.chapter}</h3>}
+          <article className="week-card">
           <div className="week-top"><strong>Vecka {week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
+          <label className="chapter-editor">Kapitel / tema (valfritt)<input value={week.chapter || ''} placeholder="Exempel: Kapitel 5 – Taluppfattning" onChange={e => updateWeek(index, { chapter: e.target.value })} /></label>
           <input className="week-title" value={week.title} onChange={e => updateWeek(index, { title: e.target.value })} />
           <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />
           <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
-        </article>)}
+        </article></div>)}
       </div>
       <div className="sticky-actions button-row">
         <button className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
