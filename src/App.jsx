@@ -546,6 +546,15 @@ function TeacherApp({ session }) {
           <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
         </article></div>)}
       </div>
+      <div className="button-row week-add-actions">
+        <button type="button" className="secondary" disabled={weeks.length >= 52} onClick={() => setPlan(p => {
+          const existing = p.weeksData.length ? p.weeksData : makeWeeks(p)
+          const nextNumber = Math.max(...existing.map(w => Number(w.weekNumber) || 0)) + 1
+          const lastDate = existing[existing.length - 1]?.weekStart || p.startDate
+          const newWeek = makeWeeks({ ...p, startWeek: nextNumber, startDate: addWeeks(lastDate, 1), weeks: 1 }, 1)[0]
+          return { ...p, weeks: existing.length + 1, weeksData: [...existing, newWeek] }
+        })}>+ Lägg till vecka</button>
+      </div>
       <div className="sticky-actions button-row">
         <button type="button" className="secondary" onClick={() => setPreviewStudents(value => !value)}>{previewStudents ? "Dölj elevförhandsvisning" : "Förhandsgranska elevvyn"}</button>
         <button className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
