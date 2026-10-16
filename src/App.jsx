@@ -837,8 +837,8 @@ function LessonDetails({ week, onChange, entryType = 'lektion' }) {
   return <div className="lessons">
     {lessons.map((lesson, i) => ({ lesson, i })).filter(({ lesson }) => editable || lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || '')))).map(({ lesson, i }) => <section className="lesson" key={i}>
       <div className="lesson-heading">
-        {editable ? <input aria-label="Lektionens namn" value={lesson.name || ''} onChange={e => changeLesson(i, { ...lesson, name: e.target.value })} /> : <h4>{lesson.name || `Lektion ${i + 1}`}</h4>}
-        {editable && <button type="button" className="remove-small" onClick={() => { if (window.confirm('Ta bort lektionen och allt innehåll i den?')) changeLessons(lessons.filter((_, index) => index !== i)) }}>× Ta bort lektion</button>}
+        {editable ? <input aria-label={entryType === 'dag' ? 'Dagens namn' : 'Lektionens namn'} value={lesson.name || ''} onChange={e => changeLesson(i, { ...lesson, name: e.target.value })} /> : <h4>{lesson.name || (entryType === 'dag' ? (WEEKDAYS[i] || `Dag ${i + 1}`) : `Lektion ${i + 1}`)}</h4>}
+        {editable && <button type="button" className="remove-small" onClick={() => { if (window.confirm(entryType === 'dag' ? 'Ta bort dagen och allt innehåll i den?' : 'Ta bort lektionen och allt innehåll i den?')) changeLessons(lessons.filter((_, index) => index !== i)) }}>× Ta bort {entryType === 'dag' ? 'dag' : 'lektion'}</button>}
       </div>
       {(lesson.topics || []).map((topic, j) => ({ topic, j })).filter(({ topic }) => editable || topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || ''))).map(({ topic, j }) => {
         const updateTopic = next => changeLesson(i, { ...lesson, topics: lesson.topics.map((item, index) => index === j ? next : item) })
