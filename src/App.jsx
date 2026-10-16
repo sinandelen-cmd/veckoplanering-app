@@ -881,6 +881,15 @@ function LessonDetails({ week, onChange, entryType = 'lektion' }) {
       })}
       {editable && <button type="button" className="secondary" onClick={() => changeLesson(i, { ...lesson, topics: [...(lesson.topics || []), { name: '', pages: [], assignments: [], links: [] }] })}>+ Moment</button>}
     </section>)}
-    {editable && <button type="button" className="secondary" onClick={() => changeLessons([...lessons, { name: entryType === 'dag' ? (WEEKDAYS[lessons.length] || `Dag ${lessons.length + 1}`) : `Lektion ${lessons.length + 1}`, topics: [] }])}>+ Lägg till {entryType === 'dag' ? 'dag' : 'lektion'}</button>}
+    {editable && (entryType !== 'dag' || WEEKDAYS.some(day => !lessons.some(lesson => lesson.name === day))) && <button type="button" className="secondary" onClick={() => {
+      if (entryType === 'dag') {
+        const missing = WEEKDAYS.find(day => !lessons.some(lesson => lesson.name === day))
+        if (!missing) return
+        const next = [...lessons, { name: missing, topics: [] }]
+        changeLessons(next.sort((a, b) => WEEKDAYS.indexOf(a.name) - WEEKDAYS.indexOf(b.name)))
+      } else {
+        changeLessons([...lessons, { name: `Lektion ${lessons.length + 1}`, topics: [] }])
+      }
+    }}>+ Lägg till {entryType === 'dag' ? 'dag' : 'lektion'}</button>}
   </div>
 }
