@@ -290,6 +290,7 @@ function chapterTone(chapter) {
 }
 
 function StudentView({ plan, error, preview = false }) {
+  const studentWeeks = Array.isArray(plan?.weeksData) ? plan.weeksData : []
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
   return <main className="shell student-shell">
@@ -298,8 +299,8 @@ function StudentView({ plan, error, preview = false }) {
       <span className="public-badge">{preview ? "Förhandsvisning" : "Publicerad"}</span>
     </header>
     <section className="year-grid">
-      {plan.weeksData.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
-        {week.chapter?.trim() && (index === 0 || week.chapter !== plan.weeksData[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
+      {studentWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
+        {week.chapter?.trim() && (index === 0 || week.chapter !== studentWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
         <article className="week-card">
         <div className="week-top"><strong>Vecka {week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
         <h3>{week.title}</h3>
