@@ -541,6 +541,12 @@ function TeacherApp({ session }) {
       }}>Ny planering</button>
     </section>
 
+    <div className="quick-save-bar" role="region" aria-label="Snabbspara årsplanering">
+      <span aria-live="polite">{busy ? "Sparar…" : isDirty ? "Osparade ändringar" : selectedId ? "Alla ändringar sparade" : "Ny planering – inte sparad"}</span>
+      <button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
+      {status && <span className="quick-save-message" role="status">{status}</span>}
+    </div>
+
     <section className="card" aria-live="polite">
       <p><strong>Sparstatus:</strong> {busy ? "Sparar…" : isDirty ? "Osparade ändringar" : selectedId ? "Inga osparade ändringar" : "Ny planering – inte sparad"}</p>
       {status && <p className="status">{status}</p>}
