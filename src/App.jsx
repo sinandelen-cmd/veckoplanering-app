@@ -70,6 +70,19 @@ function makeWeeks(plan, count = plan.weeks) {
 }
 
 // Bevara befintlig veckotext när startdatum eller antal veckor ändras.
+function displayWeeks(plan) {
+  const source = plan.weeksData.length ? plan.weeksData : makeWeeks(plan)
+  if (plan.entryType !== 'dag') return source
+  return source.map(week => {
+    const lessons = week.lessons || []
+    const isEmptyDefault = lessons.every(lesson =>
+      !lesson.topics?.length && (!lesson.name || /^(Lektion \\d+|Dag \\d+|Måndag|Tisdag|Onsdag|Torsdag|Fredag)$/.test(lesson.name))
+    )
+    if (!isEmptyDefault) return week
+    return { ...week, lessons: WEEKDAYS.map((name, i) => ({ ...(lessons[i] || { topics: [] }), name })) }
+  })
+}
+
 function reconcileWeeks(plan, startDate, count) {
   const total = Math.max(1, Math.min(52, Number(count) || DEFAULT_WEEKS))
   const previous = plan.weeksData.length ? plan.weeksData : makeWeeks(plan)
@@ -336,7 +349,7 @@ function TeacherApp({ session }) {
   }, [])
 
 
-  const weeks = plan.weeksData.length ? plan.weeksData : makeWeeks(plan)
+  const weeks = displayWeeks(plan)
 
   async function loadPlans() {
     const { data, error } = await supabase.from('veckoplanering')
@@ -369,7 +382,7 @@ function TeacherApp({ session }) {
   useEffect(() => { loadPlans() }, [])
 
   function updateWeek(index, changes) {
-    setPlan(p => ({ ...p, weeksData: (p.weeksData.length ? p.weeksData : makeWeeks(p)).map((week, i) => i === index ? { ...week, ...changes } : week) }))
+    setPlan(p => ({ ...p, weeksData: displayWeeks(p).map((week, i) => i === index ? { ...week, ...changes } : week) }))
   }
 
   async function save(publish) {
