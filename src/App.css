@@ -164,3 +164,8 @@ h3 { margin: 8px 0; color: var(--green-900); }
 .week-number-editor input { width: 85px; padding: 7px 9px; }
 .week-visibility { display: flex; align-items: center; gap: 8px; margin: 12px 0; font-size: 14px; }
 .week-visibility input { width: auto; }
+
+.import-preview { margin-top: 16px; padding: 16px; border: 1px solid #b9cfdf; border-radius: 12px; background: #f3f9ff; }
+.import-preview h3 { margin-top: 0; }
+.import-preview-week { margin: 9px 0; padding: 10px; border-radius: 8px; background: white; }
+.import-preview-week pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; margin: 6px 0 0; }
