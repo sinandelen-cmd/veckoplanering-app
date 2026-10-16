@@ -86,7 +86,8 @@ function hasWeekWork(week, index) {
   return Boolean(
     String(week.content || '').trim() ||
     week.items?.length || week.lessons?.some(lesson => lesson.topics?.length || (lesson.name && !/^Lektion \\d+$/.test(lesson.name))) ||
-    (week.title && week.title !== `Vecka ${index + 1}`) ||
+    (week.title && week.title !== `Vecka ${week.weekNumber || index + 1}`) ||
+    String(week.chapter || '').trim() || week.pages?.length || week.assignments?.length || week.links?.length ||
     String(week.teacherNotes || '').trim() || week.hidden
   )
 }
@@ -199,6 +200,7 @@ function sanitizeForStudents(plan) {
     published: true,
     weeksData: sourceWeeks
       .filter(week => week && typeof week === 'object' && !week.hidden)
+      .sort((a, b) => (Number(b.weekNumber) || 0) - (Number(a.weekNumber) || 0))
       .map((week, index) => ({
         weekNumber: Number.isInteger(week.weekNumber) ? week.weekNumber : index + 1,
         weekStart: typeof week.weekStart === 'string' ? week.weekStart : '',
@@ -296,7 +298,7 @@ function TeacherApp({ session }) {
   const latestPlanRef = useRef(plan)
   useEffect(() => { latestPlanRef.current = plan }, [plan])
 
-  const weeks = plan.weeksData.length ? plan.weeksData : makeWeeks(plan)
+  const weeks = (plan.weeksData.length ? plan.weeksData : makeWeeks(plan)).slice().sort((a, b) => (Number(a.weekNumber) || 0) - (Number(b.weekNumber) || 0))
 
   async function loadPlans() {
     const { data, error } = await supabase.from('veckoplanering')
@@ -535,6 +537,7 @@ function TeacherApp({ session }) {
           {week.chapter?.trim() && (index === 0 || week.chapter !== weeks[index - 1]?.chapter) && <h3 className={`chapter-heading chapter-tone-${index % 4}`}>{week.chapter}</h3>}
           <article className="week-card">
           <div className="week-top"><strong>Vecka {week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
+          <label className="week-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} /> Visa för elever vid publicering</label>
           <label className="chapter-editor">Kapitel / tema (valfritt)<input value={week.chapter || ''} placeholder="Exempel: Kapitel 5 – Taluppfattning" onChange={e => updateWeek(index, { chapter: e.target.value })} /></label>
           <input className="week-title" value={week.title} onChange={e => updateWeek(index, { title: e.target.value })} />
           <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />
