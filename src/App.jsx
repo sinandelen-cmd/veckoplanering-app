@@ -528,6 +528,11 @@ function TeacherApp({ session }) {
         }} /></label>
         <label>Första veckans nummer<input type="number" min="1" max="53" value={plan.startWeek || 1} onChange={e => {
           const startWeek = Math.max(1, Math.min(53, Number(e.target.value) || 1))
+          if (startWeek + weeks.length - 1 > 53) {
+            setStatus('Första veckans nummer är för högt för antalet veckor. Högsta tillåtna veckonummer är 53.')
+            return
+          }
+          setStatus('')
           setPlan(p => ({ ...p, startWeek, weeksData: (p.weeksData.length ? p.weeksData : makeWeeks(p)).map((week, index) => ({ ...week, weekNumber: startWeek + index, title: /^Vecka \d+$/.test(week.title || '') ? `Vecka ${startWeek + index}` : week.title })) }))
         }} /></label>
         <label>Lektioner per ny vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek || 3} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 3)) }))} /></label>
