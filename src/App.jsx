@@ -592,7 +592,25 @@ function TeacherApp({ session }) {
           setStatus('')
           setPlan(p => ({ ...p, startWeek, weeksData: (p.weeksData.length ? p.weeksData : makeWeeks(p)).map((week, index) => ({ ...week, weekNumber: startWeek + index, title: /^Vecka \d+$/.test(week.title || '') ? `Vecka ${startWeek + index}` : week.title })) }))
         }} /></label>
-        <label>Planera efter<select value={plan.entryType || 'lektion'} onChange={e => setPlan(p => ({ ...p, entryType: e.target.value, weeksData: p.weeksData.length ? p.weeksData : makeWeeks({ ...p, entryType: e.target.value }) }))}><option value="lektion">Lektion</option><option value="dag">Dag</option></select></label>
+        <label>Planera efter<select value={plan.entryType || 'lektion'} onChange={e => {
+          const entryType = e.target.value
+          setPlan(p => {
+            const currentWeeks = p.weeksData.length ? p.weeksData : makeWeeks(p)
+            const canRename = currentWeeks.every(week => (week.lessons || []).every(lesson =>
+              !lesson.topics?.length && (!lesson.name || /^(Lektion \\d+|Dag \\d+|Måndag|Tisdag|Onsdag|Torsdag|Fredag)$/.test(lesson.name))
+            ))
+            const weeksData = canRename ? currentWeeks.map(week => ({
+              ...week,
+              lessons: entryType === 'dag'
+                ? WEEKDAYS.map((name, i) => ({ ...(week.lessons?.[i] || { topics: [] }), name }))
+                : Array.from({ length: Math.max(1, Math.min(8, Number(p.lessonsPerWeek) || 3)) }, (_, i) => ({
+                    ...(week.lessons?.[i] || { topics: [] }), name: `Lektion ${i + 1}`
+                  }))
+            })) : currentWeeks
+            if (!canRename) setStatus('Indelningen ändrades. Befintliga dagar och lektioner med innehåll behålls oförändrade.')
+            return { ...p, entryType, weeksData }
+          })
+        }}><option value="lektion">Lektion</option><option value="dag">Dag</option></select></label>
         {plan.entryType !== 'dag' && <label>Lektioner per ny vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek || 3} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 3)) }))} /></label>}
         <label>Antal veckor<input type="number" min="1" max="52" value={plan.weeks} onChange={e => {
           const count = Math.max(1, Math.min(52, Number(e.target.value) || 1))
