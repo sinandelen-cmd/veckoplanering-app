@@ -74,6 +74,7 @@ function displayWeeks(plan) {
   const source = plan.weeksData.length ? plan.weeksData : makeWeeks(plan)
   if (plan.entryType !== 'dag') return source
   return source.map(week => {
+    if (week.daysCustomized) return week
     const lessons = week.lessons || []
     const isEmptyDefault = lessons.every(lesson =>
       !lesson.topics?.length && (!lesson.name || /^(Lektion \\d+|Dag \\d+|Måndag|Tisdag|Onsdag|Torsdag|Fredag)$/.test(lesson.name))
@@ -832,7 +833,7 @@ function WeekDetails({ week, onChange }) {
 function LessonDetails({ week, onChange, entryType = 'lektion' }) {
   const lessons = Array.isArray(week.lessons) ? week.lessons : []
   const editable = typeof onChange === 'function'
-  const changeLessons = next => onChange?.({ lessons: next })
+  const changeLessons = next => onChange?.({ lessons: next, ...(entryType === 'dag' ? { daysCustomized: true } : {}) })
   const changeLesson = (i, next) => changeLessons(lessons.map((lesson, index) => index === i ? next : lesson))
   return <div className="lessons">
     {lessons.map((lesson, i) => ({ lesson, i })).filter(({ lesson }) => editable || lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || '')))).map(({ lesson, i }) => <section className="lesson" key={i}>
