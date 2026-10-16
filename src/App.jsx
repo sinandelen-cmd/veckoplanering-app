@@ -506,7 +506,7 @@ function TeacherApp({ session }) {
     </header>
 
     <section className="card hero-card">
-      <div><p className="eyebrow">PLANERA</p><h2>Skapa årsplanering</h2><p className="muted">Importera ditt material eller börja tomt. Granska alltid innan publicering.</p></div>
+      <div><p className="eyebrow">PLANERA</p><h2>{selectedId ? "Redigera sparad årsplanering" : "Ny årsplanering – ännu inte sparad"}</h2><p className="muted">{selectedId ? `Öppen planering: ${plan.title || "Utan namn"}. Efter F5 öppnar du den igen via Mina årsplaneringar → Öppna.` : "Du arbetar med en ny planering. Välj Spara utkast för att behålla den."}</p></div>
       <button className="secondary" disabled={busy} onClick={() => {
         if (hasPlanWork(plan) && !window.confirm('Nuvarande planering i redigeraren ersätts. Har du sparat dina ändringar?')) return
         setPlan(emptyPlan()); setSelectedId(null); setStatus('Ny planering klar.')
