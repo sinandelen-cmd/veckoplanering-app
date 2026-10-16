@@ -544,7 +544,6 @@ function TeacherApp({ session }) {
     <div className="quick-save-bar" role="region" aria-label="Snabbspara årsplanering">
       <span aria-live="polite">{busy ? "Sparar…" : isDirty ? "Osparade ändringar" : selectedId ? "Alla ändringar sparade" : "Ny planering – inte sparad"}</span>
       <button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
-      {status && <span className="quick-save-message" role="status">{status}</span>}
     </div>
 
     <section className="card" aria-live="polite">
