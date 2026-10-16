@@ -313,6 +313,7 @@ function StudentView({ plan, error, preview = false }) {
 }
 
 function YearCalendar({ weeks, onClose, onOpenWeek }) {
+  const [zoom, setZoom] = useState(100)
   const validWeeks = weeks.filter(week => /^\d{4}-\d{2}-\d{2}$/.test(week.weekStart || ''))
   const dates = validWeeks.map(week => new Date(`${week.weekStart}T12:00:00`)).filter(date => !Number.isNaN(date.getTime()))
   const first = dates.length ? new Date(Math.min(...dates.map(date => date.getTime()))) : new Date()
@@ -339,8 +340,8 @@ function YearCalendar({ weeks, onClose, onOpenWeek }) {
     }
   }
   return <section className="calendar-overlay" aria-label="Årskalender">
-    <div className="calendar-top"><div><h2>Årskalender</h2><p>Alla planeringens veckor i månadsöversikt</p></div><button type="button" className="secondary" onClick={onClose}>✕ Stäng</button></div>
-    <div className="calendar-months">{months.map(({ year, month, cells }) => <section className="calendar-month" key={`${year}-${month}`}>
+    <div className="calendar-top"><div><h2>Årskalender</h2><p>Dina planerade veckor · klicka på ett veckonummer för att öppna planeringen</p></div><div className="calendar-zoom-controls"><button type="button" className="secondary" onClick={() => setZoom(value => Math.max(50, value - 25))} disabled={zoom === 50} aria-label="Zooma ut">−</button><output aria-live="polite">{zoom} %</output><button type="button" className="secondary" onClick={() => setZoom(value => Math.min(150, value + 25))} disabled={zoom === 150} aria-label="Zooma in">+</button><button type="button" className="secondary" onClick={() => setZoom(100)}>100 %</button><button type="button" className="secondary" onClick={onClose}>✕ Stäng</button></div></div>
+    <div className="calendar-months" style={{ gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${Math.round(270 * zoom / 100)}px), 1fr))`, fontSize: `${zoom}%` }}>{months.map(({ year, month, cells }) => <section className="calendar-month" key={`${year}-${month}`}>
       <h3>{new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeric' }).format(new Date(year, month, 1))}</h3>
       <div className="calendar-days">{['V', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör', 'Sön'].map(day => <strong key={day}>{day}</strong>)}
         {Array.from({ length: cells.length / 7 }, (_, row) => {
