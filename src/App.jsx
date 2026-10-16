@@ -597,7 +597,7 @@ function TeacherApp({ session }) {
           setPlan(p => {
             const currentWeeks = p.weeksData.length ? p.weeksData : makeWeeks(p)
             const canRename = currentWeeks.every(week => (week.lessons || []).every(lesson =>
-              !lesson.topics?.length && (!lesson.name || /^(Lektion \\d+|Dag \\d+|Måndag|Tisdag|Onsdag|Torsdag|Fredag)$/.test(lesson.name))
+              !lesson.topics?.length && (!lesson.name || /^(Lektion \d+|Dag \d+|Måndag|Tisdag|Onsdag|Torsdag|Fredag)$/.test(lesson.name))
             ))
             const weeksData = canRename ? currentWeeks.map(week => ({
               ...week,
