@@ -216,7 +216,7 @@ function sanitizeForStudents(plan) {
     entryType: plan?.entryType === 'dag' ? 'dag' : 'lektion',
     weeksData: sourceWeeks
       .filter(week => week && typeof week === 'object' && !week.hidden)
-      .sort((a, b) => (Number(b.weekNumber) || 0) - (Number(a.weekNumber) || 0))
+      .sort((a, b) => (Number(a.weekNumber) || 0) - (Number(b.weekNumber) || 0))
       .map((week, index) => ({
         weekNumber: Number.isInteger(week.weekNumber) ? week.weekNumber : index + 1,
         weekStart: typeof week.weekStart === 'string' ? week.weekStart : '',
