@@ -10,6 +10,7 @@ import Navigation from './Navigation.jsx'
 const APP_TITLE = 'Årsplanering'
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker
 const DEFAULT_WEEKS = 1
+const WEEKDAYS = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag']
 
 function toIsoDate(date) {
   const d = new Date(date)
@@ -64,7 +65,7 @@ function makeWeeks(plan, count = plan.weeks) {
     chapter: '',
     content: '',
     pages: [], assignments: [], links: [],
-    items: [], lessons: Array.from({ length: Math.max(1, Math.min(8, Number(plan.lessonsPerWeek) || 3)) }, (_, i) => ({ name: `${plan.entryType === 'dag' ? 'Dag' : 'Lektion'} ${i + 1}`, topics: [] })),
+    items: [], lessons: Array.from({ length: plan.entryType === 'dag' ? 5 : Math.max(1, Math.min(8, Number(plan.lessonsPerWeek) || 3)) }, (_, i) => ({ name: plan.entryType === 'dag' ? WEEKDAYS[i] : `Lektion ${i + 1}`, topics: [] })),
   }))
 }
 
@@ -591,8 +592,8 @@ function TeacherApp({ session }) {
           setStatus('')
           setPlan(p => ({ ...p, startWeek, weeksData: (p.weeksData.length ? p.weeksData : makeWeeks(p)).map((week, index) => ({ ...week, weekNumber: startWeek + index, title: /^Vecka \d+$/.test(week.title || '') ? `Vecka ${startWeek + index}` : week.title })) }))
         }} /></label>
-        <label>Planera efter<select value={plan.entryType || 'lektion'} onChange={e => setPlan(p => ({ ...p, entryType: e.target.value }))}><option value="lektion">Lektion</option><option value="dag">Dag</option></select></label>
-        <label>{plan.entryType === 'dag' ? 'Dagar per ny vecka' : 'Lektioner per ny vecka'}<input type="number" min="1" max="8" value={plan.lessonsPerWeek || 3} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 3)) }))} /></label>
+        <label>Planera efter<select value={plan.entryType || 'lektion'} onChange={e => setPlan(p => ({ ...p, entryType: e.target.value, weeksData: p.weeksData.length ? p.weeksData : makeWeeks({ ...p, entryType: e.target.value }) }))}><option value="lektion">Lektion</option><option value="dag">Dag</option></select></label>
+        {plan.entryType !== 'dag' && <label>Lektioner per ny vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek || 3} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 3)) }))} /></label>}
         <label>Antal veckor<input type="number" min="1" max="52" value={plan.weeks} onChange={e => {
           const count = Math.max(1, Math.min(52, Number(e.target.value) || 1))
           if (count === weeks.length) return
@@ -849,6 +850,6 @@ function LessonDetails({ week, onChange, entryType = 'lektion' }) {
       })}
       {editable && <button type="button" className="secondary" onClick={() => changeLesson(i, { ...lesson, topics: [...(lesson.topics || []), { name: '', pages: [], assignments: [], links: [] }] })}>+ Moment</button>}
     </section>)}
-    {editable && <button type="button" className="secondary" onClick={() => changeLessons([...lessons, { name: `${entryType === 'dag' ? 'Dag' : 'Lektion'} ${lessons.length + 1}`, topics: [] }])}>+ Lägg till {entryType === 'dag' ? 'dag' : 'lektion'}</button>}
+    {editable && <button type="button" className="secondary" onClick={() => changeLessons([...lessons, { name: entryType === 'dag' ? (WEEKDAYS[lessons.length] || `Dag ${lessons.length + 1}`) : `Lektion ${lessons.length + 1}`, topics: [] }])}>+ Lägg till {entryType === 'dag' ? 'dag' : 'lektion'}</button>}
   </div>
 }
