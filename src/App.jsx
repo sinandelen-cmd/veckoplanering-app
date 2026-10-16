@@ -535,10 +535,10 @@ function TeacherApp({ session }) {
 
     <section className="card hero-card">
       <div><p className="eyebrow">PLANERA</p><h2>{selectedId ? "Redigera sparad årsplanering" : "Ny årsplanering – ännu inte sparad"}</h2><p className="muted">{selectedId ? `Öppen planering: ${plan.title || "Utan namn"}. Efter F5 öppnas den automatiskt igen i samma flik. Du kan också hitta den under Mina årsplaneringar.` : "Du arbetar med en ny planering. Välj Spara utkast för att behålla den."}</p></div>
-      <button className="secondary" disabled={busy} onClick={() => {
+      <div className="button-row"><a className="secondary" href="#mina-arsplaneringar">Mina sparade planeringar ↓</a><button className="secondary" disabled={busy} onClick={() => {
         if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
         const fresh = emptyPlan(); try { window.sessionStorage.removeItem(`arsplanering-last-open-${session.user.id}`) } catch { /* Lagring kan vara blockerad */ } setPlan(fresh); setSelectedId(null); savedPlanRef.current = JSON.stringify(fresh); setSavedRevision(revision => revision + 1); setStatus('Ny planering klar. Spara utkast när du har fyllt i din planering.')
-      }}>Ny planering</button>
+      }}>Ny planering</button></div>
     </section>
 
     {(isDirty || busy) && <div className="quick-save-bar" role="region" aria-label="Snabbspara årsplanering">
@@ -679,7 +679,7 @@ function TeacherApp({ session }) {
 
     {previewStudents && <section className="card preview-panel"><h2>Förhandsvisning för elever</h2><p className="muted">Detta är endast en förhandsvisning. Inget publiceras.</p><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
 
-    <section className="card">
+    <section className="card" id="mina-arsplaneringar">
       <div className="section-heading"><div><p className="eyebrow">BIBLIOTEK</p><h2>Mina årsplaneringar</h2></div></div>
       {!plans.length ? <p className="muted">Du har inga sparade årsplaneringar ännu.</p> : <div className="library-list">
         {plans.map(row => <article className="library-item" key={row.id}>
