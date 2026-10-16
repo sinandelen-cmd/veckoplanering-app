@@ -307,7 +307,7 @@ function TeacherApp({ session }) {
   const latestPlanRef = useRef(plan)
   useEffect(() => { latestPlanRef.current = plan }, [plan])
   const savedPlanRef = useRef(JSON.stringify(plan))
-  const [savedRevision, setSavedRevision] = useState(0)
+  const [, setSavedRevision] = useState(0)
   const isDirty = JSON.stringify(plan) !== savedPlanRef.current
   useEffect(() => {
     const warnBeforeLeave = event => {
