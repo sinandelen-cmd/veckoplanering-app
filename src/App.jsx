@@ -299,6 +299,18 @@ function TeacherApp({ session }) {
   const [previewStudents, setPreviewStudents] = useState(false)
   const latestPlanRef = useRef(plan)
   useEffect(() => { latestPlanRef.current = plan }, [plan])
+  const savedPlanRef = useRef(JSON.stringify(plan))
+  const isDirty = JSON.stringify(plan) !== savedPlanRef.current
+  useEffect(() => {
+    const warnBeforeLeave = event => {
+      if (JSON.stringify(latestPlanRef.current) === savedPlanRef.current) return
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', warnBeforeLeave)
+    return () => window.removeEventListener('beforeunload', warnBeforeLeave)
+  }, [])
+
 
   const weeks = plan.weeksData.length ? plan.weeksData : makeWeeks(plan)
 
@@ -430,7 +442,7 @@ function TeacherApp({ session }) {
   function loadPlan(row) {
     if (busy) return
     if (hasPlanWork(plan) && !window.confirm('Nuvarande planering i redigeraren ersätts. Har du sparat dina ändringar?')) return
-    setSelectedId(row.id); setPlan(planFromRow(row)); setStatus('Planeringen är öppnad.'); window.scrollTo({ top: 0, behavior: 'smooth' })
+    setSelectedId(row.id); savedPlanRef.current = JSON.stringify(planFromRow(row)); setPlan(planFromRow(row)); setStatus('Planeringen är öppnad.'); window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function clonePlan(row) {
@@ -585,6 +597,7 @@ function TeacherApp({ session }) {
         <button className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
         <button className="primary" disabled={busy} onClick={() => save(true)}>Publicera för elever</button>
       </div>
+      {isDirty && <p className="unsaved-notice" role="status">Osparade ändringar – välj Spara utkast innan du lämnar sidan.</p>}
       {status && <p className="status">{status}</p>}
     </section>
 
