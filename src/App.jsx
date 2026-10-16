@@ -891,6 +891,6 @@ function LessonDetails({ week, onChange, entryType = 'lektion' }) {
       } else {
         changeLessons([...lessons, { name: `Lektion ${lessons.length + 1}`, topics: [] }])
       }
-    }}>+ Lägg till {entryType === 'dag' ? 'dag' : 'lektion'}</button>}
+    }}>{entryType === 'dag' ? `+ Lägg tillbaka ${WEEKDAYS.find(day => !lessons.some(lesson => lesson.name === day)) || 'dag'}` : '+ Lägg till lektion'}</button>}
   </div>
 }
