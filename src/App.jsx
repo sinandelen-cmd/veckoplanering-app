@@ -540,6 +540,17 @@ function TeacherApp({ session }) {
           <div className="week-top"><strong>Vecka {week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
           <label className="week-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} /> Visa för elever vid publicering</label>
           <label className="chapter-editor">Kapitel / tema (valfritt)<input value={week.chapter || ''} placeholder="Exempel: Kapitel 5 – Taluppfattning" onChange={e => updateWeek(index, { chapter: e.target.value })} /></label>
+          <label className="week-number-editor">Veckonummer<input type="number" min="1" max="53" value={week.weekNumber} onChange={e => {
+            const number = Number(e.target.value)
+            if (!Number.isInteger(number) || number < 1 || number > 53) return
+            if (weeks.some((other, i) => i !== index && Number(other.weekNumber) === number)) {
+              setStatus('Veckonumret används redan i den här planeringen.')
+              return
+            }
+            const title = /^Vecka \\d+$/.test(week.title || '') ? `Vecka ${number}` : week.title
+            updateWeek(index, { weekNumber: number, title })
+            setStatus('')
+          }} /></label>
           <input className="week-title" value={week.title} onChange={e => updateWeek(index, { title: e.target.value })} />
           <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />
           <LessonDetails week={week} onChange={changes => updateWeek(index, changes)} />
