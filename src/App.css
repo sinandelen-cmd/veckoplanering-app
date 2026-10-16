@@ -110,3 +110,11 @@ h3 { margin: 8px 0; color: var(--green-900); }
 .week-detail-column:first-child .week-detail-entry input { background: #f8d5d5; color: #8c1515; }
 .week-detail-column:nth-child(2) .week-detail-entry input { background: #d5e6ff; color: #164fa0; }
 .resource-chip { white-space: nowrap; width: max-content; max-width: 100%; }
+
+/* Varje vecka har en egen ljus bakgrund, även inom samma kapitel. */
+.week-card:nth-child(6n + 1) { background: #e7f2ff; border-color: #c6ddfa; }
+.week-card:nth-child(6n + 2) { background: #e4f5e9; border-color: #c6e7d0; }
+.week-card:nth-child(6n + 3) { background: #fff3d9; border-color: #f1dfb4; }
+.week-card:nth-child(6n + 4) { background: #fce7f0; border-color: #f1cddd; }
+.week-card:nth-child(6n + 5) { background: #e5f5f3; border-color: #bfe6df; }
+.week-card:nth-child(6n + 6) { background: #f1eafb; border-color: #dfcff5; }
