@@ -175,3 +175,6 @@ h3 { margin: 8px 0; color: var(--green-900); }
 .quick-save-bar button { white-space: nowrap; }
 .quick-save-message { flex-basis: 100%; overflow-wrap: anywhere; }
 @media (max-width: 600px) { .quick-save-bar { left: auto; right: 8px; bottom: 8px; max-width: calc(100vw - 16px); } .quick-save-bar > span:first-child { max-width: 110px; } }
+
+/* Ankarlänkarna i den fasta huvudmenyn ska inte dölja rubriker. */
+#lararvy, #elevvy, #mina-arsplaneringar { scroll-margin-top: 90px; }
