@@ -451,7 +451,7 @@ function TeacherApp({ session }) {
 
   function loadPlan(row) {
     if (busy) return
-    if (hasPlanWork(plan) && !window.confirm('Nuvarande planering i redigeraren ersätts. Har du sparat dina ändringar?')) return
+    if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
     setSelectedId(row.id); savedPlanRef.current = JSON.stringify(planFromRow(row)); setSavedRevision(revision => revision + 1); setPlan(planFromRow(row)); setStatus('Planeringen är öppnad.'); window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -508,7 +508,7 @@ function TeacherApp({ session }) {
     <section className="card hero-card">
       <div><p className="eyebrow">PLANERA</p><h2>{selectedId ? "Redigera sparad årsplanering" : "Ny årsplanering – ännu inte sparad"}</h2><p className="muted">{selectedId ? `Öppen planering: ${plan.title || "Utan namn"}. Efter F5 öppnar du den igen via Mina årsplaneringar → Öppna.` : "Du arbetar med en ny planering. Välj Spara utkast för att behålla den."}</p></div>
       <button className="secondary" disabled={busy} onClick={() => {
-        if (hasPlanWork(plan) && !window.confirm('Nuvarande planering i redigeraren ersätts. Har du sparat dina ändringar?')) return
+        if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
         setPlan(emptyPlan()); setSelectedId(null); setStatus('Ny planering klar.')
       }}>Ny planering</button>
     </section>
