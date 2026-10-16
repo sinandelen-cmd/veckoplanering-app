@@ -298,7 +298,7 @@ function TeacherApp({ session }) {
   const latestPlanRef = useRef(plan)
   useEffect(() => { latestPlanRef.current = plan }, [plan])
 
-  const weeks = (plan.weeksData.length ? plan.weeksData : makeWeeks(plan)).slice().sort((a, b) => (Number(a.weekNumber) || 0) - (Number(b.weekNumber) || 0))
+  const weeks = plan.weeksData.length ? plan.weeksData : makeWeeks(plan)
 
   async function loadPlans() {
     const { data, error } = await supabase.from('veckoplanering')
