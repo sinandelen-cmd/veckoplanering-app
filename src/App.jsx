@@ -303,7 +303,21 @@ function TeacherApp({ session }) {
   const [selectedId, setSelectedId] = useState(null)
   const [pasteText, setPasteText] = useState('')
   const [pendingImport, setPendingImport] = useState(null)
-  const [previewStudents, setPreviewStudents] = useState(false)
+  const [previewStudents, setPreviewStudents] = useState(() => window.location.hash === '#elevvy')
+  useEffect(() => {
+    const onNavigation = () => {
+      if (window.location.hash === '#elevvy') {
+        setPreviewStudents(true)
+        window.setTimeout(() => document.getElementById('elevvy')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
+      } else if (window.location.hash === '#lararvy') {
+        setPreviewStudents(false)
+        document.getElementById('lararvy')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }
+    window.addEventListener('hashchange', onNavigation)
+    if (window.location.hash === '#elevvy') onNavigation()
+    return () => window.removeEventListener('hashchange', onNavigation)
+  }, [])
   const initialPlansLoadedRef = useRef(false)
   const latestPlanRef = useRef(plan)
   useEffect(() => { latestPlanRef.current = plan }, [plan])
@@ -527,7 +541,7 @@ function TeacherApp({ session }) {
     }
   }
 
-  return <main className="shell">
+  return <main className="shell" id="lararvy">
     <header className="topbar">
       <div><p className="eyebrow">LÄRARVY</p><h1>{APP_TITLE}</h1><p className="muted">{session.user.email}</p></div>
       <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
@@ -677,7 +691,7 @@ function TeacherApp({ session }) {
       {status && <p className="status">{status}</p>}
     </section>
 
-    {previewStudents && <section className="card preview-panel"><h2>Förhandsvisning för elever</h2><p className="muted">Detta är endast en förhandsvisning. Inget publiceras.</p><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
+    {previewStudents && <section className="card preview-panel" id="elevvy"><h2>Förhandsvisning för elever</h2><p className="muted">Detta är endast en förhandsvisning. Inget publiceras.</p><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
 
     <section className="card" id="mina-arsplaneringar">
       <div className="section-heading"><div><p className="eyebrow">BIBLIOTEK</p><h2>Mina årsplaneringar</h2></div></div>
