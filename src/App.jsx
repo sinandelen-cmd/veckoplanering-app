@@ -330,7 +330,8 @@ function TeacherApp({ session }) {
       setStatus(`Kunde inte hämta planeringar: ${error.message}`)
       return false
     }
-    setPlans((data || []).filter(isAnnualRow))
+    const annualPlans = (data || []).filter(isAnnualRow)
+    setPlans(annualPlans)
     return true
   }
 
@@ -452,6 +453,7 @@ function TeacherApp({ session }) {
   function loadPlan(row) {
     if (busy) return
     if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
+    try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(row.id)) } catch { /* Lagring kan vara blockerad */ }
     setSelectedId(row.id); savedPlanRef.current = JSON.stringify(planFromRow(row)); setSavedRevision(revision => revision + 1); setPlan(planFromRow(row)); setStatus('Planeringen är öppnad.'); window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
