@@ -746,7 +746,7 @@ function LessonDetails({ week, onChange }) {
         {editable ? <input aria-label="Lektionens namn" value={lesson.name || ''} onChange={e => changeLesson(i, { ...lesson, name: e.target.value })} /> : <h4>{lesson.name || `Lektion ${i + 1}`}</h4>}
         {editable && <button type="button" className="remove-small" onClick={() => { if (window.confirm('Ta bort lektionen och allt innehåll i den?')) changeLessons(lessons.filter((_, index) => index !== i)) }}>× Ta bort lektion</button>}
       </div>
-      {(lesson.topics || []).map((topic, j) => ({ topic, j })).filter(({ topic }) => editable || topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.length).map(({ topic, j }) => {
+      {(lesson.topics || []).map((topic, j) => ({ topic, j })).filter(({ topic }) => editable || topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || ''))).map(({ topic, j }) => {
         const updateTopic = next => changeLesson(i, { ...lesson, topics: lesson.topics.map((item, index) => index === j ? next : item) })
         const pages = Array.isArray(topic.pages) ? topic.pages : []
         const assignments = Array.isArray(topic.assignments) ? topic.assignments : []
