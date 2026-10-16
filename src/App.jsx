@@ -541,6 +541,12 @@ function TeacherApp({ session }) {
       }}>Ny planering</button>
     </section>
 
+    <section className="card" aria-live="polite">
+      <p><strong>Sparstatus:</strong> {busy ? "Sparar…" : isDirty ? "Osparade ändringar" : selectedId ? "Inga osparade ändringar" : "Ny planering – inte sparad"}</p>
+      {status && <p className="status">{status}</p>}
+      <p className="muted">Fyll i både Namn och Ämne innan du väljer Spara utkast. Kontrollera att meddelandet ”Utkast sparat.” visas.</p>
+    </section>
+
     <section className="card">
       <div className="form-grid">
         <label>Namn<input value={plan.title} onChange={e => setPlan({ ...plan, title: e.target.value })} placeholder="Matematik 2026–2027" /></label>
