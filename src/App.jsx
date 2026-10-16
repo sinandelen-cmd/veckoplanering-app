@@ -898,7 +898,12 @@ function LessonDetails({ week, onChange, entryType = 'lektion' }) {
         const used = new Set(lessons.map(lesson => lesson.name))
         let number = 1
         while (used.has(`Lektion ${number}`)) number += 1
-        changeLessons([...lessons, { name: `Lektion ${number}`, topics: [] }])
+        const next = [...lessons, { name: `Lektion ${number}`, topics: [] }]
+        changeLessons(next.sort((a, b) => {
+          const aNumber = /^Lektion (\d+)$/.exec(a.name || '')
+          const bNumber = /^Lektion (\d+)$/.exec(b.name || '')
+          return aNumber && bNumber ? Number(aNumber[1]) - Number(bNumber[1]) : 0
+        }))
       }
     }}>{entryType === 'dag' ? `+ Lägg tillbaka ${WEEKDAYS.find(day => !lessons.some(lesson => lesson.name === day)) || 'dag'}` : '+ Lägg till lektion'}</button>}
   </div>
