@@ -295,6 +295,7 @@ function TeacherApp({ session }) {
   const [busy, setBusy] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
   const [pasteText, setPasteText] = useState('')
+  const [previewStudents, setPreviewStudents] = useState(false)
   const latestPlanRef = useRef(plan)
   useEffect(() => { latestPlanRef.current = plan }, [plan])
 
@@ -546,11 +547,14 @@ function TeacherApp({ session }) {
         </article></div>)}
       </div>
       <div className="sticky-actions button-row">
+        <button type="button" className="secondary" onClick={() => setPreviewStudents(value => !value)}>{previewStudents ? "Dölj elevförhandsvisning" : "Förhandsgranska elevvyn"}</button>
         <button className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
         <button className="primary" disabled={busy} onClick={() => save(true)}>Publicera för elever</button>
       </div>
       {status && <p className="status">{status}</p>}
     </section>
+
+    {previewStudents && <section className="card preview-panel"><h2>Förhandsvisning för elever</h2><p className="muted">Detta är endast en förhandsvisning. Inget publiceras.</p><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} /></section>}
 
     <section className="card">
       <div className="section-heading"><div><p className="eyebrow">BIBLIOTEK</p><h2>Mina årsplaneringar</h2></div></div>
