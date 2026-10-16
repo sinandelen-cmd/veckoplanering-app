@@ -76,7 +76,7 @@ function reconcileWeeks(plan, startDate, count) {
   return fresh.map((week, index) => ({
     ...week,
     ...(previous[index] || {}),
-    weekNumber: (Number(plan.startWeek) || 1) + index,
+    weekNumber: previous[index]?.weekNumber ?? ((Number(plan.startWeek) || 1) + index),
     weekStart: week.weekStart,
   }))
 }
