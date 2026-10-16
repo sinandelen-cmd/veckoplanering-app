@@ -883,7 +883,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion' }) {
             })}
             {editable && <button type="button" className="add-detail" onClick={() => updateTopic({ ...topic, links: [...links, { label: '', url: '' }] })}>+ Länk</button>}
           </div>
-          {editable && <button type="button" className="remove-small" onClick={() => { if (window.confirm('Ta bort momentet?')) changeLesson(i, { ...lesson, topics: lesson.topics.filter((_, index) => index !== j) }) }}>× Ta bort moment</button>}
+          {editable && <button type="button" className="remove-small" onClick={() => { if (!(topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm('Ta bort momentet och allt innehåll?')) changeLesson(i, { ...lesson, topics: lesson.topics.filter((_, index) => index !== j) }) }}>× Ta bort moment</button>}
         </div>
       })}
       {editable && <button type="button" className="secondary" onClick={() => changeLesson(i, { ...lesson, topics: [...(lesson.topics || []), { name: '', pages: [], assignments: [], links: [] }] })}>+ Moment</button>}
