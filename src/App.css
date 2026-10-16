@@ -150,3 +150,12 @@ h3 { margin: 8px 0; color: var(--green-900); }
 .topic-link input { width: 130px; min-width: 0; padding: 6px; font-size: 13px; }
 .topic-link .resource-chip { flex-shrink: 0; }
 @media(max-width:640px) { .topic-grid { grid-template-columns: minmax(0,1fr) minmax(0,1fr); } .topic-name { grid-column: 1/-1; } }
+
+/* Identiska radhöjder gör att sida 1 alltid står mitt för uppgift 1. */
+.topic-column { display: flex; flex-direction: column; }
+.topic-column h5 { min-height: 24px; }
+.topic-cell { height: 58px; min-height: 58px; max-height: 58px; flex: 0 0 58px; }
+.topic-cell input { height: 42px; }
+.topic-cell span { height: 48px; overflow: auto; }
+.topic-column .add-detail { margin-top: 4px; align-self: flex-start; }
+.topic-link .resource-chip { white-space: nowrap; }
