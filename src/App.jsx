@@ -851,7 +851,8 @@ function LessonDetails({ week, onChange, entryType = 'lektion' }) {
         const pages = Array.isArray(topic.pages) ? topic.pages : []
         const assignments = Array.isArray(topic.assignments) ? topic.assignments : []
         const links = Array.isArray(topic.links) ? topic.links : []
-        const rows = editable ? Math.max(pages.length, assignments.length) : Math.max(pages.filter(value => String(value).trim()).length, assignments.filter(value => String(value).trim()).length)
+        const lastFilledRow = values => values.reduce((last, value, index) => String(value ?? '').trim() ? index + 1 : last, 0)
+        const rows = editable ? Math.max(pages.length, assignments.length) : Math.max(lastFilledRow(pages), lastFilledRow(assignments))
         return <div className="topic" key={j}>
           <div className="topic-grid">
             <div className="topic-name">{editable ? <input aria-label="Momentets namn" placeholder="Exempel: Procent" value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong>{topic.name}</strong>}</div>
