@@ -1,0 +1,21 @@
+name: Kontrollera årsplanering
+on:
+  push:
+    branches:
+      - feature/arsplanering-safe-updates-20261013
+  pull_request:
+    branches:
+      - main
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run check
+      - run: npm run build
