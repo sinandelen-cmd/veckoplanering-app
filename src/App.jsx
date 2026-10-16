@@ -508,7 +508,16 @@ function TeacherApp({ session }) {
     try {
       const { error } = await supabase.from('veckoplanering').delete().eq('id', row.id).eq('user_id', session.user.id).select('id').single()
       if (error) throw error
-      if (selectedId === row.id) { setSelectedId(null); setPlan(emptyPlan()) }
+      if (selectedId === row.id) {
+        const fresh = emptyPlan()
+        setSelectedId(null)
+        setPlan(fresh)
+        savedPlanRef.current = JSON.stringify(fresh)
+        setSavedRevision(revision => revision + 1)
+      }
+      try {
+        if (window.sessionStorage.getItem(`arsplanering-last-open-${session.user.id}`) === String(row.id)) window.sessionStorage.removeItem(`arsplanering-last-open-${session.user.id}`)
+      } catch { /* Lagring kan vara blockerad */ }
       const refreshed = await loadPlans()
       setStatus(refreshed ? 'Planeringen är raderad.' : 'Planeringen raderades, men listan kunde inte uppdateras. Ladda om för att kontrollera.')
     } catch (error) {
