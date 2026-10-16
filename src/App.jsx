@@ -304,6 +304,7 @@ function TeacherApp({ session }) {
   const [pasteText, setPasteText] = useState('')
   const [pendingImport, setPendingImport] = useState(null)
   const [previewStudents, setPreviewStudents] = useState(false)
+  const initialPlansLoadedRef = useRef(false)
   const latestPlanRef = useRef(plan)
   useEffect(() => { latestPlanRef.current = plan }, [plan])
   const savedPlanRef = useRef(JSON.stringify(plan))
@@ -332,7 +333,8 @@ function TeacherApp({ session }) {
     }
     const annualPlans = (data || []).filter(isAnnualRow)
     setPlans(annualPlans)
-    if (!selectedId && !isDirty) {
+    if (!initialPlansLoadedRef.current) {
+      initialPlansLoadedRef.current = true
       try {
         const lastId = window.sessionStorage.getItem(`arsplanering-last-open-${session.user.id}`)
         const lastPlan = annualPlans.find(row => String(row.id) === lastId)
@@ -525,7 +527,7 @@ function TeacherApp({ session }) {
       <div><p className="eyebrow">PLANERA</p><h2>{selectedId ? "Redigera sparad årsplanering" : "Ny årsplanering – ännu inte sparad"}</h2><p className="muted">{selectedId ? `Öppen planering: ${plan.title || "Utan namn"}. Efter F5 öppnar du den igen via Mina årsplaneringar → Öppna.` : "Du arbetar med en ny planering. Välj Spara utkast för att behålla den."}</p></div>
       <button className="secondary" disabled={busy} onClick={() => {
         if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
-        const fresh = emptyPlan(); setPlan(fresh); setSelectedId(null); savedPlanRef.current = JSON.stringify(fresh); setSavedRevision(revision => revision + 1); setStatus('Ny planering klar. Spara utkast när du har fyllt i din planering.')
+        const fresh = emptyPlan(); try { window.sessionStorage.removeItem(`arsplanering-last-open-${session.user.id}`) } catch { /* Lagring kan vara blockerad */ } setPlan(fresh); setSelectedId(null); savedPlanRef.current = JSON.stringify(fresh); setSavedRevision(revision => revision + 1); setStatus('Ny planering klar. Spara utkast när du har fyllt i din planering.')
       }}>Ny planering</button>
     </section>
 
