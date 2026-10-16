@@ -178,3 +178,11 @@ h3 { margin: 8px 0; color: var(--green-900); }
 
 /* Ankarlänkarna i den fasta huvudmenyn ska inte dölja rubriker. */
 #lararvy, #elevvy, #mina-arsplaneringar { scroll-margin-top: 90px; }
+
+/* Sparade årsplaneringar direkt ovanför redigeraren. */
+.saved-plans-shortcut h3 { margin: 0 0 12px; }
+.saved-plans-shortcut-list { display: flex; flex-wrap: wrap; gap: 10px; }
+.saved-plan-shortcut { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 180px; max-width: 100%; padding: 11px 14px; background: #eef6f2; color: #075b46; border: 1px solid #c6ded3; border-radius: 10px; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.saved-plan-shortcut.active { border: 2px solid #075b46; background: #e0f0e8; }
+.saved-plan-shortcut small { font-size: 12px; opacity: .8; }
+@media (max-width: 600px) { .saved-plan-shortcut { flex: 1 1 100%; } }
