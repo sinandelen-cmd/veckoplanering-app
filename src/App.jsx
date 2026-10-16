@@ -610,18 +610,22 @@ function TeacherApp({ session }) {
           const entryType = e.target.value
           setPlan(p => {
             const currentWeeks = p.weeksData.length ? p.weeksData : makeWeeks(p)
-            const canRename = currentWeeks.every(week => !week.daysCustomized && (week.lessons || []).every(lesson =>
-              !lesson.topics?.length && (!lesson.name || /^(Lektion \d+|Dag \d+|Måndag|Tisdag|Onsdag|Torsdag|Fredag)$/.test(lesson.name))
-            ))
-            const weeksData = canRename ? currentWeeks.map(week => ({
-              ...week,
-              lessons: entryType === 'dag'
-                ? WEEKDAYS.map((name, i) => ({ ...(week.lessons?.[i] || { topics: [] }), name }))
-                : Array.from({ length: Math.max(1, Math.min(8, Number(p.lessonsPerWeek) || 3)) }, (_, i) => ({
-                    ...(week.lessons?.[i] || { topics: [] }), name: `Lektion ${i + 1}`
-                  }))
-            })) : currentWeeks
-            if (!canRename) setStatus('Indelningen ändrades. Befintliga dagar och lektioner som du har ändrat eller fyllt i behålls oförändrade.')
+            const isSafeToRename = week => !week.daysCustomized && (week.lessons || []).every(lesson =>
+              !lesson.topics?.length && (!lesson.name || /^(Lektion \\d+|Dag \\d+|Måndag|Tisdag|Onsdag|Torsdag|Fredag)$/.test(lesson.name))
+            )
+            const preservedCount = currentWeeks.filter(week => !isSafeToRename(week)).length
+            const weeksData = currentWeeks.map(week => {
+              if (!isSafeToRename(week)) return week
+              return {
+                ...week,
+                lessons: entryType === 'dag'
+                  ? WEEKDAYS.map((name, i) => ({ ...(week.lessons?.[i] || { topics: [] }), name }))
+                  : Array.from({ length: Math.max(1, Math.min(8, Number(p.lessonsPerWeek) || 3)) }, (_, i) => ({
+                      ...(week.lessons?.[i] || { topics: [] }), name: `Lektion ${i + 1}`
+                    }))
+              }
+            })
+            if (preservedCount) setStatus(`Indelningen ändrades i tomma veckor. ${preservedCount} vecka/veckor med egna ändringar behölls oförändrade.`)
             return { ...p, entryType, weeksData }
           })
         }}><option value="lektion">Lektion</option><option value="dag">Dag</option></select></label>
