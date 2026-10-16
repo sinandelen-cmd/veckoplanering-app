@@ -741,7 +741,7 @@ function LessonDetails({ week, onChange }) {
   const changeLessons = next => onChange?.({ lessons: next })
   const changeLesson = (i, next) => changeLessons(lessons.map((lesson, index) => index === i ? next : lesson))
   return <div className="lessons">
-    {lessons.filter(lesson => editable || lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.length)).map((lesson, i) => <section className="lesson" key={i}>
+    {lessons.map((lesson, i) => ({ lesson, i })).filter(({ lesson }) => editable || lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.length)).map(({ lesson, i }) => <section className="lesson" key={i}>
       <div className="lesson-heading">
         {editable ? <input aria-label="Lektionens namn" value={lesson.name || ''} onChange={e => changeLesson(i, { ...lesson, name: e.target.value })} /> : <h4>{lesson.name || `Lektion ${i + 1}`}</h4>}
         {editable && <button type="button" className="remove-small" onClick={() => { if (window.confirm('Ta bort lektionen och allt innehåll i den?')) changeLessons(lessons.filter((_, index) => index !== i)) }}>× Ta bort lektion</button>}
