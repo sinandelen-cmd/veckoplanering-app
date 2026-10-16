@@ -855,7 +855,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion' }) {
         const rows = editable ? Math.max(pages.length, assignments.length) : Math.max(lastFilledRow(pages), lastFilledRow(assignments))
         return <div className="topic" key={j}>
           <div className="topic-grid">
-            <div className="topic-name">{editable ? <input aria-label="Momentets namn" placeholder="Exempel: Procent" value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong>{topic.name}</strong>}</div>
+            <div className="topic-name">{editable ? <input aria-label="Momentets namn" placeholder="Exempel: Procent" value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong>{topic.name || 'Moment'}</strong>}</div>
             {['pages', 'assignments'].map(field => <div className={`topic-column ${field}`} key={field}>
               <h5>{field === 'pages' ? 'Sida' : 'Uppgift'}</h5>
               {Array.from({ length: rows }, (_, row) => <div className="topic-cell" key={row}>
