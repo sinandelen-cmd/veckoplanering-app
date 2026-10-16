@@ -534,7 +534,7 @@ function TeacherApp({ session }) {
     </header>
 
     <section className="card hero-card">
-      <div><p className="eyebrow">PLANERA</p><h2>{selectedId ? "Redigera sparad årsplanering" : "Ny årsplanering – ännu inte sparad"}</h2><p className="muted">{selectedId ? `Öppen planering: ${plan.title || "Utan namn"}. Efter F5 öppnar du den igen via Mina årsplaneringar → Öppna.` : "Du arbetar med en ny planering. Välj Spara utkast för att behålla den."}</p></div>
+      <div><p className="eyebrow">PLANERA</p><h2>{selectedId ? "Redigera sparad årsplanering" : "Ny årsplanering – ännu inte sparad"}</h2><p className="muted">{selectedId ? `Öppen planering: ${plan.title || "Utan namn"}. Efter F5 öppnas den automatiskt igen i samma flik. Du kan också hitta den under Mina årsplaneringar.` : "Du arbetar med en ny planering. Välj Spara utkast för att behålla den."}</p></div>
       <button className="secondary" disabled={busy} onClick={() => {
         if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
         const fresh = emptyPlan(); try { window.sessionStorage.removeItem(`arsplanering-last-open-${session.user.id}`) } catch { /* Lagring kan vara blockerad */ } setPlan(fresh); setSelectedId(null); savedPlanRef.current = JSON.stringify(fresh); setSavedRevision(revision => revision + 1); setStatus('Ny planering klar. Spara utkast när du har fyllt i din planering.')
