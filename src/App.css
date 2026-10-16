@@ -118,3 +118,11 @@ h3 { margin: 8px 0; color: var(--green-900); }
 .week-card:nth-child(6n + 4) { background: #fce7f0; border-color: #f1cddd; }
 .week-card:nth-child(6n + 5) { background: #e5f5f3; border-color: #bfe6df; }
 .week-card:nth-child(6n + 6) { background: #f1eafb; border-color: #dfcff5; }
+
+.chapter-week-group { min-width: 0; }
+.chapter-heading { margin: 18px 0 10px; padding: 15px 18px; border-radius: 12px; font-size: 20px; font-weight: 800; color: #162d49; background: #cfe3ff; }
+.chapter-tone-1 { background: #e3d6fa; color: #442879; }
+.chapter-tone-2 { background: #cceee4; color: #185944; }
+.chapter-tone-3 { background: #ffe3c5; color: #75401d; }
+.chapter-editor { margin-top: 12px; font-size: 13px; }
+.chapter-editor input { font-weight: 600; }
