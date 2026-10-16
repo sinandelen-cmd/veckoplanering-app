@@ -86,7 +86,7 @@ function displayWeeks(plan) {
 
 function reconcileWeeks(plan, startDate, count) {
   const total = Math.max(1, Math.min(52, Number(count) || DEFAULT_WEEKS))
-  const previous = plan.weeksData.length ? plan.weeksData : makeWeeks(plan)
+  const previous = Array.isArray(plan.weeksData) && plan.weeksData.length ? plan.weeksData : makeWeeks(plan)
   const fresh = makeWeeks({ ...plan, startDate, weeks: total }, total)
   return fresh.map((week, index) => ({
     ...week,
