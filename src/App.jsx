@@ -541,7 +541,7 @@ function TeacherApp({ session }) {
     }
   }
 
-  return <><Navigation plans={plans} onOpenPlan={loadPlan} /><main className="shell" id="lararvy">
+  return <><Navigation plans={plans} onOpenPlan={loadPlan} selectedId={selectedId} /><main className="shell" id="lararvy">
     <header className="topbar">
       <div><p className="eyebrow">LÄRARVY</p><h1>{APP_TITLE}</h1><p className="muted">{session.user.email}</p></div>
       <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
