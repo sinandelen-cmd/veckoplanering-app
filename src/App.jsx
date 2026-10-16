@@ -533,6 +533,11 @@ function TeacherApp({ session }) {
         <label>Lektioner per ny vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek || 3} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 3)) }))} /></label>
         <label>Antal veckor<input type="number" min="1" max="52" value={plan.weeks} onChange={e => {
           const count = Math.max(1, Math.min(52, Number(e.target.value) || 1))
+          const maxExistingWeek = Math.max(0, ...weeks.map(week => Number(week.weekNumber) || 0))
+          if (count > weeks.length && maxExistingWeek + (count - weeks.length) > 53) {
+            setStatus('Det finns inte tillräckligt med veckonummer kvar före vecka 53. Minska antalet veckor eller ändra startvecka.')
+            return
+          }
           const discarded = weeks.slice(count)
           const hasWork = discarded.some((week, index) => hasWeekWork(week, count + index))
           if (hasWork && !window.confirm('Det finns innehåll i veckor som tas bort. Vill du verkligen radera det innehållet?')) return
