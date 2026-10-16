@@ -312,11 +312,11 @@ function StudentView({ plan, error, preview = false }) {
   </main>
 }
 
-function YearCalendar({ weeks, onClose }) {
-  const validWeeks = weeks.filter(week => /^\\d{4}-\\d{2}-\\d{2}$/.test(week.weekStart || ''))
+function YearCalendar({ weeks, onClose, onOpenWeek }) {
+  const validWeeks = weeks.filter(week => /^\d{4}-\d{2}-\d{2}$/.test(week.weekStart || ''))
   const dates = validWeeks.map(week => new Date(`${week.weekStart}T12:00:00`)).filter(date => !Number.isNaN(date.getTime()))
   const first = dates.length ? new Date(Math.min(...dates.map(date => date.getTime()))) : new Date()
-  const last = dates.length ? new Date(Math.max(...dates.map(date => date.getTime()))) : first
+  const last = dates.length ? new Date(Math.max(...dates.map(date => date.getTime())) + 6 * 86400000) : first
   const months = []
   for (let year = first.getFullYear(), month = first.getMonth(); year < last.getFullYear() || (year === last.getFullYear() && month <= last.getMonth()); month++) {
     if (month === 12) { year++; month = 0 }
@@ -348,7 +348,7 @@ function YearCalendar({ weeks, onClose }) {
           monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
           const week = weekByDate.get(toIsoDate(monday))
           return <div className="calendar-week-row" key={row}>
-            <span className="calendar-week-number">{week ? week.weekNumber : '–'}</span>
+            {week ? <button type="button" className="calendar-week-number calendar-week-link" onClick={() => onOpenWeek(week)} title={`Öppna vecka ${week.weekNumber}`}>{week.weekNumber}</button> : <span className="calendar-week-number">–</span>}
             {cells.slice(row * 7, row * 7 + 7).map((day, index) => {
               const date = day ? toIsoDate(new Date(year, month, day, 12)) : ''
               const planned = weekByDate.get(date)
@@ -608,7 +608,7 @@ function TeacherApp({ session }) {
     }
   }
 
-  return <><Navigation plans={plans} onOpenPlan={loadPlan} selectedId={selectedId} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} />{calendarOpen && <YearCalendar weeks={weeks} onClose={() => setCalendarOpen(false)} />}<main className="shell" id="lararvy">
+  return <><Navigation plans={plans} onOpenPlan={loadPlan} selectedId={selectedId} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} />{calendarOpen && <YearCalendar weeks={weeks} onClose={() => setCalendarOpen(false)} onOpenWeek={week => { setCalendarOpen(false); window.setTimeout(() => document.getElementById(`calendar-week-${week.weekNumber}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0) }} />}<main className="shell" id="lararvy">
     <header className="topbar">
       <div><p className="eyebrow">LÄRARVY</p><h1>{APP_TITLE}</h1><p className="muted">{session.user.email}</p></div>
       <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
