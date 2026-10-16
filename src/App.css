@@ -159,3 +159,8 @@ h3 { margin: 8px 0; color: var(--green-900); }
 .topic-cell span { height: 48px; overflow: auto; }
 .topic-column .add-detail { margin-top: 4px; align-self: flex-start; }
 .topic-link .resource-chip { white-space: nowrap; }
+
+.week-number-editor { display: inline-flex; align-items: center; gap: 9px; margin: 10px 0; font-size: 13px; font-weight: 650; }
+.week-number-editor input { width: 85px; padding: 7px 9px; }
+.week-visibility { display: flex; align-items: center; gap: 8px; margin: 12px 0; font-size: 14px; }
+.week-visibility input { width: auto; }
