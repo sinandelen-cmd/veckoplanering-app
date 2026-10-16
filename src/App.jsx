@@ -312,8 +312,11 @@ function StudentView({ plan, error, preview = false }) {
   </main>
 }
 
-function YearCalendar({ weeks, onClose, onOpenWeek }) {
-  const [zoom, setZoom] = useState(100)
+function YearCalendar({ weeks, onClose, entryType = 'lektion' }) {
+  const [selectedWeekNumber, setSelectedWeekNumber] = useState(null)
+  const [selectedLessonIndex, setSelectedLessonIndex] = useState(null)
+  const selectedWeek = weeks.find(week => week.weekNumber === selectedWeekNumber)
+  const lessons = Array.isArray(selectedWeek?.lessons) ? selectedWeek.lessons : []
   const validWeeks = weeks.filter(week => /^\d{4}-\d{2}-\d{2}$/.test(week.weekStart || ''))
   const dates = validWeeks.map(week => new Date(`${week.weekStart}T12:00:00`)).filter(date => !Number.isNaN(date.getTime()))
   const first = dates.length ? new Date(Math.min(...dates.map(date => date.getTime()))) : new Date()
@@ -340,8 +343,14 @@ function YearCalendar({ weeks, onClose, onOpenWeek }) {
     }
   }
   return <section className="calendar-overlay" aria-label="Årskalender">
-    <div className="calendar-top"><div><h2>Årskalender</h2><p>Dina planerade veckor · klicka på ett veckonummer för att öppna planeringen</p></div><div className="calendar-zoom-controls"><button type="button" className="secondary" onClick={() => setZoom(value => Math.max(50, value - 25))} disabled={zoom === 50} aria-label="Zooma ut">−</button><output aria-live="polite">{zoom} %</output><button type="button" className="secondary" onClick={() => setZoom(value => Math.min(150, value + 25))} disabled={zoom === 150} aria-label="Zooma in">+</button><button type="button" className="secondary" onClick={() => setZoom(100)}>100 %</button><button type="button" className="secondary" onClick={onClose}>✕ Stäng</button></div></div>
-    <div className="calendar-months" style={{ gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${Math.round(270 * zoom / 100)}px), 1fr))`, fontSize: `${zoom}%` }}>{months.map(({ year, month, cells }) => <section className="calendar-month" key={`${year}-${month}`}>
+    <div className="calendar-top"><div><h2>{selectedWeek ? `Vecka ${selectedWeek.weekNumber}` : 'Årskalender'}</h2><p>{selectedWeek ? (selectedWeek.chapter || selectedWeek.title || 'Din planering') : 'Klicka på en vecka för att zooma in i din planering'}</p></div><div className="calendar-zoom-controls">{selectedWeek && <button type="button" className="secondary" onClick={() => { if (selectedLessonIndex !== null) setSelectedLessonIndex(null); else setSelectedWeekNumber(null) }}>← Tillbaka</button>}<button type="button" className="secondary" onClick={onClose}>✕ Stäng</button></div></div>
+    {selectedWeek ? <div className="calendar-week-detail">
+      <p><strong>{selectedWeek.title || `Vecka ${selectedWeek.weekNumber}`}</strong> · {formatDate(selectedWeek.weekStart)}</p>
+      {selectedWeek.content && <p>{selectedWeek.content}</p>}
+      {selectedLessonIndex === null ? <div className="calendar-lesson-list">{lessons.map((lesson, index) => <button type="button" className="secondary" key={index} onClick={() => setSelectedLessonIndex(index)}><strong>{lesson.name || (entryType === 'dag' ? WEEKDAYS[index] || `Dag ${index + 1}` : `Lektion ${index + 1}`)}</strong><span>{(lesson.topics || []).map(topic => topic.name).filter(Boolean).join(', ') || 'Visa innehåll'}</span></button>)}</div> : <div className="calendar-lesson-detail"><LessonDetails week={{ lessons: [lessons[selectedLessonIndex]] }} entryType={entryType} /></div>}
+      <button type="button" className="secondary" onClick={() => { setSelectedWeekNumber(null); setSelectedLessonIndex(null) }}>← Till årskalendern</button>
+    </div> : <>
+    <div className="calendar-months">{months.map(({ year, month, cells }) => <section className="calendar-month" key={`${year}-${month}`}>
       <h3>{new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeric' }).format(new Date(year, month, 1))}</h3>
       <div className="calendar-days">{['V', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör', 'Sön'].map(day => <strong key={day}>{day}</strong>)}
         {Array.from({ length: cells.length / 7 }, (_, row) => {
@@ -349,7 +358,7 @@ function YearCalendar({ weeks, onClose, onOpenWeek }) {
           monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
           const week = weekByDate.get(toIsoDate(monday))
           return <div className="calendar-week-row" key={row}>
-            {week ? <button type="button" className="calendar-week-number calendar-week-link" onClick={() => onOpenWeek(week)} title={`Öppna vecka ${week.weekNumber}`}>{week.weekNumber}</button> : <span className="calendar-week-number">–</span>}
+            {week ? <button type="button" className="calendar-week-number calendar-week-link" onClick={() => { setSelectedWeekNumber(week.weekNumber); setSelectedLessonIndex(null) }} title={`Zooma in vecka ${week.weekNumber}`}>{week.weekNumber}</button> : <span className="calendar-week-number">–</span>}
             {cells.slice(row * 7, row * 7 + 7).map((day, index) => {
               const date = day ? toIsoDate(new Date(year, month, day, 12)) : ''
               const planned = weekByDate.get(date)
@@ -358,7 +367,7 @@ function YearCalendar({ weeks, onClose, onOpenWeek }) {
           </div>
         })}
       </div>
-    </section>)}</div>
+    </section>)}</div></>}
   </section>
 }
 
@@ -609,7 +618,7 @@ function TeacherApp({ session }) {
     }
   }
 
-  return <><Navigation plans={plans} onOpenPlan={loadPlan} selectedId={selectedId} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} />{calendarOpen && <YearCalendar weeks={weeks} onClose={() => setCalendarOpen(false)} onOpenWeek={week => { setCalendarOpen(false); window.setTimeout(() => document.getElementById(`calendar-week-${week.weekNumber}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0) }} />}<main className="shell" id="lararvy">
+  return <><Navigation plans={plans} onOpenPlan={loadPlan} selectedId={selectedId} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} />{calendarOpen && <YearCalendar weeks={weeks} onClose={() => setCalendarOpen(false)} entryType={plan.entryType} />}<main className="shell" id="lararvy">
     <header className="topbar">
       <div><p className="eyebrow">LÄRARVY</p><h1>{APP_TITLE}</h1><p className="muted">{session.user.email}</p></div>
       <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
