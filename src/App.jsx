@@ -590,8 +590,8 @@ function TeacherApp({ session }) {
         <button type="button" className="secondary" disabled={weeks.length >= 52} onClick={() => setPlan(p => {
           const existing = p.weeksData.length ? p.weeksData : makeWeeks(p)
           const nextNumber = Math.max(...existing.map(w => Number(w.weekNumber) || 0)) + 1
-          const lastDate = existing[existing.length - 1]?.weekStart || p.startDate
-          const newWeek = makeWeeks({ ...p, startWeek: nextNumber, startDate: addWeeks(lastDate, 1), weeks: 1 }, 1)[0]
+          const latest = [...existing].sort((a, b) => Number(b.weekNumber) - Number(a.weekNumber))[0]
+          const newWeek = makeWeeks({ ...p, startWeek: nextNumber, startDate: addWeeks(latest?.weekStart || p.startDate, 1), weeks: 1 }, 1)[0]
           return { ...p, weeks: existing.length + 1, weeksData: [...existing, newWeek] }
         })}>+ Lägg till vecka</button>
       </div>
