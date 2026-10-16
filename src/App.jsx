@@ -71,7 +71,7 @@ function makeWeeks(plan, count = plan.weeks) {
 
 // Bevara befintlig veckotext när startdatum eller antal veckor ändras.
 function displayWeeks(plan) {
-  const source = plan.weeksData.length ? plan.weeksData : makeWeeks(plan)
+  const source = Array.isArray(plan.weeksData) && plan.weeksData.length ? plan.weeksData : makeWeeks(plan)
   if (plan.entryType !== 'dag') return source
   return source.map(week => {
     if (week.daysCustomized) return week
