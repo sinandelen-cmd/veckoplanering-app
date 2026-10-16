@@ -533,6 +533,8 @@ function TeacherApp({ session }) {
             setStatus('Första veckans nummer är för högt för antalet veckor. Högsta tillåtna veckonummer är 53.')
             return
           }
+          const hasCustomNumbers = weeks.some((week, index) => Number(week.weekNumber) !== (Number(plan.startWeek) || 1) + index)
+          if (hasCustomNumbers && !window.confirm('Du har ändrat veckonummer manuellt. Om du byter första veckans nummer skrivs de över. Vill du fortsätta?')) return
           setStatus('')
           setPlan(p => ({ ...p, startWeek, weeksData: (p.weeksData.length ? p.weeksData : makeWeeks(p)).map((week, index) => ({ ...week, weekNumber: startWeek + index, title: /^Vecka \d+$/.test(week.title || '') ? `Vecka ${startWeek + index}` : week.title })) }))
         }} /></label>
