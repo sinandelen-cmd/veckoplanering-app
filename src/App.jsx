@@ -205,7 +205,7 @@ function planFromRow(row) {
 // Elevkopian innehåller bara fält som faktiskt visas för elever.
 // En spärrlista för teacherNotes räcker inte: andra interna fält kan tillkomma.
 function sanitizeForStudents(plan) {
-  const sourceWeeks = Array.isArray(plan?.weeksData) ? (plan.entryType === 'dag' ? displayWeeks(plan) : plan.weeksData) : []
+  const sourceWeeks = Array.isArray(plan?.weeksData) && plan.weeksData.length ? (plan.entryType === 'dag' ? displayWeeks(plan) : plan.weeksData) : makeWeeks(plan)
   return {
     kind: 'arsplanering-v2',
     title: String(plan?.title || ''),
