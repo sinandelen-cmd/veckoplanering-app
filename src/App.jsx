@@ -6,6 +6,7 @@ import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url'
 import { supabase } from './supabase'
 import './App.css'
 import Navigation from './Navigation.jsx'
+import { MUNICIPALITIES_BY_COUNTY } from './swedishMunicipalities.js'
 
 const APP_TITLE = 'Årsplanering'
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker
@@ -50,7 +51,7 @@ function slugify(value) {
 
 function emptyPlan() {
   return {
-    title: '', subject: '', schoolYear: '', className: '',
+    title: '', subject: '', schoolYear: '', className: '', county: '', municipality: '',
     startDate: mondayOf(), startWeek: 1, entryType: 'lektion', lessonDisplay: 'bara-lektion', studentLayout: 'grid', studentColumns: 3, studentRows: 2, lessonsPerWeek: 3, weeks: DEFAULT_WEEKS, weeksData: [],
     published: false, publicSlug: '',
   }
@@ -738,6 +739,14 @@ function TeacherApp({ session }) {
         <label>Ämne<input value={plan.subject} onChange={e => setPlan({ ...plan, subject: e.target.value })} placeholder="Matematik" /></label>
         <label>Läsår<input value={plan.schoolYear} onChange={e => setPlan({ ...plan, schoolYear: e.target.value })} placeholder="2026–2027" /></label>
         <label>Klass/grupp<input value={plan.className} onChange={e => setPlan({ ...plan, className: e.target.value })} placeholder="8A" /></label>
+        <label>Län/region<select value={plan.county || ''} onChange={e => setPlan(p => ({ ...p, county: e.target.value, municipality: '' }))}>
+          <option value="">Välj län/region</option>
+          {Object.keys(MUNICIPALITIES_BY_COUNTY).sort((a, b) => a.localeCompare(b, 'sv')).map(county => <option key={county} value={county}>{county}</option>)}
+        </select></label>
+        <label>Kommun<select value={plan.municipality || ''} disabled={!plan.county} onChange={e => setPlan(p => ({ ...p, municipality: e.target.value }))}>
+          <option value="">{plan.county ? 'Välj kommun' : 'Välj län först'}</option>
+          {(MUNICIPALITIES_BY_COUNTY[plan.county] || []).map(municipality => <option key={municipality} value={municipality}>{municipality}</option>)}
+        </select></label>
         <label>Startdatum<input type="date" value={plan.startDate} onChange={e => {
           if (!e.target.value) return
           setPlan(p => {
