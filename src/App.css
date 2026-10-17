@@ -553,3 +553,39 @@ nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a
 .print-single-week:hover { background: #c6e9df; }
 .print-single-week:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
 @media print { .print-single-week { display: none !important; } }
+
+/* Elevvyn på skärmen: en hel vecka per rad, med full bredd.
+   Ingen intern rullning i veckokorten. Lärarens årsöversikt påverkas inte. */
+@media screen {
+  .student-screen-view .student-matrix,
+  .student-screen-view .student-list {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: none !important;
+    grid-auto-rows: max-content !important;
+    gap: 16px !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .student-screen-view .chapter-week-group {
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+  .student-screen-view .student-week-card {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    flex: none !important;
+  }
+  .student-screen-view .student-week-top {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .student-screen-view .student-week-identity {
+    min-width: 0;
+  }
+}
