@@ -520,7 +520,7 @@ const MONTH_PASTELS = ['#f2f7ff','#fff2f8','#f6f2ff','#fffbe8','#fff4ef','#f0faf
 function nationalExamsForPlan(plan) {
   const year = String(plan.schoolYear || '')
   const grade = String(plan.grade || '').replace(/[^0-9]/g, '')
-  if (plan.schoolForm !== 'grundskola' || !/2026\\s*[\/–-]\\s*2027|26\\s*[\/–-]\\s*27|HT\\s*26.*VT\\s*27/i.test(year) || !['3', '6', '9'].includes(grade)) return []
+  if (plan.schoolForm !== 'grundskola' || !year.includes('26') || !year.includes('27') || !['3', '6', '9'].includes(grade)) return []
   return NATIONAL_EXAMS_2026_27.filter(item => item.grade === grade)
 }
 
