@@ -701,6 +701,32 @@ function TeacherApp({ session }) {
     setPlan(p => ({ ...p, weeksData: displayWeeks(p).map((week, i) => i === index ? { ...week, ...changes } : week) }))
   }
 
+  function insertExampleWeek() {
+    if (busy) return
+    const currentWeeks = displayWeeks(plan)
+    const firstWeek = currentWeeks[0]
+    if (!firstWeek) return
+    if (hasWeekWork(firstWeek, 0) && !window.confirm('Första veckan har redan innehåll. Vill du ersätta just den veckan med ett matematikexempel? Övriga veckor ändras inte.')) return
+    const lessons = [
+      ['Måndag – Introduktion till bråk', 'Bråk och gemensam nämnare', '42–43', '1–6'],
+      ['Tisdag – Addition', 'Addera bråk med samma och olika nämnare', '44–45', '7–12'],
+      ['Onsdag – Subtraktion', 'Subtrahera bråk och visa uträkningen', '46–47', '13–18'],
+      ['Torsdag – Problemlösning', 'Lös textuppgifter i par', '48', '19–22'],
+      ['Fredag – Repetition', 'Repetera och gör en kort diagnos', '42–48', 'Repetitionsuppgifter'],
+    ].map(([name, topic, pages, assignments]) => ({
+      name, topics: [{ name: topic, pages: [pages], assignments: [assignments], links: [] }],
+    }))
+    lessons[0].topics[0].links = ['https://www.youtube.com/results?search_query=matematik+br%C3%A5k+%C3%A5rskurs+6']
+    const exampleWeek = {
+      ...firstWeek, title: 'Exempelvecka – Bråk', chapter: 'Matematik: Bråk',
+      content: 'Exempel för att visa upplägget. Sid- och uppgiftsnummer är påhittade och ska anpassas till läroboken. YouTube-länken går till sökresultat. Lägg till egna PowerPoint- och PDF-länkar när filerna finns.',
+      lessons, pages: [], assignments: [], links: [],
+    }
+    setPlan(previous => ({ ...previous, entryType: 'lektion', lessonsPerWeek: 5, weeksData: displayWeeks(previous).map((week, index) => index === 0 ? exampleWeek : week) }))
+    setTeacherTab('arsplan')
+    setStatus('Exempelveckan visas nu i första veckan. Den är inte sparad automatiskt. Anpassa sidnummer och lägg till dina egna PowerPoint- och PDF-länkar.')
+  }
+
   async function save(publish) {
     if (busy) return
     if (!String(plan.title || '').trim()) return setStatus('Skriv ett namn på årsplaneringen.')
@@ -903,6 +929,12 @@ function TeacherApp({ session }) {
     <div className="teacher-tab-panel" hidden={teacherTab !== "arsplan"}>
     <section className="card" aria-live="polite">
       {status && <p className="status">{status}</p>}
+    </section>
+
+    <section className="card" aria-label="Exempelvecka">
+      <h2>Prova en exempelvecka</h2>
+      <p className="muted">Se fem matematiklektioner med sidnummer, uppgiftsnummer och en YouTube-resurs i din egen planeringsvy. Exemplet sparas inte automatiskt och ändrar bara första veckan efter bekräftelse.</p>
+      <button type="button" className="secondary" disabled={busy} onClick={insertExampleWeek}>Visa exempelvecka med lektioner</button>
     </section>
 
     <section className="card teacher-settings-card">
