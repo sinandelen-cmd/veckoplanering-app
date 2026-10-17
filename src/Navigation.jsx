@@ -1,11 +1,15 @@
-export default function Navigation({ active = 'arsplan', onNavigate, onNew, onToggleCalendar, calendarOpen = false }) {
-  const destinations = [['arsplan', 'Lärarvy'], ['redigera', 'Redigera'], ['mina', 'Mina planer'], ['elevvy', 'Elevvy']]
-  return <nav className="unified-navigation" aria-label="Huvudmeny">
-    <a className="navigation-brand" href="/">Årsplanering</a>
-    {onNavigate ? <>
-      <button type="button" className="navigation-new" onClick={onNew}>+ Ny planering</button>
-      {destinations.map(([id, label]) => <button key={id} type="button" className={active === id ? 'navigation-link active' : 'navigation-link'} aria-current={active === id ? 'page' : undefined} onClick={() => onNavigate(id)}>{label}</button>)}
-      {onToggleCalendar && active === 'arsplan' && <button type="button" className="navigation-link calendar-toggle" onClick={onToggleCalendar} aria-pressed={calendarOpen}>{calendarOpen ? 'Dölj kalender' : 'Visa kalender'}</button>}
-    </> : <><a className="navigation-link" href="/#lararvy">Lärarvy</a><a className="navigation-link" href="/#elevvy">Elevvy</a></>}
-  </nav>
+export default function Navigation({ active = 'mina', onNavigate, onNew, plans = [], selectedId, onOpenPlan, onToggleCalendar, calendarOpen = false }) {
+  if (!onNavigate) return <nav className="public-navigation" aria-label="Huvudmeny"><a href="/">Årsplanering</a></nav>
+  return <aside className="planning-sidebar" aria-label="Huvudmeny">
+    <div className="sidebar-brand">Årsplanering</div>
+    <button type="button" className={active === 'mina' ? 'sidebar-link active' : 'sidebar-link'} aria-current={active === 'mina' ? 'page' : undefined} onClick={() => onNavigate('mina')}>Mina planeringar</button>
+    <button type="button" className="sidebar-new" onClick={onNew}>+ Ny planering</button>
+    <div className="sidebar-plan-list" aria-label="Sparade planeringar">
+      {plans.length === 0 ? <p className="sidebar-empty">Inga sparade planeringar ännu</p> : plans.map(row => <button key={row.id} type="button" className={selectedId === row.id ? 'sidebar-plan selected' : 'sidebar-plan'} aria-current={selectedId === row.id ? 'true' : undefined} onClick={() => onOpenPlan(row)} title={row.title || 'Utan namn'}>{row.title || 'Utan namn'}</button>)}
+    </div>
+    <div className="sidebar-divider" />
+    <button type="button" className={active === 'arsplan' || active === 'redigera' ? 'sidebar-link active' : 'sidebar-link'} aria-current={active === 'arsplan' || active === 'redigera' ? 'page' : undefined} onClick={() => onNavigate('arsplan')}>Lärarvy</button>
+    <button type="button" className={active === 'elevvy' ? 'sidebar-link active' : 'sidebar-link'} aria-current={active === 'elevvy' ? 'page' : undefined} onClick={() => onNavigate('elevvy')}>Elevvy</button>
+    {onToggleCalendar && active === 'arsplan' && <button type="button" className="sidebar-link sidebar-calendar" onClick={onToggleCalendar} aria-pressed={calendarOpen}>{calendarOpen ? 'Dölj kalender' : 'Visa kalender'}</button>}
+  </aside>
 }
