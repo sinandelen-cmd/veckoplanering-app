@@ -243,3 +243,15 @@ assert.match(css, /font-size: 10pt !important;/)
 assert.equal((app.match(/className="print-resource-url"/g) || []).length, 2, 'Både vecko- och lektionslänkar ska skriva ut URL')
 assert.match(css, /\.print-resource-url \{ display: none; \}/)
 assert.match(css, /\.student-print-page \.print-resource-url \{[\s\S]*?font-size: 10pt !important/)
+
+
+/* Regression för de verkliga A4-felen: rätt vald vecka, långa veckor och testdata. */
+assert.match(app, /printWeekStart=\{singlePrintWeek\}/, 'Utskriftsvyn ska få den valda veckan')
+assert.match(app, /printWeekStart \? studentWeeks\.filter\(week => week\.weekStart === printWeekStart\)/, 'Utskriftsvyn ska filtrera på valt veckodatum')
+assert.match(app, /function a4DemoPlan\(plan\)/)
+assert.match(app, /Array\.from\(\{ length: 3 \}, \(_, index\) =>/, 'A4-testet ska innehålla tre veckor')
+assert.match(app, /Test med långa texter och länkar/)
+assert.match(app, /Testinnehåll – sparas inte och publiceras inte\./)
+assert.match(css, /\.student-print-page \.lesson \{\s*display: block !important;\s*break-inside: avoid-page !important;/, 'Lektioner ska inte delas vid A4-utskrift')
+assert.match(css, /\.student-print-page \.student-week-card,[\s\S]*?break-inside: auto !important;/, 'Långa veckor måste kunna fortsätta på nästa sida')
+assert.doesNotMatch(css, /\.student-print-page \.topic-cell span\s*\{[^}]*font-size:\s*8pt\s*!important;/, 'Sid- och uppgiftsrutor får inte använda 8 pt')
