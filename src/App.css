@@ -386,3 +386,25 @@ h3 { margin: 8px 0; color: var(--green-900); }
   .student-print-page .lesson, .student-print-page .topic { overflow-wrap:anywhere; }
   .student-print-page .student-week-card, .student-print-page .student-month-info { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
 }
+
+/* Håll varje elevvecka samman vid utskrift även när innehållet är långt. */
+@media print {
+  .student-print-page .chapter-week-group,
+  .student-print-page .week-card,
+  .student-print-page .student-week-card,
+  .student-print-page .week-top,
+  .student-print-page .lesson-details,
+  .student-print-page .week-details {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  .student-print-page .student-matrix,
+  .student-print-page .student-list {
+    grid-template-rows: auto !important;
+    align-content: start !important;
+  }
+  .student-print-page .student-week-card {
+    orphans: 3;
+    widows: 3;
+  }
+}
