@@ -673,3 +673,36 @@ nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a
     overflow-wrap: anywhere !important;
   }
 }
+
+/* Långa veckor får fortsätta på följande A4-sida. Varje lektion
+   hålls däremot ihop; vi minskar aldrig elevtexten under 10 pt.
+   Om en enda lektion är högre än utskriftsytan kan webbläsaren ändå
+   behöva dela den, eftersom fysisk sidstorlek sätter en gräns. */
+@media print {
+  .student-print-page .chapter-week-group,
+  .student-print-page .student-week-card,
+  .student-print-page .week-content,
+  .student-print-page .lessons {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+  .student-print-page .lesson {
+    display: block !important;
+    break-inside: avoid-page !important;
+    page-break-inside: avoid !important;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+  .student-print-page .lesson-heading {
+    break-after: avoid-page !important;
+    page-break-after: avoid !important;
+  }
+  .student-print-page .topic {
+    break-inside: avoid-page !important;
+    page-break-inside: avoid !important;
+  }
+}
