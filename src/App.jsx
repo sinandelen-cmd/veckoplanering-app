@@ -365,10 +365,10 @@ function StudentView({ plan, error, preview = false }) {
     .filter(week => week && !week.hidden)
     .sort((a, b) => weekContentScore(b) - weekContentScore(a))
     .filter((week, index, weeks) => weeks.findIndex(other => (other.weekStart || `number-${other.weekNumber}`) === (week.weekStart || `number-${week.weekNumber}`)) === index)
-    .sort((a, b) => gridMode ? (a.weekStart || '').localeCompare(b.weekStart || '') : (b.weekStart || '').localeCompare(a.weekStart || '')) : []
-  const pages = gridMode ? Math.max(1, Math.ceil(studentWeeks.length / pageSize)) : 1
+    .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || '')) : []
+  const pages = Math.max(1, Math.ceil(studentWeeks.length / pageSize))
   const currentPage = Math.min(page, pages - 1)
-  const visibleWeeks = gridMode ? studentWeeks.slice(currentPage * pageSize, (currentPage + 1) * pageSize) : studentWeeks
+  const visibleWeeks = studentWeeks.slice(currentPage * pageSize, (currentPage + 1) * pageSize)
   const pageWeekLabel = studentWeekPageLabel(visibleWeeks)
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
@@ -377,7 +377,7 @@ function StudentView({ plan, error, preview = false }) {
       <div><p className="eyebrow">{preview ? 'FÖRHANDSVISNING' : 'PUBLICERAD ÅRSPLANERING'}</p><h1>{plan.title}</h1><p className="muted">{[plan.subject, plan.className, plan.schoolYear].filter(Boolean).join(' · ')}</p></div>
       <span className="public-badge">{preview ? "Förhandsvisning" : "Publicerad"}</span>
     </header>
-    {gridMode && <nav className="student-pager" aria-label="Bläddra mellan veckor"><button type="button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>← Föregående</button><strong aria-live="polite">{pageWeekLabel} · Sida {currentPage + 1} av {pages}</strong><button type="button" disabled={currentPage === pages - 1} onClick={() => setPage(currentPage + 1)}>Nästa →</button></nav>}
+    {studentWeeks.length > 0 && <nav className="student-pager" aria-label="Bläddra mellan veckor"><button type="button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>← Föregående</button><strong aria-live="polite">{pageWeekLabel} · Sida {currentPage + 1} av {pages}</strong><button type="button" disabled={currentPage === pages - 1} onClick={() => setPage(currentPage + 1)}>Nästa →</button></nav>}
     {studentWeeks.length === 0 && <p className="card empty" role="status">Det finns inga synliga veckor i den här planeringen ännu.</p>}
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
       {visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
