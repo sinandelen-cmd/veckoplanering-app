@@ -51,7 +51,7 @@ function slugify(value) {
 function emptyPlan() {
   return {
     title: '', subject: '', schoolYear: '', className: '',
-    startDate: mondayOf(), startWeek: 1, entryType: 'lektion', lessonDisplay: 'bara-lektion', lessonsPerWeek: 3, weeks: DEFAULT_WEEKS, weeksData: [],
+    startDate: mondayOf(), startWeek: 1, entryType: 'lektion', lessonDisplay: 'bara-lektion', studentLayout: 'grid', studentColumns: 3, studentRows: 2, lessonsPerWeek: 3, weeks: DEFAULT_WEEKS, weeksData: [],
     published: false, publicSlug: '',
   }
 }
@@ -215,6 +215,9 @@ function sanitizeForStudents(plan) {
     published: true,
     entryType: plan?.entryType === 'dag' ? 'dag' : 'lektion',
     lessonDisplay: ['dag-lektion', 'bara-dag', 'bara-lektion'].includes(plan?.lessonDisplay) ? plan.lessonDisplay : 'bara-lektion',
+    studentLayout: plan?.studentLayout === 'list' ? 'list' : 'grid',
+    studentColumns: Math.max(1, Math.min(3, Number(plan?.studentColumns) || 3)),
+    studentRows: Math.max(1, Math.min(6, Number(plan?.studentRows) || 2)),
     weeksData: sourceWeeks
       .filter(week => week && typeof week === 'object' && !week.hidden)
       .sort((a, b) => (b.weekStart || '').localeCompare(a.weekStart || ''))
@@ -328,7 +331,15 @@ function studentMonthInfo(dateString) {
   return { name: new Intl.DateTimeFormat('sv-SE', { month: 'long' }).format(date).toLocaleUpperCase('sv-SE'), weeks: range, color: MONTH_PASTELS[month] }
 }
 function StudentView({ plan, error, preview = false }) {
-  const studentWeeks = Array.isArray(plan?.weeksData) ? plan.weeksData.filter(week => !week.hidden).sort((a, b) => (b.weekStart || '').localeCompare(a.weekStart || '')) : []
+  const [page, setPage] = useState(0)
+  const gridMode = plan?.studentLayout !== 'list'
+  const columns = Math.max(1, Math.min(3, Number(plan?.studentColumns) || 3))
+  const rows = Math.max(1, Math.min(Math.floor(6 / columns), Number(plan?.studentRows) || 2))
+  const pageSize = Math.min(6, columns * rows)
+  const studentWeeks = Array.isArray(plan?.weeksData) ? plan.weeksData.filter(week => !week.hidden).sort((a, b) => gridMode ? (a.weekStart || '').localeCompare(b.weekStart || '') : (b.weekStart || '').localeCompare(a.weekStart || '')) : []
+  const pages = gridMode ? Math.max(1, Math.ceil(studentWeeks.length / pageSize)) : 1
+  const currentPage = Math.min(page, pages - 1)
+  const visibleWeeks = gridMode ? studentWeeks.slice(currentPage * pageSize, (currentPage + 1) * pageSize) : studentWeeks
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
   return <main className="shell student-shell">
@@ -338,7 +349,7 @@ function StudentView({ plan, error, preview = false }) {
     </header>
     <section className="year-grid">
       {studentWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
-        {week.chapter?.trim() && (index === 0 || week.chapter !== studentWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
+        {week.chapter?.trim() && (index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
         <article className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
         <div className="week-top student-week-top">
           <div className="student-week-identity"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{studentWeekDateRange(week.weekStart)}</span></div>
@@ -720,6 +731,8 @@ function TeacherApp({ session }) {
           })
         }} /></label>
         <label>Första veckans nummer<input type="number" min="1" max="53" readOnly title="Beräknas automatiskt från startdatumet" value={calendarWeekNumber(plan.startDate) ?? plan.startWeek ?? 1} /></label>
+        <label>Elevveckornas layout<select value={plan.studentLayout || 'grid'} onChange={e => setPlan(p => ({ ...p, studentLayout: e.target.value }))}><option value="grid">Kalendermatris</option><option value="list">Under varandra</option></select></label>
+        {plan.studentLayout !== 'list' && <><label>Kolumner<input type="number" min="1" max="3" value={plan.studentColumns || 3} onChange={e => setPlan(p => ({ ...p, studentColumns: Math.max(1, Math.min(3, Number(e.target.value) || 1)), studentRows: Math.min(p.studentRows || 2, Math.floor(6 / Math.max(1, Math.min(3, Number(e.target.value) || 1)))) }))} /></label><label>Rader<input type="number" min="1" max={Math.floor(6 / (plan.studentColumns || 3))} value={Math.min(plan.studentRows || 2, Math.floor(6 / (plan.studentColumns || 3)))} onChange={e => setPlan(p => ({ ...p, studentRows: Math.max(1, Math.min(Math.floor(6 / (p.studentColumns || 3)), Number(e.target.value) || 1)) }))} /></label></>}
         <label>Visning för elever<select value={plan.lessonDisplay || 'bara-lektion'} onChange={e => setPlan(p => ({ ...p, lessonDisplay: e.target.value }))}><option value="dag-lektion">Dag + lektion</option><option value="bara-dag">Bara dag</option><option value="bara-lektion">Bara lektion</option></select></label>
         <label>Planera efter<select value={plan.entryType || 'lektion'} onChange={e => {
           const entryType = e.target.value
