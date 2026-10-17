@@ -161,3 +161,17 @@ for (const value of ['2026/2027', '2026–2027', '2026-2027', '2026/27', '26/27'
 for (const value of ['2025/2027', '2026/2028', '2026/2027 extra', '2026-2027-2028', '', null]) {
   assert.equal(isSchoolYear2026_27(value), false, `Felaktigt läsår ska avvisas: ${value}`)
 }
+
+const nationalExamsForPlan = new Function(
+  'NATIONAL_EXAMS_2026_27',
+  extractFunction('isSchoolYear2026_27', 'function nationalExamsForPlan') +
+  '\n' + extractFunction('nationalExamsForPlan', 'function YearCalendar') +
+  '; return nationalExamsForPlan'
+)(NATIONAL_EXAMS_2026_27)
+assert.equal(nationalExamsForPlan({ schoolForm: 'grundskola', schoolYear: '2026/27', grade: '6' }).length, 6)
+assert.equal(nationalExamsForPlan({ schoolForm: 'grundskola', schoolYear: 'HT26–VT27', grade: '9' }).length, 9)
+for (const plan of [
+  { schoolForm: 'gymnasium', schoolYear: '2026/27', grade: '9' },
+  { schoolForm: 'grundskola', schoolYear: '2025/26', grade: '9' },
+  { schoolForm: 'grundskola', schoolYear: '2026/27', grade: '7' },
+]) assert.deepEqual(nationalExamsForPlan(plan), [], 'Nationella prov får inte visas för fel planering')
