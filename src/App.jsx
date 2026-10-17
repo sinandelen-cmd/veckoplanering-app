@@ -324,7 +324,7 @@ function calendarWeekNumber(dateString) {
 }
 const MONTH_PASTELS = ['#f2f7ff','#fff2f8','#f6f2ff','#fffbe8','#fff4ef','#f0faff','#fff8e8','#fff0e9','#f5f2ff','#fff9e9','#f1f4fa','#fff1f6']
 
-function YearCalendar({ weeks, onClose, onUpdateWeek, onSave, isDirty, busy, entryType = 'lektion' }) {
+function YearCalendar({ weeks, onClose, onUpdateWeek, onSave, isDirty, busy, saveStatus, entryType = 'lektion' }) {
   const [page, setPage] = useState(0)
   const [layout, setLayout] = useState('4x3')
   const layoutOptions = { '3x2': [3, 2], '4x3': [4, 3], '4x4': [4, 4], '4x5': [4, 5] }
@@ -360,6 +360,7 @@ function YearCalendar({ weeks, onClose, onUpdateWeek, onSave, isDirty, busy, ent
       <div className="calendar-edit-actions">
         <button type="button" disabled={busy || !isDirty} onClick={onSave}>{busy ? 'Sparar...' : 'Spara ändringar'}</button>
         {isDirty && <span>Du har osparade ändringar.</span>}
+        {saveStatus && <span role="status">{saveStatus}</span>}
       </div>
       <button type="button" className="secondary" onClick={() => { setSelectedWeekIndex(null); setSelectedLessonIndex(null) }}>← Till översikten</button>
     </div> : <>
@@ -638,7 +639,7 @@ function TeacherApp({ session }) {
     }
   }
 
-  return <><Navigation plans={plans} onOpenPlan={loadPlan} selectedId={selectedId} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} />{calendarOpen && <YearCalendar weeks={weeks} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onSave={() => save(false)} isDirty={isDirty} busy={busy} entryType={plan.entryType} />}<main className="shell" id="lararvy">
+  return <><Navigation plans={plans} onOpenPlan={loadPlan} selectedId={selectedId} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} />{calendarOpen && <YearCalendar weeks={weeks} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} />}<main className="shell" id="lararvy">
     <header className="topbar">
       <div><p className="eyebrow">LÄRARVY</p><h1>{APP_TITLE}</h1><p className="muted">{session.user.email}</p></div>
       <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
