@@ -20,7 +20,7 @@ assert.match(redirects, /\/\*\s+\/index\.html\s+200/)
 // Regression checks for the student view and publication safety.
 assert.match(app, /const pageSize = Math\.min\(6, columns \* rows\)/)
 assert.match(app, /studentWeeks\.slice\(currentPage \* pageSize, \(currentPage \+ 1\) \* pageSize\)/)
-assert.match(app, /const printGroups = \[\]/)
+assert.match(app, /const printGroups = groupStudentWeeksForPrint\(studentWeeks\)/)
 assert.match(app, /printGroups\[printPage\]\?\.weeks/)
 assert.match(app, /function isoWeekYear\(dateString\)/)
 assert.match(app, /weekStart \|\| `number-\$\{other\.weekNumber\}`/)
@@ -211,3 +211,14 @@ for (const secret of ['HEMLIG LÄRARNOTERING', 'ENDAST LÄRARE', 'Privat planeri
   assert.equal(publicJson.includes(secret), false, 'Elevversionen får inte innehålla: ' + secret)
 }
 assert.equal(studentFixture.weeksData[0].links.length, 2, 'Publicering får inte ändra lärarens data')
+
+const { groupStudentWeeksForPrint } = await import('../src/printGroups.js')
+const shortWeek = index => ({ weekStart: '2027-01-' + String(index).padStart(2, '0'), content: 'Kort vecka' })
+const fourShort = groupStudentWeeksForPrint([1, 2, 3, 4, 5].map(shortWeek))
+assert.deepEqual(fourShort.map(group => group.weeks.length), [4, 1])
+const longWeek = { content: 'Långt innehåll '.repeat(100), lessons: [{ name: 'Lektion', topics: Array.from({ length: 18 }, (_, i) => ({ name: 'Moment ' + i })) }] }
+const mixedGroups = groupStudentWeeksForPrint([shortWeek(1), longWeek, shortWeek(2)])
+assert.deepEqual(mixedGroups.map(group => group.weeks.length), [1, 1, 1])
+assert.equal(mixedGroups[1].weight, 4)
+assert.deepEqual(groupStudentWeeksForPrint([]), [])
+assert.equal(groupStudentWeeksForPrint([{ content: 'Vecka', lessons: [null, { topics: [null, { name: 'Tal' }] }] }]).length, 1)
