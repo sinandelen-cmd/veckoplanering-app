@@ -819,7 +819,8 @@ function TeacherApp({ session }) {
     if (busy) return
     if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
     try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(row.id)) } catch { /* Lagring kan vara blockerad */ }
-    setSelectedId(row.id); savedPlanRef.current = JSON.stringify(planFromRow(row)); setSavedRevision(revision => revision + 1); setPlan(planFromRow(row)); setTeacherTab('arsplan'); setPreviewStudents(false); setStatus('Planeringen är öppnad.'); window.scrollTo({ top: 0, behavior: 'smooth' })
+    const openedPlan = planFromRow(row)
+    setSelectedId(row.id); savedPlanRef.current = JSON.stringify(openedPlan); setSavedRevision(revision => revision + 1); setPlan(openedPlan); setTeacherTab('arsplan'); setPreviewStudents(false); setA4Demo(false); setStatus('Planeringen är öppnad.'); window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function clonePlan(row) {
@@ -883,7 +884,7 @@ function TeacherApp({ session }) {
     try { window.sessionStorage.removeItem(`arsplanering-last-open-${session.user.id}`) } catch { /* Lagring kan vara blockerad */ }
     setPlan(fresh); setSelectedId(null); savedPlanRef.current = JSON.stringify(fresh)
     setSavedRevision(revision => revision + 1)
-    setTeacherTab('arsplan'); setPreviewStudents(false)
+    setTeacherTab('arsplan'); setPreviewStudents(false); setA4Demo(false)
     setStatus('Ny planering klar. Spara utkast när du har fyllt i din planering.')
   }
   return <div className="planning-layout"><Navigation active={teacherTab} plans={plans} selectedId={selectedId} onOpenPlan={loadPlan} onNavigate={id => { setTeacherTab(id); if (id === 'elevvy') setPreviewStudents(true) }} onNew={createPlan} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} /><main className="shell" id="lararvy">
