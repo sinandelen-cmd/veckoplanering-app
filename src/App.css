@@ -201,3 +201,20 @@ h3 { margin: 8px 0; color: var(--green-900); }
 @media (max-width: 1100px) { .calendar-months { grid-template-columns: repeat(3,minmax(0,1fr)); } }
 @media (max-width: 780px) { .calendar-months { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 510px) { .calendar-months { grid-template-columns: 1fr; } .calendar-overlay { padding: 10px; margin: 10px; } }
+
+.calendar-pagination { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin: 14px 0; }
+.calendar-week-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.calendar-week-tile { display: flex; flex-direction: column; align-items: stretch; gap: 7px; min-height: 175px; padding: 0 12px 12px; text-align: left; background: white; border: 1px solid #c9ddd2; border-radius: 12px; overflow: hidden; }
+.calendar-week-tile:hover, .calendar-week-tile:focus-visible { outline: 2px solid #075b46; background: #f2faf5; }
+.calendar-tile-month { margin: 0 -12px 4px; padding: 8px 12px; background: #075b46; color: white; text-transform: capitalize; font-weight: 700; }
+.calendar-week-tile > strong { font-size: 20px; color: #075b46; }
+.calendar-tile-date, .calendar-tile-chapter { font-size: 13px; color: #536b5e; }
+.calendar-tile-topics { flex: 1; overflow-wrap: anywhere; font-size: 13px; }
+.calendar-tile-action { font-size: 12px; color: #075b46; font-weight: 700; }
+.calendar-week-detail { padding: 16px; background: white; border: 1px solid #d6e6dd; border-radius: 12px; }
+.calendar-lesson-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 16px 0; }
+.calendar-lesson-list button { display: flex; flex-direction: column; text-align: left; gap: 8px; }
+.calendar-lesson-detail { margin: 16px 0; }
+@media (max-width: 950px) { .calendar-week-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 650px) { .calendar-week-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 430px) { .calendar-week-grid { grid-template-columns: 1fr; } }
