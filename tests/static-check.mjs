@@ -209,7 +209,7 @@ for (const secret of ['HEMLIG LÄRARNOTERING', 'ENDAST LÄRARE', 'Privat planeri
 assert.equal(studentFixture.weeksData[0].links.length, 2, 'Publicering får inte ändra lärarens data')
 
 const { groupStudentWeeksForPrint } = await import('../src/printGroups.js')
-const shortWeek = index => ({ weekStart: '2027-01-' + String(index).padStart(2, '0'), content: 'Kort vecka' })
+const printShortWeek = index => ({ weekStart: '2027-01-' + String(index).padStart(2, '0'), content: 'Kort vecka' })
 const fourShort = groupStudentWeeksForPrint([1, 2, 3, 4, 5].map(shortWeek))
 assert.deepEqual(fourShort.map(group => group.weeks.length), [4, 1])
 const longWeek = { content: 'Långt innehåll '.repeat(100), lessons: [{ name: 'Lektion', topics: Array.from({ length: 18 }, (_, i) => ({ name: 'Moment ' + i })) }] }
@@ -228,12 +228,12 @@ const printEnd = app.indexOf('  const currentPage =', printStart)
 assert.ok(printStart >= 0 && printEnd > printStart, 'Print grouping block must exist')
 const groupPrintWeeks = new Function('studentWeeks', app.slice(printStart, printEnd) + '\nreturn printGroups')
 const shortWeek = index => ({ weekStart: '2027-01-' + String(index).padStart(2, '0'), title: 'Kort vecka ' + index, lessons: [] })
-const longWeek = { ...shortWeek(5), content: 'Långt innehåll '.repeat(100), lessons: Array.from({length: 20}, (_, index) => ({name: 'Lektion ' + index, topics: [{name: 'Moment ' + index}]})) }
-const printFixtures = [shortWeek(1), shortWeek(2), shortWeek(3), shortWeek(4), longWeek, shortWeek(6), shortWeek(7), shortWeek(8), shortWeek(9), shortWeek(10)]
+const printLongWeek = { ...printShortWeek(5), content: 'Långt innehåll '.repeat(100), lessons: Array.from({length: 20}, (_, index) => ({name: 'Lektion ' + index, topics: [{name: 'Moment ' + index}]})) }
+const printFixtures = [printShortWeek(1), printShortWeek(2), printShortWeek(3), printShortWeek(4), printLongWeek, printShortWeek(6), printShortWeek(7), printShortWeek(8), printShortWeek(9), printShortWeek(10)]
 const groups = groupPrintWeeks(printFixtures)
 assert.deepEqual(groups.map(group => group.weeks.length), [4, 1, 4, 1])
 assert.deepEqual(groups.flatMap(group => group.weeks), printFixtures, 'Print grouping must preserve order without duplicates')
 assert.ok(groups.every(group => group.weight <= 4 && group.weeks.length <= 4))
-assert.equal(groups[1].weeks[0], longWeek, 'Very long week must be alone on a print page')
+assert.equal(groups[1].weeks[0], printLongWeek, 'Very long week must be alone on a print page')
 assert.deepEqual(groupPrintWeeks([]), [])
-assert.deepEqual(groupPrintWeeks([shortWeek(1)]).map(group => group.weeks.length), [1])
+assert.deepEqual(groupPrintWeeks([printShortWeek(1)]).map(group => group.weeks.length), [1])
