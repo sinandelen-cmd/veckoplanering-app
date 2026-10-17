@@ -33,4 +33,24 @@ assert.match(app, /if \(busy\) return\s+if \(!String\(plan\.title/)
 assert.match(app, /published_content: null,\s+public_slug: null/)
 assert.match(app, /\.eq\('id', row\.id\)\.eq\('user_id', session\.user\.id\)\.select\('id'\)\.single\(\)/)
 assert.doesNotMatch(app, /max="52"/)
+// Execute the pure date/week functions against real year-boundary examples.
+const extractFunction = (name, nextMarker) => {
+  const start = app.indexOf(`function ${name}(`)
+  assert.ok(start >= 0, `Missing function: ${name}`)
+  const end = app.indexOf(nextMarker, start)
+  assert.ok(end > start, `Missing end marker for ${name}`)
+  return app.slice(start, end)
+}
+const calendarWeekNumber = new Function(extractFunction('calendarWeekNumber', 'const MONTH_PASTELS') + '; return calendarWeekNumber')()
+const isoWeekYear = new Function(extractFunction('isoWeekYear', 'function studentWeekPageLabel') + '; return isoWeekYear')()
+for (const [date, number, year] of [
+  ['2026-12-28', 53, 2026],
+  ['2027-01-01', 53, 2026],
+  ['2027-01-04', 1, 2027],
+  ['2028-01-03', 1, 2028],
+  ['2029-12-31', 1, 2030],
+]) {
+  assert.equal(calendarWeekNumber(date), number, `Wrong ISO week for ${date}`)
+  assert.equal(isoWeekYear(date), year, `Wrong ISO week year for ${date}`)
+}
 console.log('Static security/routing checks: OK')
