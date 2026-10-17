@@ -466,7 +466,7 @@ function StudentView({ plan, error, preview = false, printPage = null }) {
   return <><main className={`shell student-shell ${printPage === null ? "student-screen-view" : "student-print-page"}`}>
     <header className="student-header">
       <div><p className="eyebrow">{preview ? 'FÖRHANDSVISNING' : 'PUBLICERAD ÅRSPLANERING'}</p><h1>{plan.title}</h1><p className="muted">{[plan.subject, plan.className, plan.schoolYear].filter(Boolean).join(' · ')}</p></div>
-      {printPage === null && <button type="button" className="secondary student-print-button" onClick={() => window.print()}>🖨 Skriv ut alla synliga elevveckor (A4)</button>}
+      {printPage === null && <button type="button" className="secondary student-print-button" onClick={() => window.print()}>🖨 Skriv ut elevplaneringen (A4, hela veckor)</button>}
       <span className="public-badge">{preview ? "Förhandsvisning" : "Publicerad"}</span>
     </header>
     {printPage === null && studentWeeks.length > 0 && <nav className="student-pager" aria-label="Bläddra mellan veckor"><button type="button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>← Föregående</button><strong aria-live="polite">{pageWeekLabel} · Sida {currentPage + 1} av {pages}</strong><button type="button" disabled={currentPage === pages - 1} onClick={() => setPage(currentPage + 1)}>Nästa →</button></nav>}
@@ -486,7 +486,7 @@ function StudentView({ plan, error, preview = false, printPage = null }) {
       </article></div>)}
     </section>
   </main>
-  {printPage === null && studentWeeks.length > 0 && <div className="student-print-pages" aria-hidden="true">
+  {printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">
     {Array.from({ length: printGroups.length }, (_, index) => <StudentView key={index} plan={plan} preview={preview} printPage={index} />)}
   </div>}
 </>
