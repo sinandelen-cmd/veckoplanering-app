@@ -472,8 +472,10 @@ function StudentView({ plan, error, preview = false, printPage = null }) {
     // Antal synliga texttecken och innehållsblock är bättre indikatorer än JSON-nycklarnas längd.
     // Fortfarande en uppskattning: faktisk A4-höjd måste verifieras i webbläsare.
     const textLength = [week.title, week.chapter, week.content,
+      ...(week.pages || []), ...(week.assignments || []), ...(week.links || []),
       ...(week.lessons || []).flatMap(lesson => [lesson.name, lesson.day,
-        ...(lesson.topics || []).flatMap(topic => [topic.name, ...(topic.pages || []), ...(topic.assignments || [])])])]
+        ...(lesson.topics || []).flatMap(topic => [topic.name, ...(topic.pages || []),
+          ...(topic.assignments || []), ...(topic.links || [])])])]
       .filter(Boolean).map(value => typeof value === 'string' ? value : JSON.stringify(value)).join(' ').length
     const contentBlocks = (week.lessons || []).length +
       (week.lessons || []).reduce((sum, lesson) => sum + (lesson.topics || []).length, 0)
