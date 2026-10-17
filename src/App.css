@@ -408,3 +408,17 @@ h3 { margin: 8px 0; color: var(--green-900); }
     widows: 3;
   }
 }
+
+/* Utskrift har en egen 2 × 2-layout, oberoende av elevens skärminställning. */
+@media print {
+  .student-print-page .student-matrix,
+  .student-print-page .student-list {
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    grid-template-rows:auto auto !important;
+    gap:3mm !important;
+    overflow:visible !important;
+  }
+  .student-print-page .chapter-week-group { display:block !important; }
+  .student-print-page .student-week-card { overflow:visible !important; }
+}
