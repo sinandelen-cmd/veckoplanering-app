@@ -49,6 +49,54 @@ function slugify(value) {
     .slice(0, 70) || 'arsplanering'
 }
 
+
+function easterSunday(year) {
+  const a = year % 19, b = Math.floor(year / 100), c = year % 100
+  const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25)
+  const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30
+  const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k + 7) % 7
+  const m = Math.floor((a + 11 * h + 22 * l) / 451)
+  const month = Math.floor((h + l - 7 * m + 114) / 31)
+  const day = ((h + l - 7 * m + 114) % 31) + 1
+  return new Date(year, month - 1, day, 12)
+}
+
+function swedishPublicHolidays(year) {
+  const easter = easterSunday(year)
+  const relative = (offset, name) => {
+    const date = new Date(easter)
+    date.setDate(date.getDate() + offset)
+    return { date: toIsoDate(date), name }
+  }
+  const fixed = (month, day, name) => ({ date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`, name })
+  const weekdayBetween = (month, from, to, weekday, name) => {
+    for (let day = from; day <= to; day++) {
+      const date = new Date(year, month - 1, day, 12)
+      if (date.getDay() === weekday) return { date: toIsoDate(date), name }
+    }
+    return null
+  }
+  return [
+    fixed(1, 1, 'Nyårsdagen'), fixed(1, 6, 'Trettondedag jul'),
+    relative(-2, 'Långfredagen'), relative(0, 'Påskdagen'), relative(1, 'Annandag påsk'),
+    fixed(5, 1, 'Första maj'), relative(39, 'Kristi himmelsfärdsdag'), relative(49, 'Pingstdagen'),
+    fixed(6, 6, 'Sveriges nationaldag'),
+    weekdayBetween(6, 20, 26, 6, 'Midsommardagen'),
+    weekdayBetween(10, 31, 11, 6, 'Alla helgons dag') || weekdayBetween(11, 1, 6, 6, 'Alla helgons dag'),
+    fixed(12, 25, 'Juldagen'), fixed(12, 26, 'Annandag jul'),
+  ].filter(Boolean)
+}
+
+function publicHolidaysInWeek(weekStart) {
+  const start = new Date(`${weekStart}T12:00:00`)
+  const end = new Date(start)
+  end.setDate(end.getDate() + 6)
+  const from = toIsoDate(start), to = toIsoDate(end)
+  return [...new Set([start.getFullYear(), end.getFullYear()])]
+    .flatMap(swedishPublicHolidays).filter(item => item.date >= from && item.date <= to)
+    .sort((a, b) => a.date.localeCompare(b.date))
+}
+
 function emptyPlan() {
   return {
     title: '', subject: '', schoolYear: '', className: '', county: '', municipality: '', schoolForm: '', grade: '', course: '',
@@ -429,6 +477,7 @@ function YearCalendar({ weeks, onClose, onUpdateWeek, onSave, isDirty, busy, sav
     </div>
     {selectedWeek ? <div className="calendar-week-detail">
       <p><strong>{(/^Vecka\s+\d+$/i.test(selectedWeek.title || '') ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : selectedWeek.title) || `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}`}</strong> · {formatDate(selectedWeek.weekStart)}</p>
+      {publicHolidaysInWeek(selectedWeek.weekStart).map(holiday => <p key={holiday.date} className="calendar-holiday"><strong>Röd dag:</strong> {holiday.name} · {formatDate(holiday.date)}</p>)}
       {selectedWeek.content && <p>{selectedWeek.content}</p>}
       <label className="student-visibility-toggle"><input type="checkbox" checked={!selectedWeek.hidden} onChange={e => editSelectedWeek({ hidden: !e.target.checked })} /> Visa hela veckan för elever</label>
       <LessonDetails week={selectedWeek} onChange={editSelectedWeek} entryType={entryType} />
@@ -448,6 +497,7 @@ function YearCalendar({ weeks, onClose, onUpdateWeek, onSave, isDirty, busy, sav
           <span className="calendar-tile-month" style={{ backgroundColor: MONTH_PASTELS[date.getMonth()] }}>{month}</span>
           <strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>
           <span className="calendar-tile-date">{formatDate(week.weekStart)}</span>
+          {publicHolidaysInWeek(week.weekStart).map(holiday => <span key={holiday.date} className="calendar-holiday">🔴 {holiday.name} · {formatDate(holiday.date)}</span>)}
           {week.chapter && <span className="calendar-tile-chapter">{week.chapter}</span>}
           <span className="calendar-tile-topics">{topics.slice(0, 3).join(' · ') || week.content || 'Ingen planering inskriven ännu'}</span>
           <span className="calendar-tile-action">Visa veckan →</span>
