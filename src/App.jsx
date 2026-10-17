@@ -623,6 +623,7 @@ function TeacherApp({ session }) {
   const [plan, setPlan] = useState(emptyPlan())
   const [plans, setPlans] = useState([])
   const [calendarOpen, setCalendarOpen] = useState(true)
+  const [teacherTab, setTeacherTab] = useState("arsplan")
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
@@ -893,6 +894,10 @@ function TeacherApp({ session }) {
       <button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
     </div>}
 
+    <nav className="teacher-tabs" aria-label="Arbetsområden i lärarvyn">
+      {[["arsplan", "Årsplan"], ["redigera", "Redigera"], ["elevvy", "Elevvy och utskrift"], ["mina", "Mina planer"]].map(([id, label]) => <button key={id} type="button" className={teacherTab === id ? "teacher-tab active" : "teacher-tab"} aria-current={teacherTab === id ? "page" : undefined} onClick={() => { setTeacherTab(id); if (id === "elevvy") setPreviewStudents(true) }}>{label}</button>)}
+    </nav>
+    <div className="teacher-tab-panel" hidden={teacherTab !== "arsplan"}>
     <section className="card" aria-live="polite">
       <p><strong>Sparstatus:</strong> {busy ? "Sparar…" : isDirty ? "Osparade ändringar" : selectedId ? "Inga osparade ändringar" : "Ny planering – inte sparad"}</p>
       {status && <p className="status">{status}</p>}
@@ -1013,10 +1018,12 @@ function TeacherApp({ session }) {
       <div className="button-row">
         <button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
         <button type="button" className="primary" disabled={busy} onClick={() => save(true)}>Publicera för elever</button>
-        <button type="button" className="secondary" onClick={() => setPreviewStudents(value => !value)}>{previewStudents ? 'Dölj elevförhandsvisning' : 'Förhandsgranska elevvyn'}</button>
+        <button type="button" className="secondary" onClick={() => { setPreviewStudents(value => !value); setTeacherTab("elevvy") }}>{previewStudents ? 'Dölj elevförhandsvisning' : 'Förhandsgranska elevvyn'}</button>
       </div>
     </section>
 
+    </div>
+    <div className="teacher-tab-panel" hidden={teacherTab !== "redigera"}>
     <section className="card import-card">
       <p className="eyebrow">IMPORT</p><h2>Excel, Word, PDF eller text</h2>
       <p className="muted">Ladda upp ett underlag. Texten delas preliminärt över veckorna så att du kan granska och justera.</p>
@@ -1090,7 +1097,7 @@ function TeacherApp({ session }) {
         })}>+ Lägg till vecka</button>
       </div>
       <div className="sticky-actions button-row">
-        <button type="button" className="secondary" onClick={() => setPreviewStudents(value => !value)}>{previewStudents ? "Dölj elevförhandsvisning" : "Förhandsgranska elevvyn"}</button>
+        <button type="button" className="secondary" onClick={() => { setPreviewStudents(value => !value); setTeacherTab("elevvy") }}>{previewStudents ? "Dölj elevförhandsvisning" : "Förhandsgranska elevvyn"}</button>
         <button className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
         <button className="primary" disabled={busy} onClick={() => save(true)}>Publicera för elever</button>
       </div>
@@ -1100,8 +1107,12 @@ function TeacherApp({ session }) {
 
     </details>
 
+    </div>
+    <div className="teacher-tab-panel" hidden={teacherTab !== "elevvy"}>
     {previewStudents && <section className="card preview-panel" id="elevvy"><h2>Förhandsvisning för elever</h2><p className="muted">Detta är endast en förhandsvisning. Inget publiceras.</p><div className="a4-demo-controls"><button type="button" className="secondary" aria-pressed={a4Demo} onClick={() => setA4Demo(value => !value)}>{a4Demo ? "Visa min planering igen" : "Visa tillfälligt A4-test med långa veckor"}</button>{a4Demo && <strong>Testinnehåll – sparas inte och publiceras inte.</strong>}</div><StudentView plan={a4Demo ? a4DemoPlan(sanitizeForStudents({ ...plan, weeksData: weeks })) : sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
 
+    </div>
+    <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
     <section className="card" id="mina-arsplaneringar">
       <div className="section-heading"><div><p className="eyebrow">BIBLIOTEK</p><h2>Mina årsplaneringar</h2></div></div>
       {!plans.length ? <p className="muted">Du har inga sparade årsplaneringar ännu.</p> : <div className="library-list">
@@ -1117,6 +1128,7 @@ function TeacherApp({ session }) {
         </article>)}
       </div>}
     </section>
+    </div>
   </main></>
 }
 
