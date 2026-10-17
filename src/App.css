@@ -252,3 +252,20 @@ h3 { margin: 8px 0; color: var(--green-900); }
 .calendar-overlay .remove-small { background: #b83440; border: 1px solid #b83440; color: #fff; }
 .calendar-overlay .remove-small:hover { background: #932632; color: #fff; }
 .calendar-overlay button:focus-visible { outline: 3px solid #f3b43d; outline-offset: 2px; }
+
+/* Ljusa pastellknappar med matchande kanter och mörk läsbar text. */
+.calendar-overlay .calendar-save-button { background: #dceaff; border-color: #dceaff; color: #163c75; }
+.calendar-overlay .calendar-save-button:hover:not(:disabled) { background: #c8dfff; border-color: #c8dfff; color: #163c75; }
+.calendar-overlay .calendar-save-button:disabled { background: #edf2fa; border-color: #edf2fa; color: #7b8495; }
+.calendar-overlay .calendar-overview-button { background: #eee4ff; border-color: #eee4ff; color: #55367f; }
+.calendar-overlay .calendar-overview-button:hover { background: #e2d2ff; border-color: #e2d2ff; color: #55367f; }
+.calendar-overlay .calendar-close-button { background: #e9edf2; border-color: #e9edf2; color: #424c5a; }
+.calendar-overlay .calendar-close-button:hover { background: #dce2e9; border-color: #dce2e9; color: #424c5a; }
+.calendar-overlay .add-detail,
+.calendar-overlay .lessons > button.secondary,
+.calendar-overlay .lesson > button.secondary { background: #d9f5f2; border-color: #d9f5f2; color: #135f61; }
+.calendar-overlay .add-detail:hover,
+.calendar-overlay .lessons > button.secondary:hover,
+.calendar-overlay .lesson > button.secondary:hover { background: #c4ede8; border-color: #c4ede8; color: #135f61; }
+.calendar-overlay .remove-small { background: #ffe3e8; border-color: #ffe3e8; color: #8c3142; }
+.calendar-overlay .remove-small:hover { background: #ffd1da; border-color: #ffd1da; color: #8c3142; }
