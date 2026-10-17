@@ -87,6 +87,28 @@ function swedishPublicHolidays(year) {
   ].filter(Boolean)
 }
 
+
+function suggestedSchoolClosures(startDate, numberOfWeeks) {
+  const starts = Array.from({ length: Math.max(1, Number(numberOfWeeks) || 1) }, (_, i) => addWeeks(startDate, i))
+  const first = starts[0], last = addWeeks(starts[starts.length - 1], 1)
+  const years = [...new Set(starts.map(date => Number(date.slice(0, 4))))]
+  const suggestions = []
+  const add = (name, start, end) => {
+    if (start < last && end >= first) suggestions.push({ id: crypto.randomUUID(), name: name + ' (förslag – kontrollera datum)', startDate: start, endDate: end })
+  }
+  for (const year of years) {
+    // Vecka 44 är en vanlig nationell utgångspunkt för höstlov, inte ett fastställt kommunalt datum.
+    const autumn = Array.from({ length: 8 }, (_, i) => `${year}-10-${String(25 + i).padStart(2, '0')}`).find(date => calendarWeekNumber(date) === 44 && new Date(date + 'T12:00:00').getDay() === 1)
+    if (autumn) {
+      const friday = new Date(autumn + 'T12:00:00')
+      friday.setDate(friday.getDate() + 4)
+      add('Höstlov', autumn, toIsoDate(friday))
+    }
+    // Jullov, sportlov och påsklov varierar i längd och datum; de fylls i av läraren.
+  }
+  return suggestions
+}
+
 function validSchoolClosure(item) {
   return Boolean(item && item.name?.trim() && /^\d{4}-\d{2}-\d{2}$/.test(item.startDate || '') &&
     /^\d{4}-\d{2}-\d{2}$/.test(item.endDate || '') &&
@@ -882,6 +904,13 @@ function TeacherApp({ session }) {
         <button type="button" className="secondary" onClick={() => setPlan(p => ({ ...p, schoolClosures: (p.schoolClosures || []).filter(v => v.id !== item.id) }))}>Ta bort</button>
       </div>)}
       <button type="button" className="secondary" onClick={() => setPlan(p => ({ ...p, schoolClosures: [...(p.schoolClosures || []), { id: crypto.randomUUID(), name: 'Studiedag', startDate: p.startDate, endDate: p.startDate }] }))}>+ Lägg till lov eller studiedag</button>
+      <button type="button" className="secondary" onClick={() => setPlan(p => {
+        const proposed = suggestedSchoolClosures(p.startDate, p.weeks)
+        const existing = p.schoolClosures || []
+        const additions = proposed.filter(item => !existing.some(old => old.name.startsWith('Höstlov') && old.startDate === item.startDate))
+        return { ...p, schoolClosures: [...existing, ...additions] }
+      })}>+ Föreslå höstlov (vecka 44)</button>
+      <p>Höstlov vecka 44 är ett preliminärt riksförslag. Kontrollera alltid med din kommun eller skola. Övriga lov och studiedagar läggs tills vidare in manuellt.</p>
     </section>
 
     <section className="card calendar-primary-actions" aria-label="Spara och publicera årsplaneringen">
