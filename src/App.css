@@ -230,3 +230,7 @@ h3 { margin: 8px 0; color: var(--green-900); }
 .calendar-tile-month { color: #45404c; }
 .calendar-week-tile:hover, .calendar-week-tile:focus-visible { background: #fffdfa; }
 @media (max-width: 650px) { .calendar-overlay { inset: 52px 4px 4px; padding: 12px; } }
+
+/* Zoomad vecka: visa lektionerna i en lodrät lista, aldrig i kolumner. */
+.calendar-week-detail .calendar-lesson-list { display: flex; flex-direction: column; gap: 12px; }
+.calendar-week-detail .calendar-lesson-list > button { width: 100%; min-height: 64px; align-items: flex-start; }
