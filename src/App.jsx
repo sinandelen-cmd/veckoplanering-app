@@ -290,7 +290,7 @@ function chapterTone(chapter) {
 }
 
 function StudentView({ plan, error, preview = false }) {
-  const studentWeeks = Array.isArray(plan?.weeksData) ? plan.weeksData.filter(week => week.studentVisible !== false) : []
+  const studentWeeks = Array.isArray(plan?.weeksData) ? plan.weeksData.filter(week => !week.hidden) : []
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
   return <main className="shell student-shell">
@@ -356,7 +356,7 @@ function YearCalendar({ weeks, onClose, onUpdateWeek, onSave, isDirty, busy, sav
     {selectedWeek ? <div className="calendar-week-detail">
       <p><strong>{(/^Vecka\s+\d+$/i.test(selectedWeek.title || '') ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : selectedWeek.title) || `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}`}</strong> · {formatDate(selectedWeek.weekStart)}</p>
       {selectedWeek.content && <p>{selectedWeek.content}</p>}
-      <label className="student-visibility-toggle"><input type="checkbox" checked={selectedWeek.studentVisible !== false} onChange={e => editSelectedWeek({ studentVisible: e.target.checked })} /> Visa hela veckan för elever</label>
+      <label className="student-visibility-toggle"><input type="checkbox" checked={!selectedWeek.hidden} onChange={e => editSelectedWeek({ hidden: !e.target.checked })} /> Visa hela veckan för elever</label>
       <LessonDetails week={selectedWeek} onChange={editSelectedWeek} entryType={entryType} />
       <div className="calendar-edit-actions">
         <button type="button" className="calendar-save-button" disabled={busy || !isDirty} onClick={onSave}>{busy ? 'Sparar...' : 'Spara ändringar'}</button>
@@ -762,8 +762,7 @@ function TeacherApp({ session }) {
         {weeks.map((week, index) => ({ week, index })).sort((a, b) => Number(a.week.weekNumber) - Number(b.week.weekNumber)).map(({ week, index }, displayIndex, ordered) => <div className="chapter-week-group" key={`${week.weekNumber}-${index}`}>
           {week.chapter?.trim() && (displayIndex === 0 || week.chapter !== ordered[displayIndex - 1]?.week.chapter) && <h3 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h3>}
           <article className="week-card" id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
-          <div className="week-top"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span>
-            <label className="student-visibility-toggle"><input type="checkbox" checked={week.studentVisible !== false} onChange={e => updateWeek(index, { studentVisible: e.target.checked })} /> Visa hela veckan för elever</label>
+          <div className="week-top"><label className="student-visibility-toggle"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever`} /> Visa för elever</label><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span>
             <button type="button" className="remove-small" disabled={weeks.length <= 1} onClick={() => {
               if (hasWeekWork(week, index) && !window.confirm(`Ta bort vecka ${week.weekNumber} och allt innehåll i veckan?`)) return
               setPlan(p => {
@@ -772,7 +771,6 @@ function TeacherApp({ session }) {
                 return { ...p, weeks: remaining.length, weeksData: remaining, startWeek: Number(remaining[0]?.weekNumber) || p.startWeek }
               })
             }}>× Ta bort vecka</button></div>
-          <label className="week-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} /> Visa för elever vid publicering</label>
           <label className="chapter-editor">Kapitel / tema (valfritt)<input value={week.chapter || ''} placeholder="Exempel: Kapitel 5 – Taluppfattning" onChange={e => updateWeek(index, { chapter: e.target.value })} /></label>
           <label className="week-number-editor">Veckonummer<input type="number" min="1" max="53" value={week.weekNumber} onChange={e => {
             const number = Number(e.target.value)
