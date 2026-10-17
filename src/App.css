@@ -444,3 +444,18 @@ h3 { margin: 8px 0; color: var(--green-900); }
     page-break-inside: avoid !important;
   }
 }
+
+@media print {
+  /* Långa ord, filnamn och länkar ska brytas inom A4-kortets bredd. */
+  .student-print-page .student-week-card,
+  .student-print-page .chapter-week-group,
+  .student-print-page .week-details,
+  .student-print-page .resource-chip {
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+  .student-print-page .student-week-card {
+    orphans: 2;
+    widows: 2;
+  }
+}
