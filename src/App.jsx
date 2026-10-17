@@ -292,8 +292,13 @@ function chapterTone(chapter) {
 function studentWeekStyle(dateString) {
   const date = new Date(dateString + 'T12:00:00')
   if (Number.isNaN(date.getTime())) return {}
-  const colors = ['#eaf3ff', '#fff0df', '#f2ebff', '#e7f6ed', '#fff3e8']
-  return { backgroundColor: colors[Math.floor((date.getDate() - 1) / 7) % colors.length], borderColor: '#dce4e8' }
+  // Global veckocykel: två intilliggande veckor får aldrig samma färg,
+  // inte heller när de ligger i olika månader eller år.
+  const monday = new Date(date)
+  monday.setDate(date.getDate() - ((date.getDay() + 6) % 7))
+  const ordinal = Math.floor(Date.UTC(monday.getFullYear(), monday.getMonth(), monday.getDate()) / (7 * 86400000))
+  const colors = ['#eaf3ff', '#fff0df', '#f2ebff', '#e7f6ed']
+  return { backgroundColor: colors[((ordinal % colors.length) + colors.length) % colors.length], borderColor: '#dce4e8' }
 }
 function studentMonthInfo(dateString) {
   const date = new Date(dateString + 'T12:00:00')
