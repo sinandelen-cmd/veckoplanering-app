@@ -118,3 +118,8 @@ assert.match(app, /\.\.\.\(week\.links \|\| \[\]\)/)
 assert.match(app, /week\.lessons\.filter\(lesson => lesson && typeof lesson === 'object'\)/)
 assert.match(app, /lesson\.topics\.filter\(topic => topic && typeof topic === 'object'\)/)
 assert.match(app, /\(week\.lessons \|\| \[\]\)\.filter\(Boolean\)\.flatMap/)
+
+assert.match(app, /parsed\.username \|\| parsed\.password/)
+assert.match(app, /host === 'drive\.google\.com'/)
+assert.match(app, /host\.endsWith\('\.sharepoint\.com'\)/)
+assert.match(app, /week\.links\.filter\(v => typeof v === 'string' && resourceInfo\(v\)\)\.map\(v => v\.trim\(\)\)/)
