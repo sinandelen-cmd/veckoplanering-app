@@ -349,11 +349,11 @@ function YearCalendar({ weeks, onClose, entryType = 'lektion' }) {
   }
   return <section className="calendar-overlay" aria-label="Årsplanering med valbart antal veckor per sida">
     <div className="calendar-top">
-      <div><h2>{selectedWeek ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : `Årsöversikt · ${weeksPerPage} veckor per sida`}</h2><p>{selectedWeek ? (selectedWeek.chapter || selectedWeek.title || 'Din planering') : 'Välj en vecka för att zooma in och se dina dagar eller lektioner.'}</p></div>
+      <div><h2>{selectedWeek ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : `Årsöversikt · ${weeksPerPage} veckor per sida`}</h2><p>{selectedWeek ? (selectedWeek.chapter || (/^Vecka\s+\d+$/i.test(selectedWeek.title || '') ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : selectedWeek.title) || 'Din planering') : 'Välj en vecka för att zooma in och se dina dagar eller lektioner.'}</p></div>
       <div className="calendar-zoom-controls">{selectedWeek && <button type="button" className="secondary" onClick={back}>← Tillbaka</button>}<button type="button" className="secondary" onClick={onClose}>✕ Stäng</button></div>
     </div>
     {selectedWeek ? <div className="calendar-week-detail">
-      <p><strong>{selectedWeek.title || `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}`}</strong> · {formatDate(selectedWeek.weekStart)}</p>
+      <p><strong>{(/^Vecka\s+\d+$/i.test(selectedWeek.title || '') ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : selectedWeek.title) || `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}`}</strong> · {formatDate(selectedWeek.weekStart)}</p>
       {selectedWeek.content && <p>{selectedWeek.content}</p>}
       {selectedLessonIndex === null ? <div className="calendar-lesson-list">{lessons.map((lesson, index) => <button type="button" className="secondary" key={index} onClick={() => setSelectedLessonIndex(index)}><strong>{lesson.name || (entryType === 'dag' ? WEEKDAYS[index] || `Dag ${index + 1}` : `Lektion ${index + 1}`)}</strong><span>{(lesson.topics || []).map(topic => topic.name).filter(Boolean).join(', ') || 'Visa innehåll'}</span></button>)}</div> : <div className="calendar-lesson-detail"><LessonDetails week={{ lessons: [lessons[selectedLessonIndex]] }} entryType={entryType} /></div>}
       <button type="button" className="secondary" onClick={() => { setSelectedWeekIndex(null); setSelectedLessonIndex(null) }}>← Till översikten</button>
