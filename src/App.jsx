@@ -704,28 +704,31 @@ function TeacherApp({ session }) {
 
   function insertExampleWeek() {
     if (busy) return
-    const currentWeeks = displayWeeks(plan)
-    const firstWeek = currentWeeks[0]
-    if (!firstWeek) return
-    if (hasWeekWork(firstWeek, 0) && !window.confirm('Första veckan har redan innehåll. Vill du ersätta just den veckan med ett matematikexempel? Övriga veckor ändras inte.')) return
+    if (isDirty && !window.confirm('Du har osparade ändringar. Vill du lämna dem och öppna en separat fiktiv vecka 42?')) return
+    const demo = { ...emptyPlan(), title: 'EXEMPEL – Vecka 42: Bråk', subject: 'Matematik', className: 'Årskurs 6',
+      startDate: '2026-10-12', weeks: 1, entryType: 'lektion', lessonsPerWeek: 5, published: false, archived: false }
     const lessons = [
-      ['Måndag – Introduktion till bråk', 'Bråk och gemensam nämnare', '42–43', '1–6'],
-      ['Tisdag – Addition', 'Addera bråk med samma och olika nämnare', '44–45', '7–12'],
-      ['Onsdag – Subtraktion', 'Subtrahera bråk och visa uträkningen', '46–47', '13–18'],
-      ['Torsdag – Problemlösning', 'Lös textuppgifter i par', '48', '19–22'],
-      ['Fredag – Repetition', 'Repetera och gör en kort diagnos', '42–48', 'Repetitionsuppgifter'],
-    ].map(([name, topic, pages, assignments]) => ({
-      name, topics: [{ name: topic, pages: [pages], assignments: [assignments], links: [] }],
+      ['Måndag – Vad är ett bråk?', 'Täljare, nämnare och bråk med bilder', '42–43', '1–6', 'https://www.youtube.com/results?search_query=br%C3%A5k+matematik+%C3%A5rskurs+6'],
+      ['Tisdag – Likvärdiga bråk', 'Förlänga och förkorta bråk', '44–45', '7–12', 'https://www.youtube.com/results?search_query=f%C3%B6rl%C3%A4nga+f%C3%B6rkorta+br%C3%A5k'],
+      ['Onsdag – Addera bråk', 'Gemensam nämnare och addition', '46–47', '13–18', 'https://www.youtube.com/results?search_query=addera+br%C3%A5k+gemensam+n%C3%A4mnare'],
+      ['Torsdag – Problemlösning', 'Textuppgifter med bråk i par', '48', '19–22', 'https://www.youtube.com/results?search_query=probleml%C3%B6sning+br%C3%A5k+matematik'],
+      ['Fredag – Repetition och diagnos', 'Repetera och genomför en kort diagnos', '42–48', 'Repetition 1–8', 'https://www.youtube.com/results?search_query=repetition+br%C3%A5k+matematik'],
+    ].map(([name, topic, pages, assignments, url]) => ({
+      name, topics: [{ name: topic, pages: [pages], assignments: [assignments], links: [url] }],
     }))
-    lessons[0].topics[0].links = ['https://www.youtube.com/results?search_query=matematik+br%C3%A5k+%C3%A5rskurs+6']
-    const exampleWeek = {
-      ...firstWeek, title: 'Exempelvecka – Bråk', chapter: 'Matematik: Bråk',
-      content: 'Exempel för att visa upplägget. Sid- och uppgiftsnummer är påhittade och ska anpassas till läroboken. YouTube-länken går till sökresultat. Lägg till egna PowerPoint- och PDF-länkar när filerna finns.',
-      lessons, pages: [], assignments: [], links: [],
-    }
-    setPlan(previous => ({ ...previous, entryType: 'lektion', lessonsPerWeek: 5, weeksData: displayWeeks(previous).map((week, index) => index === 0 ? exampleWeek : week) }))
+    const week = makeWeeks(demo, 1)[0]
+    demo.weeksData = [{ ...week, title: 'Vecka 42 – Bråk', chapter: 'Matematik: Bråk',
+      content: 'Fiktiv demonstration. Sid- och uppgiftsnummer är påhittade. YouTube-länkar leder till sökresultat. PowerPoint och PDF kan läggas till som egna länkar när filerna finns.',
+      lessons }]
+    setSelectedId(null)
+    try { window.sessionStorage.removeItem(`arsplanering-last-open-${session.user.id}`) } catch { /* Lagring kan vara blockerad */ }
+    setPlan(demo)
+    savedPlanRef.current = JSON.stringify(demo)
+    setSavedRevision(revision => revision + 1)
     setTeacherTab('arsplan')
-    setStatus('Exempelveckan visas nu i första veckan. Den är inte sparad automatiskt. Anpassa sidnummer och lägg till dina egna PowerPoint- och PDF-länkar.')
+    setPreviewStudents(false)
+    setA4Demo(false)
+    setStatus('Fiktiv vecka 42 visas nu i Lärarvy. Den är inte sparad och inga tidigare planeringar har ändrats. PowerPoint och PDF kan läggas till som egna länkar.')
   }
 
   async function save(publish) {
@@ -964,8 +967,8 @@ function TeacherApp({ session }) {
 
     <section className="card" aria-label="Exempelvecka">
       <h2>Prova en exempelvecka</h2>
-      <p className="muted">Se fem matematiklektioner med sidnummer, uppgiftsnummer och en YouTube-resurs i din egen planeringsvy. Exemplet sparas inte automatiskt och ändrar bara första veckan efter bekräftelse.</p>
-      <button type="button" className="secondary" disabled={busy} onClick={insertExampleWeek}>Visa exempelvecka med lektioner</button>
+      <p className="muted">Öppna en separat fiktiv planering för vecka 42 (12–16 oktober 2026), med fem lektioner, moment, sidor, uppgifter och olika YouTube-länkar. Dina sparade planeringar påverkas inte.</p>
+      <button type="button" className="secondary" disabled={busy} onClick={insertExampleWeek}>Visa fiktiv vecka 42 i planeringen</button>
     </section>
 
     <section className="card teacher-settings-card">
