@@ -324,7 +324,7 @@ function calendarWeekNumber(dateString) {
 }
 const MONTH_PASTELS = ['#f2f7ff','#fff2f8','#f6f2ff','#fffbe8','#fff4ef','#f0faff','#fff8e8','#fff0e9','#f5f2ff','#fff9e9','#f1f4fa','#fff1f6']
 
-function YearCalendar({ weeks, onClose, entryType = 'lektion' }) {
+function YearCalendar({ weeks, onClose, onUpdateWeek, onSave, isDirty, busy, entryType = 'lektion' }) {
   const [page, setPage] = useState(0)
   const [layout, setLayout] = useState('4x3')
   const layoutOptions = { '3x2': [3, 2], '4x3': [4, 3], '4x4': [4, 4], '4x5': [4, 5] }
@@ -343,6 +343,7 @@ function YearCalendar({ weeks, onClose, entryType = 'lektion' }) {
   const pageWeeks = orderedWeeks.slice(currentPage * weeksPerPage, (currentPage + 1) * weeksPerPage)
   const selectedWeek = selectedWeekIndex === null ? null : orderedWeeks[selectedWeekIndex]
   const lessons = Array.isArray(selectedWeek?.lessons) ? selectedWeek.lessons : []
+  const editSelectedWeek = changes => { const index = weeks.findIndex(week => week.weekStart === selectedWeek?.weekStart); if (index >= 0) onUpdateWeek?.(index, changes) }
   const back = () => {
     if (selectedLessonIndex !== null) setSelectedLessonIndex(null)
     else setSelectedWeekIndex(null)
@@ -355,7 +356,11 @@ function YearCalendar({ weeks, onClose, entryType = 'lektion' }) {
     {selectedWeek ? <div className="calendar-week-detail">
       <p><strong>{(/^Vecka\s+\d+$/i.test(selectedWeek.title || '') ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : selectedWeek.title) || `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}`}</strong> · {formatDate(selectedWeek.weekStart)}</p>
       {selectedWeek.content && <p>{selectedWeek.content}</p>}
-      {selectedLessonIndex === null ? <div className="calendar-lesson-list">{lessons.map((lesson, index) => <button type="button" className="secondary" key={index} onClick={() => setSelectedLessonIndex(index)}><strong>{lesson.name || (entryType === 'dag' ? WEEKDAYS[index] || `Dag ${index + 1}` : `Lektion ${index + 1}`)}</strong><span>{(lesson.topics || []).map(topic => topic.name).filter(Boolean).join(', ') || 'Visa innehåll'}</span></button>)}</div> : <div className="calendar-lesson-detail"><LessonDetails week={{ lessons: [lessons[selectedLessonIndex]] }} entryType={entryType} /></div>}
+      <LessonDetails week={selectedWeek} onChange={editSelectedWeek} entryType={entryType} />
+      <div className="calendar-edit-actions">
+        <button type="button" disabled={busy || !isDirty} onClick={onSave}>{busy ? 'Sparar...' : 'Spara ändringar'}</button>
+        {isDirty && <span>Du har osparade ändringar.</span>}
+      </div>
       <button type="button" className="secondary" onClick={() => { setSelectedWeekIndex(null); setSelectedLessonIndex(null) }}>← Till översikten</button>
     </div> : <>
       <div className="calendar-layout-selector"><label htmlFor="calendar-layout">Visa veckor</label><select id="calendar-layout" value={layout} onChange={event => changeLayout(event.target.value)}><option value="3x2">3 × 2 (6 veckor)</option><option value="4x3">4 × 3 (12 veckor)</option><option value="4x4">4 × 4 (16 veckor)</option><option value="4x5">4 × 5 (20 veckor)</option></select></div>
@@ -633,7 +638,7 @@ function TeacherApp({ session }) {
     }
   }
 
-  return <><Navigation plans={plans} onOpenPlan={loadPlan} selectedId={selectedId} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} />{calendarOpen && <YearCalendar weeks={weeks} onClose={() => setCalendarOpen(false)} entryType={plan.entryType} />}<main className="shell" id="lararvy">
+  return <><Navigation plans={plans} onOpenPlan={loadPlan} selectedId={selectedId} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} />{calendarOpen && <YearCalendar weeks={weeks} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onSave={() => save(false)} isDirty={isDirty} busy={busy} entryType={plan.entryType} />}<main className="shell" id="lararvy">
     <header className="topbar">
       <div><p className="eyebrow">LÄRARVY</p><h1>{APP_TITLE}</h1><p className="muted">{session.user.email}</p></div>
       <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
