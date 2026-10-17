@@ -455,7 +455,11 @@ function StudentView({ plan, error, preview = false, printPage = null }) {
   // Behåll den mest innehållsrika posten om samma datum finns flera gånger.
   const weekContentScore = week => (String(week.content || '').length + String(week.chapter || '').length
     + (week.items?.length || 0) * 10 + (week.lessons?.length || 0) * 5
-    + (week.assignments?.length || 0) * 10 + (week.links?.length || 0) * 10)
+    + (week.assignments?.length || 0) * 10 + (week.links?.length || 0) * 10
+    + (week.lessons || []).reduce((sum, lesson) => sum + String(lesson.name || '').length
+      + (lesson.topics || []).reduce((topicSum, topic) => topicSum + String(topic.name || '').length
+        + (topic.pages?.length || 0) * 8 + (topic.assignments?.length || 0) * 10
+        + (topic.links?.length || 0) * 10, 0), 0))
   const studentWeeks = Array.isArray(plan?.weeksData) ? [...plan.weeksData]
     .filter(week => week && !week.hidden)
     .sort((a, b) => weekContentScore(b) - weekContentScore(a))
