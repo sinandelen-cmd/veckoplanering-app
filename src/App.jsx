@@ -679,6 +679,7 @@ function TeacherApp({ session }) {
     if (!String(plan.title || '').trim()) return setStatus('Skriv ett namn på årsplaneringen.')
     if (!String(plan.subject || '').trim()) return setStatus('Skriv ämne.')
     if ((plan.schoolClosures || []).some(item => !validSchoolClosure(item))) return setStatus('Rätta namn och datum för lov/studiedagar innan du sparar eller publicerar.')
+    if (publish && !weeks.some(week => week && !week.hidden)) return setStatus('Det finns inga synliga veckor att publicera. Markera minst en vecka med ”Visa för elever”.')
     setBusy(true)
     setStatus('Sparar...')
     try {
