@@ -222,7 +222,7 @@ function sanitizeForStudents(plan) {
     studentRows: Math.max(1, Math.min(6, Number(plan?.studentRows) || 2)),
     weeksData: sourceWeeks
       .filter(week => week && typeof week === 'object' && !week.hidden)
-      // Elevversionen sorteras utan att ändra lärarens ursprungliga veckolista.
+      // Filter skapar en ny array: sortering ändrar inte lärarens ursprungliga lista.
       .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || ''))
       .map((week, index) => ({
         weekNumber: Number.isInteger(week.weekNumber) ? week.weekNumber : index + 1,
@@ -704,7 +704,7 @@ function TeacherApp({ session }) {
   async function deletePlan(row) {
     if (busy) return
     if (selectedId === row.id && JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar i den här planeringen. Radering tar även bort dem. Vill du fortsätta?')) return
-    if (!window.confirm(`Radera "${row.title}"?`)) return
+    if (!window.confirm(`Radera "${row.title}"? Detta kan inte ångras.`)) return
     setBusy(true)
     try {
       const { error } = await supabase.from('veckoplanering').delete().eq('id', row.id).eq('user_id', session.user.id).select('id').single()
