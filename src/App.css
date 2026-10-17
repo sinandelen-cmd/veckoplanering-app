@@ -636,8 +636,8 @@ nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a
   }
   .student-print-page .topic-cell span {
     padding: 1.5mm !important;
-    font-size: 8pt !important;
-    line-height: 1.2 !important;
+    font-size: 10pt !important;
+    line-height: 1.35 !important;
   }
   .student-print-page .topic-column h5 {
     min-height: 0 !important;
@@ -704,5 +704,19 @@ nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a
   .student-print-page .topic {
     break-inside: avoid-page !important;
     page-break-inside: avoid !important;
+  }
+}
+
+/* Särskild prioritet för sidnummer, uppgifter och inklistrad text.
+   Tidigare selektorer för .topic-cell span var mer specifika än *.
+   Behåll minst 10 pt även när ett moment innehåller nästlade element. */
+@media print {
+  .student-print-page .topic-cell,
+  .student-print-page .topic-cell span,
+  .student-print-page .topic-cell :is(a, p, div, small, strong, em, code, pre, li),
+  .student-print-page .resource-chip,
+  .student-print-page .resource-chip * {
+    font-size: 10pt !important;
+    line-height: 1.35 !important;
   }
 }
