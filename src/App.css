@@ -363,3 +363,26 @@ h3 { margin: 8px 0; color: var(--green-900); }
 .calendar-week-visibility { display:flex; align-items:center; gap:7px; padding:9px 12px; font-weight:600; cursor:pointer; }
 .calendar-week-visibility input { width:17px; height:17px; flex-shrink:0; }
 .calendar-week-wrapper .calendar-week-tile { border:0; border-top:1px solid #e3ebe7; border-radius:0; flex:1; width:100%; }
+
+/* A4-utskrift: samma elevkort, högst sex veckor per sida. */
+.student-print-pages { display:none; }
+@media print {
+  @page { size:A4 portrait; margin:9mm; }
+  body { background:white !important; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+  .student-screen-view { display:none !important; }
+  .student-print-pages { display:block !important; }
+  .student-print-page { display:flex !important; flex-direction:column; width:100% !important; max-width:none !important; min-height:0 !important; height:auto !important; margin:0 !important; padding:0 !important; box-shadow:none !important; break-after:page; page-break-after:always; }
+  .student-print-page:last-child { break-after:auto; page-break-after:auto; }
+  .student-print-page .student-header { margin-bottom:5mm; }
+  .student-print-page .student-header h1 { font-size:17pt; }
+  .student-print-page .student-matrix { display:grid !important; grid-template-columns:repeat(var(--student-columns,3),minmax(0,1fr)) !important; grid-template-rows:repeat(var(--student-rows,2),minmax(0,1fr)) !important; height:auto !important; min-height:0 !important; overflow:visible !important; gap:3mm; }
+  .student-print-page .student-list { height:auto !important; overflow:visible !important; }
+  .student-print-page .chapter-week-group { min-width:0; min-height:0; overflow:visible !important; break-inside:avoid; page-break-inside:avoid; }
+  .student-print-page .student-week-card { height:auto !important; max-height:none !important; min-height:0 !important; overflow:visible !important; padding:3mm !important; font-size:9pt; }
+  .student-print-page .week-content { overflow:visible !important; }
+  .student-print-page .public-badge { display:none; }
+  .student-print-page .chapter-heading { font-size:10pt; }
+  .student-print-page .student-month-info span { display:none; }
+  .student-print-page .lesson, .student-print-page .topic { overflow-wrap:anywhere; }
+  .student-print-page .student-week-card, .student-print-page .student-month-info { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+}
