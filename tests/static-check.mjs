@@ -255,3 +255,10 @@ assert.match(app, /Testinnehåll – sparas inte och publiceras inte\./)
 assert.match(css, /\.student-print-page \.lesson \{\s*display: block !important;\s*break-inside: avoid-page !important;/, 'Lektioner ska inte delas vid A4-utskrift')
 assert.match(css, /\.student-print-page \.student-week-card,[\s\S]*?break-inside: auto !important;/, 'Långa veckor måste kunna fortsätta på nästa sida')
 assert.doesNotMatch(css, /\.student-print-page \.topic-cell span\s*\{[^}]*font-size:\s*8pt\s*!important;/, 'Sid- och uppgiftsrutor får inte använda 8 pt')
+
+assert.match(app, /const \[teacherTab, setTeacherTab\] = useState\("arsplan"\)/)
+for (const tab of ['arsplan', 'redigera', 'elevvy', 'mina']) {
+  assert.match(app, new RegExp('teacherTab !== "' + tab + '"'), 'Lärarflik saknas: ' + tab)
+}
+assert.match(css, /\.teacher-tab-panel\[hidden\] \{ display: none !important; \}/)
+assert.match(app, /if \(id === "elevvy"\) setPreviewStudents\(true\)/)
