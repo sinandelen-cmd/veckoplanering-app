@@ -26,6 +26,8 @@ assert.match(app, /const printGroups = singlePrintWeek \? \[\{ weeks: studentWee
 assert.match(css, /\.student-print-page \.student-week-card,[\s\S]*?break-inside: auto !important/)
 assert.match(css, /\.student-print-page \.lesson \{[\s\S]*?break-inside: avoid-page !important/)
 assert.match(css, /\.student-print-page \.lesson-heading \{[\s\S]*?break-after: avoid-page !important/)
+assert.match(app, /printWeekStart=\{singlePrintWeek\}/)
+assert.match(app, /printWeekStart \? studentWeeks\.filter\(week => week\.weekStart === printWeekStart\)/)
 assert.match(app, /className="print-single-week"/)
 assert.match(app, /window\.addEventListener\('afterprint', clearPrintSelection\)/)
 assert.match(app, /printGroups\[printPage\]\?\.weeks/)
