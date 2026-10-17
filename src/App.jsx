@@ -1026,8 +1026,8 @@ function TeacherApp({ session }) {
     </section>
 
     </div>
-    <div className="teacher-tab-panel" hidden={teacherTab !== "redigera"}>
-    <section className="card import-card">
+    <div className="teacher-tab-panel" hidden={teacherTab !== "arsplan"}>
+    <section className="card import-card"><h2>Redigera och importera underlag</h2>
       <p className="eyebrow">IMPORT</p><h2>Excel, Word, PDF eller text</h2>
       <p className="muted">Ladda upp ett underlag. Texten delas preliminärt över veckorna så att du kan granska och justera.</p>
       <input type="file" accept=".xlsx,.xls,.docx,.pdf,.txt,.csv" disabled={busy} onChange={e => {
