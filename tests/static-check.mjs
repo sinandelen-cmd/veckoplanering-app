@@ -79,3 +79,10 @@ assert.doesNotMatch(app, /className="student-print-pages" aria-hidden="true"/)
 assert.match(app, /student-print-spacious/)
 assert.match(css, /student-print-page\.student-print-spacious/)
 assert.match(css, /break-inside: avoid-page !important/)
+
+const municipalitiesSource = fs.readFileSync(new URL('../src/swedishMunicipalities.js', import.meta.url), 'utf8')
+const countyBlocks = [...municipalitiesSource.matchAll(/"[^"]+ län": \\[([\\s\\S]*?)\\]/g)]
+assert.equal(countyBlocks.length, 21, 'Sverige ska ha 21 län')
+assert.equal(countyBlocks.reduce((sum, [, block]) => sum + [...block.matchAll(/"[^"]+"/g)].length, 0), 290, 'Sverige ska ha 290 kommuner')
+assert.match(municipalitiesSource, /"Håbo"/)
+assert.match(municipalitiesSource, /"Ängelholm"/)
