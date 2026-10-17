@@ -99,7 +99,7 @@ function publicHolidaysInWeek(weekStart) {
 
 function emptyPlan() {
   return {
-    title: '', subject: '', schoolYear: '', className: '', county: '', municipality: '', schoolForm: '', grade: '', course: '',
+    title: '', subject: '', schoolYear: '', className: '', county: '', municipality: '', schoolForm: '', grade: '', course: '', schoolClosures: [],
     startDate: mondayOf(), startWeek: 1, entryType: 'lektion', lessonDisplay: 'bara-lektion', studentLayout: 'grid', studentColumns: 3, studentRows: 2, lessonsPerWeek: 3, weeks: DEFAULT_WEEKS, weeksData: [],
     published: false, publicSlug: '',
   }
@@ -162,7 +162,7 @@ function hasPlanWork(plan) {
   return Boolean(
     String(plan.title || '').trim() || String(plan.subject || '').trim() ||
     String(plan.schoolYear || '').trim() || String(plan.className || '').trim() ||
-    (plan.weeksData || []).some(hasWeekWork)
+    (plan.schoolClosures || []).length > 0 || (plan.weeksData || []).some(hasWeekWork)
   )
 }
 
@@ -458,7 +458,7 @@ function calendarWeekNumber(dateString) {
 }
 const MONTH_PASTELS = ['#f2f7ff','#fff2f8','#f6f2ff','#fffbe8','#fff4ef','#f0faff','#fff8e8','#fff0e9','#f5f2ff','#fff9e9','#f1f4fa','#fff1f6']
 
-function YearCalendar({ weeks, onClose, onUpdateWeek, onSave, isDirty, busy, saveStatus, entryType = 'lektion' }) {
+function YearCalendar({ weeks, schoolClosures = [], onClose, onUpdateWeek, onSave, isDirty, busy, saveStatus, entryType = 'lektion' }) {
   // Alla planerade veckor på en lång sida, alltid fyra per rad.
   const [selectedWeekIndex, setSelectedWeekIndex] = useState(null)
   const [selectedLessonIndex, setSelectedLessonIndex] = useState(null)
@@ -477,6 +477,7 @@ function YearCalendar({ weeks, onClose, onUpdateWeek, onSave, isDirty, busy, sav
     </div>
     {selectedWeek ? <div className="calendar-week-detail">
       <p><strong>{(/^Vecka\s+\d+$/i.test(selectedWeek.title || '') ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : selectedWeek.title) || `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}`}</strong> · {formatDate(selectedWeek.weekStart)}</p>
+      {schoolClosures.filter(item => item.startDate <= addWeeks(selectedWeek.weekStart, 1) && item.endDate >= selectedWeek.weekStart).map(item => <p key={item.id} className="calendar-holiday"><strong>Skolledigt:</strong> {item.name} · {formatDate(item.startDate)}–{formatDate(item.endDate)}</p>)}
       {publicHolidaysInWeek(selectedWeek.weekStart).map(holiday => <p key={holiday.date} className="calendar-holiday"><strong>Röd dag:</strong> {holiday.name} · {formatDate(holiday.date)}</p>)}
       {selectedWeek.content && <p>{selectedWeek.content}</p>}
       <label className="student-visibility-toggle"><input type="checkbox" checked={!selectedWeek.hidden} onChange={e => editSelectedWeek({ hidden: !e.target.checked })} /> Visa hela veckan för elever</label>
@@ -497,6 +498,7 @@ function YearCalendar({ weeks, onClose, onUpdateWeek, onSave, isDirty, busy, sav
           <span className="calendar-tile-month" style={{ backgroundColor: MONTH_PASTELS[date.getMonth()] }}>{month}</span>
           <strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>
           <span className="calendar-tile-date">{formatDate(week.weekStart)}</span>
+          {schoolClosures.filter(item => item.startDate < addWeeks(week.weekStart, 1) && item.endDate >= week.weekStart).map(item => <span key={item.id} className="calendar-holiday">📅 {item.name}</span>)}
           {publicHolidaysInWeek(week.weekStart).map(holiday => <span key={holiday.date} className="calendar-holiday">🔴 {holiday.name} · {formatDate(holiday.date)}</span>)}
           {week.chapter && <span className="calendar-tile-chapter">{week.chapter}</span>}
           <span className="calendar-tile-topics">{topics.slice(0, 3).join(' · ') || week.content || 'Ingen planering inskriven ännu'}</span>
@@ -858,7 +860,19 @@ function TeacherApp({ session }) {
       </div>
     </section>
 
-    {calendarOpen && <YearCalendar weeks={weeks} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} />}
+    {calendarOpen && <YearCalendar weeks={weeks} schoolClosures={plan.schoolClosures || []} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} />}
+
+    <section className="card" aria-label="Skollov och studiedagar">
+      <h3>Skollov och studiedagar</h3>
+      <p>Nationella helgdagar visas automatiskt. Lägg till och anpassa lov, studiedagar och andra lokala ledigheter här.</p>
+      {(plan.schoolClosures || []).map(item => <div className="form-grid" key={item.id}>
+        <label>Benämning<input value={item.name} onChange={e => setPlan(p => ({ ...p, schoolClosures: (p.schoolClosures || []).map(v => v.id === item.id ? { ...v, name: e.target.value } : v) }))} /></label>
+        <label>Från<input type="date" value={item.startDate} onChange={e => setPlan(p => ({ ...p, schoolClosures: (p.schoolClosures || []).map(v => v.id === item.id ? { ...v, startDate: e.target.value } : v) }))} /></label>
+        <label>Till<input type="date" value={item.endDate} onChange={e => setPlan(p => ({ ...p, schoolClosures: (p.schoolClosures || []).map(v => v.id === item.id ? { ...v, endDate: e.target.value } : v) }))} /></label>
+        <button type="button" className="secondary" onClick={() => setPlan(p => ({ ...p, schoolClosures: (p.schoolClosures || []).filter(v => v.id !== item.id) }))}>Ta bort</button>
+      </div>)}
+      <button type="button" className="secondary" onClick={() => setPlan(p => ({ ...p, schoolClosures: [...(p.schoolClosures || []), { id: crypto.randomUUID(), name: 'Studiedag', startDate: p.startDate, endDate: p.startDate }] }))}>+ Lägg till lov eller studiedag</button>
+    </section>
 
     <section className="card calendar-primary-actions" aria-label="Spara och publicera årsplaneringen">
       <div className="button-row">
