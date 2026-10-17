@@ -634,9 +634,11 @@ function TeacherApp({ session }) {
   useEffect(() => {
     const onNavigation = () => {
       if (window.location.hash === '#elevvy') {
+        setTeacherTab('elevvy')
         setPreviewStudents(true)
         window.setTimeout(() => document.getElementById('elevvy')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
       } else if (window.location.hash === '#lararvy') {
+        setTeacherTab('arsplan')
         setPreviewStudents(false)
         document.getElementById('lararvy')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
@@ -875,7 +877,16 @@ function TeacherApp({ session }) {
     }
   }
 
-  return <><Navigation plans={plans} onOpenPlan={loadPlan} selectedId={selectedId} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} /><main className="shell" id="lararvy">
+  const createPlan = () => {
+    if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
+    const fresh = emptyPlan()
+    try { window.sessionStorage.removeItem(`arsplanering-last-open-${session.user.id}`) } catch { /* Lagring kan vara blockerad */ }
+    setPlan(fresh); setSelectedId(null); savedPlanRef.current = JSON.stringify(fresh)
+    setSavedRevision(revision => revision + 1)
+    setTeacherTab('arsplan'); setPreviewStudents(false)
+    setStatus('Ny planering klar. Spara utkast när du har fyllt i din planering.')
+  }
+  return <><Navigation active={teacherTab} onNavigate={id => { setTeacherTab(id); if (id === 'elevvy') setPreviewStudents(true) }} onNew={createPlan} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} /><main className="shell" id="lararvy">
     <header className="topbar">
       <div><p className="eyebrow">LÄRARVY</p><h1>{APP_TITLE}</h1><p className="muted">{session.user.email}</p></div>
       <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
@@ -1318,4 +1329,6 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
       }
     }}>{entryType === 'dag' ? `+ Lägg tillbaka ${WEEKDAYS.find(day => !lessons.some(lesson => lesson.name === day)) || 'dag'}` : '+ Lägg till lektion'}</button>}
   </div>
-}
+}     <div className="planning-context"><strong>{plan.title || 'Ny årsplanering'}</strong><span aria-live="polite">{busy ? 'Sparar…' : isDirty ? 'Osparade ändringar' : selectedId ? 'Sparad' : 'Inte sparad'}</span></div>
+
+
