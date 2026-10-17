@@ -303,7 +303,7 @@ function StudentView({ plan, error, preview = false }) {
         {week.chapter?.trim() && (index === 0 || week.chapter !== studentWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
         <article className="week-card">
         <div className="week-top"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
-        <h3>{week.title}</h3>
+        <h3>{/^Vecka\s+\d+$/i.test(week.title || '') ? `Vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}` : week.title}</h3>
         <div className="week-content">{week.content || (!week.pages?.length && !week.assignments?.length && !week.links?.length && !week.lessons?.some(lesson => lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.length || topic.assignments?.length || topic.links?.length)) ? 'Ingen planering angiven ännu.' : '')}</div>
         <LessonDetails week={week} entryType={plan.entryType || 'lektion'} />
         <WeekDetails week={week} />
@@ -772,18 +772,8 @@ function TeacherApp({ session }) {
               })
             }}>× Ta bort vecka</button></div>
           <label className="chapter-editor">Kapitel / tema (valfritt)<input value={week.chapter || ''} placeholder="Exempel: Kapitel 5 – Taluppfattning" onChange={e => updateWeek(index, { chapter: e.target.value })} /></label>
-          <label className="week-number-editor">Veckonummer<input type="number" min="1" max="53" value={week.weekNumber} onChange={e => {
-            const number = Number(e.target.value)
-            if (!Number.isInteger(number) || number < 1 || number > 53) return
-            if (weeks.some((other, i) => i !== index && Number(other.weekNumber) === number)) {
-              setStatus('Veckonumret används redan i den här planeringen.')
-              return
-            }
-            const title = /^Vecka \d+$/.test(week.title || '') ? `Vecka ${number}` : week.title
-            updateWeek(index, { weekNumber: number, title })
-            setStatus('')
-          }} /></label>
-          <input className="week-title" value={week.title} onChange={e => updateWeek(index, { title: e.target.value })} />
+          <label className="week-number-editor">Veckonummer<input type="number" readOnly value={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Veckonumret bestäms automatiskt av datumet" /></label>
+          <input className="week-title" value={/^Vecka\s+\d+$/i.test(week.title || '') ? `Vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}` : (week.title || '')} onChange={e => updateWeek(index, { title: e.target.value })} />
           <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />
           <LessonDetails week={week} entryType={plan.entryType || 'lektion'} onChange={changes => updateWeek(index, changes)} />
           <details className="legacy-week-details" defaultOpen={Boolean(week.pages?.length || week.assignments?.length || week.links?.length)}>
