@@ -438,7 +438,7 @@ function YearCalendar({ weeks, onClose, onUpdateWeek, onSave, isDirty, busy, sav
       </div>
       <button type="button" className="secondary calendar-overview-button" onClick={() => { setSelectedWeekIndex(null); setSelectedLessonIndex(null) }}>← Till översikten</button>
     </div> : <>
-      <p className="calendar-overview-count">Alla ${orderedWeeks.length} planerade veckor visas nedan. Scrolla för att se fler.</p>
+      <p className="calendar-overview-count">Alla {orderedWeeks.length} planerade veckor visas nedan. Scrolla för att se fler.</p>
       <div className="calendar-week-grid" style={{ "--week-grid-columns": 4 }}>{orderedWeeks.map((week, index) => {
         const date = new Date(`${week.weekStart}T12:00:00`)
         const month = new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeric' }).format(date)
@@ -452,11 +452,6 @@ function YearCalendar({ weeks, onClose, onUpdateWeek, onSave, isDirty, busy, sav
           <span className="calendar-tile-action">Visa veckan →</span>
         </button>
       })}</div>
-      <div className="calendar-pagination">
-        <button type="button" className="secondary" disabled={currentPage === 0} onClick={() => setPage(p => Math.max(0, p - 1))}>← Föregående</button>
-        <span>Vecka {(pageWeeks[0] ? calendarWeekNumber(pageWeeks[0].weekStart) : null) ?? '–'}–{(pageWeeks.length ? calendarWeekNumber(pageWeeks[pageWeeks.length - 1].weekStart) : null) ?? '–'} · Sida {currentPage + 1}/{pageCount}</span>
-        <button type="button" className="secondary" disabled={currentPage >= pageCount - 1} onClick={() => setPage(p => Math.min(pageCount - 1, p + 1))}>Nästa →</button>
-      </div>
     </>}
   </section>
 }
