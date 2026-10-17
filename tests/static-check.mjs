@@ -210,10 +210,10 @@ assert.equal(studentFixture.weeksData[0].links.length, 2, 'Publicering får inte
 
 const { groupStudentWeeksForPrint } = await import('../src/printGroups.js')
 const printShortWeek = index => ({ weekStart: '2027-01-' + String(index).padStart(2, '0'), content: 'Kort vecka' })
-const fourShort = groupStudentWeeksForPrint([1, 2, 3, 4, 5].map(shortWeek))
+const fourShort = groupStudentWeeksForPrint([1, 2, 3, 4, 5].map(printShortWeek))
 assert.deepEqual(fourShort.map(group => group.weeks.length), [4, 1])
 const longWeek = { content: 'Långt innehåll '.repeat(100), lessons: [{ name: 'Lektion', topics: Array.from({ length: 18 }, (_, i) => ({ name: 'Moment ' + i })) }] }
-const mixedGroups = groupStudentWeeksForPrint([shortWeek(1), longWeek, shortWeek(2)])
+const mixedGroups = groupStudentWeeksForPrint([printShortWeek(1), longWeek, printShortWeek(2)])
 assert.deepEqual(mixedGroups.map(group => group.weeks.length), [1, 1, 1])
 assert.equal(mixedGroups[1].weight, 4)
 assert.deepEqual(groupStudentWeeksForPrint([]), [])
