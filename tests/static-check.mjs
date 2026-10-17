@@ -53,4 +53,15 @@ for (const [date, number, year] of [
   assert.equal(calendarWeekNumber(date), number, `Wrong ISO week for ${date}`)
   assert.equal(isoWeekYear(date), year, `Wrong ISO week year for ${date}`)
 }
+// Run the same pagination arithmetic as the student view with boundary sizes.
+for (const [columns, rows, expected] of [[3, 2, 6], [2, 2, 4], [1, 2, 2], [3, 99, 6]]) {
+  const clampedColumns = Math.max(1, Math.min(3, columns))
+  const clampedRows = Math.max(1, Math.min(Math.floor(6 / clampedColumns), rows))
+  const pageSize = Math.min(6, clampedColumns * clampedRows)
+  assert.equal(pageSize, expected)
+  const weekIds = Array.from({ length: 13 }, (_, i) => i + 1)
+  const pages = Math.ceil(weekIds.length / pageSize)
+  const actual = Array.from({ length: pages }, (_, page) => weekIds.slice(page * pageSize, (page + 1) * pageSize)).flat()
+  assert.deepEqual(actual, weekIds, 'Pagination must neither duplicate nor skip weeks')
+}
 console.log('Static security/routing checks: OK')
