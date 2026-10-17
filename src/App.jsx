@@ -351,18 +351,18 @@ function YearCalendar({ weeks, onClose, onUpdateWeek, onSave, isDirty, busy, sav
   return <section className="calendar-overlay" aria-label="Årsplanering med valbart antal veckor per sida">
     <div className="calendar-top">
       <div><h2>{selectedWeek ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : `Årsöversikt · ${weeksPerPage} veckor per sida`}</h2><p>{selectedWeek ? (selectedWeek.chapter || (/^Vecka\s+\d+$/i.test(selectedWeek.title || '') ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : selectedWeek.title) || 'Din planering') : 'Välj en vecka för att zooma in och se dina dagar eller lektioner.'}</p></div>
-      <div className="calendar-zoom-controls">{selectedWeek && <button type="button" className="secondary" onClick={back}>← Tillbaka</button>}<button type="button" className="secondary" onClick={onClose}>✕ Stäng</button></div>
+      <div className="calendar-zoom-controls">{selectedWeek && <button type="button" className="secondary calendar-overview-button" onClick={back}>← Tillbaka</button>}<button type="button" className="secondary calendar-close-button" onClick={onClose}>✕ Stäng</button></div>
     </div>
     {selectedWeek ? <div className="calendar-week-detail">
       <p><strong>{(/^Vecka\s+\d+$/i.test(selectedWeek.title || '') ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : selectedWeek.title) || `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}`}</strong> · {formatDate(selectedWeek.weekStart)}</p>
       {selectedWeek.content && <p>{selectedWeek.content}</p>}
       <LessonDetails week={selectedWeek} onChange={editSelectedWeek} entryType={entryType} />
       <div className="calendar-edit-actions">
-        <button type="button" disabled={busy || !isDirty} onClick={onSave}>{busy ? 'Sparar...' : 'Spara ändringar'}</button>
+        <button type="button" className="calendar-save-button" disabled={busy || !isDirty} onClick={onSave}>{busy ? 'Sparar...' : 'Spara ändringar'}</button>
         {isDirty && <span>Du har osparade ändringar.</span>}
         {saveStatus && <span role="status">{saveStatus}</span>}
       </div>
-      <button type="button" className="secondary" onClick={() => { setSelectedWeekIndex(null); setSelectedLessonIndex(null) }}>← Till översikten</button>
+      <button type="button" className="secondary calendar-overview-button" onClick={() => { setSelectedWeekIndex(null); setSelectedLessonIndex(null) }}>← Till översikten</button>
     </div> : <>
       <div className="calendar-layout-selector"><label htmlFor="calendar-layout">Visa veckor</label><select id="calendar-layout" value={layout} onChange={event => changeLayout(event.target.value)}><option value="3x2">3 × 2 (6 veckor)</option><option value="4x3">4 × 3 (12 veckor)</option><option value="4x4">4 × 4 (16 veckor)</option><option value="4x5">4 × 5 (20 veckor)</option></select></div>
       <div className="calendar-pagination" aria-label="Bläddra mellan veckosidor">
