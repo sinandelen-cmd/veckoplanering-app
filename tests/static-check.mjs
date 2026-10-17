@@ -67,3 +67,10 @@ for (const [columns, rows, expected] of [[3, 2, 6], [2, 2, 4], [1, 2, 2], [3, 99
   assert.deepEqual(actual, weekIds, 'Pagination must neither duplicate nor skip weeks')
 }
 console.log('Static security/routing checks: OK')
+
+// Lovförslag får inte dupliceras efter att läraren har flyttat datumet.
+assert.match(app, /suggestionKey: `\$\{name\}-\$\{start\.slice\(0, 4\)\}`/)
+assert.match(app, /old\.suggestionKey === item\.suggestionKey/)
+// Utskriften använder hela veckogrupper och ska inte döljas för hjälpmedel.
+assert.match(app, /printGroups\[printPage\]\?\.weeks/)
+assert.doesNotMatch(app, /className="student-print-pages" aria-hidden="true"/)
