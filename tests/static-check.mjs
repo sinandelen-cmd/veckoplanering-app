@@ -94,3 +94,7 @@ assert.match(app, /🔒 Nationellt prov:/)
 assert.match(nationalExams, /2027-03-17/)
 assert.match(nationalExams, /2027-05-14/)
 assert.match(nationalExams, /locked:true/)
+
+assert.match(app, /verified: false, name: name/)
+assert.match(app, /checked=\{item.verified === true\}/)
+assert.match(app, /Skolledigt \(ej verifierat\)/)
