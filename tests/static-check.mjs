@@ -285,11 +285,12 @@ assert.match(app, /setTeacherTab\('arsplan'\); setPreviewStudents\(false\); setA
 assert.match(app, /setTeacherTab\('arsplan'\); setPreviewStudents\(false\); setA4Demo\(false\)/)
 
 assert.match(app, /function insertExampleWeek\(\)/)
-assert.match(app, /hasWeekWork\(firstWeek, 0\).*window.confirm/)
-assert.match(app, /index === 0 \? exampleWeek : week/)
-assert.match(app, /Visa exempelvecka med lektioner/)
 
 assert.match(app, /Återanvänd som ny/)
 assert.match(app, /archived: false, published: false/)
 assert.match(app, /Arkiv \(/)
 assert.match(app, /async function setArchived\(row, archived\)/)
+
+assert.match(app, /Visa fiktiv vecka 42 i planeringen/)
+assert.match(app, /startDate: '2026-10-12', weeks: 1/)
+assert.match(app, /setSelectedId\(null\)/)
