@@ -524,7 +524,9 @@ function YearCalendar({ weeks, schoolClosures = [], onClose, onUpdateWeek, onSav
         const date = new Date(`${week.weekStart}T12:00:00`)
         const month = new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeric' }).format(date)
         const topics = (week.lessons || []).flatMap(lesson => (lesson.topics || []).map(topic => topic.name).filter(Boolean))
-        return <button type="button" className="calendar-week-tile" key={`${week.weekStart}-${index}`} onClick={() => { setSelectedWeekIndex(index); setSelectedLessonIndex(null) }} aria-label={`Zooma in vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`}>
+        return <div className="calendar-week-wrapper" key={`${week.weekStart}-${index}`}>
+          <label className="calendar-week-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => { const originalIndex = weeks.findIndex(item => item.weekStart === week.weekStart); if (originalIndex >= 0) onUpdateWeek?.(originalIndex, { hidden: !e.target.checked }) }} /> Visa för elever</label>
+          <button type="button" className="calendar-week-tile" onClick={() => { setSelectedWeekIndex(index); setSelectedLessonIndex(null) }} aria-label={`Zooma in vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`}>
           <span className="calendar-tile-month" style={{ backgroundColor: MONTH_PASTELS[date.getMonth()] }}>{month}</span>
           <strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>
           <span className="calendar-tile-date">{formatDate(week.weekStart)}</span>
@@ -533,7 +535,8 @@ function YearCalendar({ weeks, schoolClosures = [], onClose, onUpdateWeek, onSav
           {week.chapter && <span className="calendar-tile-chapter">{week.chapter}</span>}
           <span className="calendar-tile-topics">{topics.slice(0, 3).join(' · ') || week.content || 'Ingen planering inskriven ännu'}</span>
           <span className="calendar-tile-action">Visa veckan →</span>
-        </button>
+          </button>
+        </div>
       })}</div>
     </>}
   </section>
