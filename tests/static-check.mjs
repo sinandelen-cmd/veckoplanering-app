@@ -257,7 +257,7 @@ assert.match(css, /\.student-print-page \.student-week-card,[\s\S]*?break-inside
 assert.doesNotMatch(css, /\.student-print-page \.topic-cell span\s*\{[^}]*font-size:\s*8pt\s*!important;/, 'Sid- och uppgiftsrutor får inte använda 8 pt')
 
 assert.match(app, /const \[teacherTab, setTeacherTab\] = useState\("mina"\)/)
-for (const tab of ['arsplan', 'redigera', 'elevvy', 'mina']) {
+for (const tab of ['arsplan', 'elevvy', 'mina']) {
   assert.match(app, new RegExp('teacherTab !== "' + tab + '"'), 'Lärarflik saknas: ' + tab)
 }
 assert.match(css, /\.teacher-tab-panel\[hidden\] \{ display: none !important; \}/)
@@ -273,3 +273,9 @@ assert.match(nav, /Mina planeringar/)
 assert.match(nav, /onOpenPlan\(row\)/)
 assert.match(app, /plans=\{plans\} selectedId=\{selectedId\} onOpenPlan=\{loadPlan\}/)
 assert.match(css, /\.planning-layout/)
+
+assert.doesNotMatch(nav, /sidebar-link[^\n]*>Lärarvy/)
+assert.match(nav, /planning-top-navigation/)
+assert.match(nav, /top-navigation-link[^\n]*>Lärarvy/)
+assert.match(nav, /top-navigation-link[^\n]*>Elevvy/)
+assert.match(app, /Redigera och importera underlag/)
