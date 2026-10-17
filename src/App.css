@@ -325,7 +325,7 @@ h3 { margin: 8px 0; color: var(--green-900); }
    Varje veckoruta kan scrollas invändigt vid mycket innehåll. */
 @media (max-width:799px) {
   .student-shell:has(.student-matrix) { width:100%; max-width:none; }
-  .student-matrix { height:calc(100dvh - 210px); min-height:280px; grid-template-columns:repeat(var(--student-columns,3),minmax(0,1fr)); grid-template-rows:repeat(var(--student-rows,2),minmax(0,1fr)); overflow:hidden; }
+  .student-matrix { height:max(0px,calc(100dvh - 210px)); min-height:0; grid-template-columns:repeat(var(--student-columns,3),minmax(0,1fr)); grid-template-rows:repeat(var(--student-rows,2),minmax(0,1fr)); overflow:hidden; }
   .student-matrix .chapter-week-group { min-height:0; overflow:hidden; }
   .student-matrix .week-card { padding:10px; }
 }
@@ -339,4 +339,12 @@ h3 { margin: 8px 0; color: var(--green-900); }
   .student-matrix .chapter-heading { font-size:.75rem; }
   .student-pager { gap:5px; font-size:.8rem; }
   .student-pager button { padding:6px; }
+}
+
+/* På små skärmar ska sex veckor inte tvinga fram en högre sida än skärmen.
+   Innehåll som inte ryms scrollas inne i respektive veckokort. */
+@media (max-width:799px) {
+  .student-shell:has(.student-matrix) { min-width:0; }
+  .student-matrix .chapter-week-group { min-height:0; }
+  .student-matrix .student-week-card { min-height:0; overscroll-behavior:contain; }
 }
