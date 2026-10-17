@@ -410,22 +410,10 @@ function calendarWeekNumber(dateString) {
 const MONTH_PASTELS = ['#f2f7ff','#fff2f8','#f6f2ff','#fffbe8','#fff4ef','#f0faff','#fff8e8','#fff0e9','#f5f2ff','#fff9e9','#f1f4fa','#fff1f6']
 
 function YearCalendar({ weeks, onClose, onUpdateWeek, onSave, isDirty, busy, saveStatus, entryType = 'lektion' }) {
-  const [page, setPage] = useState(0)
-  const [layout, setLayout] = useState('4x3')
-  const layoutOptions = { '3x2': [3, 2], '4x3': [4, 3], '4x4': [4, 4], '4x5': [4, 5] }
-  const [columns, rows] = layoutOptions[layout]
-  const weeksPerPage = columns * rows
-  const changeLayout = next => {
-    if (!layoutOptions[next]) return
-    setPage(Math.floor(page * weeksPerPage / (layoutOptions[next][0] * layoutOptions[next][1])))
-    setLayout(next)
-  }
+  // Alla planerade veckor på en lång sida, alltid fyra per rad.
   const [selectedWeekIndex, setSelectedWeekIndex] = useState(null)
   const [selectedLessonIndex, setSelectedLessonIndex] = useState(null)
   const orderedWeeks = [...weeks].filter(week => week && /^\d{4}-\d{2}-\d{2}$/.test(week.weekStart || '')).sort((a, b) => a.weekStart.localeCompare(b.weekStart))
-  const pageCount = Math.max(1, Math.ceil(orderedWeeks.length / weeksPerPage))
-  const currentPage = Math.min(page, pageCount - 1)
-  const pageWeeks = orderedWeeks.slice(currentPage * weeksPerPage, (currentPage + 1) * weeksPerPage)
   const selectedWeek = selectedWeekIndex === null ? null : orderedWeeks[selectedWeekIndex]
   const lessons = Array.isArray(selectedWeek?.lessons) ? selectedWeek.lessons : []
   const editSelectedWeek = changes => { const index = weeks.findIndex(week => week.weekStart === selectedWeek?.weekStart); if (index >= 0) onUpdateWeek?.(index, changes) }
@@ -433,9 +421,9 @@ function YearCalendar({ weeks, onClose, onUpdateWeek, onSave, isDirty, busy, sav
     if (selectedLessonIndex !== null) setSelectedLessonIndex(null)
     else setSelectedWeekIndex(null)
   }
-  return <section className="calendar-overlay" aria-label="Årsplanering med valbart antal veckor per sida">
+  return <section className="calendar-overlay" aria-label="Årsplanering med fyra veckor per rad">
     <div className="calendar-top">
-      <div><h2>{selectedWeek ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : `Årsöversikt · ${weeksPerPage} veckor per sida`}</h2><p>{selectedWeek ? (selectedWeek.chapter || (/^Vecka\s+\d+$/i.test(selectedWeek.title || '') ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : selectedWeek.title) || 'Din planering') : 'Välj en vecka för att zooma in och se dina dagar eller lektioner.'}</p></div>
+      <div><h2>{selectedWeek ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : `Årsöversikt · 4 veckor per rad`}</h2><p>{selectedWeek ? (selectedWeek.chapter || (/^Vecka\s+\d+$/i.test(selectedWeek.title || '') ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : selectedWeek.title) || 'Din planering') : 'Välj en vecka för att zooma in och se dina dagar eller lektioner.'}</p></div>
       <div className="calendar-zoom-controls">{selectedWeek && <button type="button" className="secondary calendar-overview-button" onClick={back}>← Tillbaka</button>}<button type="button" className="secondary calendar-close-button" onClick={onClose}>✕ Stäng</button></div>
     </div>
     {selectedWeek ? <div className="calendar-week-detail">
@@ -450,17 +438,12 @@ function YearCalendar({ weeks, onClose, onUpdateWeek, onSave, isDirty, busy, sav
       </div>
       <button type="button" className="secondary calendar-overview-button" onClick={() => { setSelectedWeekIndex(null); setSelectedLessonIndex(null) }}>← Till översikten</button>
     </div> : <>
-      <div className="calendar-layout-selector"><label htmlFor="calendar-layout">Visa veckor</label><select id="calendar-layout" value={layout} onChange={event => changeLayout(event.target.value)}><option value="3x2">3 × 2 (6 veckor)</option><option value="4x3">4 × 3 (12 veckor)</option><option value="4x4">4 × 4 (16 veckor)</option><option value="4x5">4 × 5 (20 veckor)</option></select></div>
-      <div className="calendar-pagination" aria-label="Bläddra mellan veckosidor">
-        <button type="button" className="secondary" disabled={currentPage === 0} onClick={() => setPage(p => Math.max(0, p - 1))}>← Föregående {weeksPerPage} veckor</button>
-        <strong>Sida {currentPage + 1} av {pageCount}</strong>
-        <button type="button" className="secondary" disabled={currentPage >= pageCount - 1} onClick={() => setPage(p => Math.min(pageCount - 1, p + 1))}>Nästa {weeksPerPage} veckor →</button>
-      </div>
-      <div className="calendar-week-grid" style={{ "--week-grid-columns": columns }}>{pageWeeks.map((week, index) => {
+      <p className="calendar-overview-count">Alla ${orderedWeeks.length} planerade veckor visas nedan. Scrolla för att se fler.</p>
+      <div className="calendar-week-grid" style={{ "--week-grid-columns": 4 }}>{orderedWeeks.map((week, index) => {
         const date = new Date(`${week.weekStart}T12:00:00`)
         const month = new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeric' }).format(date)
         const topics = (week.lessons || []).flatMap(lesson => (lesson.topics || []).map(topic => topic.name).filter(Boolean))
-        return <button type="button" className="calendar-week-tile" key={`${week.weekStart}-${index}`} onClick={() => { setSelectedWeekIndex(currentPage * weeksPerPage + index); setSelectedLessonIndex(null) }} aria-label={`Zooma in vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`}>
+        return <button type="button" className="calendar-week-tile" key={`${week.weekStart}-${index}`} onClick={() => { setSelectedWeekIndex(index); setSelectedLessonIndex(null) }} aria-label={`Zooma in vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`}>
           <span className="calendar-tile-month" style={{ backgroundColor: MONTH_PASTELS[date.getMonth()] }}>{month}</span>
           <strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>
           <span className="calendar-tile-date">{formatDate(week.weekStart)}</span>
