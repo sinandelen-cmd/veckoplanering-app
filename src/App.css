@@ -742,3 +742,34 @@ nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a
     break-inside: avoid-page !important;
   }
 }
+
+/* Testlayout: lugn lärarvy med fyra arbetsflikar. */
+.teacher-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: .75rem;
+  margin: 0 0 1rem;
+  border: 1px solid var(--border, #d8e1e7);
+  border-radius: 14px;
+  background: var(--surface, #fff);
+  box-shadow: 0 4px 16px rgba(25, 48, 67, .08);
+}
+.teacher-tabs .teacher-tab {
+  flex: 1 1 145px;
+  min-height: 44px;
+  border-radius: 10px;
+  font-weight: 650;
+}
+.teacher-tabs .teacher-tab.active {
+  background: #174e73;
+  color: #fff;
+  border-color: #174e73;
+}
+.teacher-tab-panel[hidden] { display: none !important; }
+@media print {
+  .teacher-tabs { display: none !important; }
+}
