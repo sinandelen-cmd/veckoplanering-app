@@ -106,3 +106,7 @@ assert.match(app, /toIsoDate\(date\) === value/)
 assert.match(app, /const contentBlocks = \(week\.lessons \|\| \[\]\)\.length/)
 assert.match(app, /textLength > 1100 \|\| contentBlocks > 16/)
 assert.doesNotMatch(app, /JSON\.stringify\(week\)\.length/)
+
+assert.match(app, /const contentBlocks = \(week\.lessons \|\| \[\]\)\.length/)
+assert.match(app, /textLength > 1100 \|\| contentBlocks > 16/)
+assert.match(app, /printGroups\.push\(\{ weeks: \[week\], weight \}\)/)
