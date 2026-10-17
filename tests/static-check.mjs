@@ -74,3 +74,7 @@ assert.match(app, /old\.suggestionKey === item\.suggestionKey/)
 // Utskriften använder hela veckogrupper och ska inte döljas för hjälpmedel.
 assert.match(app, /printGroups\[printPage\]\?\.weeks/)
 assert.doesNotMatch(app, /className="student-print-pages" aria-hidden="true"/)
+
+assert.match(app, /student-print-spacious/)
+assert.match(css, /student-print-page\.student-print-spacious/)
+assert.match(css, /break-inside: avoid-page !important/)
