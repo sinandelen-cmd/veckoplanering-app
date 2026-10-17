@@ -336,7 +336,7 @@ function resourceInfo(url) {
   const value = String(url || '').trim()
   try {
     const parsed = new URL(value)
-    if (!['https:', 'http:'].includes(parsed.protocol)) return null
+    if (!['https:', 'http:'].includes(parsed.protocol) || !parsed.hostname || parsed.username || parsed.password) return null
     const host = parsed.hostname.toLowerCase()
     const path = parsed.pathname.toLowerCase()
     if (host === 'youtube.com' || host.endsWith('.youtube.com') || host === 'youtu.be') return { label: 'YouTube', icon: '▶', kind: 'youtube' }
@@ -344,7 +344,7 @@ function resourceInfo(url) {
     if (/\.(pdf)(?:$)/i.test(path)) return { label: 'PDF', icon: 'PDF', kind: 'pdf' }
     if (/\.(docx?)(?:$)/i.test(path)) return { label: 'Word', icon: 'W', kind: 'word' }
     if (/\.(xlsx?)(?:$)/i.test(path)) return { label: 'Excel', icon: 'X', kind: 'excel' }
-    if (host.includes('drive.google.com') || host.includes('onedrive') || host.includes('sharepoint')) return { label: 'Fil', icon: '↗', kind: 'file' }
+    if (host === 'drive.google.com' || host.endsWith('.onedrive.com') || host.endsWith('.sharepoint.com')) return { label: 'Fil', icon: '↗', kind: 'file' }
     return { label: 'Länk', icon: '↗', kind: 'link' }
   } catch { return null }
 }
