@@ -307,9 +307,15 @@ function studentMonthInfo(dateString) {
   // Då visas en gränsvecka bara under en månad, även vid årsskiftet.
   date.setDate(date.getDate() + (3 - ((date.getDay() + 6) % 7)))
   const year = date.getFullYear(), month = date.getMonth()
-  const first = toIsoDate(new Date(year, month, 1, 12))
-  const last = toIsoDate(new Date(year, month + 1, 0, 12))
-  return { name: new Intl.DateTimeFormat('sv-SE', { month: 'long' }).format(date).toLocaleUpperCase('sv-SE'), weeks: 'Vecka ' + calendarWeekNumber(first) + '–' + calendarWeekNumber(last), color: MONTH_PASTELS[month] }
+  // Endast veckor vars torsdag ligger i månaden ingår i intervallet.
+  const firstThursday = new Date(year, month, 1, 12)
+  firstThursday.setDate(firstThursday.getDate() + ((4 - firstThursday.getDay() + 7) % 7))
+  const lastThursday = new Date(year, month + 1, 0, 12)
+  lastThursday.setDate(lastThursday.getDate() - ((lastThursday.getDay() - 4 + 7) % 7))
+  const firstWeek = calendarWeekNumber(toIsoDate(firstThursday))
+  const lastWeek = calendarWeekNumber(toIsoDate(lastThursday))
+  const range = firstWeek === lastWeek ? 'Vecka ' + firstWeek : 'Vecka ' + firstWeek + '–' + lastWeek
+  return { name: new Intl.DateTimeFormat('sv-SE', { month: 'long' }).format(date).toLocaleUpperCase('sv-SE'), weeks: range, color: MONTH_PASTELS[month] }
 }
 function StudentView({ plan, error, preview = false }) {
   const studentWeeks = Array.isArray(plan?.weeksData) ? plan.weeksData.filter(week => !week.hidden).sort((a, b) => (b.weekStart || '').localeCompare(a.weekStart || '')) : []
