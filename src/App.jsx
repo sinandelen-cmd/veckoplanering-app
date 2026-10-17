@@ -302,7 +302,7 @@ function StudentView({ plan, error, preview = false }) {
       {studentWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
         {week.chapter?.trim() && (index === 0 || week.chapter !== studentWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
         <article className="week-card">
-        <div className="week-top"><strong>Vecka {week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
+        <div className="week-top"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
         <h3>{week.title}</h3>
         <div className="week-content">{week.content || (!week.pages?.length && !week.assignments?.length && !week.links?.length && !week.lessons?.some(lesson => lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.length || topic.assignments?.length || topic.links?.length)) ? 'Ingen planering angiven ännu.' : '')}</div>
         <LessonDetails week={week} entryType={plan.entryType || 'lektion'} />
@@ -311,6 +311,18 @@ function StudentView({ plan, error, preview = false }) {
     </section>
   </main>
 }
+
+
+// ISO 8601: kalenderveckan beräknas från datumet, inte från planeringens löpnummer.
+function calendarWeekNumber(dateString) {
+  const date = new Date(`${dateString}T12:00:00`)
+  if (Number.isNaN(date.getTime())) return null
+  const utc = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  utc.setUTCDate(utc.getUTCDate() + 4 - (utc.getUTCDay() || 7))
+  const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1))
+  return Math.ceil((((utc - yearStart) / 86400000) + 1) / 7)
+}
+const MONTH_PASTELS = ['#f2f7ff','#fff2f8','#f6f2ff','#fffbe8','#fff4ef','#f0faff','#fff8e8','#fff0e9','#f5f2ff','#fff9e9','#f1f4fa','#fff1f6']
 
 function YearCalendar({ weeks, onClose, entryType = 'lektion' }) {
   const [page, setPage] = useState(0)
@@ -337,11 +349,11 @@ function YearCalendar({ weeks, onClose, entryType = 'lektion' }) {
   }
   return <section className="calendar-overlay" aria-label="Årsplanering med valbart antal veckor per sida">
     <div className="calendar-top">
-      <div><h2>{selectedWeek ? `Vecka ${selectedWeek.weekNumber}` : `Årsöversikt · ${weeksPerPage} veckor per sida`}</h2><p>{selectedWeek ? (selectedWeek.chapter || selectedWeek.title || 'Din planering') : 'Välj en vecka för att zooma in och se dina dagar eller lektioner.'}</p></div>
+      <div><h2>{selectedWeek ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : `Årsöversikt · ${weeksPerPage} veckor per sida`}</h2><p>{selectedWeek ? (selectedWeek.chapter || selectedWeek.title || 'Din planering') : 'Välj en vecka för att zooma in och se dina dagar eller lektioner.'}</p></div>
       <div className="calendar-zoom-controls">{selectedWeek && <button type="button" className="secondary" onClick={back}>← Tillbaka</button>}<button type="button" className="secondary" onClick={onClose}>✕ Stäng</button></div>
     </div>
     {selectedWeek ? <div className="calendar-week-detail">
-      <p><strong>{selectedWeek.title || `Vecka ${selectedWeek.weekNumber}`}</strong> · {formatDate(selectedWeek.weekStart)}</p>
+      <p><strong>{selectedWeek.title || `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}`}</strong> · {formatDate(selectedWeek.weekStart)}</p>
       {selectedWeek.content && <p>{selectedWeek.content}</p>}
       {selectedLessonIndex === null ? <div className="calendar-lesson-list">{lessons.map((lesson, index) => <button type="button" className="secondary" key={index} onClick={() => setSelectedLessonIndex(index)}><strong>{lesson.name || (entryType === 'dag' ? WEEKDAYS[index] || `Dag ${index + 1}` : `Lektion ${index + 1}`)}</strong><span>{(lesson.topics || []).map(topic => topic.name).filter(Boolean).join(', ') || 'Visa innehåll'}</span></button>)}</div> : <div className="calendar-lesson-detail"><LessonDetails week={{ lessons: [lessons[selectedLessonIndex]] }} entryType={entryType} /></div>}
       <button type="button" className="secondary" onClick={() => { setSelectedWeekIndex(null); setSelectedLessonIndex(null) }}>← Till översikten</button>
@@ -356,8 +368,8 @@ function YearCalendar({ weeks, onClose, entryType = 'lektion' }) {
         const date = new Date(`${week.weekStart}T12:00:00`)
         const month = new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeric' }).format(date)
         const topics = (week.lessons || []).flatMap(lesson => (lesson.topics || []).map(topic => topic.name).filter(Boolean))
-        return <button type="button" className="calendar-week-tile" key={`${week.weekStart}-${index}`} onClick={() => { setSelectedWeekIndex(currentPage * weeksPerPage + index); setSelectedLessonIndex(null) }} aria-label={`Zooma in vecka ${week.weekNumber}`}>
-          <span className="calendar-tile-month">{month}</span>
+        return <button type="button" className="calendar-week-tile" key={`${week.weekStart}-${index}`} onClick={() => { setSelectedWeekIndex(currentPage * weeksPerPage + index); setSelectedLessonIndex(null) }} aria-label={`Zooma in vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`}>
+          <span className="calendar-tile-month" style={{ backgroundColor: MONTH_PASTELS[date.getMonth()] }}>{month}</span>
           <strong>Vecka {week.weekNumber}</strong>
           <span className="calendar-tile-date">{formatDate(week.weekStart)}</span>
           {week.chapter && <span className="calendar-tile-chapter">{week.chapter}</span>}
@@ -367,7 +379,7 @@ function YearCalendar({ weeks, onClose, entryType = 'lektion' }) {
       })}</div>
       <div className="calendar-pagination">
         <button type="button" className="secondary" disabled={currentPage === 0} onClick={() => setPage(p => Math.max(0, p - 1))}>← Föregående</button>
-        <span>Vecka {pageWeeks[0]?.weekNumber ?? '–'}–{pageWeeks[pageWeeks.length - 1]?.weekNumber ?? '–'} · Sida {currentPage + 1}/{pageCount}</span>
+        <span>Vecka {(pageWeeks[0] ? calendarWeekNumber(pageWeeks[0].weekStart) : null) ?? '–'}–{(pageWeeks.length ? calendarWeekNumber(pageWeeks[pageWeeks.length - 1].weekStart) : null) ?? '–'} · Sida {currentPage + 1}/{pageCount}</span>
         <button type="button" className="secondary" disabled={currentPage >= pageCount - 1} onClick={() => setPage(p => Math.min(pageCount - 1, p + 1))}>Nästa →</button>
       </div>
     </>}
