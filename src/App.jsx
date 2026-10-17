@@ -948,10 +948,10 @@ function TeacherApp({ session }) {
     <section className="card" aria-label="Nationella prov enligt Skolverket">
       <h2>Nationella prov – officiella datum</h2>
       <p className="muted">Läsåret 2026/27, fastställda av Skolverket. Datumen är låsta referensuppgifter och kan inte redigeras här. Muntliga prov och åk 3 har provperioder, inte enskilda fasta datum.</p>
-      {String(plan.schoolYear || '').includes('26') && String(plan.schoolYear || '').includes('27') && ['3','6','9'].includes(String(plan.grade || '').replace(/[^0-9]/g, '')) ? <>
+      {plan.schoolForm === 'grundskola' && /2026\s*[/–-]\s*2027|26\s*[/–-]\s*27|HT\s*26.*VT\s*27/i.test(String(plan.schoolYear || '')) && ['3','6','9'].includes(String(plan.grade || '').replace(/[^0-9]/g, '')) ? <>
         {NATIONAL_EXAM_PERIODS_2026_27.filter(item => item.grade === String(plan.grade).replace(/[^0-9]/g, '')).map(item => <p key={item.subject}><strong>{item.subject}:</strong> {item.start}–{item.end} (provperiod)</p>)}
         <ul>{NATIONAL_EXAMS_2026_27.filter(item => item.grade === String(plan.grade).replace(/[^0-9]/g, '')).map(item => <li key={item.date + item.subject + item.part}>{item.date} – {item.subject}, delprov {item.part} <span aria-label="Låst datum">🔒</span></li>)}</ul>
-      </> : <p className="muted">Välj läsåret 2026/27 och årskurs 3, 6 eller 9 för att se fastställda provtillfällen. Andra läsår och skolformer kräver separat verifierade datum.</p>}
+      </> : <p className="muted">Välj grundskola, läsåret 2026/27 och årskurs 3, 6 eller 9. Datum för andra skolformer och läsår visas inte förrän de har kontrollerats separat.</p>}
       <a href="https://www.skolverket.se/prov-och-bedomning/nationella-prov/provdatum/provdatum-for-grundskola-sameskola-specialskola" target="_blank" rel="noreferrer">Kontrollera datum hos Skolverket</a>
     </section>
 
