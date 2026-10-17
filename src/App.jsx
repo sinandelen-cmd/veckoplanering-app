@@ -853,7 +853,7 @@ function TeacherApp({ session }) {
   async function clonePlan(row) {
     if (busy) return
     const source = planFromRow(row)
-    const title = window.prompt('Namn på kopian:', `${source.title} – kopia`)
+    const title = window.prompt('Namn på den nya planeringen:', `${source.title} – nytt läsår`)
     if (!title) return
     const subject = window.prompt('Ämne för kopian:', source.subject || '')
     if (subject === null) return
@@ -870,7 +870,7 @@ function TeacherApp({ session }) {
       })
       if (error) throw error
       const refreshed = await loadPlans()
-      setStatus(refreshed ? 'Planeringen är klonad som utkast.' : 'Kopian sparades, men listan kunde inte uppdateras. Ladda om för att kontrollera.')
+      setStatus(refreshed ? 'En ny aktiv planering har skapats som utkast. Originalet finns kvar i arkivet.' : 'Kopian sparades, men listan kunde inte uppdateras. Ladda om för att kontrollera.')
     } catch (error) {
       setStatus(`Kunde inte klona: ${error.message || 'Okänt fel'}`)
     } finally {
@@ -1192,7 +1192,7 @@ function TeacherApp({ session }) {
           <div className="button-row">
             <span className={`status-badge ${row.published ? 'published' : 'draft'}`}>{row.published ? 'Publicerad' : 'Utkast'}</span>
             <button className="secondary" disabled={busy} onClick={() => loadPlan(row)}>Öppna</button>
-            <button className="secondary" disabled={busy} onClick={() => clonePlan(row)}>Klona</button>
+            <button className="secondary" disabled={busy} onClick={() => clonePlan(row)}>{showArchive ? 'Återanvänd som ny' : 'Klona'}</button>
             <button className="secondary" disabled={busy} onClick={() => setArchived(row, !showArchive)}>{showArchive ? 'Återställ' : 'Arkivera'}</button>
             {row.published && <button className="secondary" disabled={busy} onClick={() => unpublish(row)}>Avpublicera</button>}
             <button className="danger" disabled={busy} onClick={() => deletePlan(row)}>Radera</button>
