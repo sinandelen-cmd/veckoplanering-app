@@ -356,7 +356,13 @@ function StudentView({ plan, error, preview = false }) {
   const columns = Math.max(1, Math.min(3, Number(plan?.studentColumns) || 3))
   const rows = Math.max(1, Math.min(Math.floor(6 / columns), Number(plan?.studentRows) || 2))
   const pageSize = Math.min(6, columns * rows)
-  const studentWeeks = Array.isArray(plan?.weeksData) ? plan.weeksData.filter(week => week && !week.hidden).filter((week, index, weeks) => weeks.findIndex(other => (other.weekStart || `number-${other.weekNumber}`) === (week.weekStart || `number-${week.weekNumber}`)) === index).sort((a, b) => gridMode ? (a.weekStart || '').localeCompare(b.weekStart || '') : (b.weekStart || '').localeCompare(a.weekStart || '')) : []
+  // Datumet identifierar veckan även när ISO-veckonummer återkommer nästa år.
+  // Dubbletter sorteras först så att vi kan behålla den mest innehållsrika posten.
+  const studentWeeks = Array.isArray(plan?.weeksData) ? [...plan.weeksData]
+    .filter(week => week && !week.hidden)
+    .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || ''))
+    .filter((week, index, weeks) => weeks.findIndex(other => (other.weekStart || `number-${other.weekNumber}`) === (week.weekStart || `number-${week.weekNumber}`)) === index)
+    .sort((a, b) => gridMode ? (a.weekStart || '').localeCompare(b.weekStart || '') : (b.weekStart || '').localeCompare(a.weekStart || '')) : []
   const pages = gridMode ? Math.max(1, Math.ceil(studentWeeks.length / pageSize)) : 1
   const currentPage = Math.min(page, pages - 1)
   const visibleWeeks = gridMode ? studentWeeks.slice(currentPage * pageSize, (currentPage + 1) * pageSize) : studentWeeks
