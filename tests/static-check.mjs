@@ -113,7 +113,7 @@ assert.match(printSource, /\.\.\.\(week\.links \|\| \[\]\)/)
 
 assert.match(app, /week\.lessons\.filter\(lesson => lesson && typeof lesson === 'object'\)/)
 assert.match(app, /lesson\.topics\.filter\(topic => topic && typeof topic === 'object'\)/)
-assert.match(app, /\(week\.lessons \|\| \[\]\)\.filter\(Boolean\)\.flatMap/)
+assert.match(printSource, /week\.lessons\) \? week\.lessons\.filter\(Boolean\)/)
 
 assert.match(app, /parsed\.username \|\| parsed\.password/)
 assert.match(app, /host === 'drive\.google\.com'/)
