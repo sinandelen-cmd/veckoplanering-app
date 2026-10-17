@@ -104,7 +104,19 @@ function suggestedSchoolClosures(startDate, numberOfWeeks) {
       friday.setDate(friday.getDate() + 4)
       add('Höstlov', autumn, toIsoDate(friday))
     }
-    // Jullov, sportlov och påsklov varierar i längd och datum; de fylls i av läraren.
+    // Vinterlovet kan skilja sig mellan skolor. Dessa är endast redigerbara utgångspunkter.
+    add('Jullov', `${year}-12-22`, `${year + 1}-01-06`)
+    const winterMonday = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(year, 1, 16 + i, 12)
+      return toIsoDate(d)
+    }).find(date => calendarWeekNumber(date) === 9 && new Date(date + 'T12:00:00').getDay() === 1)
+    if (winterMonday) add('Sportlov', winterMonday, toIsoDate(new Date(new Date(winterMonday + 'T12:00:00').getTime() + 4 * 86400000)))
+    const easter = easterSunday(year)
+    const easterMonday = new Date(easter + 'T12:00:00')
+    easterMonday.setDate(easterMonday.getDate() + 1)
+    const easterFriday = new Date(easterMonday)
+    easterFriday.setDate(easterFriday.getDate() + 4)
+    add('Påsklov', toIsoDate(easterMonday), toIsoDate(easterFriday))
   }
   return suggestions
 }
