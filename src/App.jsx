@@ -687,7 +687,7 @@ function TeacherApp({ session }) {
       // Databasens status hämtas separat, inte från redigerarens lokala kopia.
       let databasePublished = false
       let databaseSlug = ''
-      if (selectedId && !publish) {
+      if (selectedId) {
         const { data: existing, error: lookupError } = await supabase.from('veckoplanering')
           .select('published,public_slug').eq('id', selectedId).eq('user_id', session.user.id).single()
         if (lookupError) {
@@ -699,7 +699,7 @@ function TeacherApp({ session }) {
         databaseSlug = existing.public_slug || ''
       }
       const keepPublished = !publish && databasePublished
-      const slug = publish ? (plan.publicSlug || buildSlug(plan)) : (databaseSlug || '')
+      const slug = publish ? (databaseSlug || buildSlug(plan)) : (databaseSlug || '')
       const payload = { kind: 'arsplanering-v2', ...plan, weeksData: weeks, published: publish || keepPublished, publicSlug: slug }
       const publishedPayload = publish ? sanitizeForStudents(payload) : null
       const row = {
