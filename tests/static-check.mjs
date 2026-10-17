@@ -102,3 +102,7 @@ assert.match(app, /Skolledigt \(ej verifierat\)/)
 assert.match(app, /startDate: e\.target\.value, verified: false/)
 assert.match(app, /endDate: e\.target\.value, verified: false/)
 assert.match(app, /toIsoDate\(date\) === value/)
+
+assert.match(app, /const contentBlocks = \(week\.lessons \|\| \[\]\)\.length/)
+assert.match(app, /textLength > 1100 \|\| contentBlocks > 16/)
+assert.doesNotMatch(app, /JSON\.stringify\(week\)\.length/)
