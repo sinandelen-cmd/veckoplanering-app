@@ -175,3 +175,39 @@ for (const plan of [
   { schoolForm: 'grundskola', schoolYear: '2025/26', grade: '9' },
   { schoolForm: 'grundskola', schoolYear: '2026/27', grade: '7' },
 ]) assert.deepEqual(nationalExamsForPlan(plan), [], 'Nationella prov får inte visas för fel planering')
+
+const sanitizeForStudentsRuntime = new Function(
+  'displayWeeks', 'makeWeeks', 'resourceInfo',
+  extractFunction('sanitizeForStudents', 'function resourceInfo') + '; return sanitizeForStudents'
+)(
+  plan => plan.weeksData,
+  () => [],
+  url => {
+    try {
+      const parsed = new URL(String(url || '').trim())
+      return ['http:', 'https:'].includes(parsed.protocol) && !parsed.username && !parsed.password
+        ? { label: 'Webblänk' } : null
+    } catch { return null }
+  }
+)
+const studentFixture = {
+  title: 'Testplan', subject: 'Matematik', entryType: 'lektion',
+  teacherNotes: 'HEMLIG LÄRARNOTERING',
+  schoolClosures: [{ name: 'Privat planeringsdag' }],
+  weeksData: [
+    { weekStart: '2027-01-04', weekNumber: 1, title: 'Nyår', content: 'Synligt',
+      teacherNotes: 'ENDAST LÄRARE', links: ['https://example.com/fil', 'javascript:alert(1)'],
+      lessons: [{ name: 'Lektion', topics: [{ name: 'Tal', links: ['https://example.org', 'ftp://example.org'] }] }] },
+    { weekStart: '2026-12-28', weekNumber: 53, title: 'Dold', hidden: true, content: 'DOLT INNEHÅLL' },
+    { weekStart: '2026-12-21', weekNumber: 52, title: 'Julvecka', content: 'Synlig' },
+  ],
+}
+const sanitized = sanitizeForStudentsRuntime(studentFixture)
+assert.deepEqual(sanitized.weeksData.map(week => week.weekStart), ['2026-12-21', '2027-01-04'])
+assert.equal(sanitized.weeksData[1].links.length, 1)
+assert.equal(sanitized.weeksData[1].lessons[0].topics[0].links.length, 1)
+const publicJson = JSON.stringify(sanitized)
+for (const secret of ['HEMLIG LÄRARNOTERING', 'ENDAST LÄRARE', 'Privat planeringsdag', 'DOLT INNEHÅLL', 'javascript:alert', 'ftp://']) {
+  assert.equal(publicJson.includes(secret), false, 'Elevversionen får inte innehålla: ' + secret)
+}
+assert.equal(studentFixture.weeksData[0].links.length, 2, 'Publicering får inte ändra lärarens data')
