@@ -563,7 +563,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], onClose,
     {selectedWeek ? <div className="calendar-week-detail">
       <p><strong>{(/^Vecka\s+\d+$/i.test(selectedWeek.title || '') ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : selectedWeek.title) || `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}`}</strong> · {formatDate(selectedWeek.weekStart)}</p>
       {schoolClosures.filter(item => validSchoolClosure(item) && item.startDate < addWeeks(selectedWeek.weekStart, 1) && item.endDate >= selectedWeek.weekStart).map(item => <p key={item.id} className="calendar-holiday"><strong>{item.verified ? "Skolledigt:" : "Skolledigt (ej verifierat):"}</strong> {item.name} · {formatDate(item.startDate)}–{formatDate(item.endDate)}</p>)}
-      {nationalExams.filter(exam => exam.date >= selectedWeek.weekStart && exam.date < addWeeks(selectedWeek.weekStart, 1)).map(exam => <p key={exam.date + exam.subject + exam.part} className="calendar-holiday"><strong>🔒 Nationellt prov (kontrollera datum):</strong> {exam.subject}, delprov {exam.part} · {formatDate(exam.date)}{exam.startTime ? ` kl. ${exam.startTime}` : ''}</p>)}
+      {nationalExams.filter(exam => exam.date >= selectedWeek.weekStart && exam.date < addWeeks(selectedWeek.weekStart, 1)).map(exam => <p key={exam.date + exam.subject + exam.part} className="calendar-holiday"><strong>🔒 Nationellt prov:</strong> {exam.subject}, delprov {exam.part} · {formatDate(exam.date)}{exam.startTime ? ` kl. ${exam.startTime}` : ''}</p>)}
       {publicHolidaysInWeek(selectedWeek.weekStart).map(holiday => <p key={holiday.date} className="calendar-holiday"><strong>Röd dag:</strong> {holiday.name} · {formatDate(holiday.date)}</p>)}
       {selectedWeek.content && <p>{selectedWeek.content}</p>}
       <label className="student-visibility-toggle"><input type="checkbox" checked={!selectedWeek.hidden} onChange={e => editSelectedWeek({ hidden: !e.target.checked })} /> Visa hela veckan för elever</label>
@@ -978,8 +978,9 @@ function TeacherApp({ session }) {
     </section>
 
     <section className="card" aria-label="Nationella prov enligt Skolverket">
-      <h2>Nationella prov – datum att kontrollera</h2>
-      <p className="muted">Läsåret 2026/27. Dessa inlagda datum är ännu inte slutverifierade mot Skolverkets aktuella provschema. Kontrollera alltid datum och tider hos Skolverket innan de används. Datumen kan inte redigeras här. Muntliga prov och åk 3 har provperioder, inte enskilda fasta datum.</p>
+      <h2>Nationella prov – Skolverkets datum 2026/27</h2>
+      <p className="muted">Datumen och provperioderna är avstämda mot Skolverkets publicerade schema (kontrollerat 17 oktober 2026). Årskurs 9 börjar kl. 09.00 på fasta provdagar; årskurs 6 har ingen nationellt fastställd starttid. Kontrollera eventuella senare ändringar hos Skolverket. Muntliga prov och årskurs 3 har provperioder.</p>
+      <p><a href="https://www.skolverket.se/prov-och-bedomning/nationella-prov/provdatum/provdatum-for-grundskola-sameskola-specialskola" target="_blank" rel="noopener noreferrer">Kontrollera aktuella provdatum hos Skolverket ↗</a></p>
       {plan.schoolForm === 'grundskola' && isSchoolYear2026_27(plan.schoolYear) && ['3','6','9'].includes(String(plan.grade || '').replace(/[^0-9]/g, '')) ? <>
         {NATIONAL_EXAM_PERIODS_2026_27.filter(item => item.grade === String(plan.grade).replace(/[^0-9]/g, '')).map(item => <p key={item.subject}><strong>{item.subject}:</strong> {item.start}–{item.end} (provperiod)</p>)}
         <ul>{NATIONAL_EXAMS_2026_27.filter(item => item.grade === String(plan.grade).replace(/[^0-9]/g, '')).map(item => <li key={item.date + item.subject + item.part}>{item.date} {item.startTime ? `kl. ${item.startTime}` : ""} – {item.subject}, delprov {item.part} <span aria-label="Låst datum">🔒</span></li>)}</ul>
