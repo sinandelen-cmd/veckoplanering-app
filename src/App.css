@@ -203,7 +203,7 @@ h3 { margin: 8px 0; color: var(--green-900); }
 @media (max-width: 510px) { .calendar-months { grid-template-columns: 1fr; } .calendar-overlay { padding: 10px; margin: 10px; } }
 
 .calendar-pagination { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin: 14px 0; }
-.calendar-week-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.calendar-week-grid { display: grid; grid-template-columns: repeat(var(--week-grid-columns, 4), minmax(0, 1fr)); gap: 12px; }
 .calendar-week-tile { display: flex; flex-direction: column; align-items: stretch; gap: 7px; min-height: 175px; padding: 0 12px 12px; text-align: left; background: white; border: 1px solid #c9ddd2; border-radius: 12px; overflow: hidden; }
 .calendar-week-tile:hover, .calendar-week-tile:focus-visible { outline: 2px solid #075b46; background: #f2faf5; }
 .calendar-tile-month { margin: 0 -12px 4px; padding: 8px 12px; background: #075b46; color: white; text-transform: capitalize; font-weight: 700; }
