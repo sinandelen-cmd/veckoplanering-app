@@ -622,6 +622,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], onClose,
 function TeacherApp({ session }) {
   const [plan, setPlan] = useState(emptyPlan())
   const [plans, setPlans] = useState([])
+  const [showArchive, setShowArchive] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(true)
   const [teacherTab, setTeacherTab] = useState("mina")
   const [status, setStatus] = useState('')
@@ -862,7 +863,7 @@ function TeacherApp({ session }) {
     if (schoolYear === null) return
     setBusy(true)
     try {
-      const clone = { ...source, title, subject, className, schoolYear, published: false, publicSlug: '' }
+      const clone = { ...source, title, subject, className, schoolYear, archived: false, published: false, publicSlug: '' }
       const { error } = await supabase.from('veckoplanering').insert({
         user_id: session.user.id, title, week_start: clone.startDate, content: JSON.stringify(clone), subject, class_name: className, school_year: schoolYear,
         start_date: clone.startDate, weeks: clone.weeks, published: false, public_slug: null, updated_at: new Date().toISOString(),
@@ -872,6 +873,36 @@ function TeacherApp({ session }) {
       setStatus(refreshed ? 'Planeringen är klonad som utkast.' : 'Kopian sparades, men listan kunde inte uppdateras. Ladda om för att kontrollera.')
     } catch (error) {
       setStatus(`Kunde inte klona: ${error.message || 'Okänt fel'}`)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function setArchived(row, archived) {
+    if (busy) return
+    if (selectedId === row.id && isDirty) {
+      setStatus('Spara eller lämna dina osparade ändringar innan du arkiverar eller återställer planeringen.')
+      return
+    }
+    if (archived && !window.confirm(`Arkivera "${row.title}"? Den sparas och kan återställas när som helst.`)) return
+    setBusy(true)
+    try {
+      const stored = parseContent(row.content)
+      if (!stored || typeof stored !== 'object') throw new Error('Planeringens innehåll kunde inte läsas.')
+      const updated = { ...stored, archived }
+      const { data, error } = await supabase.from('veckoplanering').update({ content: JSON.stringify(updated), updated_at: new Date().toISOString() })
+        .eq('id', row.id).eq('user_id', session.user.id).select('id').single()
+      if (error || !data) throw error || new Error('Ingen planering uppdaterades.')
+      if (selectedId === row.id) {
+        const next = { ...plan, archived }
+        setPlan(next)
+        savedPlanRef.current = JSON.stringify(next)
+        setSavedRevision(revision => revision + 1)
+      }
+      const refreshed = await loadPlans()
+      setStatus(refreshed ? (archived ? 'Planeringen är arkiverad.' : 'Planeringen är återställd.') : 'Ändringen sparades men listan kunde inte uppdateras.')
+    } catch (error) {
+      setStatus(`Kunde inte ändra arkivstatus: ${error.message || 'Okänt fel'}`)
     } finally {
       setBusy(false)
     }
@@ -913,7 +944,7 @@ function TeacherApp({ session }) {
     setTeacherTab('arsplan'); setPreviewStudents(false); setA4Demo(false)
     setStatus('Ny planering klar. Spara utkast när du har fyllt i din planering.')
   }
-  return <div className="planning-layout"><Navigation active={teacherTab} plans={plans} selectedId={selectedId} onOpenPlan={loadPlan} onNavigate={id => { setTeacherTab(id); if (id === 'elevvy') setPreviewStudents(true) }} onNew={createPlan} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} /><main className="shell" id="lararvy">
+  return <div className="planning-layout"><Navigation active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} onOpenPlan={loadPlan} onNavigate={id => { setTeacherTab(id); if (id === 'elevvy') setPreviewStudents(true) }} onNew={createPlan} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} /><main className="shell" id="lararvy">
     <header className="topbar">
       <div><p className="eyebrow">{teacherTab === "mina" ? "MINA PLANERINGAR" : teacherTab === "elevvy" ? "ELEV VY" : "LÄRARVY"}</p><h1>{APP_TITLE}</h1><p className="muted">{session.user.email}</p></div>
       <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
@@ -1151,18 +1182,24 @@ function TeacherApp({ session }) {
     <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
     <section className="card" id="mina-arsplaneringar">
       <div className="section-heading"><div><p className="eyebrow">BIBLIOTEK</p><h2>Mina årsplaneringar</h2></div><button type="button" className="primary" onClick={createPlan}>+ Ny planering</button></div>
-      {!plans.length ? <p className="muted">Du har inga sparade årsplaneringar ännu.</p> : <div className="library-list">
-        {plans.map(row => <article className="library-item" key={row.id}>
+      <div className="button-row" role="group" aria-label="Planeringsbibliotek">
+        <button type="button" className={!showArchive ? 'primary' : 'secondary'} aria-pressed={!showArchive} onClick={() => setShowArchive(false)}>Aktiva ({plans.filter(row => !parseContent(row.content)?.archived).length})</button>
+        <button type="button" className={showArchive ? 'primary' : 'secondary'} aria-pressed={showArchive} onClick={() => setShowArchive(true)}>Arkiv ({plans.filter(row => parseContent(row.content)?.archived).length})</button>
+      </div>
+      {!plans.some(row => Boolean(parseContent(row.content)?.archived) === showArchive) ? <p className="muted">{showArchive ? 'Arkivet är tomt.' : 'Du har inga aktiva årsplaneringar ännu.'}</p> : <div className="library-list">
+        {plans.filter(row => Boolean(parseContent(row.content)?.archived) === showArchive).map(row => <article className="library-item" key={row.id}>
           <div><strong className="library-title">{row.title}</strong><p className="muted">{[row.subject, row.class_name, row.school_year].filter(Boolean).join(' · ')}</p></div>
           <div className="button-row">
             <span className={`status-badge ${row.published ? 'published' : 'draft'}`}>{row.published ? 'Publicerad' : 'Utkast'}</span>
             <button className="secondary" disabled={busy} onClick={() => loadPlan(row)}>Öppna</button>
             <button className="secondary" disabled={busy} onClick={() => clonePlan(row)}>Klona</button>
+            <button className="secondary" disabled={busy} onClick={() => setArchived(row, !showArchive)}>{showArchive ? 'Återställ' : 'Arkivera'}</button>
             {row.published && <button className="secondary" disabled={busy} onClick={() => unpublish(row)}>Avpublicera</button>}
             <button className="danger" disabled={busy} onClick={() => deletePlan(row)}>Radera</button>
           </div>
         </article>)}
       </div>}
+      <p className="muted">Arkivering döljer bara planeringen från den aktiva listan. Publicerade elevlänkar påverkas inte.</p>
     </section>
     </div>
   </main></div>
