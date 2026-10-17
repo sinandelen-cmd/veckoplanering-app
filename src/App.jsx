@@ -533,10 +533,13 @@ function calendarWeekNumber(dateString) {
 }
 const MONTH_PASTELS = ['#f2f7ff','#fff2f8','#f6f2ff','#fffbe8','#fff4ef','#f0faff','#fff8e8','#fff0e9','#f5f2ff','#fff9e9','#f1f4fa','#fff1f6']
 
+function isSchoolYear2026_27(value) {
+  return /^(?:2026\\s*[/–-]\\s*2027|26\\s*[/–-]\\s*27|HT\\s*26\\s*[/–-]?\\s*VT\\s*27)$/i.test(String(value || '').trim())
+}
+
 function nationalExamsForPlan(plan) {
-  const year = String(plan.schoolYear || '')
   const grade = String(plan.grade || '').replace(/[^0-9]/g, '')
-  if (plan.schoolForm !== 'grundskola' || !year.includes('26') || !year.includes('27') || !['3', '6', '9'].includes(grade)) return []
+  if (plan.schoolForm !== 'grundskola' || !isSchoolYear2026_27(plan.schoolYear) || !['3', '6', '9'].includes(grade)) return []
   return NATIONAL_EXAMS_2026_27.filter(item => item.grade === grade)
 }
 
@@ -977,7 +980,7 @@ function TeacherApp({ session }) {
     <section className="card" aria-label="Nationella prov enligt Skolverket">
       <h2>Nationella prov – officiella datum</h2>
       <p className="muted">Läsåret 2026/27, fastställda av Skolverket. Datumen är låsta referensuppgifter och kan inte redigeras här. Muntliga prov och åk 3 har provperioder, inte enskilda fasta datum.</p>
-      {plan.schoolForm === 'grundskola' && /2026\s*[/–-]\s*2027|26\s*[/–-]\s*27|HT\s*26.*VT\s*27/i.test(String(plan.schoolYear || '')) && ['3','6','9'].includes(String(plan.grade || '').replace(/[^0-9]/g, '')) ? <>
+      {plan.schoolForm === 'grundskola' && isSchoolYear2026_27(plan.schoolYear) && ['3','6','9'].includes(String(plan.grade || '').replace(/[^0-9]/g, '')) ? <>
         {NATIONAL_EXAM_PERIODS_2026_27.filter(item => item.grade === String(plan.grade).replace(/[^0-9]/g, '')).map(item => <p key={item.subject}><strong>{item.subject}:</strong> {item.start}–{item.end} (provperiod)</p>)}
         <ul>{NATIONAL_EXAMS_2026_27.filter(item => item.grade === String(plan.grade).replace(/[^0-9]/g, '')).map(item => <li key={item.date + item.subject + item.part}>{item.date} {item.startTime ? `kl. ${item.startTime}` : ""} – {item.subject}, delprov {item.part} <span aria-label="Låst datum">🔒</span></li>)}</ul>
       </> : <p className="muted">Välj grundskola, läsåret 2026/27 och årskurs 3, 6 eller 9. Datum för andra skolformer och läsår visas inte förrän de har kontrollerats separat.</p>}
