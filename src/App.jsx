@@ -303,6 +303,9 @@ function studentWeekStyle(dateString) {
 function studentMonthInfo(dateString) {
   const date = new Date(dateString + 'T12:00:00')
   if (Number.isNaN(date.getTime())) return null
+  // Tilldela en vecka till den månad som innehåller dess torsdag.
+  // Då visas en gränsvecka bara under en månad, även vid årsskiftet.
+  date.setDate(date.getDate() + (3 - ((date.getDay() + 6) % 7)))
   const year = date.getFullYear(), month = date.getMonth()
   const first = toIsoDate(new Date(year, month, 1, 12))
   const last = toIsoDate(new Date(year, month + 1, 0, 12))
