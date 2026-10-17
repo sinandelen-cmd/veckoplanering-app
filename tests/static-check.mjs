@@ -294,3 +294,7 @@ assert.match(app, /async function setArchived\(row, archived\)/)
 assert.match(app, /Visa fiktiv vecka 42 i planeringen/)
 assert.match(app, /startDate: '2026-10-12', weeks: 1/)
 assert.match(app, /setSelectedId\(null\)/)
+
+assert.match(app, /function publicDemoWeek42\(\)/)
+assert.match(app, /\/elev\/demo-vecka-42/)
+assert.match(app, /setStudentPlan\(publicDemoWeek42\(\)\)/)
