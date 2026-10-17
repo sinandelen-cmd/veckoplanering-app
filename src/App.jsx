@@ -465,8 +465,16 @@ function StudentView({ plan, error, preview = false, printPage = null }) {
   // Längre elevveckor får mer plats på A4. Grupperna består alltid av hela veckor.
   const printGroups = []
   for (const week of studentWeeks) {
-    const textLength = JSON.stringify(week).length
-    const weight = textLength > 2500 ? 4 : textLength > 1200 ? 2 : 1
+    // Antal synliga texttecken och innehållsblock är bättre indikatorer än JSON-nycklarnas längd.
+    // Fortfarande en uppskattning: faktisk A4-höjd måste verifieras i webbläsare.
+    const textLength = [week.title, week.chapter, week.content,
+      ...(week.lessons || []).flatMap(lesson => [lesson.name, lesson.day,
+        ...(lesson.topics || []).flatMap(topic => [topic.name, ...(topic.pages || []), ...(topic.assignments || [])])])]
+      .filter(Boolean).map(value => String(value)).join(' ').length
+    const contentBlocks = (week.lessons || []).length +
+      (week.lessons || []).reduce((sum, lesson) => sum + (lesson.topics || []).length, 0)
+    const weight = textLength > 1100 || contentBlocks > 16 ? 4 :
+      textLength > 500 || contentBlocks > 8 ? 2 : 1
     const last = printGroups[printGroups.length - 1]
     if (!last || last.weight + weight > 4 || last.weeks.length >= 4) printGroups.push({ weeks: [week], weight })
     else { last.weeks.push(week); last.weight += weight }
