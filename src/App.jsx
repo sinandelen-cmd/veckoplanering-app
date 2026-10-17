@@ -534,7 +534,7 @@ function calendarWeekNumber(dateString) {
 const MONTH_PASTELS = ['#f2f7ff','#fff2f8','#f6f2ff','#fffbe8','#fff4ef','#f0faff','#fff8e8','#fff0e9','#f5f2ff','#fff9e9','#f1f4fa','#fff1f6']
 
 function isSchoolYear2026_27(value) {
-  return /^(?:2026\s*[/–-]\s*2027|26\s*[/–-]\s*27|HT\s*26\s*[/–-]?\s*VT\s*27)$/i.test(String(value || '').trim())
+  return /^(?:2026\s*[/–-]\s*(?:2027|27)|26\s*[/–-]\s*27|HT\s*(?:20)?26\s*[/–-]?\s*VT\s*(?:20)?27)$/i.test(String(value || '').trim())
 }
 
 function nationalExamsForPlan(plan) {
