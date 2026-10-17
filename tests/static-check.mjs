@@ -239,3 +239,7 @@ assert.match(printSource, /groups.push/)
 
 // Regression: specifik stil för uppgiftstext ska inte vara mindre än 10 pt.
 assert.match(css, /font-size: 10pt !important;/)
+
+assert.equal((app.match(/className="print-resource-url"/g) || []).length, 2, 'Både vecko- och lektionslänkar ska skriva ut URL')
+assert.match(css, /\.print-resource-url \{ display: none; \}/)
+assert.match(css, /\.student-print-page \.print-resource-url \{[\s\S]*?font-size: 10pt !important/)
