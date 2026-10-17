@@ -824,3 +824,15 @@ nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a
 .teacher-settings-details[open] summary { border-bottom: 1px solid #d9e5df; }
 .teacher-settings-details > .form-grid { padding: 18px 22px 22px; }
 @media print { .teacher-tabs { display: none !important; } }
+
+/* En enda sammanhängande navigering för lärarens arbetsytor. */
+.unified-navigation { position: sticky; top: 0; z-index: 100; display: flex; align-items: center; flex-wrap: wrap; gap: .45rem; padding: .7rem 1rem; background: #075b46; color: white; font-family: "Segoe UI", Arial, sans-serif; }
+.navigation-brand { color: white; font-weight: 750; text-decoration: none; margin-right: .8rem; }
+.unified-navigation button, .unified-navigation .navigation-link { font: inherit; cursor: pointer; border-radius: .55rem; padding: .48rem .7rem; border: 1px solid transparent; background: transparent; color: white; text-decoration: none; }
+.unified-navigation .navigation-link.active { background: white; color: #075b46; font-weight: 750; }
+.unified-navigation .navigation-link:focus-visible, .unified-navigation .navigation-new:focus-visible { outline: 3px solid #fbbf24; outline-offset: 2px; }
+.unified-navigation .navigation-new { background: #fef3c7; color: #173b30; font-weight: 750; }
+.unified-navigation .calendar-toggle { margin-left: auto; }
+.planning-context { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; padding: .4rem .2rem .8rem; }
+.planning-context span { font-size: .85rem; color: #52645e; }
+@media (max-width: 650px) { .unified-navigation { gap: .25rem; padding: .55rem; } .navigation-brand { width: 100%; } .unified-navigation button { padding: .42rem .5rem; } .unified-navigation .calendar-toggle { margin-left: 0; } }
