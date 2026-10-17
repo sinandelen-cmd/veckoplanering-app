@@ -448,10 +448,10 @@ function studentWeekPageLabel(weeks) {
 }
 // Endast tillfällig A4-demonstration. Läggs aldrig i lärarens plan eller databasen.
 function a4DemoPlan(plan) {
-  const weeksData = Array.from({ length: 5 }, (_, index) => {
+  const weeksData = Array.from({ length: 2 }, (_, index) => {
     const date = new Date(Date.UTC(2026, 9, 12 + index * 7))
     const weekStart = date.toISOString().slice(0, 10)
-    const long = index === 2
+    const long = index === 1
     return {
       weekStart, weekNumber: 42 + index, title: long ? 'Innehållsrik testvecka' : 'Exempelvecka',
       chapter: 'A4-test – endast förhandsvisning',
