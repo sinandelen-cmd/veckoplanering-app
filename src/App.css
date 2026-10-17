@@ -430,3 +430,17 @@ h3 { margin: 8px 0; color: var(--green-900); }
   .preview-panel:has(.student-print-pages) { display:block !important; border:0 !important; box-shadow:none !important; padding:0 !important; margin:0 !important; background:transparent !important; }
   .preview-panel:has(.student-print-pages) > :not(.student-print-pages):not(.student-screen-view):not(.student-shell) { display:none !important; }
 }
+
+@media print {
+  /* Sidor med en eller två innehållsrika veckor får hela sidbredden. */
+  .student-print-page.student-print-spacious .student-matrix,
+  .student-print-page.student-print-spacious .student-list {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto !important;
+  }
+  .student-print-page .chapter-week-group,
+  .student-print-page .student-week-card {
+    break-inside: avoid-page !important;
+    page-break-inside: avoid !important;
+  }
+}
