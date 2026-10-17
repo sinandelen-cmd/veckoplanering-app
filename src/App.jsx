@@ -98,7 +98,7 @@ function suggestedSchoolClosures(startDate, numberOfWeeks) {
   }
   for (const year of years) {
     // Vecka 44 är en vanlig nationell utgångspunkt för höstlov, inte ett fastställt kommunalt datum.
-    const autumn = Array.from({ length: 8 }, (_, i) => `${year}-10-${String(25 + i).padStart(2, '0')}`).find(date => calendarWeekNumber(date) === 44 && new Date(date + 'T12:00:00').getDay() === 1)
+    const autumn = Array.from({ length: 10 }, (_, i) => { const date = new Date(year, 9, 25 + i, 12); return toIsoDate(date) }).find(date => calendarWeekNumber(date) === 44 && new Date(date + 'T12:00:00').getDay() === 1)
     if (autumn) {
       const friday = new Date(autumn + 'T12:00:00')
       friday.setDate(friday.getDate() + 4)
