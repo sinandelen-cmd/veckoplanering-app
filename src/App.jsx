@@ -963,7 +963,20 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
   return <div className="lessons">
     {lessons.map((lesson, i) => ({ lesson, i })).filter(({ lesson }) => (editable || lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || ''))))).map(({ lesson, i }) => <section className="lesson" key={i}>
       <div className="lesson-heading">
-        {editable ? <input aria-label={entryType === 'dag' ? 'Dagens namn' : 'Lektionens namn'} value={lesson.name || ''} onChange={e => changeLesson(i, { ...lesson, name: e.target.value })} /> : <h4>{lesson.name || (entryType === 'dag' ? (WEEKDAYS[i] || `Dag ${i + 1}`) : `Lektion ${i + 1}`)}{entryType === 'dag' && lessonDayDate(week.weekStart, lesson.name || WEEKDAYS[i]) && <span className="lesson-day-date"> · {lessonDayDate(week.weekStart, lesson.name || WEEKDAYS[i])}</span>}</h4>}
+        {editable ? <div className="lesson-edit-heading">
+          <input aria-label={entryType === 'dag' ? 'Dagens namn' : 'Lektionens namn'} value={lesson.name || ''} onChange={e => changeLesson(i, { ...lesson, name: e.target.value })} />
+          {entryType !== 'dag' && <label>Dag <select aria-label={'Veckodag för ' + (lesson.name || 'lektion ' + (i + 1))} value={lesson.day || ''} onChange={e => changeLesson(i, { ...lesson, day: e.target.value })}><option value="">Välj dag</option>{WEEKDAYS.map(day => <option key={day} value={day}>{day}</option>)}</select></label>}
+          {lessonDayDate(week.weekStart, entryType === 'dag' ? lesson.name : lesson.day) && <span className="lesson-day-date">{lessonDayDate(week.weekStart, entryType === 'dag' ? lesson.name : lesson.day)}</span>}
+        </div> : <h4>
+          {(() => {
+            const day = entryType === 'dag' ? (lesson.name || WEEKDAYS[i]) : lesson.day
+            const name = lesson.name || (entryType === 'dag' ? (WEEKDAYS[i] || 'Dag ' + (i + 1)) : 'Lektion ' + (i + 1))
+            const showDay = lessonDisplay !== 'bara-lektion'
+            const showLesson = lessonDisplay !== 'bara-dag'
+            const dayLabel = day || 'Dag ej vald'
+            return <>{showDay && <span>{dayLabel}</span>}{showDay && showLesson && ' · '}{showLesson && <span>{name}</span>}{lessonDayDate(week.weekStart, day) && <span className="lesson-day-date"> · {lessonDayDate(week.weekStart, day)}</span>}</>
+          })()}
+        </h4>}
         {editable && <button type="button" className="remove-small" onClick={() => { if (!(lesson.topics || []).some(topic => topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm(entryType === 'dag' ? 'Ta bort dagen och allt innehåll i den?' : 'Ta bort lektionen och allt innehåll i den?')) changeLessons(lessons.filter((_, index) => index !== i)) }}>× Ta bort {entryType === 'dag' ? 'dag' : 'lektion'}</button>}
       </div>
       {(lesson.topics || []).map((topic, j) => ({ topic, j })).filter(({ topic }) => (editable || topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || '')))).map(({ topic, j }) => {
