@@ -314,12 +314,21 @@ function StudentView({ plan, error, preview = false }) {
 
 function YearCalendar({ weeks, onClose, entryType = 'lektion' }) {
   const [page, setPage] = useState(0)
+  const [layout, setLayout] = useState('4x3')
+  const layoutOptions = { '3x2': [3, 2], '4x3': [4, 3], '4x4': [4, 4], '4x5': [4, 5] }
+  const [columns, rows] = layoutOptions[layout]
+  const weeksPerPage = columns * rows
+  const changeLayout = next => {
+    if (!layoutOptions[next]) return
+    setPage(Math.floor(page * weeksPerPage / (layoutOptions[next][0] * layoutOptions[next][1])))
+    setLayout(next)
+  }
   const [selectedWeekIndex, setSelectedWeekIndex] = useState(null)
   const [selectedLessonIndex, setSelectedLessonIndex] = useState(null)
   const orderedWeeks = [...weeks].filter(week => week && /^\d{4}-\d{2}-\d{2}$/.test(week.weekStart || '')).sort((a, b) => a.weekStart.localeCompare(b.weekStart))
-  const pageCount = Math.max(1, Math.ceil(orderedWeeks.length / 12))
+  const pageCount = Math.max(1, Math.ceil(orderedWeeks.length / weeksPerPage))
   const currentPage = Math.min(page, pageCount - 1)
-  const pageWeeks = orderedWeeks.slice(currentPage * 12, (currentPage + 1) * 12)
+  const pageWeeks = orderedWeeks.slice(currentPage * weeksPerPage, (currentPage + 1) * weeksPerPage)
   const selectedWeek = selectedWeekIndex === null ? null : orderedWeeks[selectedWeekIndex]
   const lessons = Array.isArray(selectedWeek?.lessons) ? selectedWeek.lessons : []
   const back = () => {
@@ -346,7 +355,7 @@ function YearCalendar({ weeks, onClose, entryType = 'lektion' }) {
         const date = new Date(`${week.weekStart}T12:00:00`)
         const month = new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeric' }).format(date)
         const topics = (week.lessons || []).flatMap(lesson => (lesson.topics || []).map(topic => topic.name).filter(Boolean))
-        return <button type="button" className="calendar-week-tile" key={`${week.weekStart}-${index}`} onClick={() => { setSelectedWeekIndex(currentPage * 12 + index); setSelectedLessonIndex(null) }} aria-label={`Zooma in vecka ${week.weekNumber}`}>
+        return <button type="button" className="calendar-week-tile" key={`${week.weekStart}-${index}`} onClick={() => { setSelectedWeekIndex(currentPage * weeksPerPage + index); setSelectedLessonIndex(null) }} aria-label={`Zooma in vecka ${week.weekNumber}`}>
           <span className="calendar-tile-month">{month}</span>
           <strong>Vecka {week.weekNumber}</strong>
           <span className="calendar-tile-date">{formatDate(week.weekStart)}</span>
