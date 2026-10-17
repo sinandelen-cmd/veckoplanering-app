@@ -140,3 +140,16 @@ assert.match(app, /Nationella prov – Skolverkets datum 2026\/27/)
 assert.match(app, /kontrollerat 17 oktober 2026/)
 
 assert.match(app, /Kontrollera aktuella provdatum hos Skolverket/)
+
+const { NATIONAL_EXAMS_2026_27, NATIONAL_EXAM_PERIODS_2026_27 } = await import('../src/nationalExams.js')
+const officialFixedDates = {
+  '6': ['2027-04-19', '2027-04-21', '2027-04-27', '2027-04-29', '2027-05-11', '2027-05-13'],
+  '9': ['2027-03-17', '2027-03-19', '2027-04-13', '2027-04-15', '2027-04-20', '2027-04-28', '2027-05-04', '2027-05-12', '2027-05-14'],
+}
+for (const [grade, dates] of Object.entries(officialFixedDates)) {
+  assert.deepEqual(NATIONAL_EXAMS_2026_27.filter(item => item.grade === grade).map(item => item.date).sort(), dates)
+  assert.ok(NATIONAL_EXAMS_2026_27.filter(item => item.grade === grade).every(item => item.startTime === (grade === '9' ? '09:00' : null)))
+}
+assert.ok(NATIONAL_EXAM_PERIODS_2026_27.some(item => item.grade === '3' && item.start === '2027-03-15' && item.end === '2027-05-21'))
+assert.ok(NATIONAL_EXAM_PERIODS_2026_27.filter(item => ['6', '9'].includes(item.grade)).every(item => item.start === '2026-11-02' && item.end === '2026-12-04'))
+assert.match(css, /overflow-wrap: anywhere/)
