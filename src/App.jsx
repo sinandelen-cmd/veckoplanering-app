@@ -347,8 +347,9 @@ function StudentView({ plan, error, preview = false }) {
       <div><p className="eyebrow">{preview ? 'FÖRHANDSVISNING' : 'PUBLICERAD ÅRSPLANERING'}</p><h1>{plan.title}</h1><p className="muted">{[plan.subject, plan.className, plan.schoolYear].filter(Boolean).join(' · ')}</p></div>
       <span className="public-badge">{preview ? "Förhandsvisning" : "Publicerad"}</span>
     </header>
-    <section className="year-grid">
-      {studentWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
+    {gridMode && <nav className="student-pager" aria-label="Bläddra mellan veckor"><button type="button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>← Föregående</button><strong>Sida {currentPage + 1} av {pages}</strong><button type="button" disabled={currentPage === pages - 1} onClick={() => setPage(currentPage + 1)}>Nästa →</button></nav>}
+    <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
+      {visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
         {week.chapter?.trim() && (index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
         <article className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
         <div className="week-top student-week-top">
