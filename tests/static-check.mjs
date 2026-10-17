@@ -221,6 +221,12 @@ assert.equal(mixedGroups[1].weight, 4)
 assert.deepEqual(groupStudentWeeksForPrint([]), [])
 assert.equal(groupStudentWeeksForPrint([{ content: 'Vecka', lessons: [null, { topics: [null, { name: 'Tal' }] }] }]).length, 1)
 
+// A4-kontrakt: stående format, en kolumn och minst 10 pt även för importerat innehåll.
+assert.match(css, /@page\s*\{\s*size:\s*A4 portrait/)
+assert.match(css, /\.student-print-page\s+\*\s*\{\s*font-size:\s*10pt\s*!important/)
+assert.match(css, /\.student-print-page\s+\.lessons,[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\)\s*!important/)
+assert.match(css, /\.student-print-page\s+\.topic-cell span[\s\S]*?overflow:\s*visible\s*!important/)
+assert.match(app, /className="print-single-week"/)
 assert.match(printSource, /textLength > 1100/)
 assert.match(printSource, /groups.push/)
 
