@@ -357,3 +357,9 @@ h3 { margin: 8px 0; color: var(--green-900); }
 @media (min-width: 900px) {
   .calendar-week-grid { min-width: 0; }
 }
+
+/* Synlighet för elever styrs separat från knappen som öppnar veckan. */
+.calendar-week-wrapper { display:flex; flex-direction:column; min-width:0; border:1px solid #c9ddd2; border-radius:12px; background:white; overflow:hidden; }
+.calendar-week-visibility { display:flex; align-items:center; gap:7px; padding:9px 12px; font-weight:600; cursor:pointer; }
+.calendar-week-visibility input { width:17px; height:17px; flex-shrink:0; }
+.calendar-week-wrapper .calendar-week-tile { border:0; border-top:1px solid #e3ebe7; border-radius:0; flex:1; width:100%; }
