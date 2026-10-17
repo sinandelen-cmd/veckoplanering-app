@@ -937,7 +937,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', studentView = fa
         const lastFilledRow = values => values.reduce((last, value, index) => String(value ?? '').trim() ? index + 1 : last, 0)
         const rows = editable ? Math.max(pages.length, assignments.length) : Math.max(lastFilledRow(pages), lastFilledRow(assignments))
         return <div className="topic" key={j}>
-          {editable && <label className="student-visibility-toggle"><input type="checkbox" checked={topic.studentVisible !== false} onChange={e => updateTopic({ ...topic, studentVisible: e.target.checked })} /> Visa momentet för elever</label>
+          {editable && <label className="student-visibility-toggle"><input type="checkbox" checked={topic.studentVisible !== false} onChange={e => updateTopic({ ...topic, studentVisible: e.target.checked })} /> Visa momentet för elever</label>}
           <div className="topic-grid">
             <div className="topic-name">{editable ? <input aria-label="Momentets namn" placeholder="Exempel: Procent" value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong>{topic.name || 'Moment'}</strong>}</div>
             {['pages', 'assignments'].map(field => <div className={`topic-column ${field}`} key={field}>
