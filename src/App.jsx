@@ -348,10 +348,11 @@ function StudentView({ plan, error, preview = false }) {
       <div><p className="eyebrow">{preview ? 'FÖRHANDSVISNING' : 'PUBLICERAD ÅRSPLANERING'}</p><h1>{plan.title}</h1><p className="muted">{[plan.subject, plan.className, plan.schoolYear].filter(Boolean).join(' · ')}</p></div>
       <span className="public-badge">{preview ? "Förhandsvisning" : "Publicerad"}</span>
     </header>
-    {gridMode && <nav className="student-pager" aria-label="Bläddra mellan veckor"><button type="button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>← Föregående</button><strong>{pageWeekLabel} · Sida {currentPage + 1} av {pages}</strong><button type="button" disabled={currentPage === pages - 1} onClick={() => setPage(currentPage + 1)}>Nästa →</button></nav>}
+    {gridMode && <nav className="student-pager" aria-label="Bläddra mellan veckor"><button type="button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>← Föregående</button><strong aria-live="polite">{pageWeekLabel} · Sida {currentPage + 1} av {pages}</strong><button type="button" disabled={currentPage === pages - 1} onClick={() => setPage(currentPage + 1)}>Nästa →</button></nav>}
+    {studentWeeks.length === 0 && <p className="card empty" role="status">Det finns inga synliga veckor i den här planeringen ännu.</p>}
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
       {visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
-        {week.chapter?.trim() && (index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
+        {week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
         <article className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
         <div className="week-top student-week-top">
           <div className="student-week-identity"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{studentWeekDateRange(week.weekStart)}</span></div>
