@@ -447,8 +447,12 @@ function StudentView({ plan, error, preview = false, printPage = null }) {
     .filter((week, index, weeks) => weeks.findIndex(other => (other.weekStart || `number-${other.weekNumber}`) === (week.weekStart || `number-${week.weekNumber}`)) === index)
     .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || '')) : []
   const pages = Math.max(1, Math.ceil(studentWeeks.length / pageSize))
+  const printPageSize = 4 // Två gånger två ger mer plats per vecka på A4.
+  const printPages = Math.max(1, Math.ceil(studentWeeks.length / printPageSize))
   const currentPage = printPage === null ? Math.min(page, pages - 1) : printPage
-  const visibleWeeks = studentWeeks.slice(currentPage * pageSize, (currentPage + 1) * pageSize)
+  const visibleWeeks = printPage === null
+    ? studentWeeks.slice(currentPage * pageSize, (currentPage + 1) * pageSize)
+    : studentWeeks.slice(printPage * printPageSize, (printPage + 1) * printPageSize)
   const pageWeekLabel = studentWeekPageLabel(visibleWeeks)
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
@@ -476,7 +480,7 @@ function StudentView({ plan, error, preview = false, printPage = null }) {
     </section>
   </main>
   {printPage === null && studentWeeks.length > 0 && <div className="student-print-pages" aria-hidden="true">
-    {Array.from({ length: pages }, (_, index) => <StudentView key={index} plan={plan} preview={preview} printPage={index} />)}
+    {Array.from({ length: printPages }, (_, index) => <StudentView key={index} plan={plan} preview={preview} printPage={index} />)}
   </div>}
 </>
 }
