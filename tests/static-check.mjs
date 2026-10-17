@@ -114,3 +114,7 @@ assert.match(app, /printGroups\.push\(\{ weeks: \[week\], weight \}\)/)
 assert.match(app, /weekContentScore = week =>/)
 assert.match(app, /topic\.links\?\.length \|\| 0/)
 assert.match(app, /\.\.\.\(week\.links \|\| \[\]\)/)
+
+assert.match(app, /week\.lessons\.filter\(lesson => lesson && typeof lesson === 'object'\)/)
+assert.match(app, /lesson\.topics\.filter\(topic => topic && typeof topic === 'object'\)/)
+assert.match(app, /\(week\.lessons \|\| \[\]\)\.filter\(Boolean\)\.flatMap/)
