@@ -564,20 +564,23 @@ function nationalExamsForPlan(plan) {
 }
 
 function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], onClose, onUpdateWeek, onSave, isDirty, busy, saveStatus, entryType = 'lektion' }) {
-  // Alla planerade veckor på en lång sida, alltid fyra per rad.
+  // Årsöversikt i nio veckor per sida, tre kolumner och tre rader.
   const [selectedWeekIndex, setSelectedWeekIndex] = useState(null)
+  const [overviewPage, setOverviewPage] = useState(0)
   const [selectedLessonIndex, setSelectedLessonIndex] = useState(null)
   const orderedWeeks = [...weeks].filter(week => week && /^\d{4}-\d{2}-\d{2}$/.test(week.weekStart || '')).sort((a, b) => a.weekStart.localeCompare(b.weekStart))
   const selectedWeek = selectedWeekIndex === null ? null : orderedWeeks[selectedWeekIndex]
+  const pageCount = Math.max(1, Math.ceil(orderedWeeks.length / 9))
+  const currentPage = Math.min(overviewPage, pageCount - 1)
   const lessons = Array.isArray(selectedWeek?.lessons) ? selectedWeek.lessons : []
   const editSelectedWeek = changes => { const index = weeks.findIndex(week => week.weekStart === selectedWeek?.weekStart); if (index >= 0) onUpdateWeek?.(index, changes) }
   const back = () => {
     if (selectedLessonIndex !== null) setSelectedLessonIndex(null)
     else setSelectedWeekIndex(null)
   }
-  return <section className="calendar-overlay" aria-label="Årsplanering med fyra veckor per rad">
+  return <section className="calendar-overlay" aria-label="Årsplanering med tre gånger tre veckor">
     <div className="calendar-top">
-      <div><h2>{selectedWeek ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : `Årsöversikt · 4 veckor per rad`}</h2><p>{selectedWeek ? (selectedWeek.chapter || (/^Vecka\s+\d+$/i.test(selectedWeek.title || '') ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : selectedWeek.title) || 'Din planering') : 'Välj en vecka för att zooma in och se dina dagar eller lektioner.'}</p></div>
+      <div><h2>{selectedWeek ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : `Årsöversikt · 3 × 3 veckor`}</h2><p>{selectedWeek ? (selectedWeek.chapter || (/^Vecka\s+\d+$/i.test(selectedWeek.title || '') ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : selectedWeek.title) || 'Din planering') : 'Välj en vecka för att zooma in och se dina dagar eller lektioner.'}</p></div>
       <div className="calendar-zoom-controls">{selectedWeek && <button type="button" className="secondary calendar-overview-button" onClick={back}>← Tillbaka</button>}<button type="button" className="secondary calendar-close-button" onClick={onClose}>✕ Stäng</button></div>
     </div>
     {selectedWeek ? <div className="calendar-week-detail">
@@ -595,8 +598,14 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], onClose,
       </div>
       <button type="button" className="secondary calendar-overview-button" onClick={() => { setSelectedWeekIndex(null); setSelectedLessonIndex(null) }}>← Till översikten</button>
     </div> : <>
-      <p className="calendar-overview-count">Alla {orderedWeeks.length} planerade veckor visas nedan. Scrolla för att se fler.</p>
-      <div className="calendar-week-grid" style={{ "--week-grid-columns": 4 }}>{orderedWeeks.map((week, index) => {
+      <p className="calendar-overview-count">Visar vecka {currentPage * 9 + 1}–{Math.min((currentPage + 1) * 9, orderedWeeks.length)} av {orderedWeeks.length} planerade veckor.</p>
+      <div className="calendar-zoom-controls" aria-label="Bläddra bland veckor">
+        <button type="button" className="secondary" disabled={currentPage === 0} onClick={() => setOverviewPage(page => Math.max(0, page - 1))}>← Föregående 9</button>
+        <span>Sida {currentPage + 1} av {pageCount}</span>
+        <button type="button" className="secondary" disabled={currentPage >= pageCount - 1} onClick={() => setOverviewPage(page => Math.min(pageCount - 1, page + 1))}>Nästa 9 →</button>
+      </div>
+      <div className="calendar-week-grid" style={{ "--week-grid-columns": 3 }}>{orderedWeeks.slice(currentPage * 9, (currentPage + 1) * 9).map((week, localIndex) => {
+        const index = currentPage * 9 + localIndex
         const date = new Date(`${week.weekStart}T12:00:00`)
         const month = new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeric' }).format(date)
         const topics = (week.lessons || []).flatMap(lesson => (lesson.topics || []).map(topic => topic.name).filter(Boolean))
