@@ -515,3 +515,60 @@ nav[aria-label="Huvudmeny"] .nav-role-teacher { background: #dbeafe; color: #173
 nav[aria-label="Huvudmeny"] .nav-role-student { background: #fce7f3; color: #831843; }
 nav[aria-label="Huvudmeny"] .nav-role:hover { filter: brightness(.96); }
 nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a; outline-offset: 3px; }
+
+/* Kompakt A4-layout: förhindra att sidgruppens flex/grid skapar en extra sida.
+   Långa veckor får hela bredden och två lektionskolumner. */
+@media print {
+  .student-print-pages,
+  .student-print-page {
+    display: block !important;
+    overflow: visible !important;
+  }
+  .student-print-page {
+    break-before: auto !important;
+    break-after: page !important;
+    page-break-after: always !important;
+    break-inside: avoid-page !important;
+    page-break-inside: avoid !important;
+  }
+  .student-print-page:last-child {
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+  .student-print-page .student-matrix,
+  .student-print-page .student-list {
+    align-items: start !important;
+    grid-auto-rows: max-content !important;
+  }
+  .student-print-page .student-header {
+    margin: 0 0 3mm !important;
+    padding: 0 !important;
+  }
+  .student-print-page .student-week-card {
+    padding: 2mm !important;
+  }
+  .student-print-page .lessons {
+    gap: 2mm !important;
+    margin: 2mm 0 !important;
+  }
+  .student-print-page .lesson {
+    padding: 2mm !important;
+    border-radius: 2mm !important;
+  }
+  .student-print-page .lesson-heading { margin-bottom: 1mm !important; }
+  .student-print-page .topic { padding: 1mm 0 !important; }
+  .student-print-page .topic-grid { gap: 1mm !important; }
+  .student-print-page.student-print-spacious .lessons {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .student-print-page.student-print-spacious .topic-grid {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr) !important;
+  }
+  .student-print-page.student-print-spacious .lesson,
+  .student-print-page.student-print-spacious .topic {
+    font-size: 8pt !important;
+  }
+  .student-print-page.student-print-spacious .topic-name strong {
+    font-size: 8pt !important;
+  }
+}
