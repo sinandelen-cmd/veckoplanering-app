@@ -218,3 +218,9 @@ h3 { margin: 8px 0; color: var(--green-900); }
 @media (max-width: 950px) { .calendar-week-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 650px) { .calendar-week-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 430px) { .calendar-week-grid { grid-template-columns: 1fr; } }
+
+.calendar-layout-selector { display: flex; align-items: center; gap: 10px; margin: 12px 0; flex-wrap: wrap; }
+.calendar-layout-selector label { display: inline; font-weight: 700; }
+.calendar-layout-selector select { width: auto; min-width: 190px; padding: 8px 10px; border: 1px solid #b8d3c7; border-radius: 9px; background: white; color: #173b30; }
+.calendar-zoom-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 780px) { .calendar-top { flex-wrap: wrap; } }
