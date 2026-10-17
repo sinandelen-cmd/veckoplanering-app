@@ -836,3 +836,29 @@ nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a
 .planning-context { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; padding: .4rem .2rem .8rem; }
 .planning-context span { font-size: .85rem; color: #52645e; }
 @media (max-width: 650px) { .unified-navigation { gap: .25rem; padding: .55rem; } .navigation-brand { width: 100%; } .unified-navigation button { padding: .42rem .5rem; } .unified-navigation .calendar-toggle { margin-left: 0; } }
+
+/* Enkel vänsternavigering: planbiblioteket är utgångspunkten. */
+.planning-layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); min-height: 100vh; align-items: start; }
+.planning-layout > .shell { width: 100%; min-width: 0; max-width: 1400px; margin: 0 auto; }
+.planning-sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; gap: .35rem; padding: 1.1rem .8rem; background: #075b46; color: white; }
+.sidebar-brand { font-size: 1.1rem; font-weight: 800; padding: .4rem .65rem 1rem; }
+.planning-sidebar button { text-align: left; cursor: pointer; font: inherit; border: 0; border-radius: .55rem; padding: .7rem .65rem; }
+.sidebar-link { color: white; background: transparent; font-weight: 650 !important; }
+.sidebar-link.active { background: #fff; color: #075b46; }
+.sidebar-new { color: #143b2d; background: #fef3c7; font-weight: 750 !important; }
+.sidebar-plan-list { display: flex; flex-direction: column; gap: .2rem; max-height: 45vh; overflow-y: auto; }
+.sidebar-plan { color: #e6f5ed; background: transparent; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .87rem !important; }
+.sidebar-plan.selected { background: #d4eee1; color: #075b46; font-weight: 750 !important; }
+.sidebar-empty { font-size: .8rem; opacity: .8; padding: 0 .65rem; }
+.sidebar-divider { border-top: 1px solid #4c8a77; margin: .5rem 0; }
+.sidebar-calendar { font-size: .85rem !important; opacity: .9; }
+.planning-sidebar button:focus-visible { outline: 3px solid #fbbf24; outline-offset: 2px; }
+.public-navigation { padding: .85rem 1rem; background: #075b46; }
+.public-navigation a { color: white; text-decoration: none; font-weight: 750; }
+@media (max-width: 750px) {
+  .planning-layout { display: block; }
+  .planning-sidebar { position: static; height: auto; max-height: none; }
+  .sidebar-plan-list { max-height: 170px; }
+  .planning-layout > .shell { width: 100%; }
+}
+@media print { .planning-sidebar, .public-navigation { display: none !important; } .planning-layout { display: block; } }
