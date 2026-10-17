@@ -593,3 +593,17 @@ nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a
     page-break-inside: avoid !important;
   }
 }
+
+/* A4: veckorna i en enda lodrät kolumn, aldrig sida vid sida. */
+@media print {
+  .student-print-page .student-matrix,
+  .student-print-page .student-list,
+  .student-print-page.student-print-spacious .student-matrix,
+  .student-print-page.student-print-spacious .student-list {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: none !important;
+    grid-auto-rows: max-content !important;
+    gap: 4mm !important;
+  }
+}
