@@ -153,3 +153,11 @@ for (const [grade, dates] of Object.entries(officialFixedDates)) {
 assert.ok(NATIONAL_EXAM_PERIODS_2026_27.some(item => item.grade === '3' && item.start === '2027-03-15' && item.end === '2027-05-21'))
 assert.ok(NATIONAL_EXAM_PERIODS_2026_27.filter(item => ['6', '9'].includes(item.grade)).every(item => item.start === '2026-11-02' && item.end === '2026-12-04'))
 assert.match(css, /overflow-wrap: anywhere/)
+
+const isSchoolYear2026_27 = new Function(extractFunction('isSchoolYear2026_27', 'function nationalExamsForPlan') + '; return isSchoolYear2026_27')()
+for (const value of ['2026/2027', '2026–2027', '2026-2027', '26/27', 'HT26–VT27', ' HT 26 - VT 27 ']) {
+  assert.equal(isSchoolYear2026_27(value), true, `Läsår ska accepteras: ${value}`)
+}
+for (const value of ['2025/2027', '2026/2028', '2026/27', '2026/2027 extra', '2026-2027-2028', '', null]) {
+  assert.equal(isSchoolYear2026_27(value), false, `Felaktigt läsår ska avvisas: ${value}`)
+}
