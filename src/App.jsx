@@ -1318,6 +1318,4 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
       }
     }}>{entryType === 'dag' ? `+ Lägg tillbaka ${WEEKDAYS.find(day => !lessons.some(lesson => lesson.name === day)) || 'dag'}` : '+ Lägg till lektion'}</button>}
   </div>
-}     <div className="planning-context"><strong>{plan.title || 'Ny årsplanering'}</strong><span aria-live="polite">{busy ? 'Sparar…' : isDirty ? 'Osparade ändringar' : selectedId ? 'Sparad' : 'Inte sparad'}</span></div>
-
-
+}
