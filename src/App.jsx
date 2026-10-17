@@ -449,19 +449,20 @@ function studentWeekPageLabel(weeks) {
 }
 // Endast tillfällig A4-demonstration. Läggs aldrig i lärarens plan eller databasen.
 function a4DemoPlan(plan) {
-  const weeksData = Array.from({ length: 2 }, (_, index) => {
+  const weeksData = Array.from({ length: 3 }, (_, index) => {
     const date = new Date(Date.UTC(2026, 9, 12 + index * 7))
     const weekStart = date.toISOString().slice(0, 10)
     const long = index === 1
+    const imported = index === 2
     return {
-      weekStart, weekNumber: 42 + index, title: long ? 'Innehållsrik testvecka' : 'Exempelvecka',
+      weekStart, weekNumber: 42 + index, title: imported ? 'Test med långa texter och länkar' : long ? 'Innehållsrik testvecka' : 'Exempelvecka',
       chapter: 'A4-test – endast förhandsvisning',
-      content: long ? 'Den här veckan innehåller extra många moment för att pröva utskriften.' : 'Kort exempeltext.',
-      lessons: Array.from({ length: long ? 12 : 2 }, (_, lessonIndex) => ({
+      content: imported ? 'Test av längre inklistrade instruktioner, filnamn och länkar. Allt innehåll ska synas i stående A4 utan inre rullning.' : long ? 'Den här veckan innehåller extra många moment för att pröva utskriften.' : 'Kort exempeltext.',
+      lessons: Array.from({ length: long ? 12 : imported ? 3 : 2 }, (_, lessonIndex) => ({
         name: 'Lektion ' + (lessonIndex + 1),
         day: ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'][lessonIndex % 5],
-        topics: [{ name: 'Öva på tal och problemlösning med förklaringar och exempel ' + (lessonIndex + 1),
-          pages: ['42–45'], assignments: ['Uppgift 1–8', 'Förklara ditt svar med egna ord'], links: [] }],
+        topics: [{ name: imported ? 'Längre inklistrat moment: Läs instruktionerna noggrant, jämför lösningsmetoder och förklara i flera steg hur du kommer fram till ditt svar. Kontrollera sedan beräkningarna och resonera om alternativa lösningar.' : 'Öva på tal och problemlösning med förklaringar och exempel ' + (lessonIndex + 1),
+          pages: imported ? ['Sidorna 142–149, övning 3a–3f och fördjupning på sidan 150'] : ['42–45'], assignments: imported ? ['Uppgift 1–8: Visa uträkning, motivera varje steg och skriv en tydlig slutsats.', 'Inklistrad instruktion: Lämna in ett dokument med filnamnet Matematik_fordjupning_vecka44_komplett_redovisning.pdf. Beskriv vilka metoder du valde och varför.'] : ['Uppgift 1–8', 'Förklara ditt svar med egna ord'], links: imported ? ['https://example.org/undervisning/matematik/fordjupning/vecka-44/langt-resursnamn'] : [] }],
       })),
       pages: [], assignments: [], links: [],
     }
