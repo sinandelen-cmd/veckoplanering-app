@@ -904,7 +904,9 @@ function TeacherApp({ session }) {
       <p className="muted">Fyll i både Namn och Ämne innan du väljer Spara utkast. Kontrollera att meddelandet ”Utkast sparat.” visas.</p>
     </section>
 
-    <section className="card">
+    <section className="card teacher-settings-card">
+      <details className="teacher-settings-details">
+        <summary><strong>Grunduppgifter och inställningar</strong><span>Ändra namn, ämne, skolform, läsår och visningsalternativ</span></summary>
       <div className="form-grid">
         <label>Namn<input value={plan.title} onChange={e => setPlan({ ...plan, title: e.target.value })} placeholder="Matematik 2026–2027" /></label>
         <label>Skolform<select value={plan.schoolForm || ''} onChange={e => setPlan(p => ({ ...p, schoolForm: e.target.value, grade: '', course: '' }))}>
@@ -977,6 +979,7 @@ function TeacherApp({ session }) {
           setPlan(p => ({ ...p, weeks: count, weeksData: reconcileWeeks(p, p.startDate, count) }))
         }} /></label>
       </div>
+      </details>
     </section>
 
     {calendarOpen && <YearCalendar weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={nationalExamsForPlan(plan)} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} />}
