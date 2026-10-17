@@ -470,7 +470,7 @@ function StudentView({ plan, error, preview = false, printPage = null }) {
     const textLength = [week.title, week.chapter, week.content,
       ...(week.lessons || []).flatMap(lesson => [lesson.name, lesson.day,
         ...(lesson.topics || []).flatMap(topic => [topic.name, ...(topic.pages || []), ...(topic.assignments || [])])])]
-      .filter(Boolean).map(value => String(value)).join(' ').length
+      .filter(Boolean).map(value => typeof value === 'string' ? value : JSON.stringify(value)).join(' ').length
     const contentBlocks = (week.lessons || []).length +
       (week.lessons || []).reduce((sum, lesson) => sum + (lesson.topics || []).length, 0)
     const weight = textLength > 1100 || contentBlocks > 16 ? 4 :
