@@ -57,11 +57,11 @@ function emptyPlan() {
 }
 
 function makeWeeks(plan, count = plan.weeks) {
-  const total = Math.max(1, Math.min(52, Number(count) || DEFAULT_WEEKS))
+  const total = Math.max(1, Math.trunc(Number(count) || DEFAULT_WEEKS))
   return Array.from({ length: total }, (_, index) => ({
-    weekNumber: (Number(plan.startWeek) || 1) + index,
+    weekNumber: calendarWeekNumber(addWeeks(plan.startDate, index)) ?? (Number(plan.startWeek) || 1),
     weekStart: addWeeks(plan.startDate, index),
-    title: `Vecka ${(Number(plan.startWeek) || 1) + index}`,
+    title: `Vecka ${calendarWeekNumber(addWeeks(plan.startDate, index)) ?? (Number(plan.startWeek) || 1)}`,
     chapter: '',
     content: '',
     pages: [], assignments: [], links: [],
@@ -85,13 +85,13 @@ function displayWeeks(plan) {
 }
 
 function reconcileWeeks(plan, startDate, count) {
-  const total = Math.max(1, Math.min(52, Number(count) || DEFAULT_WEEKS))
+  const total = Math.max(1, Math.trunc(Number(count) || DEFAULT_WEEKS))
   const previous = Array.isArray(plan.weeksData) && plan.weeksData.length ? plan.weeksData : makeWeeks(plan)
   const fresh = makeWeeks({ ...plan, startDate, weeks: total }, total)
   return fresh.map((week, index) => ({
     ...week,
     ...(previous[index] || {}),
-    weekNumber: previous[index]?.weekNumber ?? (Math.max((Number(plan.startWeek) || 1) - 1, ...previous.map(item => Number(item.weekNumber) || 0)) + index - previous.length + 1),
+    weekNumber: calendarWeekNumber(week.weekStart) ?? week.weekNumber,
     weekStart: week.weekStart,
   }))
 }
@@ -779,14 +779,9 @@ function TeacherApp({ session }) {
           })
         }}><option value="lektion">Lektion</option><option value="dag">Dag</option></select></label>
         {plan.entryType !== 'dag' && <label>Lektioner per ny vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek || 3} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 3)) }))} /></label>}
-        <label>Antal veckor<input type="number" min="1" max="52" value={plan.weeks} onChange={e => {
-          const count = Math.max(1, Math.min(52, Number(e.target.value) || 1))
+        <label>Antal veckor<input type="number" min="1" value={plan.weeks} onChange={e => {
+          const count = Math.max(1, Math.trunc(Number(e.target.value) || 1))
           if (count === weeks.length) return
-          const maxExistingWeek = Math.max(0, ...weeks.map(week => Number(week.weekNumber) || 0))
-          if (count > weeks.length && maxExistingWeek + (count - weeks.length) > 53) {
-            setStatus('Det finns inte tillräckligt med veckonummer kvar före vecka 53. Minska antalet veckor eller ändra startvecka.')
-            return
-          }
           const discarded = weeks.slice(count)
           const hasWork = discarded.some((week, index) => hasWeekWork(week, count + index))
           if (hasWork && !window.confirm('Det finns innehåll i veckor som tas bort. Vill du verkligen radera det innehållet?')) return
