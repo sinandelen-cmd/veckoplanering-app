@@ -459,3 +459,30 @@ h3 { margin: 8px 0; color: var(--green-900); }
     widows: 2;
   }
 }
+
+/* Lärarens elevförhandsvisning: skriv aldrig ut formulär, bibliotek eller navigering.
+   #lararvy är den verkliga föräldern, inte .narrow-shell. */
+@media print {
+  body:has(#lararvy .student-print-pages) #lararvy > :not(.preview-panel) {
+    display: none !important;
+  }
+  body:has(#lararvy .student-print-pages) #lararvy {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  body:has(#lararvy .student-print-pages) #lararvy > .preview-panel {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  body:has(#lararvy .student-print-pages) #lararvy > .preview-panel > :not(.student-print-pages) {
+    display: none !important;
+  }
+}
