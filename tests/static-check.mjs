@@ -18,7 +18,9 @@ assert.match(sql, /drop policy if exists "Public can view published annual plans
 assert.match(redirects, /\/\*\s+\/index\.html\s+200/)
 // Regression checks for the student view and publication safety.
 assert.match(app, /const pageSize = Math\.min\(6, columns \* rows\)/)
-assert.match(app, /const visibleWeeks = studentWeeks\.slice\(currentPage \* pageSize, \(currentPage \+ 1\) \* pageSize\)/)
+assert.match(app, /studentWeeks\.slice\(currentPage \* pageSize, \(currentPage \+ 1\) \* pageSize\)/)
+assert.match(app, /const printPageSize = 4/)
+assert.match(app, /studentWeeks\.slice\(printPage \* printPageSize, \(printPage \+ 1\) \* printPageSize\)/)
 assert.match(app, /function isoWeekYear\(dateString\)/)
 assert.match(app, /weekStart \|\| `number-\$\{other\.weekNumber\}`/)
 assert.match(app, /\.sort\(\(a, b\) => \(a\.weekStart \|\| ''\)\.localeCompare\(b\.weekStart \|\| ''\)\)/)
