@@ -589,3 +589,58 @@ nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a
     min-width: 0;
   }
 }
+
+/* A4-finjustering: skalad, läsbar layout utan inre rullningsfält.
+   Text i uppgiftsrutor får växa så att inget kapas vid utskrift. */
+@media print {
+  .student-print-page,
+  .student-print-page * { box-sizing: border-box !important; }
+  .student-print-page .student-matrix,
+  .student-print-page .student-list,
+  .student-print-page .chapter-week-group,
+  .student-print-page .student-week-card,
+  .student-print-page .lesson,
+  .student-print-page .topic-grid,
+  .student-print-page .topic-column {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+  .student-print-page .student-week-card {
+    font-size: 8pt !important;
+    line-height: 1.22 !important;
+  }
+  .student-print-page .lesson { font-size: 8pt !important; }
+  .student-print-page .topic-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 1mm !important;
+  }
+  .student-print-page .topic-column {
+    padding: 1.5mm !important;
+    overflow: visible !important;
+  }
+  .student-print-page .topic-cell,
+  .student-print-page .topic-cell span {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    flex: 0 1 auto !important;
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+  }
+  .student-print-page .topic-cell {
+    margin-bottom: 1mm !important;
+    align-items: flex-start !important;
+  }
+  .student-print-page .topic-cell span {
+    padding: 1.5mm !important;
+    font-size: 8pt !important;
+    line-height: 1.2 !important;
+  }
+  .student-print-page .topic-column h5 {
+    min-height: 0 !important;
+    margin: 0 0 1mm !important;
+  }
+}
