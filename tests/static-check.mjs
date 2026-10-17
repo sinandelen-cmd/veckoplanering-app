@@ -265,3 +265,11 @@ assert.match(app, /if \(id === ['"]elevvy['"]\) setPreviewStudents\(true\)/)
 assert.doesNotMatch(app, /className="teacher-tabs"/, 'Dubbla lärarflikar får inte finnas')
 assert.doesNotMatch(app, /<strong>Sparstatus:<\/strong>/, 'Sparstatus ska inte upprepas')
 assert.match(app, /setTeacherTab\('arsplan'\); setPreviewStudents\(false\); setStatus\('Planeringen är öppnad\.'\)/)
+
+// Sidomenyn ska börja med Mina planeringar och använda samma öppna plan för båda vyerna.
+const nav = fs.readFileSync(new URL('../src/Navigation.jsx', import.meta.url), 'utf8')
+assert.match(nav, /planning-sidebar/)
+assert.match(nav, /Mina planeringar/)
+assert.match(nav, /onOpenPlan\(row\)/)
+assert.match(app, /plans=\{plans\} selectedId=\{selectedId\} onOpenPlan=\{loadPlan\}/)
+assert.match(css, /\.planning-layout/)
