@@ -572,3 +572,24 @@ nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a
     font-size: 8pt !important;
   }
 }
+
+/* Chrome kan skapa en tom sida när break-after och break-inside:avoid
+   kombineras på samma höga sidbehållare. Bryt i stället före nästa grupp. */
+@media print {
+  .student-print-page,
+  .student-print-page:last-child {
+    break-after: auto !important;
+    page-break-after: auto !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+  .student-print-page + .student-print-page {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+  .student-print-page .chapter-week-group,
+  .student-print-page .student-week-card {
+    break-inside: avoid-page !important;
+    page-break-inside: avoid !important;
+  }
+}
