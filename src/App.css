@@ -367,7 +367,7 @@ h3 { margin: 8px 0; color: var(--green-900); }
 /* A4-utskrift: samma elevkort, högst sex veckor per sida. */
 .student-print-pages { display:none; }
 @media print {
-  @page { size:A4 portrait; margin:9mm; }
+  @page { size:A4 landscape; margin:9mm; }
   body { background:white !important; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
   .student-screen-view { display:none !important; }
   .student-print-pages { display:block !important; }
@@ -606,4 +606,23 @@ nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a
     grid-auto-rows: max-content !important;
     gap: 4mm !important;
   }
+}
+
+/* Liggande A4: ge innehållsrika veckor hela sidbredden utan inre scrollfält. */
+@media print {
+  .student-print-page,
+  .student-print-page .student-matrix,
+  .student-print-page .student-list,
+  .student-print-page .chapter-week-group,
+  .student-print-page .student-week-card,
+  .student-print-page .week-content,
+  .student-print-page .lessons,
+  .student-print-page .lesson,
+  .student-print-page .topic,
+  .student-print-page .topic-grid,
+  .student-print-page .resource-chip {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .student-print-page .student-week-card { height: auto !important; }
 }
