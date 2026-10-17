@@ -819,7 +819,7 @@ function TeacherApp({ session }) {
     if (busy) return
     if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
     try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(row.id)) } catch { /* Lagring kan vara blockerad */ }
-    setSelectedId(row.id); savedPlanRef.current = JSON.stringify(planFromRow(row)); setSavedRevision(revision => revision + 1); setPlan(planFromRow(row)); setStatus('Planeringen är öppnad.'); window.scrollTo({ top: 0, behavior: 'smooth' })
+    setSelectedId(row.id); savedPlanRef.current = JSON.stringify(planFromRow(row)); setSavedRevision(revision => revision + 1); setPlan(planFromRow(row)); setTeacherTab('arsplan'); setPreviewStudents(false); setStatus('Planeringen är öppnad.'); window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function clonePlan(row) {
@@ -892,27 +892,16 @@ function TeacherApp({ session }) {
       <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
     </header>
 
-    <section className="card hero-card">
-      <div><p className="eyebrow">PLANERA</p><h2>{selectedId ? "Redigera sparad årsplanering" : "Ny årsplanering – ännu inte sparad"}</h2><p className="muted">{selectedId ? `Öppen planering: ${plan.title || "Utan namn"}. Efter F5 öppnas den automatiskt igen i samma flik. Du kan också hitta den under Mina årsplaneringar.` : "Du arbetar med en ny planering. Välj Spara utkast för att behålla den."}</p></div>
-      <div className="button-row"><button className="secondary" disabled={busy} onClick={() => {
-        if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
-        const fresh = emptyPlan(); try { window.sessionStorage.removeItem(`arsplanering-last-open-${session.user.id}`) } catch { /* Lagring kan vara blockerad */ } setPlan(fresh); setSelectedId(null); savedPlanRef.current = JSON.stringify(fresh); setSavedRevision(revision => revision + 1); setStatus('Ny planering klar. Spara utkast när du har fyllt i din planering.')
-      }}>Ny planering</button></div>
-    </section>
+    <div className="planning-context"><strong>{plan.title || 'Ny årsplanering'}</strong><span aria-live="polite">{busy ? 'Sparar…' : isDirty ? 'Osparade ändringar' : selectedId ? 'Sparad' : 'Inte sparad'}</span></div>
 
     {(isDirty || busy) && <div className="quick-save-bar" role="region" aria-label="Snabbspara årsplanering">
       <span aria-live="polite">{busy ? "Sparar…" : "Osparade ändringar"}</span>
       <button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
     </div>}
 
-    <nav className="teacher-tabs" aria-label="Arbetsområden i lärarvyn">
-      {[["arsplan", "Årsplan"], ["redigera", "Redigera"], ["elevvy", "Elevvy och utskrift"], ["mina", "Mina planer"]].map(([id, label]) => <button key={id} type="button" className={teacherTab === id ? "teacher-tab active" : "teacher-tab"} aria-current={teacherTab === id ? "page" : undefined} onClick={() => { setTeacherTab(id); if (id === "elevvy") setPreviewStudents(true) }}>{label}</button>)}
-    </nav>
     <div className="teacher-tab-panel" hidden={teacherTab !== "arsplan"}>
     <section className="card" aria-live="polite">
-      <p><strong>Sparstatus:</strong> {busy ? "Sparar…" : isDirty ? "Osparade ändringar" : selectedId ? "Inga osparade ändringar" : "Ny planering – inte sparad"}</p>
       {status && <p className="status">{status}</p>}
-      <p className="muted">Fyll i både Namn och Ämne innan du väljer Spara utkast. Kontrollera att meddelandet ”Utkast sparat.” visas.</p>
     </section>
 
     <section className="card teacher-settings-card">
@@ -1032,7 +1021,7 @@ function TeacherApp({ session }) {
       <div className="button-row">
         <button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
         <button type="button" className="primary" disabled={busy} onClick={() => save(true)}>Publicera för elever</button>
-        <button type="button" className="secondary" onClick={() => { setPreviewStudents(value => !value); setTeacherTab("elevvy") }}>{previewStudents ? 'Dölj elevförhandsvisning' : 'Förhandsgranska elevvyn'}</button>
+        
       </div>
     </section>
 
@@ -1111,7 +1100,7 @@ function TeacherApp({ session }) {
         })}>+ Lägg till vecka</button>
       </div>
       <div className="sticky-actions button-row">
-        <button type="button" className="secondary" onClick={() => { setPreviewStudents(value => !value); setTeacherTab("elevvy") }}>{previewStudents ? "Dölj elevförhandsvisning" : "Förhandsgranska elevvyn"}</button>
+        
         <button className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
         <button className="primary" disabled={busy} onClick={() => save(true)}>Publicera för elever</button>
       </div>
