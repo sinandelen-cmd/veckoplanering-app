@@ -224,3 +224,9 @@ h3 { margin: 8px 0; color: var(--green-900); }
 .calendar-layout-selector select { width: auto; min-width: 190px; padding: 8px 10px; border: 1px solid #b8d3c7; border-radius: 9px; background: white; color: #173b30; }
 .calendar-zoom-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 @media (max-width: 780px) { .calendar-top { flex-wrap: wrap; } }
+
+/* Zoomkalendern fungerar som en gardin ovanpå årsplaneringen. */
+.calendar-overlay { position: fixed; inset: 65px 12px 12px; z-index: 100; max-width: none; margin: 0; overflow-y: auto; overscroll-behavior: contain; box-shadow: 0 0 0 100vmax rgba(25, 30, 40, .30), 0 12px 40px rgba(0,0,0,.18); }
+.calendar-tile-month { color: #45404c; }
+.calendar-week-tile:hover, .calendar-week-tile:focus-visible { background: #fffdfa; }
+@media (max-width: 650px) { .calendar-overlay { inset: 52px 4px 4px; padding: 12px; } }
