@@ -51,7 +51,7 @@ function slugify(value) {
 function emptyPlan() {
   return {
     title: '', subject: '', schoolYear: '', className: '',
-    startDate: mondayOf(), startWeek: 1, entryType: 'lektion', lessonsPerWeek: 3, weeks: DEFAULT_WEEKS, weeksData: [],
+    startDate: mondayOf(), startWeek: 1, entryType: 'lektion', lessonDisplay: 'bara-lektion', lessonsPerWeek: 3, weeks: DEFAULT_WEEKS, weeksData: [],
     published: false, publicSlug: '',
   }
 }
@@ -214,6 +214,7 @@ function sanitizeForStudents(plan) {
     schoolYear: String(plan?.schoolYear || ''),
     published: true,
     entryType: plan?.entryType === 'dag' ? 'dag' : 'lektion',
+    lessonDisplay: ['dag-lektion', 'bara-dag', 'bara-lektion'].includes(plan?.lessonDisplay) ? plan.lessonDisplay : 'bara-lektion',
     weeksData: sourceWeeks
       .filter(week => week && typeof week === 'object' && !week.hidden)
       .sort((a, b) => (b.weekStart || '').localeCompare(a.weekStart || ''))
@@ -222,7 +223,7 @@ function sanitizeForStudents(plan) {
         weekStart: typeof week.weekStart === 'string' ? week.weekStart : '',
         title: typeof week.title === 'string' ? week.title : '',
         chapter: typeof week.chapter === 'string' ? week.chapter.slice(0, 160) : '',
-        lessons: Array.isArray(week.lessons) ? week.lessons.map(lesson => ({ name: String(lesson.name || ''), topics: Array.isArray(lesson.topics) ? lesson.topics.map(topic => ({ name: String(topic.name || ''), pages: Array.isArray(topic.pages) ? topic.pages.map(String) : [], assignments: Array.isArray(topic.assignments) ? topic.assignments.map(String) : [], links: Array.isArray(topic.links) ? topic.links.filter(link => link && resourceInfo(typeof link === 'string' ? link : link.url)).map(link => typeof link === 'string' ? { url: link, label: resourceInfo(link).label } : { url: String(link.url), label: String(link.label || resourceInfo(link.url).label) }) : [] })) : [] })) : [],
+        lessons: Array.isArray(week.lessons) ? week.lessons.map(lesson => ({ name: String(lesson.name || ''), day: String(lesson.day || ''), topics: Array.isArray(lesson.topics) ? lesson.topics.map(topic => ({ name: String(topic.name || ''), pages: Array.isArray(topic.pages) ? topic.pages.map(String) : [], assignments: Array.isArray(topic.assignments) ? topic.assignments.map(String) : [], links: Array.isArray(topic.links) ? topic.links.filter(link => link && resourceInfo(typeof link === 'string' ? link : link.url)).map(link => typeof link === 'string' ? { url: link, label: resourceInfo(link).label } : { url: String(link.url), label: String(link.label || resourceInfo(link.url).label) }) : [] })) : [] })) : [],
         content: typeof week.content === 'string' ? week.content : '',
         pages: Array.isArray(week.pages) ? week.pages.filter(v => typeof v === 'string' && v.trim()).slice(0, 100) : [],
         assignments: Array.isArray(week.assignments) ? week.assignments.filter(v => typeof v === 'string' && v.trim()).slice(0, 100) : [],
@@ -345,7 +346,7 @@ function StudentView({ plan, error, preview = false }) {
         </div>
         {!/^Vecka\s+\d+$/i.test(week.title || '') && week.title?.trim() && <h3>{week.title}</h3>}
         <div className="week-content">{week.content || (!week.pages?.length && !week.assignments?.length && !week.links?.length && !week.lessons?.some(lesson => lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.length || topic.assignments?.length || topic.links?.length)) ? 'Ingen planering angiven ännu.' : '')}</div>
-        <LessonDetails week={week} entryType={plan.entryType || 'lektion'} />
+        <LessonDetails week={week} entryType={plan.entryType || 'lektion'} lessonDisplay={plan.lessonDisplay || 'bara-lektion'} />
         <WeekDetails week={week} />
       </article></div>)}
     </section>
@@ -719,6 +720,7 @@ function TeacherApp({ session }) {
           })
         }} /></label>
         <label>Första veckans nummer<input type="number" min="1" max="53" readOnly title="Beräknas automatiskt från startdatumet" value={calendarWeekNumber(plan.startDate) ?? plan.startWeek ?? 1} /></label>
+        <label>Visning för elever<select value={plan.lessonDisplay || 'bara-lektion'} onChange={e => setPlan(p => ({ ...p, lessonDisplay: e.target.value }))}><option value="dag-lektion">Dag + lektion</option><option value="bara-dag">Bara dag</option><option value="bara-lektion">Bara lektion</option></select></label>
         <label>Planera efter<select value={plan.entryType || 'lektion'} onChange={e => {
           const entryType = e.target.value
           setPlan(p => {
@@ -953,7 +955,7 @@ function lessonDayDate(weekStart, lessonName) {
   date.setDate(date.getDate() - ((date.getDay() + 6) % 7) + index)
   return formatDate(toIsoDate(date))
 }
-function LessonDetails({ week, onChange, entryType = 'lektion' }) {
+function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 'bara-lektion' }) {
   const lessons = Array.isArray(week?.lessons) ? week.lessons : []
   const editable = typeof onChange === 'function'
   const changeLessons = next => onChange?.({ lessons: next, ...(entryType === 'dag' ? { daysCustomized: true } : {}) })
