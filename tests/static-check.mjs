@@ -98,3 +98,7 @@ assert.match(nationalExams, /locked:true/)
 assert.match(app, /verified: false, name: name/)
 assert.match(app, /checked=\{item.verified === true\}/)
 assert.match(app, /Skolledigt \(ej verifierat\)/)
+
+assert.match(app, /startDate: e\.target\.value, verified: false/)
+assert.match(app, /endDate: e\.target\.value, verified: false/)
+assert.match(app, /toIsoDate\(date\) === value/)
