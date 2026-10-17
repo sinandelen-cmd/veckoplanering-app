@@ -289,6 +289,20 @@ function chapterTone(chapter) {
   return hash % 4
 }
 
+function studentWeekStyle(dateString) {
+  const date = new Date(dateString + 'T12:00:00')
+  if (Number.isNaN(date.getTime())) return {}
+  const colors = ['#eaf3ff', '#fff0df', '#f2ebff', '#e7f6ed', '#fff3e8']
+  return { backgroundColor: colors[Math.floor((date.getDate() - 1) / 7) % colors.length], borderColor: '#dce4e8' }
+}
+function studentMonthInfo(dateString) {
+  const date = new Date(dateString + 'T12:00:00')
+  if (Number.isNaN(date.getTime())) return null
+  const year = date.getFullYear(), month = date.getMonth()
+  const first = toIsoDate(new Date(year, month, 1, 12))
+  const last = toIsoDate(new Date(year, month + 1, 0, 12))
+  return { name: new Intl.DateTimeFormat('sv-SE', { month: 'long' }).format(date).toLocaleUpperCase('sv-SE'), weeks: 'Vecka ' + calendarWeekNumber(first) + '–' + calendarWeekNumber(last), color: MONTH_PASTELS[month] }
+}
 function StudentView({ plan, error, preview = false }) {
   const studentWeeks = Array.isArray(plan?.weeksData) ? plan.weeksData.filter(week => !week.hidden).sort((a, b) => (b.weekStart || '').localeCompare(a.weekStart || '')) : []
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
@@ -301,9 +315,12 @@ function StudentView({ plan, error, preview = false }) {
     <section className="year-grid">
       {studentWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
         {week.chapter?.trim() && (index === 0 || week.chapter !== studentWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
-        <article className="week-card">
-        <div className="week-top"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
-        <h3>{/^Vecka\s+\d+$/i.test(week.title || '') ? `Vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}` : week.title}</h3>
+        <article className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
+        <div className="week-top student-week-top">
+          <div className="student-week-identity"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
+          {studentMonthInfo(week.weekStart) && <div className="student-month-info" style={{ backgroundColor: studentMonthInfo(week.weekStart).color }}><strong>{studentMonthInfo(week.weekStart).name}</strong><span>{studentMonthInfo(week.weekStart).weeks}</span></div>}
+        </div>
+        {!/^Vecka\s+\d+$/i.test(week.title || '') && week.title?.trim() && <h3>{week.title}</h3>}
         <div className="week-content">{week.content || (!week.pages?.length && !week.assignments?.length && !week.links?.length && !week.lessons?.some(lesson => lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.length || topic.assignments?.length || topic.links?.length)) ? 'Ingen planering angiven ännu.' : '')}</div>
         <LessonDetails week={week} entryType={plan.entryType || 'lektion'} />
         <WeekDetails week={week} />
