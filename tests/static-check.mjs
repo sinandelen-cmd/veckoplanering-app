@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
 const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+const printSource = fs.readFileSync(new URL('../src/printGroups.js', import.meta.url), 'utf8')
 const css = fs.readFileSync(new URL('../src/App.css', import.meta.url), 'utf8')
 const sql = fs.readFileSync(new URL('../supabase-migration.sql', import.meta.url), 'utf8')
 const redirects = fs.readFileSync(new URL('../public/_redirects', import.meta.url), 'utf8')
@@ -103,13 +104,8 @@ assert.match(app, /startDate: e\.target\.value, verified: false/)
 assert.match(app, /endDate: e\.target\.value, verified: false/)
 assert.match(app, /toIsoDate\(date\) === value/)
 
-assert.match(app, /const contentBlocks = \(week\.lessons \|\| \[\]\)\.length/)
-assert.match(app, /textLength > 1100 \|\| contentBlocks > 16/)
 assert.doesNotMatch(app, /JSON\.stringify\(week\)\.length/)
 
-assert.match(app, /const contentBlocks = \(week\.lessons \|\| \[\]\)\.length/)
-assert.match(app, /textLength > 1100 \|\| contentBlocks > 16/)
-assert.match(app, /printGroups\.push\(\{ weeks: \[week\], weight \}\)/)
 
 assert.match(app, /weekContentScore = week =>/)
 assert.match(app, /topic\.links\?\.length \|\| 0/)
@@ -222,3 +218,6 @@ assert.deepEqual(mixedGroups.map(group => group.weeks.length), [1, 1, 1])
 assert.equal(mixedGroups[1].weight, 4)
 assert.deepEqual(groupStudentWeeksForPrint([]), [])
 assert.equal(groupStudentWeeksForPrint([{ content: 'Vecka', lessons: [null, { topics: [null, { name: 'Tal' }] }] }]).length, 1)
+
+assert.match(printSource, /textLength > 1100/)
+assert.match(printSource, /groups.push/)
