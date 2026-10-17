@@ -712,7 +712,7 @@ function TeacherApp({ session }) {
     }
   }
 
-  return <><Navigation plans={plans} onOpenPlan={loadPlan} selectedId={selectedId} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} />{calendarOpen && <YearCalendar weeks={weeks} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} />}<main className="shell" id="lararvy">
+  return <><Navigation plans={plans} onOpenPlan={loadPlan} selectedId={selectedId} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} /><main className="shell" id="lararvy">
     <header className="topbar">
       <div><p className="eyebrow">LÄRARVY</p><h1>{APP_TITLE}</h1><p className="muted">{session.user.email}</p></div>
       <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
@@ -788,6 +788,8 @@ function TeacherApp({ session }) {
         }} /></label>
       </div>
     </section>
+
+    {calendarOpen && <YearCalendar weeks={weeks} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} />}
 
     <section className="card calendar-primary-actions" aria-label="Spara och publicera årsplaneringen">
       <div className="button-row">
