@@ -222,7 +222,8 @@ function sanitizeForStudents(plan) {
     studentRows: Math.max(1, Math.min(6, Number(plan?.studentRows) || 2)),
     weeksData: sourceWeeks
       .filter(week => week && typeof week === 'object' && !week.hidden)
-      .sort((a, b) => (b.weekStart || '').localeCompare(a.weekStart || ''))
+      // Elevversionen sorteras utan att ändra lärarens ursprungliga veckolista.
+      .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || ''))
       .map((week, index) => ({
         weekNumber: Number.isInteger(week.weekNumber) ? week.weekNumber : index + 1,
         weekStart: typeof week.weekStart === 'string' ? week.weekStart : '',
