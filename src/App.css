@@ -626,3 +626,25 @@ nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a
   }
   .student-print-page .student-week-card { height: auto !important; }
 }
+
+/* En tydlig utskriftsknapp i övre högra hörnet på varje elevvecka. */
+.student-week-card { position: relative; }
+.print-single-week {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  float: right;
+  margin: 0 0 8px 8px;
+  padding: 7px 10px;
+  border: 1px solid #9bcbbf;
+  border-radius: 8px;
+  background: #e0f2ed;
+  color: #075b46;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.print-single-week:hover { background: #c6e9df; }
+.print-single-week:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+@media print { .print-single-week { display: none !important; } }
