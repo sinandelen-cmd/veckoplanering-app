@@ -486,3 +486,9 @@ h3 { margin: 8px 0; color: var(--green-900); }
     display: none !important;
   }
 }
+
+@media print {
+  body:has(#lararvy .student-print-pages) nav[aria-label="Huvudmeny"] {
+    display: none !important;
+  }
+}
