@@ -281,3 +281,26 @@ h3 { margin: 8px 0; color: var(--green-900); }
 .student-month-info span { font-size: .9rem; font-weight: 750; }
 .student-week-card .week-content { background: #fff9fb; font-weight: 700; color: #243643; border-radius: 8px; }
 .student-week-card .lesson-heading, .student-week-card .lesson-heading strong { font-weight: 800; }
+
+/* Elevmatris: upp till sex veckor på ett blad, utan sidscroll på stor skärm. */
+.student-pager { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:12px 0; }
+.student-pager button { padding:8px 14px; }
+.student-matrix { display:grid; grid-template-columns:repeat(var(--student-columns,3), minmax(0,1fr)); gap:12px; align-items:stretch; }
+.student-matrix .chapter-week-group { min-width:0; display:flex; flex-direction:column; }
+.student-matrix .week-card { min-width:0; flex:1; overflow:auto; }
+.student-matrix .chapter-heading { font-size:1rem; margin:0 0 6px; }
+.student-matrix .student-week-identity strong { font-size:1.15rem; }
+.student-matrix .student-month-info { padding:5px 8px; }
+.student-matrix .student-month-info strong { font-size:.82rem; }
+.student-matrix .student-month-info span { font-size:.75rem; }
+@media (min-width:800px) {
+  .student-shell:has(.student-matrix) { max-width:none; width:100%; }
+  .student-matrix { height:calc(100dvh - 215px); min-height:360px; grid-template-rows:repeat(var(--student-rows,2),minmax(0,1fr)); overflow:hidden; }
+  .student-matrix .chapter-week-group { min-height:0; overflow:hidden; }
+}
+@media (max-width:799px) {
+  .student-matrix { grid-template-columns:repeat(min(2,var(--student-columns,3)),minmax(0,1fr)); }
+}
+@media (max-width:520px) {
+  .student-matrix { grid-template-columns:minmax(0,1fr); }
+}
