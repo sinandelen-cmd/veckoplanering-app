@@ -469,7 +469,7 @@ function a4DemoPlan(plan) {
   return { ...plan, title: 'A4-TEST – INTE SPARAD', studentLayout: 'grid', weeksData }
 }
 
-function StudentView({ plan, error, preview = false, printPage = null }) {
+function StudentView({ plan, error, preview = false, printPage = null, printWeekStart = null }) {
   const [page, setPage] = useState(0)
   const [singlePrintWeek, setSinglePrintWeek] = useState(null)
   useEffect(() => {
@@ -506,7 +506,7 @@ function StudentView({ plan, error, preview = false, printPage = null }) {
   const currentPage = printPage === null ? Math.min(page, pages - 1) : printPage
   const visibleWeeks = printPage === null
     ? studentWeeks.slice(currentPage * pageSize, (currentPage + 1) * pageSize)
-    : (printGroups[printPage]?.weeks || [])
+    : (printWeekStart ? studentWeeks.filter(week => week.weekStart === printWeekStart) : (printGroups[printPage]?.weeks || []))
   const pageWeekLabel = studentWeekPageLabel(visibleWeeks)
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
@@ -522,7 +522,7 @@ function StudentView({ plan, error, preview = false, printPage = null }) {
       {visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
         {week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
         <article className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
-        {printPage === null && <button type="button" className="print-single-week" onClick={() => printOnlyWeek(week.weekStart)} aria-label={`Skriv ut vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} på liggande A4`}>🖨 Skriv ut veckan</button>}
+        {printPage === null && <button type="button" className="print-single-week" onClick={() => printOnlyWeek(week.weekStart)} aria-label={`Skriv ut vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} på stående A4`}>🖨 Skriv ut veckan</button>}
         <div className="week-top student-week-top">
           <div className="student-week-identity"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{studentWeekDateRange(week.weekStart)}</span></div>
           {studentMonthInfo(week.weekStart) && <div className="student-month-info" style={{ backgroundColor: studentMonthInfo(week.weekStart).color }}><strong>{studentMonthInfo(week.weekStart).name}</strong><span>{studentMonthInfo(week.weekStart).weeks}</span></div>}
@@ -535,7 +535,7 @@ function StudentView({ plan, error, preview = false, printPage = null }) {
     </section>
   </main>
   {printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">
-    {Array.from({ length: printGroups.length }, (_, index) => <StudentView key={index} plan={plan} preview={preview} printPage={index} />)}
+    {Array.from({ length: printGroups.length }, (_, index) => <StudentView key={index} plan={plan} preview={preview} printPage={index} printWeekStart={singlePrintWeek} />)}
   </div>}
 </>
 }
