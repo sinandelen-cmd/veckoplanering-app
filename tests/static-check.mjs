@@ -123,3 +123,6 @@ assert.match(app, /parsed\.username \|\| parsed\.password/)
 assert.match(app, /host === 'drive\.google\.com'/)
 assert.match(app, /host\.endsWith\('\.sharepoint\.com'\)/)
 assert.match(app, /week\.links\.filter\(v => typeof v === 'string' && resourceInfo\(v\)\)\.map\(v => v\.trim\(\)\)/)
+
+assert.match(app, /publish && !sanitizeForStudents\(\{ \.\.\.plan, weeksData: weeks \}\)\.weeksData\.length/)
+assert.match(app, /Det finns inga synliga veckor att publicera/)
