@@ -87,6 +87,14 @@ function swedishPublicHolidays(year) {
   ].filter(Boolean)
 }
 
+function validSchoolClosure(item) {
+  return Boolean(item && item.name?.trim() && /^\d{4}-\d{2}-\d{2}$/.test(item.startDate || '') &&
+    /^\d{4}-\d{2}-\d{2}$/.test(item.endDate || '') &&
+    !Number.isNaN(new Date(item.startDate + 'T12:00:00').getTime()) &&
+    !Number.isNaN(new Date(item.endDate + 'T12:00:00').getTime()) &&
+    item.startDate <= item.endDate)
+}
+
 function publicHolidaysInWeek(weekStart) {
   const start = new Date(`${weekStart}T12:00:00`)
   const end = new Date(start)
@@ -477,7 +485,7 @@ function YearCalendar({ weeks, schoolClosures = [], onClose, onUpdateWeek, onSav
     </div>
     {selectedWeek ? <div className="calendar-week-detail">
       <p><strong>{(/^Vecka\s+\d+$/i.test(selectedWeek.title || '') ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : selectedWeek.title) || `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}`}</strong> · {formatDate(selectedWeek.weekStart)}</p>
-      {schoolClosures.filter(item => item.startDate <= addWeeks(selectedWeek.weekStart, 1) && item.endDate >= selectedWeek.weekStart).map(item => <p key={item.id} className="calendar-holiday"><strong>Skolledigt:</strong> {item.name} · {formatDate(item.startDate)}–{formatDate(item.endDate)}</p>)}
+      {schoolClosures.filter(item => validSchoolClosure(item) && item.startDate < addWeeks(selectedWeek.weekStart, 1) && item.endDate >= selectedWeek.weekStart).map(item => <p key={item.id} className="calendar-holiday"><strong>Skolledigt:</strong> {item.name} · {formatDate(item.startDate)}–{formatDate(item.endDate)}</p>)}
       {publicHolidaysInWeek(selectedWeek.weekStart).map(holiday => <p key={holiday.date} className="calendar-holiday"><strong>Röd dag:</strong> {holiday.name} · {formatDate(holiday.date)}</p>)}
       {selectedWeek.content && <p>{selectedWeek.content}</p>}
       <label className="student-visibility-toggle"><input type="checkbox" checked={!selectedWeek.hidden} onChange={e => editSelectedWeek({ hidden: !e.target.checked })} /> Visa hela veckan för elever</label>
@@ -498,7 +506,7 @@ function YearCalendar({ weeks, schoolClosures = [], onClose, onUpdateWeek, onSav
           <span className="calendar-tile-month" style={{ backgroundColor: MONTH_PASTELS[date.getMonth()] }}>{month}</span>
           <strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>
           <span className="calendar-tile-date">{formatDate(week.weekStart)}</span>
-          {schoolClosures.filter(item => item.startDate < addWeeks(week.weekStart, 1) && item.endDate >= week.weekStart).map(item => <span key={item.id} className="calendar-holiday">📅 {item.name}</span>)}
+          {schoolClosures.filter(item => validSchoolClosure(item) && item.startDate < addWeeks(week.weekStart, 1) && item.endDate >= week.weekStart).map(item => <span key={item.id} className="calendar-holiday">📅 {item.name}</span>)}
           {publicHolidaysInWeek(week.weekStart).map(holiday => <span key={holiday.date} className="calendar-holiday">🔴 {holiday.name} · {formatDate(holiday.date)}</span>)}
           {week.chapter && <span className="calendar-tile-chapter">{week.chapter}</span>}
           <span className="calendar-tile-topics">{topics.slice(0, 3).join(' · ') || week.content || 'Ingen planering inskriven ännu'}</span>
@@ -869,6 +877,7 @@ function TeacherApp({ session }) {
         <label>Benämning<input value={item.name} onChange={e => setPlan(p => ({ ...p, schoolClosures: (p.schoolClosures || []).map(v => v.id === item.id ? { ...v, name: e.target.value } : v) }))} /></label>
         <label>Från<input type="date" value={item.startDate} onChange={e => setPlan(p => ({ ...p, schoolClosures: (p.schoolClosures || []).map(v => v.id === item.id ? { ...v, startDate: e.target.value } : v) }))} /></label>
         <label>Till<input type="date" value={item.endDate} onChange={e => setPlan(p => ({ ...p, schoolClosures: (p.schoolClosures || []).map(v => v.id === item.id ? { ...v, endDate: e.target.value } : v) }))} /></label>
+        {!validSchoolClosure(item) && <p role="alert">Ange namn och giltiga datum. Slutdatum måste vara samma dag eller senare än startdatum.</p>}
         <button type="button" className="secondary" onClick={() => setPlan(p => ({ ...p, schoolClosures: (p.schoolClosures || []).filter(v => v.id !== item.id) }))}>Ta bort</button>
       </div>)}
       <button type="button" className="secondary" onClick={() => setPlan(p => ({ ...p, schoolClosures: [...(p.schoolClosures || []), { id: crypto.randomUUID(), name: 'Studiedag', startDate: p.startDate, endDate: p.startDate }] }))}>+ Lägg till lov eller studiedag</button>
