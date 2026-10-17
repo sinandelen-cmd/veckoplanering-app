@@ -771,7 +771,7 @@ function TeacherApp({ session }) {
             updateWeek(index, { weekStart: nextDate, weekNumber: target })
             setStatus('')
           }} /></label>
-          <input className="week-title" value={/^Vecka\s+\d+$/i.test(week.title || '') ? `Vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}` : (week.title || '')} onChange={e => updateWeek(index, { title: e.target.value })} />
+          {!/^Vecka\s+\d+$/i.test(week.title || '') && <input className="week-title" aria-label="Egen veckorubrik" value={week.title || ''} onChange={e => updateWeek(index, { title: e.target.value })} />}
           <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />
           <LessonDetails week={week} entryType={plan.entryType || 'lektion'} onChange={changes => updateWeek(index, changes)} />
           <details className="legacy-week-details" defaultOpen={Boolean(week.pages?.length || week.assignments?.length || week.links?.length)}>
