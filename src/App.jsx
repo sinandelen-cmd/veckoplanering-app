@@ -123,11 +123,13 @@ function suggestedSchoolClosures(startDate, numberOfWeeks) {
 }
 
 function validSchoolClosure(item) {
-  return Boolean(item && item.name?.trim() && /^\d{4}-\d{2}-\d{2}$/.test(item.startDate || '') &&
-    /^\d{4}-\d{2}-\d{2}$/.test(item.endDate || '') &&
-    !Number.isNaN(new Date(item.startDate + 'T12:00:00').getTime()) &&
-    !Number.isNaN(new Date(item.endDate + 'T12:00:00').getTime()) &&
-    item.startDate <= item.endDate)
+  if (!item?.name?.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(item.startDate || '') ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(item.endDate || '')) return false
+  const validDate = value => {
+    const date = new Date(value + 'T12:00:00')
+    return !Number.isNaN(date.getTime()) && toIsoDate(date) === value
+  }
+  return validDate(item.startDate) && validDate(item.endDate) && item.startDate <= item.endDate
 }
 
 function publicHolidaysInWeek(weekStart) {
