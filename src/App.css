@@ -422,3 +422,11 @@ h3 { margin: 8px 0; color: var(--green-900); }
   .student-print-page .chapter-week-group { display:block !important; }
   .student-print-page .student-week-card { overflow:visible !important; }
 }
+
+/* Vid utskrift från lärarens förhandsvisning ska bara elevplaneringen skrivas ut. */
+@media print {
+  .narrow-shell:has(.student-print-pages) > :not(.preview-panel) { display:none !important; }
+  .narrow-shell:has(.student-print-pages) { display:block !important; width:100% !important; max-width:none !important; padding:0 !important; margin:0 !important; }
+  .preview-panel:has(.student-print-pages) { display:block !important; border:0 !important; box-shadow:none !important; padding:0 !important; margin:0 !important; background:transparent !important; }
+  .preview-panel:has(.student-print-pages) > :not(.student-print-pages):not(.student-screen-view):not(.student-shell) { display:none !important; }
+}
