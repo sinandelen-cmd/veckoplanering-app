@@ -106,13 +106,13 @@ function suggestedSchoolClosures(startDate, numberOfWeeks) {
     }
     // Vinterlovet kan skilja sig mellan skolor. Dessa är endast redigerbara utgångspunkter.
     add('Jullov', `${year}-12-22`, `${year + 1}-01-06`)
-    const winterMonday = Array.from({ length: 7 }, (_, i) => {
+    const winterMonday = Array.from({ length: 20 }, (_, i) => {
       const d = new Date(year, 1, 16 + i, 12)
       return toIsoDate(d)
     }).find(date => calendarWeekNumber(date) === 9 && new Date(date + 'T12:00:00').getDay() === 1)
     if (winterMonday) add('Sportlov', winterMonday, toIsoDate(new Date(new Date(winterMonday + 'T12:00:00').getTime() + 4 * 86400000)))
     const easter = easterSunday(year)
-    const easterMonday = new Date(easter + 'T12:00:00')
+    const easterMonday = new Date(easter)
     easterMonday.setDate(easterMonday.getDate() + 1)
     const easterFriday = new Date(easterMonday)
     easterFriday.setDate(easterFriday.getDate() + 4)
@@ -938,10 +938,10 @@ function TeacherApp({ session }) {
       <button type="button" className="secondary" onClick={() => setPlan(p => {
         const proposed = suggestedSchoolClosures(p.startDate, p.weeks)
         const existing = p.schoolClosures || []
-        const additions = proposed.filter(item => !existing.some(old => old.suggestionKey === item.suggestionKey || (old.name.startsWith('Höstlov') && old.startDate.slice(0, 4) === item.startDate.slice(0, 4))))
+        const additions = proposed.filter(item => !existing.some(old => old.suggestionKey === item.suggestionKey || (old.name.startsWith(item.name.split(' (')[0]) && old.startDate.slice(0, 4) === item.startDate.slice(0, 4))))
         return { ...p, schoolClosures: [...existing, ...additions] }
-      })}>+ Föreslå höstlov (vecka 44)</button>
-      <p>Höstlov vecka 44 är ett preliminärt riksförslag. Kontrollera alltid med din kommun eller skola. Övriga lov och studiedagar läggs tills vidare in manuellt.</p>
+      })}>+ Föreslå lov (redigerbara datum)</button>
+      <p>Höstlov vecka 44, sportlov vecka 9, jullov 22 december–6 januari och påsklov veckan efter påsk är preliminära exempel, inte kommunens beslutade lovdatum. Kontrollera alltid mot kommunens eller skolans läsårstider och ändra vid behov.</p>
     </section>
 
     <section className="card calendar-primary-actions" aria-label="Spara och publicera årsplaneringen">
