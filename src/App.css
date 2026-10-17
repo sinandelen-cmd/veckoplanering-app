@@ -444,21 +444,3 @@ h3 { margin: 8px 0; color: var(--green-900); }
     page-break-inside: avoid !important;
   }
 }
-
-@media print {
-  /* Varje logisk utskriftssida börjar på ett nytt A4-ark. */
-  .student-print-page {
-    break-before: page !important;
-    page-break-before: always !important;
-  }
-  .student-print-pages > .student-print-page:first-child {
-    break-before: auto !important;
-    page-break-before: auto !important;
-  }
-  .student-print-page .student-header,
-  .student-print-page .student-matrix,
-  .student-print-page .student-list {
-    break-inside: avoid-page;
-    page-break-inside: avoid;
-  }
-}
