@@ -456,8 +456,8 @@ function StudentView({ plan, error, preview = false, printPage = null }) {
   const weekContentScore = week => (String(week.content || '').length + String(week.chapter || '').length
     + (week.items?.length || 0) * 10 + (week.lessons?.length || 0) * 5
     + (week.assignments?.length || 0) * 10 + (week.links?.length || 0) * 10
-    + (week.lessons || []).reduce((sum, lesson) => sum + String(lesson.name || '').length
-      + (lesson.topics || []).reduce((topicSum, topic) => topicSum + String(topic.name || '').length
+    + (week.lessons || []).filter(Boolean).reduce((sum, lesson) => sum + String(lesson.name || '').length
+      + (lesson.topics || []).filter(Boolean).reduce((topicSum, topic) => topicSum + String(topic.name || '').length
         + (topic.pages?.length || 0) * 8 + (topic.assignments?.length || 0) * 10
         + (topic.links?.length || 0) * 10, 0), 0))
   const studentWeeks = Array.isArray(plan?.weeksData) ? [...plan.weeksData]
@@ -473,12 +473,12 @@ function StudentView({ plan, error, preview = false, printPage = null }) {
     // Fortfarande en uppskattning: faktisk A4-höjd måste verifieras i webbläsare.
     const textLength = [week.title, week.chapter, week.content,
       ...(week.pages || []), ...(week.assignments || []), ...(week.links || []),
-      ...(week.lessons || []).flatMap(lesson => [lesson.name, lesson.day,
-        ...(lesson.topics || []).flatMap(topic => [topic.name, ...(topic.pages || []),
+      ...(week.lessons || []).filter(Boolean).flatMap(lesson => [lesson.name, lesson.day,
+        ...(lesson.topics || []).filter(Boolean).flatMap(topic => [topic.name, ...(topic.pages || []),
           ...(topic.assignments || []), ...(topic.links || [])])])]
       .filter(Boolean).map(value => typeof value === 'string' ? value : JSON.stringify(value)).join(' ').length
     const contentBlocks = (week.lessons || []).length +
-      (week.lessons || []).reduce((sum, lesson) => sum + (lesson.topics || []).length, 0)
+      (week.lessons || []).filter(Boolean).reduce((sum, lesson) => sum + (lesson.topics || []).filter(Boolean).length, 0)
     const weight = textLength > 1100 || contentBlocks > 16 ? 4 :
       textLength > 500 || contentBlocks > 8 ? 2 : 1
     const last = printGroups[printGroups.length - 1]
