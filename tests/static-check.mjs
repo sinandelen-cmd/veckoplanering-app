@@ -130,3 +130,6 @@ assert.match(app, /Det finns inga synliga veckor att publicera/)
 assert.match(app, /if \(selectedId\) \{\s*const \{ data: existing, error: lookupError \}/)
 assert.match(app, /const slug = publish \? \(databaseSlug \|\| buildSlug\(plan\)\)/)
 assert.match(app, /\.\.\.\(publish \|\| !selectedId \? publicationFields/)
+
+assert.match(app, /publish && weeks\.some\(week => week && !week\.hidden && !validSchoolClosure/)
+assert.match(app, /En synlig vecka saknar giltigt startdatum/)
