@@ -702,7 +702,9 @@ function TeacherApp({ session }) {
   }
 
   async function deletePlan(row) {
-    if (busy || !window.confirm(`Radera "${row.title}"?`)) return
+    if (busy) return
+    if (selectedId === row.id && JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar i den här planeringen. Radering tar även bort dem. Vill du fortsätta?')) return
+    if (!window.confirm(`Radera "${row.title}"?`)) return
     setBusy(true)
     try {
       const { error } = await supabase.from('veckoplanering').delete().eq('id', row.id).eq('user_id', session.user.id).select('id').single()
