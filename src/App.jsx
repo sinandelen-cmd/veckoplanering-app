@@ -789,6 +789,14 @@ function TeacherApp({ session }) {
       </div>
     </section>
 
+    <section className="card calendar-primary-actions" aria-label="Spara och publicera årsplaneringen">
+      <div className="button-row">
+        <button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
+        <button type="button" className="primary" disabled={busy} onClick={() => save(true)}>Publicera för elever</button>
+        <button type="button" className="secondary" onClick={() => setPreviewStudents(value => !value)}>{previewStudents ? 'Dölj elevförhandsvisning' : 'Förhandsgranska elevvyn'}</button>
+      </div>
+    </section>
+
     <section className="card import-card">
       <p className="eyebrow">IMPORT</p><h2>Excel, Word, PDF eller text</h2>
       <p className="muted">Ladda upp ett underlag. Texten delas preliminärt över veckorna så att du kan granska och justera.</p>
