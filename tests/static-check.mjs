@@ -236,3 +236,6 @@ assert.match(app, /className="print-single-week"/)
 assert.match(printSource, /textLength > 1100/)
 assert.match(printSource, /groups.push/)
 
+
+// Regression: specifik stil för uppgiftstext ska inte vara mindre än 10 pt.
+assert.match(css, /font-size: 10pt !important;/)
