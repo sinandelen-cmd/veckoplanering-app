@@ -126,3 +126,7 @@ assert.match(app, /week\.links\.filter\(v => typeof v === 'string' && resourceIn
 
 assert.match(app, /publish && !sanitizeForStudents\(\{ \.\.\.plan, weeksData: weeks \}\)\.weeksData\.length/)
 assert.match(app, /Det finns inga synliga veckor att publicera/)
+
+assert.match(app, /if \(selectedId\) \{\s*const \{ data: existing, error: lookupError \}/)
+assert.match(app, /const slug = publish \? \(databaseSlug \|\| buildSlug\(plan\)\)/)
+assert.match(app, /\.\.\.\(publish \|\| !selectedId \? publicationFields/)
