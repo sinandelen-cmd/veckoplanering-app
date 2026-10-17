@@ -289,6 +289,15 @@ function chapterTone(chapter) {
   return hash % 4
 }
 
+function studentWeekDateRange(dateString) {
+  const start = new Date(dateString + 'T12:00:00')
+  if (Number.isNaN(start.getTime())) return ''
+  start.setDate(start.getDate() - ((start.getDay() + 6) % 7))
+  const end = new Date(start)
+  end.setDate(start.getDate() + 6)
+  const format = date => new Intl.DateTimeFormat('sv-SE', { day: 'numeric', month: 'short' }).format(date)
+  return format(start) + '–' + format(end) + ' ' + end.getFullYear()
+}
 function studentWeekStyle(dateString) {
   const date = new Date(dateString + 'T12:00:00')
   if (Number.isNaN(date.getTime())) return {}
@@ -331,7 +340,7 @@ function StudentView({ plan, error, preview = false }) {
         {week.chapter?.trim() && (index === 0 || week.chapter !== studentWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
         <article className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
         <div className="week-top student-week-top">
-          <div className="student-week-identity"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
+          <div className="student-week-identity"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{studentWeekDateRange(week.weekStart)}</span></div>
           {studentMonthInfo(week.weekStart) && <div className="student-month-info" style={{ backgroundColor: studentMonthInfo(week.weekStart).color }}><strong>{studentMonthInfo(week.weekStart).name}</strong><span>{studentMonthInfo(week.weekStart).weeks}</span></div>}
         </div>
         {!/^Vecka\s+\d+$/i.test(week.title || '') && week.title?.trim() && <h3>{week.title}</h3>}
