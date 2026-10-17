@@ -348,3 +348,12 @@ h3 { margin: 8px 0; color: var(--green-900); }
   .student-matrix .chapter-week-group { min-height:0; }
   .student-matrix .student-week-card { min-height:0; overscroll-behavior:contain; }
 }
+
+
+/* Lärarens årsöversikt: alltid fyra veckor per rad, även på smal skärm.
+   På mobil får översikten en horisontell scroll så att korten förblir läsbara. */
+.calendar-overlay { overflow-x: auto; }
+.calendar-week-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); min-width: 720px; }
+@media (min-width: 900px) {
+  .calendar-week-grid { min-width: 0; }
+}
