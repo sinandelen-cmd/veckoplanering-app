@@ -773,3 +773,54 @@ nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a
 @media print {
   .teacher-tabs { display: none !important; }
 }
+
+/* Lugnare lärarvy: tydlig aktiv flik och grundinställningar som öppnas vid behov. */
+.teacher-tabs {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  padding: 8px !important;
+  margin: 12px 0 16px !important;
+  background: #e9f2f0 !important;
+  border: 1px solid #cbded8 !important;
+  border-radius: 14px !important;
+}
+.teacher-tabs .teacher-tab {
+  appearance: none;
+  flex: 1 1 155px !important;
+  padding: 12px 16px !important;
+  min-height: 46px !important;
+  border: 2px solid transparent !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  color: #18493f !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  cursor: pointer;
+}
+.teacher-tabs .teacher-tab.active,
+.teacher-tabs .teacher-tab[aria-current="page"] {
+  background: #145d50 !important;
+  border-color: #145d50 !important;
+  color: #fff !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,.12);
+}
+.teacher-tabs .teacher-tab:focus-visible,
+.teacher-settings-details summary:focus-visible {
+  outline: 3px solid #327ac2;
+  outline-offset: 2px;
+}
+.teacher-settings-card { padding: 0 !important; }
+.teacher-settings-details summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  padding: 18px 22px;
+  color: #145d50;
+}
+.teacher-settings-details summary span { color: #596e69; font-size: 13px; }
+.teacher-settings-details[open] summary { border-bottom: 1px solid #d9e5df; }
+.teacher-settings-details > .form-grid { padding: 18px 22px 22px; }
+@media print { .teacher-tabs { display: none !important; } }
