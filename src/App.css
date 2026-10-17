@@ -269,3 +269,15 @@ h3 { margin: 8px 0; color: var(--green-900); }
 .calendar-overlay .lesson > button.secondary:hover { background: #c4ede8; border-color: #c4ede8; color: #135f61; }
 .calendar-overlay .remove-small { background: #ffe3e8; border-color: #ffe3e8; color: #8c3142; }
 .calendar-overlay .remove-small:hover { background: #ffd1da; border-color: #ffd1da; color: #8c3142; }
+
+/* Tydlig men diskret elevvy */
+.student-week-card { border: 1px solid #dce4e8; }
+.student-week-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.student-week-identity { display: flex; flex-direction: column; gap: 4px; }
+.student-week-identity strong { font-size: 1.45rem; font-weight: 800; color: #213744; }
+.student-week-identity span { font-size: 1.05rem; font-weight: 750; color: #273b48; }
+.student-month-info { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; border-radius: 9px; padding: 9px 13px; color: #273b48; }
+.student-month-info strong { font-size: 1rem; font-weight: 800; }
+.student-month-info span { font-size: .9rem; font-weight: 750; }
+.student-week-card .week-content { background: #fff9fb; font-weight: 700; color: #243643; border-radius: 8px; }
+.student-week-card .lesson-heading, .student-week-card .lesson-heading strong { font-weight: 800; }
