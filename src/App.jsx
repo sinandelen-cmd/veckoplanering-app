@@ -1208,6 +1208,25 @@ function TeacherApp({ session }) {
   </main></div>
 }
 
+function publicDemoWeek42() {
+  const plan = { ...emptyPlan(), title: 'Fiktiv vecka 42 – Matematik: Bråk', subject: 'Matematik',
+    className: 'Årskurs 6', startDate: '2026-10-12', weeks: 1, entryType: 'lektion',
+    lessonsPerWeek: 5, studentLayout: 'list' }
+  const lessons = [
+    ['Måndag – Vad är ett bråk?', 'Täljare, nämnare och bråk med bilder', '42–43', '1–6', 'https://www.youtube.com/results?search_query=br%C3%A5k+matematik+%C3%A5rskurs+6'],
+    ['Tisdag – Likvärdiga bråk', 'Förlänga och förkorta bråk', '44–45', '7–12', 'https://www.youtube.com/results?search_query=f%C3%B6rl%C3%A4nga+f%C3%B6rkorta+br%C3%A5k'],
+    ['Onsdag – Addera bråk', 'Gemensam nämnare och addition', '46–47', '13–18', 'https://www.youtube.com/results?search_query=addera+br%C3%A5k+gemensam+n%C3%A4mnare'],
+    ['Torsdag – Problemlösning', 'Textuppgifter med bråk i par', '48', '19–22', 'https://www.youtube.com/results?search_query=probleml%C3%B6sning+br%C3%A5k+matematik'],
+    ['Fredag – Repetition och diagnos', 'Repetera och genomför en kort diagnos', '42–48', 'Repetition 1–8', 'https://www.youtube.com/results?search_query=repetition+br%C3%A5k+matematik'],
+  ].map(([name, topic, pages, assignments, url]) => ({
+    name, topics: [{ name: topic, pages: [pages], assignments: [assignments], links: [url] }],
+  }))
+  const week = makeWeeks(plan, 1)[0]
+  return sanitizeForStudents({ ...plan, weeksData: [{ ...week, title: 'Vecka 42 – Bråk',
+    chapter: 'Matematik: Bråk', content: 'Fiktiv exempelvecka. Sid- och uppgiftsnummer är påhittade. YouTube-länkarna leder till sökresultat.',
+    lessons }] })
+}
+
 function AnnualApp() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -1217,12 +1236,15 @@ function AnnualApp() {
   const [password, setPassword] = useState('')
   const [status, setStatus] = useState('')
 
+  const isPublicDemo = window.location.pathname.replace(/\\/$/, '') === '/elev/demo-vecka-42'
+
   const studentSlug = useMemo(() => {
     const match = window.location.pathname.match(/^\/elev\/([^/]+)\/?$/)
     return match ? decodeURIComponent(match[1]) : null
   }, [])
 
   useEffect(() => {
+    if (isPublicDemo) { setStudentPlan(publicDemoWeek42()); setLoading(false); return undefined }
     if (studentSlug) {
       supabase.rpc('get_public_annual_plan', { slug_value: studentSlug })
         .maybeSingle()
@@ -1243,7 +1265,7 @@ function AnnualApp() {
     supabase.auth.getSession().then(({ data }) => { setSession(data.session); setLoading(false) })
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => setSession(newSession))
     return () => listener.subscription.unsubscribe()
-  }, [studentSlug])
+  }, [studentSlug, isPublicDemo])
 
   async function login(event) {
     event.preventDefault(); setStatus('Loggar in...')
