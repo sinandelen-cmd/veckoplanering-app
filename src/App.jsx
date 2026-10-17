@@ -1,3 +1,4 @@
+import { groupStudentWeeksForPrint } from './printGroups.js'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as XLSX from 'xlsx'
 import mammoth from 'mammoth'
@@ -467,25 +468,7 @@ function StudentView({ plan, error, preview = false, printPage = null }) {
     .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || '')) : []
   const pages = Math.max(1, Math.ceil(studentWeeks.length / pageSize))
   // Längre elevveckor får mer plats på A4. Grupperna består alltid av hela veckor.
-  const printGroups = []
-  for (const week of studentWeeks) {
-    // Antal synliga texttecken och innehållsblock är bättre indikatorer än JSON-nycklarnas längd.
-    // Fortfarande en uppskattning: faktisk A4-höjd måste verifieras i webbläsare.
-    const textLength = [week.title, week.chapter, week.content,
-      ...(week.pages || []), ...(week.assignments || []), ...(week.links || []),
-      ...(week.lessons || []).filter(Boolean).flatMap(lesson => [lesson.name, lesson.day,
-        ...(lesson.topics || []).filter(Boolean).flatMap(topic => [topic.name, ...(topic.pages || []),
-          ...(topic.assignments || []), ...(topic.links || [])])])]
-      .filter(Boolean).map(value => typeof value === 'string' ? value : JSON.stringify(value)).join(' ').length
-    const contentBlocks = (week.lessons || []).length +
-      (week.lessons || []).filter(Boolean).reduce((sum, lesson) => sum + (lesson.topics || []).filter(Boolean).length, 0)
-    // Mycket långa veckor får en egen utskriftssida; en uppskattning kan dock inte garantera fysisk passform.
-    const weight = textLength > 1100 || contentBlocks > 16 ? 4 :
-      textLength > 500 || contentBlocks > 8 ? 2 : 1
-    const last = printGroups[printGroups.length - 1]
-    if (!last || last.weight + weight > 4 || last.weeks.length >= 4) printGroups.push({ weeks: [week], weight })
-    else { last.weeks.push(week); last.weight += weight }
-  }
+  const printGroups = groupStudentWeeksForPrint(studentWeeks)
   const currentPage = printPage === null ? Math.min(page, pages - 1) : printPage
   const visibleWeeks = printPage === null
     ? studentWeeks.slice(currentPage * pageSize, (currentPage + 1) * pageSize)
