@@ -479,6 +479,7 @@ function StudentView({ plan, error, preview = false, printPage = null }) {
       .filter(Boolean).map(value => typeof value === 'string' ? value : JSON.stringify(value)).join(' ').length
     const contentBlocks = (week.lessons || []).length +
       (week.lessons || []).filter(Boolean).reduce((sum, lesson) => sum + (lesson.topics || []).filter(Boolean).length, 0)
+    // Mycket långa veckor får en egen utskriftssida; en uppskattning kan dock inte garantera fysisk passform.
     const weight = textLength > 1100 || contentBlocks > 16 ? 4 :
       textLength > 500 || contentBlocks > 8 ? 2 : 1
     const last = printGroups[printGroups.length - 1]
