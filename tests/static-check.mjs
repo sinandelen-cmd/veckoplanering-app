@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
 const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+const css = fs.readFileSync(new URL('../src/App.css', import.meta.url), 'utf8')
 const sql = fs.readFileSync(new URL('../supabase-migration.sql', import.meta.url), 'utf8')
 const redirects = fs.readFileSync(new URL('../public/_redirects', import.meta.url), 'utf8')
 assert.match(app, /sanitizeForStudents/)
