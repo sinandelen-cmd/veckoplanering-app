@@ -221,3 +221,19 @@ assert.equal(groupStudentWeeksForPrint([{ content: 'Vecka', lessons: [null, { to
 
 assert.match(printSource, /textLength > 1100/)
 assert.match(printSource, /groups.push/)
+
+/* Exercise the actual student print grouping algorithm with realistic week fixtures. */
+const printStart = app.indexOf('const printGroups = []')
+const printEnd = app.indexOf('  const currentPage =', printStart)
+assert.ok(printStart >= 0 && printEnd > printStart, 'Print grouping block must exist')
+const groupPrintWeeks = new Function('studentWeeks', app.slice(printStart, printEnd) + '\nreturn printGroups')
+const shortWeek = index => ({ weekStart: '2027-01-' + String(index).padStart(2, '0'), title: 'Kort vecka ' + index, lessons: [] })
+const longWeek = { ...shortWeek(5), content: 'Långt innehåll '.repeat(100), lessons: Array.from({length: 20}, (_, index) => ({name: 'Lektion ' + index, topics: [{name: 'Moment ' + index}]})) }
+const printFixtures = [shortWeek(1), shortWeek(2), shortWeek(3), shortWeek(4), longWeek, shortWeek(6), shortWeek(7), shortWeek(8), shortWeek(9), shortWeek(10)]
+const groups = groupPrintWeeks(printFixtures)
+assert.deepEqual(groups.map(group => group.weeks.length), [4, 1, 4, 1])
+assert.deepEqual(groups.flatMap(group => group.weeks), printFixtures, 'Print grouping must preserve order without duplicates')
+assert.ok(groups.every(group => group.weight <= 4 && group.weeks.length <= 4))
+assert.equal(groups[1].weeks[0], longWeek, 'Very long week must be alone on a print page')
+assert.deepEqual(groupPrintWeeks([]), [])
+assert.deepEqual(groupPrintWeeks([shortWeek(1)]).map(group => group.weeks.length), [1])
