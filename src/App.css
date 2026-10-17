@@ -320,3 +320,23 @@ h3 { margin: 8px 0; color: var(--green-900); }
   .student-shell:has(.student-matrix) .student-pager { margin:6px 0; }
   .student-shell:has(.student-matrix) .student-matrix { height:calc(100dvh - 175px); }
 }
+
+/* Behåll matrisens fasta rutnät på surfplatta och mindre skärmar.
+   Varje veckoruta kan scrollas invändigt vid mycket innehåll. */
+@media (max-width:799px) {
+  .student-shell:has(.student-matrix) { width:100%; max-width:none; }
+  .student-matrix { height:calc(100dvh - 210px); min-height:280px; grid-template-columns:repeat(var(--student-columns,3),minmax(0,1fr)); grid-template-rows:repeat(var(--student-rows,2),minmax(0,1fr)); overflow:hidden; }
+  .student-matrix .chapter-week-group { min-height:0; overflow:hidden; }
+  .student-matrix .week-card { padding:10px; }
+}
+@media (max-width:520px) {
+  .student-matrix { grid-template-columns:repeat(var(--student-columns,3),minmax(0,1fr)); gap:5px; }
+  .student-matrix .week-card { padding:6px; font-size:.75rem; }
+  .student-matrix .student-week-identity strong { font-size:.85rem; }
+  .student-matrix .student-month-info { padding:3px; }
+  .student-matrix .student-month-info strong { font-size:.7rem; }
+  .student-matrix .student-month-info span { display:none; }
+  .student-matrix .chapter-heading { font-size:.75rem; }
+  .student-pager { gap:5px; font-size:.8rem; }
+  .student-pager button { padding:6px; }
+}
