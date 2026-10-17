@@ -330,6 +330,24 @@ function studentMonthInfo(dateString) {
   const range = firstWeek === lastWeek ? 'Vecka ' + firstWeek : 'Vecka ' + firstWeek + '–' + lastWeek
   return { name: new Intl.DateTimeFormat('sv-SE', { month: 'long' }).format(date).toLocaleUpperCase('sv-SE'), weeks: range, color: MONTH_PASTELS[month] }
 }
+// Veckoår enligt ISO: årsskiftet kan ligga mitt i en kalendervecka.
+function isoWeekYear(dateString) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString || '')) return null
+  const date = new Date(`${dateString}T12:00:00`)
+  if (Number.isNaN(date.getTime())) return null
+  const thursday = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  thursday.setUTCDate(thursday.getUTCDate() + 4 - (thursday.getUTCDay() || 7))
+  return thursday.getUTCFullYear()
+}
+function studentWeekPageLabel(weeks) {
+  if (!weeks.length) return 'Inga veckor'
+  const format = week => {
+    const number = calendarWeekNumber(week.weekStart) ?? week.weekNumber
+    const year = isoWeekYear(week.weekStart)
+    return `${number}${year ? ` (${year})` : ''}`
+  }
+  return weeks.length === 1 ? `Vecka ${format(weeks[0])}` : `Vecka ${format(weeks[0])}–${format(weeks[weeks.length - 1])}`
+}
 function StudentView({ plan, error, preview = false }) {
   const [page, setPage] = useState(0)
   const gridMode = plan?.studentLayout !== 'list'
@@ -340,7 +358,7 @@ function StudentView({ plan, error, preview = false }) {
   const pages = gridMode ? Math.max(1, Math.ceil(studentWeeks.length / pageSize)) : 1
   const currentPage = Math.min(page, pages - 1)
   const visibleWeeks = gridMode ? studentWeeks.slice(currentPage * pageSize, (currentPage + 1) * pageSize) : studentWeeks
-  const pageWeekLabel = visibleWeeks.length ? `Vecka ${calendarWeekNumber(visibleWeeks[0].weekStart) ?? visibleWeeks[0].weekNumber}${visibleWeeks.length > 1 ? `–${calendarWeekNumber(visibleWeeks[visibleWeeks.length - 1].weekStart) ?? visibleWeeks[visibleWeeks.length - 1].weekNumber}` : ''}` : 'Inga veckor'
+  const pageWeekLabel = studentWeekPageLabel(visibleWeeks)
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
   return <main className="shell student-shell">
