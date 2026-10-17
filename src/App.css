@@ -720,3 +720,25 @@ nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a
     line-height: 1.35 !important;
   }
 }
+
+/* Webbadresser ska gå att använda även på utskrivet papper.
+   Håll dem dolda på skärm, men visa full URL i elevens A4-utskrift. */
+.print-resource-url { display: none; }
+@media print {
+  .student-print-page .print-resource-url {
+    display: block !important;
+    font-size: 10pt !important;
+    line-height: 1.35 !important;
+    font-weight: normal !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+  }
+  .student-print-page .resource-chip {
+    display: inline-flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    max-width: 100% !important;
+    break-inside: avoid-page !important;
+  }
+}
