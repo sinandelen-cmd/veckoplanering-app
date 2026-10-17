@@ -446,6 +446,28 @@ function studentWeekPageLabel(weeks) {
   }
   return weeks.length === 1 ? `Vecka ${format(weeks[0])}` : `Vecka ${format(weeks[0])}–${format(weeks[weeks.length - 1])}`
 }
+// Endast tillfällig A4-demonstration. Läggs aldrig i lärarens plan eller databasen.
+function a4DemoPlan(plan) {
+  const weeksData = Array.from({ length: 5 }, (_, index) => {
+    const date = new Date(Date.UTC(2026, 9, 12 + index * 7))
+    const weekStart = date.toISOString().slice(0, 10)
+    const long = index === 2
+    return {
+      weekStart, weekNumber: 42 + index, title: long ? 'Innehållsrik testvecka' : 'Exempelvecka',
+      chapter: 'A4-test – endast förhandsvisning',
+      content: long ? 'Den här veckan innehåller extra många moment för att pröva utskriften.' : 'Kort exempeltext.',
+      lessons: Array.from({ length: long ? 12 : 2 }, (_, lessonIndex) => ({
+        name: 'Lektion ' + (lessonIndex + 1),
+        day: ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'][lessonIndex % 5],
+        topics: [{ name: 'Öva på tal och problemlösning med förklaringar och exempel ' + (lessonIndex + 1),
+          pages: ['42–45'], assignments: ['Uppgift 1–8', 'Förklara ditt svar med egna ord'], links: [] }],
+      })),
+      pages: [], assignments: [], links: [],
+    }
+  })
+  return { ...plan, title: 'A4-TEST – INTE SPARAD', studentLayout: 'grid', weeksData }
+}
+
 function StudentView({ plan, error, preview = false, printPage = null }) {
   const [page, setPage] = useState(0)
   const gridMode = plan?.studentLayout !== 'list'
@@ -593,6 +615,7 @@ function TeacherApp({ session }) {
   const [pasteText, setPasteText] = useState('')
   const [pendingImport, setPendingImport] = useState(null)
   const [previewStudents, setPreviewStudents] = useState(() => window.location.hash === '#elevvy')
+  const [a4Demo, setA4Demo] = useState(false)
   useEffect(() => {
     const onNavigation = () => {
       if (window.location.hash === '#elevvy') {
@@ -1063,7 +1086,7 @@ function TeacherApp({ session }) {
 
     </details>
 
-    {previewStudents && <section className="card preview-panel" id="elevvy"><h2>Förhandsvisning för elever</h2><p className="muted">Detta är endast en förhandsvisning. Inget publiceras.</p><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
+    {previewStudents && <section className="card preview-panel" id="elevvy"><h2>Förhandsvisning för elever</h2><p className="muted">Detta är endast en förhandsvisning. Inget publiceras.</p><div className="a4-demo-controls"><button type="button" className="secondary" aria-pressed={a4Demo} onClick={() => setA4Demo(value => !value)}>{a4Demo ? "Visa min planering igen" : "Visa tillfälligt A4-test med långa veckor"}</button>{a4Demo && <strong>Testinnehåll – sparas inte och publiceras inte.</strong>}</div><StudentView plan={a4Demo ? a4DemoPlan(sanitizeForStudents({ ...plan, weeksData: weeks })) : sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
 
     <section className="card" id="mina-arsplaneringar">
       <div className="section-heading"><div><p className="eyebrow">BIBLIOTEK</p><h2>Mina årsplaneringar</h2></div></div>
