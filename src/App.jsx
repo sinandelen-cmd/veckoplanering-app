@@ -1,5 +1,6 @@
 import { groupStudentWeeksForPrint } from './printGroups.js'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import * as XLSX from 'xlsx'
 import mammoth from 'mammoth'
 import * as pdfjsLib from 'pdfjs-dist'
@@ -470,6 +471,17 @@ function a4DemoPlan(plan) {
 
 function StudentView({ plan, error, preview = false, printPage = null }) {
   const [page, setPage] = useState(0)
+  const [singlePrintWeek, setSinglePrintWeek] = useState(null)
+  useEffect(() => {
+    if (printPage !== null) return undefined
+    const clearPrintSelection = () => setSinglePrintWeek(null)
+    window.addEventListener('afterprint', clearPrintSelection)
+    return () => window.removeEventListener('afterprint', clearPrintSelection)
+  }, [printPage])
+  const printOnlyWeek = weekStart => {
+    flushSync(() => setSinglePrintWeek(weekStart))
+    window.print()
+  }
   const gridMode = plan?.studentLayout !== 'list'
   const columns = Math.max(1, Math.min(3, Number(plan?.studentColumns) || 3))
   const rows = Math.max(1, Math.min(Math.floor(6 / columns), Number(plan?.studentRows) || 2))
@@ -490,7 +502,7 @@ function StudentView({ plan, error, preview = false, printPage = null }) {
     .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || '')) : []
   const pages = Math.max(1, Math.ceil(studentWeeks.length / pageSize))
   // Längre elevveckor får mer plats på A4. Grupperna består alltid av hela veckor.
-  const printGroups = groupStudentWeeksForPrint(studentWeeks)
+  const printGroups = singlePrintWeek ? [{ weeks: studentWeeks.filter(week => week.weekStart === singlePrintWeek) }] : groupStudentWeeksForPrint(studentWeeks)
   const currentPage = printPage === null ? Math.min(page, pages - 1) : printPage
   const visibleWeeks = printPage === null
     ? studentWeeks.slice(currentPage * pageSize, (currentPage + 1) * pageSize)
@@ -510,6 +522,7 @@ function StudentView({ plan, error, preview = false, printPage = null }) {
       {visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
         {week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
         <article className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
+        {printPage === null && <button type="button" className="print-single-week" onClick={() => printOnlyWeek(week.weekStart)} aria-label={`Skriv ut vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} på liggande A4`}>🖨 Skriv ut veckan</button>}
         <div className="week-top student-week-top">
           <div className="student-week-identity"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{studentWeekDateRange(week.weekStart)}</span></div>
           {studentMonthInfo(week.weekStart) && <div className="student-month-info" style={{ backgroundColor: studentMonthInfo(week.weekStart).color }}><strong>{studentMonthInfo(week.weekStart).name}</strong><span>{studentMonthInfo(week.weekStart).weeks}</span></div>}
