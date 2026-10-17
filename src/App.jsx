@@ -430,7 +430,7 @@ function studentWeekPageLabel(weeks) {
   }
   return weeks.length === 1 ? `Vecka ${format(weeks[0])}` : `Vecka ${format(weeks[0])}–${format(weeks[weeks.length - 1])}`
 }
-function StudentView({ plan, error, preview = false }) {
+function StudentView({ plan, error, preview = false, printPage = null }) {
   const [page, setPage] = useState(0)
   const gridMode = plan?.studentLayout !== 'list'
   const columns = Math.max(1, Math.min(3, Number(plan?.studentColumns) || 3))
@@ -447,17 +447,18 @@ function StudentView({ plan, error, preview = false }) {
     .filter((week, index, weeks) => weeks.findIndex(other => (other.weekStart || `number-${other.weekNumber}`) === (week.weekStart || `number-${week.weekNumber}`)) === index)
     .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || '')) : []
   const pages = Math.max(1, Math.ceil(studentWeeks.length / pageSize))
-  const currentPage = Math.min(page, pages - 1)
+  const currentPage = printPage === null ? Math.min(page, pages - 1) : printPage
   const visibleWeeks = studentWeeks.slice(currentPage * pageSize, (currentPage + 1) * pageSize)
   const pageWeekLabel = studentWeekPageLabel(visibleWeeks)
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
-  return <main className="shell student-shell">
+  return <><main className={`shell student-shell ${printPage === null ? "student-screen-view" : "student-print-page"}`}>
     <header className="student-header">
       <div><p className="eyebrow">{preview ? 'FÖRHANDSVISNING' : 'PUBLICERAD ÅRSPLANERING'}</p><h1>{plan.title}</h1><p className="muted">{[plan.subject, plan.className, plan.schoolYear].filter(Boolean).join(' · ')}</p></div>
+      {printPage === null && <button type="button" className="secondary student-print-button" onClick={() => window.print()}>🖨 Skriv ut alla synliga elevveckor (A4)</button>}
       <span className="public-badge">{preview ? "Förhandsvisning" : "Publicerad"}</span>
     </header>
-    {studentWeeks.length > 0 && <nav className="student-pager" aria-label="Bläddra mellan veckor"><button type="button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>← Föregående</button><strong aria-live="polite">{pageWeekLabel} · Sida {currentPage + 1} av {pages}</strong><button type="button" disabled={currentPage === pages - 1} onClick={() => setPage(currentPage + 1)}>Nästa →</button></nav>}
+    {printPage === null && studentWeeks.length > 0 && <nav className="student-pager" aria-label="Bläddra mellan veckor"><button type="button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>← Föregående</button><strong aria-live="polite">{pageWeekLabel} · Sida {currentPage + 1} av {pages}</strong><button type="button" disabled={currentPage === pages - 1} onClick={() => setPage(currentPage + 1)}>Nästa →</button></nav>}
     {studentWeeks.length === 0 && <p className="card empty" role="status">Det finns inga synliga veckor i den här planeringen ännu.</p>}
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
       {visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
@@ -474,6 +475,10 @@ function StudentView({ plan, error, preview = false }) {
       </article></div>)}
     </section>
   </main>
+  {printPage === null && studentWeeks.length > 0 && <div className="student-print-pages" aria-hidden="true">
+    {Array.from({ length: pages }, (_, index) => <StudentView key={index} plan={plan} preview={preview} printPage={index} />)}
+  </div>}
+</>
 }
 
 
