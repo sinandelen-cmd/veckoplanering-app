@@ -290,7 +290,7 @@ function chapterTone(chapter) {
 }
 
 function StudentView({ plan, error, preview = false }) {
-  const studentWeeks = Array.isArray(plan?.weeksData) ? plan.weeksData : []
+  const studentWeeks = Array.isArray(plan?.weeksData) ? plan.weeksData.filter(week => week.studentVisible !== false) : []
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
   return <main className="shell student-shell">
@@ -305,7 +305,7 @@ function StudentView({ plan, error, preview = false }) {
         <div className="week-top"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span></div>
         <h3>{week.title}</h3>
         <div className="week-content">{week.content || (!week.pages?.length && !week.assignments?.length && !week.links?.length && !week.lessons?.some(lesson => lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.length || topic.assignments?.length || topic.links?.length)) ? 'Ingen planering angiven ännu.' : '')}</div>
-        <LessonDetails week={week} entryType={plan.entryType || 'lektion'} studentView />
+        <LessonDetails week={week} entryType={plan.entryType || 'lektion'} />
         <WeekDetails week={week} />
       </article></div>)}
     </section>
@@ -356,6 +356,7 @@ function YearCalendar({ weeks, onClose, onUpdateWeek, onSave, isDirty, busy, sav
     {selectedWeek ? <div className="calendar-week-detail">
       <p><strong>{(/^Vecka\s+\d+$/i.test(selectedWeek.title || '') ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : selectedWeek.title) || `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}`}</strong> · {formatDate(selectedWeek.weekStart)}</p>
       {selectedWeek.content && <p>{selectedWeek.content}</p>}
+      <label className="student-visibility-toggle"><input type="checkbox" checked={selectedWeek.studentVisible !== false} onChange={e => editSelectedWeek({ studentVisible: e.target.checked })} /> Visa hela veckan för elever</label>
       <LessonDetails week={selectedWeek} onChange={editSelectedWeek} entryType={entryType} />
       <div className="calendar-edit-actions">
         <button type="button" className="calendar-save-button" disabled={busy || !isDirty} onClick={onSave}>{busy ? 'Sparar...' : 'Spara ändringar'}</button>
@@ -762,6 +763,7 @@ function TeacherApp({ session }) {
           {week.chapter?.trim() && (displayIndex === 0 || week.chapter !== ordered[displayIndex - 1]?.week.chapter) && <h3 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h3>}
           <article className="week-card" id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
           <div className="week-top"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span>
+            <label className="student-visibility-toggle"><input type="checkbox" checked={week.studentVisible !== false} onChange={e => updateWeek(index, { studentVisible: e.target.checked })} /> Visa hela veckan för elever</label>
             <button type="button" className="remove-small" disabled={weeks.length <= 1} onClick={() => {
               if (hasWeekWork(week, index) && !window.confirm(`Ta bort vecka ${week.weekNumber} och allt innehåll i veckan?`)) return
               setPlan(p => {
@@ -917,19 +919,18 @@ function WeekDetails({ week, onChange }) {
 }
 
 
-function LessonDetails({ week, onChange, entryType = 'lektion', studentView = false }) {
+function LessonDetails({ week, onChange, entryType = 'lektion' }) {
   const lessons = Array.isArray(week?.lessons) ? week.lessons : []
   const editable = typeof onChange === 'function'
   const changeLessons = next => onChange?.({ lessons: next, ...(entryType === 'dag' ? { daysCustomized: true } : {}) })
   const changeLesson = (i, next) => changeLessons(lessons.map((lesson, index) => index === i ? next : lesson))
   return <div className="lessons">
-    {lessons.map((lesson, i) => ({ lesson, i })).filter(({ lesson }) => (editable || !studentView || lesson.studentVisible !== false) && (editable || lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || ''))))).map(({ lesson, i }) => <section className="lesson" key={i}>
+    {lessons.map((lesson, i) => ({ lesson, i })).filter(({ lesson }) => (editable || lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || ''))))).map(({ lesson, i }) => <section className="lesson" key={i}>
       <div className="lesson-heading">
-        {editable && <label className="student-visibility-toggle"><input type="checkbox" checked={lesson.studentVisible !== false} onChange={e => changeLesson(i, { ...lesson, studentVisible: e.target.checked })} /> Visa lektionen för elever</label>}
         {editable ? <input aria-label={entryType === 'dag' ? 'Dagens namn' : 'Lektionens namn'} value={lesson.name || ''} onChange={e => changeLesson(i, { ...lesson, name: e.target.value })} /> : <h4>{lesson.name || (entryType === 'dag' ? (WEEKDAYS[i] || `Dag ${i + 1}`) : `Lektion ${i + 1}`)}</h4>}
         {editable && <button type="button" className="remove-small" onClick={() => { if (!(lesson.topics || []).some(topic => topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm(entryType === 'dag' ? 'Ta bort dagen och allt innehåll i den?' : 'Ta bort lektionen och allt innehåll i den?')) changeLessons(lessons.filter((_, index) => index !== i)) }}>× Ta bort {entryType === 'dag' ? 'dag' : 'lektion'}</button>}
       </div>
-      {(lesson.topics || []).map((topic, j) => ({ topic, j })).filter(({ topic }) => (editable || !studentView || topic.studentVisible !== false) && (editable || topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || '')))).map(({ topic, j }) => {
+      {(lesson.topics || []).map((topic, j) => ({ topic, j })).filter(({ topic }) => (editable || topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || '')))).map(({ topic, j }) => {
         const updateTopic = next => changeLesson(i, { ...lesson, topics: (lesson.topics || []).map((item, index) => index === j ? next : item) })
         const pages = Array.isArray(topic.pages) ? topic.pages : []
         const assignments = Array.isArray(topic.assignments) ? topic.assignments : []
@@ -937,7 +938,6 @@ function LessonDetails({ week, onChange, entryType = 'lektion', studentView = fa
         const lastFilledRow = values => values.reduce((last, value, index) => String(value ?? '').trim() ? index + 1 : last, 0)
         const rows = editable ? Math.max(pages.length, assignments.length) : Math.max(lastFilledRow(pages), lastFilledRow(assignments))
         return <div className="topic" key={j}>
-          {editable && <label className="student-visibility-toggle"><input type="checkbox" checked={topic.studentVisible !== false} onChange={e => updateTopic({ ...topic, studentVisible: e.target.checked })} /> Visa momentet för elever</label>}
           <div className="topic-grid">
             <div className="topic-name">{editable ? <input aria-label="Momentets namn" placeholder="Exempel: Procent" value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong>{topic.name || 'Moment'}</strong>}</div>
             {['pages', 'assignments'].map(field => <div className={`topic-column ${field}`} key={field}>
