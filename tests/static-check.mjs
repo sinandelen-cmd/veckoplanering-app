@@ -298,3 +298,6 @@ assert.match(app, /setSelectedId\(null\)/)
 assert.match(app, /function publicDemoWeek42\(\)/)
 assert.match(app, /\/elev\/demo-vecka-42/)
 assert.match(app, /setStudentPlan\(publicDemoWeek42\(\)\)/)
+
+assert.match(app, /orderedWeeks\.slice\(currentPage \* 9, \(currentPage \+ 1\) \* 9\)/)
+assert.match(app, /Nästa 9/)
