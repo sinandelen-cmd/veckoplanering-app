@@ -387,62 +387,12 @@ h3 { margin: 8px 0; color: var(--green-900); }
   .student-print-page .student-week-card, .student-print-page .student-month-info { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
 }
 
-/* Håll varje elevvecka samman vid utskrift även när innehållet är långt. */
-@media print {
-  .student-print-page .chapter-week-group,
-  .student-print-page .week-card,
-  .student-print-page .student-week-card,
-  .student-print-page .week-top,
-  .student-print-page .lesson-details,
-  .student-print-page .week-details {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-  .student-print-page .student-matrix,
-  .student-print-page .student-list {
-    grid-template-rows: auto !important;
-    align-content: start !important;
-  }
-  .student-print-page .student-week-card {
-    orphans: 3;
-    widows: 3;
-  }
-}
-
-/* Utskrift har en egen 2 × 2-layout, oberoende av elevens skärminställning. */
-@media print {
-  .student-print-page .student-matrix,
-  .student-print-page .student-list {
-    display:grid !important;
-    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
-    grid-template-rows:auto auto !important;
-    gap:3mm !important;
-    overflow:visible !important;
-  }
-  .student-print-page .chapter-week-group { display:block !important; }
-  .student-print-page .student-week-card { overflow:visible !important; }
-}
-
 /* Vid utskrift från lärarens förhandsvisning ska bara elevplaneringen skrivas ut. */
 @media print {
   .narrow-shell:has(.student-print-pages) > :not(.preview-panel) { display:none !important; }
   .narrow-shell:has(.student-print-pages) { display:block !important; width:100% !important; max-width:none !important; padding:0 !important; margin:0 !important; }
   .preview-panel:has(.student-print-pages) { display:block !important; border:0 !important; box-shadow:none !important; padding:0 !important; margin:0 !important; background:transparent !important; }
   .preview-panel:has(.student-print-pages) > :not(.student-print-pages):not(.student-screen-view):not(.student-shell) { display:none !important; }
-}
-
-@media print {
-  /* Sidor med en eller två innehållsrika veckor får hela sidbredden. */
-  .student-print-page.student-print-spacious .student-matrix,
-  .student-print-page.student-print-spacious .student-list {
-    grid-template-columns: minmax(0, 1fr) !important;
-    grid-template-rows: auto !important;
-  }
-  .student-print-page .chapter-week-group,
-  .student-print-page .student-week-card {
-    break-inside: avoid-page !important;
-    page-break-inside: avoid !important;
-  }
 }
 
 @media print {
@@ -516,45 +466,55 @@ nav[aria-label="Huvudmeny"] .nav-role-student { background: #fce7f3; color: #831
 nav[aria-label="Huvudmeny"] .nav-role:hover { filter: brightness(.96); }
 nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a; outline-offset: 3px; }
 
-/* Kompakt A4-layout: förhindra att sidgruppens flex/grid skapar en extra sida.
-   Långa veckor får hela bredden och två lektionskolumner. */
+/* Samlade A4-regler: en kolumn veckor, kompakt innehåll och sidbrytning
+   före nästa grupp. Ingen tvingad tom sida efter sista gruppen. */
 @media print {
-  .student-print-pages,
-  .student-print-page {
+  .student-print-pages, .student-print-page {
     display: block !important;
     overflow: visible !important;
   }
   .student-print-page {
     break-before: auto !important;
-    break-after: page !important;
-    page-break-after: always !important;
-    break-inside: avoid-page !important;
-    page-break-inside: avoid !important;
-  }
-  .student-print-page:last-child {
     break-after: auto !important;
+    break-inside: auto !important;
     page-break-after: auto !important;
+    page-break-inside: auto !important;
+  }
+  .student-print-page + .student-print-page {
+    break-before: page !important;
+    page-break-before: always !important;
   }
   .student-print-page .student-matrix,
   .student-print-page .student-list {
-    align-items: start !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: none !important;
     grid-auto-rows: max-content !important;
+    align-items: start !important;
+    gap: 4mm !important;
+    height: auto !important;
+    overflow: visible !important;
   }
-  .student-print-page .student-header {
-    margin: 0 0 3mm !important;
-    padding: 0 !important;
-  }
+  .student-print-page .chapter-week-group,
   .student-print-page .student-week-card {
-    padding: 2mm !important;
+    break-inside: avoid-page !important;
+    page-break-inside: avoid !important;
+    max-height: none !important;
+    overflow: visible !important;
   }
-  .student-print-page .lessons {
-    gap: 2mm !important;
-    margin: 2mm 0 !important;
+  .student-print-page .student-header { margin: 0 0 3mm !important; padding: 0 !important; }
+  .student-print-page .student-week-card { height: auto !important; padding: 2mm !important; }
+  .student-print-page .week-content,
+  .student-print-page .lessons,
+  .student-print-page .lesson,
+  .student-print-page .topic,
+  .student-print-page .topic-grid,
+  .student-print-page .resource-chip {
+    max-height: none !important;
+    overflow: visible !important;
   }
-  .student-print-page .lesson {
-    padding: 2mm !important;
-    border-radius: 2mm !important;
-  }
+  .student-print-page .lessons { gap: 2mm !important; margin: 2mm 0 !important; }
+  .student-print-page .lesson { padding: 2mm !important; border-radius: 2mm !important; }
   .student-print-page .lesson-heading { margin-bottom: 1mm !important; }
   .student-print-page .topic { padding: 1mm 0 !important; }
   .student-print-page .topic-grid { gap: 1mm !important; }
@@ -565,66 +525,7 @@ nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a
     grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr) !important;
   }
   .student-print-page.student-print-spacious .lesson,
-  .student-print-page.student-print-spacious .topic {
-    font-size: 8pt !important;
-  }
-  .student-print-page.student-print-spacious .topic-name strong {
-    font-size: 8pt !important;
-  }
-}
-
-/* Chrome kan skapa en tom sida när break-after och break-inside:avoid
-   kombineras på samma höga sidbehållare. Bryt i stället före nästa grupp. */
-@media print {
-  .student-print-page,
-  .student-print-page:last-child {
-    break-after: auto !important;
-    page-break-after: auto !important;
-    break-inside: auto !important;
-    page-break-inside: auto !important;
-  }
-  .student-print-page + .student-print-page {
-    break-before: page !important;
-    page-break-before: always !important;
-  }
-  .student-print-page .chapter-week-group,
-  .student-print-page .student-week-card {
-    break-inside: avoid-page !important;
-    page-break-inside: avoid !important;
-  }
-}
-
-/* A4: veckorna i en enda lodrät kolumn, aldrig sida vid sida. */
-@media print {
-  .student-print-page .student-matrix,
-  .student-print-page .student-list,
-  .student-print-page.student-print-spacious .student-matrix,
-  .student-print-page.student-print-spacious .student-list {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) !important;
-    grid-template-rows: none !important;
-    grid-auto-rows: max-content !important;
-    gap: 4mm !important;
-  }
-}
-
-/* Liggande A4: ge innehållsrika veckor hela sidbredden utan inre scrollfält. */
-@media print {
-  .student-print-page,
-  .student-print-page .student-matrix,
-  .student-print-page .student-list,
-  .student-print-page .chapter-week-group,
-  .student-print-page .student-week-card,
-  .student-print-page .week-content,
-  .student-print-page .lessons,
-  .student-print-page .lesson,
-  .student-print-page .topic,
-  .student-print-page .topic-grid,
-  .student-print-page .resource-chip {
-    max-height: none !important;
-    overflow: visible !important;
-  }
-  .student-print-page .student-week-card { height: auto !important; }
+  .student-print-page.student-print-spacious .topic { font-size: 8pt !important; }
 }
 
 /* En tydlig utskriftsknapp i övre högra hörnet på varje elevvecka. */
