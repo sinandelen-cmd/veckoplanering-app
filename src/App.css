@@ -304,3 +304,19 @@ h3 { margin: 8px 0; color: var(--green-900); }
 @media (max-width:520px) {
   .student-matrix { grid-template-columns:minmax(0,1fr); }
 }
+
+/* Låt varje vecka behålla sin månadsetikett och läsbarhet även i smal matris. */
+.student-matrix .student-week-top { display:flex; flex-wrap:wrap; align-items:flex-start; }
+.student-matrix .student-week-identity { min-width:0; }
+.student-matrix .student-week-identity span { font-size:.85rem; overflow-wrap:anywhere; }
+.student-matrix .student-month-info { margin-left:auto; max-width:100%; }
+.student-matrix .student-month-info span { color:#273b48; }
+.student-matrix .week-content { overflow-wrap:anywhere; }
+.student-matrix .lesson, .student-matrix .topic { min-width:0; overflow-wrap:anywhere; }
+.student-matrix .student-week-card:focus-within { outline:2px solid #8199b5; outline-offset:2px; }
+.student-pager button:disabled { opacity:.4; cursor:not-allowed; }
+@media (min-width:800px) {
+  .student-shell:has(.student-matrix) .student-header { margin-bottom:8px; }
+  .student-shell:has(.student-matrix) .student-pager { margin:6px 0; }
+  .student-shell:has(.student-matrix) .student-matrix { height:calc(100dvh - 175px); }
+}
