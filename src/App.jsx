@@ -216,7 +216,7 @@ function sanitizeForStudents(plan) {
     entryType: plan?.entryType === 'dag' ? 'dag' : 'lektion',
     weeksData: sourceWeeks
       .filter(week => week && typeof week === 'object' && !week.hidden)
-      .sort((a, b) => (Number(a.weekNumber) || 0) - (Number(b.weekNumber) || 0))
+      .sort((a, b) => (b.weekStart || '').localeCompare(a.weekStart || ''))
       .map((week, index) => ({
         weekNumber: Number.isInteger(week.weekNumber) ? week.weekNumber : index + 1,
         weekStart: typeof week.weekStart === 'string' ? week.weekStart : '',
@@ -290,7 +290,7 @@ function chapterTone(chapter) {
 }
 
 function StudentView({ plan, error, preview = false }) {
-  const studentWeeks = Array.isArray(plan?.weeksData) ? plan.weeksData.filter(week => !week.hidden) : []
+  const studentWeeks = Array.isArray(plan?.weeksData) ? plan.weeksData.filter(week => !week.hidden).sort((a, b) => (b.weekStart || '').localeCompare(a.weekStart || '')) : []
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
   return <main className="shell student-shell">
@@ -748,10 +748,10 @@ function TeacherApp({ session }) {
     <section className="card">
       <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
       <div className="year-grid">
-        {weeks.map((week, index) => ({ week, index })).sort((a, b) => Number(a.week.weekNumber) - Number(b.week.weekNumber)).map(({ week, index }, displayIndex, ordered) => <div className="chapter-week-group" key={`${week.weekNumber}-${index}`}>
+        {weeks.map((week, index) => ({ week, index })).sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).map(({ week, index }, displayIndex, ordered) => <div className="chapter-week-group" key={`${week.weekNumber}-${index}`}>
           {week.chapter?.trim() && (displayIndex === 0 || week.chapter !== ordered[displayIndex - 1]?.week.chapter) && <h3 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h3>}
           <article className="week-card" id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
-          <div className="week-top"><label className="student-visibility-toggle"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever`} /></label><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{formatDate(week.weekStart)}</span>
+          <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}><label className="student-visibility-toggle" style={{ padding: "8px", display: "inline-flex", alignItems: "center" }}><input style={{ width: 28, height: 28, cursor: "pointer", accentColor: "#08785b" }} type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever`} /></label><strong style={{ fontSize: "1.45rem", fontWeight: 800 }}>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span style={{ fontSize: "1.15rem", fontWeight: 700 }}>{formatDate(week.weekStart)}</span>
             <button type="button" className="remove-small" disabled={weeks.length <= 1} onClick={() => {
               if (hasWeekWork(week, index) && !window.confirm(`Ta bort vecka ${week.weekNumber} och allt innehåll i veckan?`)) return
               setPlan(p => {
@@ -761,7 +761,16 @@ function TeacherApp({ session }) {
               })
             }}>× Ta bort vecka</button></div>
           <label className="chapter-editor">Kapitel / tema (valfritt)<input value={week.chapter || ''} placeholder="Exempel: Kapitel 5 – Taluppfattning" onChange={e => updateWeek(index, { chapter: e.target.value })} /></label>
-          <label className="week-number-editor">Veckonummer<input type="number" readOnly value={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Veckonumret bestäms automatiskt av datumet" /></label>
+          <label className="week-number-editor">Veckonummer<input type="number" min="1" max="53" value={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Ändra veckonumret för att flytta veckan och dess datum" onChange={e => {
+            const target = Number(e.target.value)
+            const current = calendarWeekNumber(week.weekStart)
+            if (!Number.isInteger(target) || target < 1 || target > 53 || current === null) return
+            const nextDate = addWeeks(week.weekStart, target - current)
+            if (calendarWeekNumber(nextDate) !== target) { setStatus('Veckonumret finns inte vid detta årsskifte.'); return }
+            if (weeks.some((other, i) => i !== index && other.weekStart === nextDate)) { setStatus('Det finns redan en planering för den veckan.'); return }
+            updateWeek(index, { weekStart: nextDate, weekNumber: target })
+            setStatus('')
+          }} /></label>
           <input className="week-title" value={/^Vecka\s+\d+$/i.test(week.title || '') ? `Vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}` : (week.title || '')} onChange={e => updateWeek(index, { title: e.target.value })} />
           <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />
           <LessonDetails week={week} entryType={plan.entryType || 'lektion'} onChange={changes => updateWeek(index, changes)} />
