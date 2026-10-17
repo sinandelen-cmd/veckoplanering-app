@@ -234,3 +234,21 @@ h3 { margin: 8px 0; color: var(--green-900); }
 /* Zoomad vecka: visa lektionerna i en lodrät lista, aldrig i kolumner. */
 .calendar-week-detail .calendar-lesson-list { display: flex; flex-direction: column; gap: 12px; }
 .calendar-week-detail .calendar-lesson-list > button { width: 100%; min-height: 64px; align-items: flex-start; }
+
+/* Tydligt åtskilda knappar i zoomkalenderns redigeringsvy. */
+.calendar-overlay .calendar-save-button { background: #1558c0; border: 1px solid #1558c0; color: #fff; font-weight: 700; }
+.calendar-overlay .calendar-save-button:hover:not(:disabled) { background: #104699; color: #fff; }
+.calendar-overlay .calendar-save-button:disabled { background: #d8e3f5; border-color: #d8e3f5; color: #65748b; opacity: 1; cursor: not-allowed; }
+.calendar-overlay .calendar-overview-button { background: #6843ad; border: 1px solid #6843ad; color: #fff; font-weight: 700; }
+.calendar-overlay .calendar-overview-button:hover { background: #51318b; color: #fff; }
+.calendar-overlay .calendar-close-button { background: #555d6b; border: 1px solid #555d6b; color: #fff; }
+.calendar-overlay .calendar-close-button:hover { background: #3f4652; color: #fff; }
+.calendar-overlay .add-detail,
+.calendar-overlay .lessons > button.secondary,
+.calendar-overlay .lesson > button.secondary { background: #087f83; border: 1px solid #087f83; color: #fff; font-weight: 650; }
+.calendar-overlay .add-detail:hover,
+.calendar-overlay .lessons > button.secondary:hover,
+.calendar-overlay .lesson > button.secondary:hover { background: #076467; color: #fff; }
+.calendar-overlay .remove-small { background: #b83440; border: 1px solid #b83440; color: #fff; }
+.calendar-overlay .remove-small:hover { background: #932632; color: #fff; }
+.calendar-overlay button:focus-visible { outline: 3px solid #f3b43d; outline-offset: 2px; }
