@@ -91,6 +91,8 @@ function reconcileWeeks(plan, startDate, count) {
   return fresh.map((week, index) => ({
     ...week,
     ...(previous[index] || {}),
+    // Behåll egen rubrik, men uppdatera automatisk "Vecka N"-rubrik vid nytt datum.
+    title: !previous[index]?.title || /^Vecka\\s+\\d+$/i.test(previous[index].title) ? week.title : previous[index].title,
     weekNumber: calendarWeekNumber(week.weekStart) ?? week.weekNumber,
     weekStart: week.weekStart,
   }))
