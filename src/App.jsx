@@ -680,6 +680,7 @@ function TeacherApp({ session }) {
     if (!String(plan.subject || '').trim()) return setStatus('Skriv ämne.')
     if ((plan.schoolClosures || []).some(item => !validSchoolClosure(item))) return setStatus('Rätta namn och datum för lov/studiedagar innan du sparar eller publicerar.')
     if (publish && !sanitizeForStudents({ ...plan, weeksData: weeks }).weeksData.length) return setStatus('Det finns inga synliga veckor att publicera. Markera minst en vecka med ”Visa för elever”.')
+    if (publish && weeks.some(week => week && !week.hidden && !/^\\d{4}-\\d{2}-\\d{2}$/.test(week.weekStart || ''))) return setStatus('En synlig vecka saknar giltigt startdatum. Rätta veckans datum innan publicering.')
     setBusy(true)
     setStatus('Sparar...')
     try {
