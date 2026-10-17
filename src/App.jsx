@@ -683,8 +683,8 @@ function TeacherApp({ session }) {
     setBusy(true)
     setStatus('Sparar...')
     try {
-      // Befintliga publiceringsfält ändras aldrig vid sparning av utkast.
-      // Databasens status hämtas separat, inte från redigerarens lokala kopia.
+      // Databasens publiceringsstatus och länk kontrolleras även vid ompublicering.
+      // Utkast får aldrig skriva över elevversionen.
       let databasePublished = false
       let databaseSlug = ''
       if (selectedId) {
