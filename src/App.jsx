@@ -623,7 +623,7 @@ function TeacherApp({ session }) {
   const [plan, setPlan] = useState(emptyPlan())
   const [plans, setPlans] = useState([])
   const [calendarOpen, setCalendarOpen] = useState(true)
-  const [teacherTab, setTeacherTab] = useState("arsplan")
+  const [teacherTab, setTeacherTab] = useState("mina")
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
@@ -886,9 +886,9 @@ function TeacherApp({ session }) {
     setTeacherTab('arsplan'); setPreviewStudents(false)
     setStatus('Ny planering klar. Spara utkast när du har fyllt i din planering.')
   }
-  return <><Navigation active={teacherTab} onNavigate={id => { setTeacherTab(id); if (id === 'elevvy') setPreviewStudents(true) }} onNew={createPlan} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} /><main className="shell" id="lararvy">
+  return <div className="planning-layout"><Navigation active={teacherTab} plans={plans} selectedId={selectedId} onOpenPlan={loadPlan} onNavigate={id => { setTeacherTab(id); if (id === 'elevvy') setPreviewStudents(true) }} onNew={createPlan} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} /><main className="shell" id="lararvy">
     <header className="topbar">
-      <div><p className="eyebrow">LÄRARVY</p><h1>{APP_TITLE}</h1><p className="muted">{session.user.email}</p></div>
+      <div><p className="eyebrow">{teacherTab === "mina" ? "MINA PLANERINGAR" : teacherTab === "elevvy" ? "ELEV VY" : "LÄRARVY"}</p><h1>{APP_TITLE}</h1><p className="muted">{session.user.email}</p></div>
       <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
     </header>
 
@@ -1117,7 +1117,7 @@ function TeacherApp({ session }) {
     </div>
     <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
     <section className="card" id="mina-arsplaneringar">
-      <div className="section-heading"><div><p className="eyebrow">BIBLIOTEK</p><h2>Mina årsplaneringar</h2></div></div>
+      <div className="section-heading"><div><p className="eyebrow">BIBLIOTEK</p><h2>Mina årsplaneringar</h2></div><button type="button" className="primary" onClick={createPlan}>+ Ny planering</button></div>
       {!plans.length ? <p className="muted">Du har inga sparade årsplaneringar ännu.</p> : <div className="library-list">
         {plans.map(row => <article className="library-item" key={row.id}>
           <div><strong className="library-title">{row.title}</strong><p className="muted">{[row.subject, row.class_name, row.school_year].filter(Boolean).join(' · ')}</p></div>
@@ -1132,7 +1132,7 @@ function TeacherApp({ session }) {
       </div>}
     </section>
     </div>
-  </main></>
+  </main></div>
 }
 
 function AnnualApp() {
