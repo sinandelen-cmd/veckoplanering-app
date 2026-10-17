@@ -464,7 +464,7 @@ function YearCalendar({ weeks, onClose, onUpdateWeek, onSave, isDirty, busy, sav
 function TeacherApp({ session }) {
   const [plan, setPlan] = useState(emptyPlan())
   const [plans, setPlans] = useState([])
-  const [calendarOpen, setCalendarOpen] = useState(false)
+  const [calendarOpen, setCalendarOpen] = useState(true)
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
@@ -815,6 +815,7 @@ function TeacherApp({ session }) {
       </div>}
     </section>
 
+    <details className="legacy-week-editor"><summary>Detaljerad veckoredigering (vid behov)</summary>
     <section className="card">
       <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
       <div className="year-grid">
@@ -868,6 +869,8 @@ function TeacherApp({ session }) {
       {isDirty && <p className="unsaved-notice" role="status">Osparade ändringar – välj Spara utkast innan du lämnar sidan.</p>}
       {status && <p className="status">{status}</p>}
     </section>
+
+    </details>
 
     {previewStudents && <section className="card preview-panel" id="elevvy"><h2>Förhandsvisning för elever</h2><p className="muted">Detta är endast en förhandsvisning. Inget publiceras.</p><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
 
