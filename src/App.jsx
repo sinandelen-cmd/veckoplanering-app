@@ -335,9 +335,9 @@ function YearCalendar({ weeks, onClose, entryType = 'lektion' }) {
     if (selectedLessonIndex !== null) setSelectedLessonIndex(null)
     else setSelectedWeekIndex(null)
   }
-  return <section className="calendar-overlay" aria-label="Årsplanering med tolv veckor per sida">
+  return <section className="calendar-overlay" aria-label="Årsplanering med valbart antal veckor per sida">
     <div className="calendar-top">
-      <div><h2>{selectedWeek ? `Vecka ${selectedWeek.weekNumber}` : 'Årsöversikt · 12 veckor per sida'}</h2><p>{selectedWeek ? (selectedWeek.chapter || selectedWeek.title || 'Din planering') : 'Välj en vecka för att zooma in och se dina dagar eller lektioner.'}</p></div>
+      <div><h2>{selectedWeek ? `Vecka ${selectedWeek.weekNumber}` : `Årsöversikt · ${weeksPerPage} veckor per sida`}</h2><p>{selectedWeek ? (selectedWeek.chapter || selectedWeek.title || 'Din planering') : 'Välj en vecka för att zooma in och se dina dagar eller lektioner.'}</p></div>
       <div className="calendar-zoom-controls">{selectedWeek && <button type="button" className="secondary" onClick={back}>← Tillbaka</button>}<button type="button" className="secondary" onClick={onClose}>✕ Stäng</button></div>
     </div>
     {selectedWeek ? <div className="calendar-week-detail">
@@ -346,12 +346,13 @@ function YearCalendar({ weeks, onClose, entryType = 'lektion' }) {
       {selectedLessonIndex === null ? <div className="calendar-lesson-list">{lessons.map((lesson, index) => <button type="button" className="secondary" key={index} onClick={() => setSelectedLessonIndex(index)}><strong>{lesson.name || (entryType === 'dag' ? WEEKDAYS[index] || `Dag ${index + 1}` : `Lektion ${index + 1}`)}</strong><span>{(lesson.topics || []).map(topic => topic.name).filter(Boolean).join(', ') || 'Visa innehåll'}</span></button>)}</div> : <div className="calendar-lesson-detail"><LessonDetails week={{ lessons: [lessons[selectedLessonIndex]] }} entryType={entryType} /></div>}
       <button type="button" className="secondary" onClick={() => { setSelectedWeekIndex(null); setSelectedLessonIndex(null) }}>← Till översikten</button>
     </div> : <>
+      <div className="calendar-layout-selector"><label htmlFor="calendar-layout">Visa veckor</label><select id="calendar-layout" value={layout} onChange={event => changeLayout(event.target.value)}><option value="3x2">3 × 2 (6 veckor)</option><option value="4x3">4 × 3 (12 veckor)</option><option value="4x4">4 × 4 (16 veckor)</option><option value="4x5">4 × 5 (20 veckor)</option></select></div>
       <div className="calendar-pagination" aria-label="Bläddra mellan veckosidor">
-        <button type="button" className="secondary" disabled={currentPage === 0} onClick={() => setPage(p => Math.max(0, p - 1))}>← Föregående 12 veckor</button>
+        <button type="button" className="secondary" disabled={currentPage === 0} onClick={() => setPage(p => Math.max(0, p - 1))}>← Föregående {weeksPerPage} veckor</button>
         <strong>Sida {currentPage + 1} av {pageCount}</strong>
-        <button type="button" className="secondary" disabled={currentPage >= pageCount - 1} onClick={() => setPage(p => Math.min(pageCount - 1, p + 1))}>Nästa 12 veckor →</button>
+        <button type="button" className="secondary" disabled={currentPage >= pageCount - 1} onClick={() => setPage(p => Math.min(pageCount - 1, p + 1))}>Nästa {weeksPerPage} veckor →</button>
       </div>
-      <div className="calendar-week-grid">{pageWeeks.map((week, index) => {
+      <div className="calendar-week-grid" style={{ "--week-grid-columns": columns }}>{pageWeeks.map((week, index) => {
         const date = new Date(`${week.weekStart}T12:00:00`)
         const month = new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeric' }).format(date)
         const topics = (week.lessons || []).flatMap(lesson => (lesson.topics || []).map(topic => topic.name).filter(Boolean))
