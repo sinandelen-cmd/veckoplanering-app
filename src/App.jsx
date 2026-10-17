@@ -557,6 +557,7 @@ function TeacherApp({ session }) {
   }
 
   async function save(publish) {
+    if (busy) return
     if (!String(plan.title || '').trim()) return setStatus('Skriv ett namn på årsplaneringen.')
     if (!String(plan.subject || '').trim()) return setStatus('Skriv ämne.')
     setBusy(true)
