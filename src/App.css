@@ -367,7 +367,7 @@ h3 { margin: 8px 0; color: var(--green-900); }
 /* A4-utskrift: samma elevkort, högst sex veckor per sida. */
 .student-print-pages { display:none; }
 @media print {
-  @page { size:A4 landscape; margin:9mm; }
+  @page { size:A4 portrait; margin:9mm; }
   body { background:white !important; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
   .student-screen-view { display:none !important; }
   .student-print-pages { display:block !important; }
