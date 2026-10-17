@@ -133,3 +133,8 @@ assert.match(app, /\.\.\.\(publish \|\| !selectedId \? publicationFields/)
 
 assert.match(app, /publish && weeks\.some\(week => week && !week\.hidden && !validSchoolClosure/)
 assert.match(app, /En synlig vecka saknar giltigt startdatum/)
+
+assert.match(app, /function isSchoolYear2026_27\(value\)/)
+assert.match(app, /!isSchoolYear2026_27\(plan\.schoolYear\)/)
+assert.match(app, /Nationella prov – datum att kontrollera/)
+assert.match(app, /ännu inte slutverifierade mot Skolverkets aktuella provschema/)
