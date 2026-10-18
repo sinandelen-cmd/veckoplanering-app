@@ -1510,3 +1510,26 @@ body { background: #fffaf2; color: var(--ink); }
 .topic-column .topic-custom-heading input::placeholder { color:#82404a; opacity:1; }
 .topic-column .topic-custom-heading input:focus { border-style:solid; outline:2px solid #f2d39c; outline-offset:1px; }
 .topic-column h5 { overflow-wrap:anywhere; }
+
+/* Planeringens egen mjuka färgidentitet – begränsad till den öppna planeringen. */
+.planning-layout { --plan-light:#fff9e6; --plan-soft:#fff0bd; --plan-accent:#ad5269; --plan-ink:#79364b; }
+.planning-layout .planning-view-switcher { background:var(--plan-light); border-bottom-color:var(--plan-soft); }
+.planning-layout .planning-view-switcher .top-navigation-link.active,
+.planning-layout .planning-view-switcher .top-navigation-link.top-calendar.active { background:var(--plan-accent); border-color:var(--plan-accent); color:white; }
+.planning-layout .week-overview-toolbar,
+.planning-layout .week-card,
+.planning-layout .colleague-share-panel { border-color:var(--plan-soft); }
+.planning-layout .week-overview-toolbar strong,
+.planning-layout .week-card .week-top > strong,
+.planning-layout .colleague-share-panel h2 { color:var(--plan-ink); }
+.planning-layout .week-count-badge,
+.planning-layout .week-card .week-heading-visibility { background:var(--plan-soft); color:var(--plan-ink); }
+.planning-layout .week-overview-toolbar .primary,
+.planning-layout .week-card .primary { background:var(--plan-accent); }
+.planning-sidebar .sidebar-plan[style] { border-left:5px solid var(--item-accent); background:var(--item-light); color:var(--item-ink); }
+.planning-sidebar .sidebar-plan[style].selected { border-left-width:7px; outline:2px solid var(--item-accent); outline-offset:-2px; font-weight:800; }
+.student-shell { --plan-light:#fff9e6; --plan-soft:#fff0bd; --plan-accent:#ad5269; --plan-ink:#79364b; }
+.student-shell .student-week, .student-shell .student-week-card { border-color:var(--plan-soft); }
+.student-shell h1, .student-shell h2 { color:var(--plan-ink); }
+.student-shell .primary { background:var(--plan-accent); }
+@media print { .student-shell { --plan-light:white; --plan-soft:#ddd; } }
