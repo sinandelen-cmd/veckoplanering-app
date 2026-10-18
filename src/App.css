@@ -1672,3 +1672,8 @@ body { background: #fffaf2; color: var(--ink); }
 .topic-grid.without-pages:not(.without-assignments){grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
 .topic-grid.without-assignments:not(.without-pages){grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
 .topic-grid.without-pages.without-assignments{grid-template-columns:minmax(0,1fr)}
+
+/* Simple large checkbox instead of the eye, aligned left of each week. */
+.calendar-month-row .calendar-week-checkbox{position:absolute;left:3px;top:45%;transform:translateY(-50%);width:38px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:transparent;border:0}
+.calendar-month-row .calendar-week-checkbox input{width:27px;height:27px;accent-color:#8c4b65;cursor:pointer;margin:0}
+@media(max-width:700px){.calendar-month-row .calendar-week-checkbox{width:27px;left:0}.calendar-month-row .calendar-week-checkbox input{width:23px;height:23px}}
