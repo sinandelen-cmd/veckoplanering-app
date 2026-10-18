@@ -896,6 +896,7 @@ function TeacherApp({ session }) {
   async function shareWithColleague(event) {
     event.preventDefault()
     if (!selectedId || !shareRecipient.trim() || !sharePassword) return
+    if (plan.receivedCopy) { setShareMessage('En mottagen kopia får inte delas vidare.'); return }
     if (isDirty) { setShareMessage('Spara dina ändringar innan du delar planeringen.'); return }
     setBusy(true)
     setShareMessage('')
@@ -907,7 +908,7 @@ function TeacherApp({ session }) {
       if (typeof data === 'string' && data.startsWith('ERROR:')) throw new Error(data.slice(6))
       setShareToken(data)
       setSharePassword('')
-      setShareMessage('Inbjudan skapad. Ge engångskoden till kollegan på ett säkert sätt. Koden gäller i sju dagar.')
+      setShareMessage('Inbjudan skapad. Skicka engångskoden privat till kollegan. Ingen e-post skickas automatiskt. Koden gäller i sju dagar.')
     } catch (error) { setShareMessage('Kunde inte skapa inbjudan: ' + error.message) }
     finally { setBusy(false) }
   }
@@ -1070,7 +1071,7 @@ function TeacherApp({ session }) {
       <div className="share-panel-heading"><div><h2>Klona och dela</h2><p className="muted">Kollegan får en egen, privat kopia. Den kan inte delas vidare via Årsplanering.</p></div><button type="button" className="secondary" onClick={() => setShareOpen(false)}>Stäng</button></div>
       <div className="colleague-share-grid">
         <form onSubmit={shareWithColleague}>
-          <h3>Dela din planering</h3>
+          <h3>Dela din planering</h3><p className="muted">Kollegan behöver ett eget konto med samma e-postadress som du anger. Du skickar engångskoden själv – ingen e-post skickas automatiskt.</p>
           {plan.receivedCopy ? <p className="muted">Den här planeringen är mottagen från en kollega och kan inte delas vidare.</p> : <>
             <label>Kollegans e-postadress<input type="email" required autoComplete="email" value={shareRecipient} onChange={e => setShareRecipient(e.target.value)} placeholder="kollega@skola.se" /></label>
             <label>Delningskod<input type="password" required autoComplete="off" value={sharePassword} onChange={e => setSharePassword(e.target.value)} placeholder="Ange delningskod" /></label>
