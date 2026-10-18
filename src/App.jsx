@@ -509,6 +509,7 @@ function ImportantDatesForWeek({ week, plan }) {
   const entries = dates.flatMap(({ date, day }) => {
     const events = closures.filter(item => item.startDate <= date && item.endDate >= date)
       .map(item => ({ name: item.name, kind: /studiedag/i.test(item.name) ? 'study' : 'holiday', verified: item.verified }))
+    events.push(...publicHolidaysInWeek(week.weekStart).filter(item => item.date === date).map(item => ({ name: 'Röd dag – ' + item.name, kind: 'holiday', verified: true })))
     events.push(...exams.filter(item => item.date === date).map(item => ({ name: 'NP – ' + item.subject + ', delprov ' + item.part, kind: 'exam', verified: true })))
     return events.map(event => ({ ...event, date, day }))
   })
