@@ -652,7 +652,7 @@ function nationalExamsForPlan(plan) {
 
 function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnFirstWeek = false, onClose, onUpdateWeek, onAddWeek, onDeleteWeek, onSave, isDirty, busy, saveStatus, entryType = 'lektion' }) {
   // Årsöversikt i nio veckor per sida, tre kolumner och tre rader.
-  const [selectedWeekIndex, setSelectedWeekIndex] = useState(startOnFirstWeek ? 0 : null)
+  const [selectedWeekIndex, setSelectedWeekIndex] = useState(0)
   const [overviewPage, setOverviewPage] = useState(0)
   const [selectedLessonIndex, setSelectedLessonIndex] = useState(null)
   const orderedWeeks = [...weeks].filter(week => week && /^\d{4}-\d{2}-\d{2}$/.test(week.weekStart || '')).sort((a, b) => a.weekStart.localeCompare(b.weekStart))
@@ -1375,7 +1375,7 @@ function TeacherApp({ session }) {
     </div>}
 
     </div>
-    <div className="teacher-tab-panel" hidden={true}>
+    <div className="teacher-tab-panel legacy-post-creation-panel" hidden={true}>
     <section className="card import-card"><h2>Redigera och importera underlag</h2>
       <p className="eyebrow">IMPORT</p><h2>Excel, Word, PDF eller text</h2>
       <p className="muted">Ladda upp ett underlag. Texten delas preliminärt över veckorna så att du kan granska och justera.</p>
