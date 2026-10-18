@@ -504,7 +504,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     flushSync(() => setSinglePrintWeek(weekStart))
     window.print()
   }
-  const gridMode = plan?.studentLayout !== 'list'
+  const gridMode = printPage !== null && plan?.studentLayout !== 'list'
   const columns = Math.max(1, Math.min(3, Number(plan?.studentColumns) || 3))
   const rows = Math.max(1, Math.min(Math.floor(6 / columns), Number(plan?.studentRows) || 2))
   const pageSize = Math.min(6, columns * rows)
@@ -521,13 +521,13 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     .filter(week => week && !week.hidden)
     .sort((a, b) => weekContentScore(b) - weekContentScore(a))
     .filter((week, index, weeks) => weeks.findIndex(other => (other.weekStart || `number-${other.weekNumber}`) === (week.weekStart || `number-${week.weekNumber}`)) === index)
-    .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || '')) : []
+    .sort((a, b) => (b.weekStart || '').localeCompare(a.weekStart || '')) : []
   const pages = Math.max(1, Math.ceil(studentWeeks.length / pageSize))
   // Längre elevveckor får mer plats på A4. Grupperna består alltid av hela veckor.
   const printGroups = singlePrintWeek ? [{ weeks: studentWeeks.filter(week => week.weekStart === singlePrintWeek) }] : groupStudentWeeksForPrint(studentWeeks)
   const currentPage = printPage === null ? Math.min(page, pages - 1) : printPage
   const visibleWeeks = printPage === null
-    ? studentWeeks.slice(currentPage * pageSize, (currentPage + 1) * pageSize)
+    ? studentWeeks
     : (printWeekStart ? studentWeeks.filter(week => week.weekStart === printWeekStart) : (printGroups[printPage]?.weeks || []))
   const pageWeekLabel = studentWeekPageLabel(visibleWeeks)
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
@@ -535,19 +535,18 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   return <><main style={planThemeStyle(plan)} className={`shell student-shell ${printPage === null ? "student-screen-view" : "student-print-page"} ${printPage !== null && visibleWeeks.length === 1 ? "student-print-spacious" : ""}`}>
     <header className="student-header">
       <div><p className="eyebrow">{preview ? 'FÖRHANDSVISNING' : 'PUBLICERAD ÅRSPLANERING'}</p><h1>{plan.title}</h1><p className="muted">{[plan.subject, plan.className, plan.schoolYear].filter(Boolean).join(' · ')}</p></div>
-      {printPage === null && <button type="button" className="secondary student-print-button" onClick={() => window.print()}>🖨 Skriv ut elevplaneringen (A4, hela veckor)</button>}
+
       <span className="public-badge">{preview ? "Förhandsvisning" : "Publicerad"}</span>
     </header>
-    {printPage === null && studentWeeks.length > 0 && <nav className="student-pager" aria-label="Bläddra mellan veckor"><button type="button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>← Föregående</button><strong aria-live="polite">{pageWeekLabel} · Sida {currentPage + 1} av {pages}</strong><button type="button" disabled={currentPage === pages - 1} onClick={() => setPage(currentPage + 1)}>Nästa →</button></nav>}
     {studentWeeks.length === 0 && <p className="card empty" role="status">Det finns inga synliga veckor i den här planeringen ännu.</p>}
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
       {visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
         {week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
         <article className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
-        {printPage === null && <button type="button" className="print-single-week" onClick={() => printOnlyWeek(week.weekStart)} aria-label={`Skriv ut vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} på stående A4`}>🖨 Skriv ut veckan</button>}
+
         <div className="week-top student-week-top">
-          <div className="student-week-identity"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{studentWeekDateRange(week.weekStart)}</span></div>
-          {studentMonthInfo(week.weekStart) && <div className="student-month-info" style={{ backgroundColor: studentMonthInfo(week.weekStart).color }}><strong>{studentMonthInfo(week.weekStart).name}</strong><span>{studentMonthInfo(week.weekStart).weeks}</span></div>}
+          <div className="student-week-identity"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>{printPage !== null && <span>{studentWeekDateRange(week.weekStart)}</span>}</div>
+          {printPage !== null && studentMonthInfo(week.weekStart) && <div className="student-month-info" style={{ backgroundColor: studentMonthInfo(week.weekStart).color }}><strong>{studentMonthInfo(week.weekStart).name}</strong><span>{studentMonthInfo(week.weekStart).weeks}</span></div>}
         </div>
         {!/^Vecka\s+\d+$/i.test(week.title || '') && week.title?.trim() && <h3>{week.title}</h3>}
         <div className="week-content">{week.content || (!week.pages?.length && !week.assignments?.length && !week.links?.length && !week.lessons?.some(lesson => lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.length || topic.assignments?.length || topic.links?.length)) ? 'Ingen planering angiven ännu.' : '')}</div>
@@ -556,7 +555,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
       </article></div>)}
     </section>
   </main>
-  {printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">
+  {false && printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">
     {Array.from({ length: printGroups.length }, (_, index) => <StudentView key={index} plan={plan} preview={preview} printPage={index} printWeekStart={singlePrintWeek} />)}
   </div>}
 </>
