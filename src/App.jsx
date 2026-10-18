@@ -513,6 +513,7 @@ function ImportantDatesForWeek({ week, plan }) {
   })
   if (!entries.length) return null
   return <div className="student-important-dates" aria-label="Viktiga datum denna vecka">
+    <h4>📅 Viktiga datum</h4>
     {entries.map((item, index) => <div className={`student-important-date student-important-date-${item.kind}`} key={item.date + item.name + index}>
       <strong>{item.day} <small>{Number(item.date.slice(8))}/{Number(item.date.slice(5, 7))}</small></strong>
       <span>{item.kind === 'exam' ? '📝' : item.kind === 'study' ? '📘' : '🌼'} {item.name}{!item.verified && <small> · Kontrollera datum</small>}</span>
