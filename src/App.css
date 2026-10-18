@@ -1648,3 +1648,16 @@ body { background: #fffaf2; color: var(--ink); }
 .planning-layout .topic-fixed-heading h5{margin:0;font-size:17px!important;font-weight:800!important}
 .planning-layout .remove-topic-column{font-size:12px;font-weight:700;white-space:nowrap;padding:5px 9px;border-radius:8px}
 .planning-layout .restore-topic-column{align-self:start;min-height:42px;border:1px dashed #a8c8bf;border-radius:10px}
+
+/* Lesson editor: match the 17px bold weekday/lesson heading in every entered value. */
+.topic-grid .topic-name textarea,
+.topic-grid .topic-name-display,
+.topic-grid .topic-cell input,
+.topic-grid .topic-cell span,
+.topic-grid .topic-fixed-heading h5{font-family:inherit!important;font-size:17px!important;font-weight:800!important;line-height:1.45!important;color:#55363e!important;letter-spacing:0!important}
+.topic-grid .topic-name textarea{padding:12px 14px!important;min-height:76px;background:#fff;border:1px solid #b7d5c9;border-radius:9px}
+.topic-grid .topic-cell input{padding:10px 12px!important;min-height:42px;box-sizing:border-box}
+.topic-grid .topic-fixed-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.topic-grid .topic-fixed-heading h5{margin:0}
+.topic-grid .remove-topic-column{font-size:12px!important;font-weight:700!important;white-space:nowrap;padding:6px 9px;border-radius:8px}
+.topic-grid .restore-topic-column{align-self:start;min-height:42px;border:1px dashed #a8c8bf;border-radius:10px}
