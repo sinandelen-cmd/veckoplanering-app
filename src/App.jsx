@@ -167,7 +167,7 @@ function planThemeStyle(plan, fallback = '') {
 function emptyPlan() {
   return {
     title: '', subject: '', schoolYear: '', className: '', county: '', municipality: '', schoolForm: '', grade: '', course: '', schoolClosures: [],
-    startDate: mondayOf(), startWeek: 1, entryType: 'lektion', lessonDisplay: 'bara-lektion', studentLayout: 'grid', studentColumns: 3, studentRows: 2, lessonsPerWeek: 3, weeks: DEFAULT_WEEKS, weeksData: [],
+    startDate: mondayOf(), startWeek: 1, entryType: 'lektion', lessonDisplay: 'bara-lektion', studentLayout: 'grid', studentColumns: 3, studentRows: 2, lessonsPerWeek: 3, lessonDays: ['Måndag', 'Onsdag', 'Fredag'], weeks: DEFAULT_WEEKS, weeksData: [],
     published: false, publicSlug: '', autoReleaseWeeks: false, visibleWeekCount: 2,
   }
 }
@@ -181,7 +181,7 @@ function makeWeeks(plan, count = plan.weeks) {
     chapter: '',
     content: '',
     pages: [], assignments: [], links: [],
-    items: [], lessons: Array.from({ length: plan.entryType === 'dag' ? 5 : Math.max(1, Math.min(8, Number(plan.lessonsPerWeek) || 3)) }, (_, i) => ({ name: plan.entryType === 'dag' ? WEEKDAYS[i] : `Lektion ${i + 1}`, topics: [] })),
+    items: [], lessons: Array.from({ length: plan.entryType === 'dag' ? 5 : Math.max(1, Math.min(8, Number(plan.lessonsPerWeek) || 3)) }, (_, i) => ({ name: plan.entryType === 'dag' ? WEEKDAYS[i] : `Lektion ${i + 1}`, day: plan.entryType === 'dag' ? WEEKDAYS[i] : (plan.lessonDays?.[i] || ''), topics: [] })),
   }))
 }
 
@@ -508,11 +508,11 @@ function ImportantDatesForWeek({ week, plan }) {
     return { date: toIsoDate(date), day: ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag'][index] }
   })
   const closures = (Array.isArray(plan.schoolClosures) ? plan.schoolClosures : []).filter(validSchoolClosure)
-  const exams = nationalExamsForPlan(plan)
+  const exams = []
   const entries = dates.flatMap(({ date, day }) => {
     const events = closures.filter(item => item.startDate <= date && item.endDate >= date)
       .map(item => ({ name: item.name, kind: /studiedag/i.test(item.name) ? 'study' : 'holiday', verified: item.verified }))
-    events.push(...publicHolidaysInWeek(week.weekStart).filter(item => item.date === date).map(item => ({ name: 'Röd dag – ' + item.name, kind: 'holiday', verified: true })))
+    
     events.push(...exams.filter(item => item.date === date).map(item => ({ name: 'NP – ' + item.subject + ', delprov ' + item.part, kind: 'exam', verified: true })))
     return events.map(event => ({ ...event, date, day }))
   })
@@ -659,7 +659,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
       <p><strong>{(/^Vecka\s+\d+$/i.test(selectedWeek.title || '') ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : selectedWeek.title) || `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}`}</strong> · {formatDate(selectedWeek.weekStart)}</p>
       {schoolClosures.filter(item => validSchoolClosure(item) && item.startDate < addWeeks(selectedWeek.weekStart, 1) && item.endDate >= selectedWeek.weekStart).map(item => <p key={item.id} className="calendar-holiday"><strong>{item.verified ? "Skolledigt:" : "Skolledigt (ej verifierat):"}</strong> {item.name} · {formatDate(item.startDate)}–{formatDate(item.endDate)}</p>)}
       {nationalExams.filter(exam => exam.date >= selectedWeek.weekStart && exam.date < addWeeks(selectedWeek.weekStart, 1)).map(exam => <p key={exam.date + exam.subject + exam.part} className="calendar-holiday"><strong>🔒 Nationellt prov:</strong> {exam.subject}, delprov {exam.part} · {formatDate(exam.date)}{exam.startTime ? ` kl. ${exam.startTime}` : ''}</p>)}
-      {publicHolidaysInWeek(selectedWeek.weekStart).map(holiday => <p key={holiday.date} className="calendar-holiday"><strong>Röd dag:</strong> {holiday.name} · {formatDate(holiday.date)}</p>)}
+      
       <div className="calendar-publication-dates"><label>Publicera för elever från<input type="date" value={selectedWeek.publishDate || ''} onChange={e => editSelectedWeek({ publishDate: e.target.value })} /></label><label>Dölj för elever från<input type="date" value={selectedWeek.hideDate || ''} onChange={e => editSelectedWeek({ hideDate: e.target.value })} /></label></div>
       {selectedWeek.content && <p>{selectedWeek.content}</p>}
       <LessonDetails week={selectedWeek} onChange={editSelectedWeek} entryType={entryType} />
@@ -694,7 +694,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
           <span className="calendar-tile-date">{formatDate(week.weekStart)}</span><span className="calendar-tile-visibility" aria-hidden="true">{week.hidden ? "🙈 Dold för elever" : "👁️ Synlig för elever"}</span>
           {schoolClosures.filter(item => validSchoolClosure(item) && item.startDate < addWeeks(week.weekStart, 1) && item.endDate >= week.weekStart).map(item => <span key={item.id} className="calendar-holiday">📅 {item.name}{item.verified ? "" : " · ej verifierat"}</span>)}
           {nationalExams.filter(exam => exam.date >= week.weekStart && exam.date < addWeeks(week.weekStart, 1)).map(exam => <span key={exam.date + exam.subject + exam.part} className="calendar-holiday">🔒 NP {exam.subject} · {formatDate(exam.date)}</span>)}
-          {publicHolidaysInWeek(week.weekStart).map(holiday => <span key={holiday.date} className="calendar-holiday">🔴 {holiday.name} · {formatDate(holiday.date)}</span>)}
+          
           {week.chapter && <span className="calendar-tile-chapter">{week.chapter}</span>}
           <span className="calendar-tile-topics">{topics.slice(0, 3).join(' · ') || week.content || 'Ingen planering inskriven ännu'}</span>
           <span className="calendar-tile-action">Visa veckan →</span>
@@ -1206,6 +1206,7 @@ function TeacherApp({ session }) {
           <label>Startdatum<input type="date" required value={plan.startDate} onChange={event => { if (event.target.value) setPlan(p => ({ ...p, startDate: mondayOf(`${event.target.value}T12:00:00`), weeksData: [] })) }} /></label>
           <p className="muted">Planeringen börjar med en vecka. Lägg till fler veckor efter sista veckan när du behöver. Importerade underlag kan innehålla flera veckor.</p>
         </div>
+        <div className="card" style={{ marginTop: 14 }}><h3>Mitt veckoschema</h3><label>Antal lektioner per vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 1)) }))} /></label><div className="form-grid">{Array.from({ length: plan.lessonsPerWeek }, (_, i) => <label key={i}>Lektion {i + 1} – dag<select value={plan.lessonDays?.[i] || ''} onChange={e => setPlan(p => ({ ...p, lessonDays: Array.from({ length: Math.max(1, Number(p.lessonsPerWeek) || 3) }, (_, j) => j === i ? e.target.value : (p.lessonDays?.[j] || '')) }))}><option value="">Välj dag</option>{WEEKDAYS.map(day => <option key={day} value={day}>{day}</option>)}</select></label>)}</div><p className="muted">Samma dagar och lektionsnummer läggs automatiskt in i varje ny vecka. Du kan ändra dem senare.</p></div>
         {simpleMore && <div className="simple-extra-fields"><h3>Fler uppgifter</h3><div className="form-grid"><label>Skolform<input value={plan.schoolForm || ""} onChange={e => setPlan(p => ({ ...p, schoolForm: e.target.value }))} placeholder="Grundskola" /></label><label>Årskurs<input value={plan.grade || ""} onChange={e => setPlan(p => ({ ...p, grade: e.target.value }))} placeholder="6" /></label><label>Lektioner per vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 1)) }))} /></label><label>Kommun<input value={plan.municipality || ""} onChange={e => setPlan(p => ({ ...p, municipality: e.target.value }))} /></label></div>
           <div className="simple-closure-section">
             <h3>Lov och studiedagar</h3>
@@ -1316,7 +1317,7 @@ function TeacherApp({ session }) {
       </details>
     </section>
 
-    {calendarOpen && <div id="teacher-year-calendar"><YearCalendar startOnFirstWeek={weeks.length === 1} weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={nationalExamsForPlan(plan)} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onAddWeek={() => setPlan(p => {
+    {calendarOpen && <div id="teacher-year-calendar"><YearCalendar startOnFirstWeek={weeks.length === 1} weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={[]} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onAddWeek={() => setPlan(p => {
       const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
       if (existing.length >= 52) return p
       const latest = [...existing].sort((a, b) => b.weekStart.localeCompare(a.weekStart))[0]
