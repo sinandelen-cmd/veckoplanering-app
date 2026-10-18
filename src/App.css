@@ -1059,3 +1059,45 @@ body { background: #fffaf2; color: var(--ink); }
 .simple-setup-card h2 { margin-top: 0; }
 .simple-setup-card .form-grid { margin: 1rem 0; }
 .simple-setup-card .button-row { margin-top: 1.2rem; }
+
+/* Samma lugna formulärspråk genom hela lärarens planering. */
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) > .card,
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) > .teacher-tab-panel > .card {
+  background: #fffdf8;
+  border: 1px solid #efcf85;
+  border-radius: 15px;
+  box-shadow: none;
+  padding: clamp(16px, 2.5vw, 22px);
+  margin-bottom: 14px;
+}
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) h2,
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) h3 {
+  color: #82404a;
+  line-height: 1.35;
+}
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) label {
+  color: #71414a;
+  font-weight: 600;
+}
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) input,
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) select,
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) textarea {
+  border: 1px solid #c9dcd0;
+  border-radius: 8px;
+  background: #fff;
+}
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) details {
+  border-radius: 10px;
+}
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) details > summary {
+  cursor: pointer;
+}
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) .primary,
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) .secondary {
+  border-radius: 8px;
+}
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) .muted {
+  color: #86666a;
+}
+.compact-status-card { padding: 10px 16px !important; }
+.compact-status-card .status { margin: 0; }
