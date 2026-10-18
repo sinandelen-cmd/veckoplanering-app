@@ -1374,3 +1374,7 @@ body { background: #fffaf2; color: var(--ink); }
   .planning-layout.view-teacher .week-card .topic-grid { grid-template-columns: 1fr; }
   .planning-layout.view-teacher .week-card .topic-name { grid-column: auto; }
 }
+
+.calendar-add-week-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 12px 0 16px; }
+.calendar-add-week-actions .primary { background: #b85c68; color: #fff; border-radius: 8px; padding: 10px 16px; font-weight: 700; }
+.calendar-add-week-actions .muted { font-size: .88rem; color: #87666a; }
