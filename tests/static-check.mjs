@@ -358,3 +358,6 @@ assert.match(sql, /'\{schoolClosures\}'/)
 // Datumintervall ska alltid visas för elever, inte bara vid utskrift.
 assert.match(app, /<span>\{studentWeekDateRange\(week\.weekStart\)\}<\/span>/)
 assert.doesNotMatch(app, /printPage !== null && <span>\{studentWeekDateRange/)
+
+assert.match(app, /Ingen vecka är publicerad för elever ännu/)
+assert.match(app, /Nästa vecka visas automatiskt/)
