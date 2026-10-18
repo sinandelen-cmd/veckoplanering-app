@@ -875,3 +875,40 @@ nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a
 .planning-layout > .shell { grid-column: 2; grid-row: 2; }
 @media (max-width: 750px) { .planning-layout > .planning-sidebar { height: auto; } .planning-top-navigation { position: sticky; top: 0; z-index: 90; } }
 @media print { .planning-top-navigation { display: none !important; } }
+
+/* Ljus och välkomnande navigering för lärare, även på mobil. */
+.planning-sidebar {
+  background: #f2f7ff;
+  color: #294568;
+  border-right: 1px solid #d9e5f6;
+  gap: .55rem;
+  padding: 1.1rem .9rem;
+}
+.sidebar-new {
+  background: #ffe6a8;
+  color: #533d12;
+  font-weight: 800 !important;
+  border: 1px solid #f2d28b !important;
+}
+.sidebar-new:hover { background: #ffda85; }
+.sidebar-brand {
+  padding: .95rem .65rem .3rem;
+  color: #344b73;
+}
+.sidebar-link { color: #344b73; background: #e8f0ff; }
+.sidebar-link.active { background: #d9e7ff; color: #1e477b; }
+.sidebar-plan-list { max-height: none; overflow-y: visible; gap: .3rem; }
+.sidebar-plan { background: #fff; color: #294568; border: 1px solid #e0e9f6 !important; }
+.sidebar-plan:hover { background: #eaf3ff; }
+.sidebar-plan.selected { background: #d8ecff; color: #17436d; }
+.sidebar-empty { color: #6b7890; opacity: 1; }
+.planning-top-navigation { background: #e8f1ff; color: #284a75; border-bottom: 1px solid #d6e4f8; }
+.planning-top-navigation button { color: #284a75; }
+.planning-top-navigation .top-navigation-link.active { background: #fff; color: #1d4b83; box-shadow: 0 1px 5px rgba(49,86,135,.09); }
+.planning-top-navigation button:hover { background: #d7e8ff; }
+.planning-top-navigation button:focus-visible,
+.planning-sidebar button:focus-visible { outline: 3px solid #638cc7; outline-offset: 2px; }
+@media (max-width: 750px) {
+  .planning-sidebar { border-right: 0; border-bottom: 1px solid #d9e5f6; }
+  .planning-top-navigation { position: static; }
+}
