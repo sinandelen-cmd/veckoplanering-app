@@ -685,16 +685,14 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
       <button type="button" className="calendar-delete-week danger" disabled={busy || weeks.length <= 1} onClick={() => { onDeleteWeek?.(selectedWeek.weekStart); setSelectedWeekIndex(null); setSelectedLessonIndex(null) }}>🗑️ Radera vecka</button>
       <button type="button" className="secondary calendar-overview-button" onClick={() => { setSelectedWeekIndex(null); setSelectedLessonIndex(null) }}>← Till översikten</button>
     </div> : <>
-      <p className="calendar-overview-count">{orderedWeeks.length} planerade veckor · månaderna visas under varandra. Svep åt sidan inom en månad på mobilen.</p>
+      <p className="calendar-overview-count">{orderedWeeks.length} planerade veckor · högst fyra veckor per rad.</p>
       <div className="calendar-months">
-        {Array.from(orderedWeeks.reduce((groups, week, index) => {
-          const date = new Date(week.weekStart + 'T12:00:00')
-          const key = week.weekStart.slice(0, 7)
-          if (!groups.has(key)) groups.set(key, { date, weeks: [] })
-          groups.get(key).weeks.push({ week, index })
-          return groups
-        }, new Map()).values()).map(group => <section className="calendar-month-section" key={group.date.toISOString()} style={{ backgroundColor: MONTH_PASTELS[group.date.getMonth()], "--month-accent": ["#5089b8","#b96597","#8068b2","#568b69","#b68a32","#b9735a","#548e9b","#a26e9e","#72914d","#b47a43","#7d6ab0","#b76977"][group.date.getMonth()] }}>
-          <h3>{new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeric' }).format(group.date)}</h3>
+        {Array.from({ length: Math.ceil(orderedWeeks.length / 4) }, (_, groupIndex) => {
+          const weeks = orderedWeeks.slice(groupIndex * 4, groupIndex * 4 + 4).map((week, offset) => ({ week, index: groupIndex * 4 + offset }))
+          const date = new Date(weeks[0].week.weekStart + 'T12:00:00')
+          return { date, weeks, groupIndex }
+        }).map(group => <section className="calendar-month-section" key={group.date.toISOString()} style={{ backgroundColor: MONTH_PASTELS[group.date.getMonth()], "--month-accent": ["#5089b8","#b96597","#8068b2","#568b69","#b68a32","#b9735a","#548e9b","#a26e9e","#72914d","#b47a43","#7d6ab0","#b76977"][group.date.getMonth()] }}>
+          <h3>{new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeric' }).format(group.date)} · Veckor {calendarWeekNumber(group.weeks[0].week.weekStart)}–{calendarWeekNumber(group.weeks[group.weeks.length - 1].week.weekStart)}</h3>
           <div className="calendar-month-row" style={{ "--month-week-count": group.weeks.length }}>
             {group.weeks.map(({ week, index }) => {
               const date = new Date(week.weekStart + 'T12:00:00')
