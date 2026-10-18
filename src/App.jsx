@@ -412,6 +412,7 @@ function publicationFields(publish, keepPublished, slug, publishedPayload) {
 
 function Login({ email, password, setEmail, setPassword, onSubmit, onSignUp, status }) {
   const [registering, setRegistering] = useState(false)
+  const [inviteCode, setInviteCode] = useState('')
   return <main className="shell narrow-shell">
     <section className="brand-card">
       <div className="brand-mark">Å</div>
@@ -419,11 +420,12 @@ function Login({ email, password, setEmail, setPassword, onSubmit, onSignUp, sta
       <h1>{APP_TITLE}</h1>
       <p className="muted">Planera, importera, klona och publicera.</p>
     </section>
-    <form className="card" onSubmit={onSubmit}>
+    <form className="card" onSubmit={registering ? event => onSignUp(event, inviteCode) : onSubmit}>
       <h2>{registering ? 'Skapa lärarkonto' : 'Logga in som lärare'}</h2>
       <label>E-post<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label>
+      {registering && <label>Engångskod från kollegan<input required value={inviteCode} onChange={e => setInviteCode(e.target.value)} autoComplete="off" placeholder="Klistra in inbjudningskoden" /></label>}
       <label>Lösenord<input type="password" value={password} onChange={e => setPassword(e.target.value)} required /></label>
-      <button className="primary full" type="submit" onClick={registering ? event => { event.preventDefault(); void onSignUp(event) } : undefined}>{registering ? "Skapa konto" : "Logga in"}</button>
+      <button className="primary full" type="submit">{registering ? "Skapa konto" : "Logga in"}</button>
       <button type="button" className="secondary full" onClick={() => setRegistering(value => !value)}>{registering ? "Har du redan konto? Logga in" : "Ny lärare? Skapa konto"}</button>
       {registering && <p className="muted">Använd din egen e-postadress och välj ett lösenord med minst 6 tecken. Du kan behöva bekräfta din e-post innan du loggar in.</p>}
       {status && <p className="status">{status}</p>}
@@ -1680,12 +1682,13 @@ function AnnualApp() {
     else { setPassword(''); setStatus('') }
   }
 
-  async function signUp(event) {
+  async function signUp(event, inviteCode) {
     event.preventDefault()
+    if (!inviteCode.trim()) { setStatus('Ange engångskoden från kollegan.'); return }
     if (password.length < 6) { setStatus('Lösenordet måste ha minst 6 tecken.'); return }
     setStatus('Skapar konto...')
-    const { data, error } = await supabase.auth.signUp({ email: email.trim(), password })
-    if (error) { setStatus('Kunde inte skapa konto: ' + error.message); return }
+    const { data, error } = await supabase.auth.signUp({ email: email.trim(), password, options: { data: { registration_invite_token: inviteCode.trim() } } })
+    if (error) { setStatus('Kunde inte skapa konto. Kontrollera att engångskoden gäller din e-postadress och inte har använts. ' + error.message); return }
     setPassword('')
     setStatus(data.session ? 'Kontot är skapat och du är inloggad.' : 'Kontot är registrerat. Kontrollera din e-post och bekräfta adressen innan du loggar in.')
   }
