@@ -1642,3 +1642,9 @@ body { background: #fffaf2; color: var(--ink); }
 .planning-layout .topic-column h5{font-size:17px!important;font-weight:800!important;line-height:1.45!important;color:#633943!important;letter-spacing:0!important}
 .planning-layout .topic-name textarea,.planning-layout .topic-column .topic-cell input{font-family:inherit}
 .planning-layout .topic-name textarea::placeholder,.planning-layout .topic-column .topic-cell input::placeholder{font-size:17px;font-weight:700;opacity:.65}
+
+/* Fixed Sida/Uppgift titles and removable full columns. */
+.planning-layout .topic-fixed-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.planning-layout .topic-fixed-heading h5{margin:0;font-size:17px!important;font-weight:800!important}
+.planning-layout .remove-topic-column{font-size:12px;font-weight:700;white-space:nowrap;padding:5px 9px;border-radius:8px}
+.planning-layout .restore-topic-column{align-self:start;min-height:42px;border:1px dashed #a8c8bf;border-radius:10px}
