@@ -970,6 +970,14 @@ function TeacherApp({ session }) {
     </div>}
 
     <div className="teacher-tab-panel" hidden={teacherTab !== "arsplan"}>
+    <section className="card teacher-calendar-actions" aria-label="Årskalender och zoom">
+      <h2>Årskalender – {plan.title?.trim() || 'Ny planering'}</h2>
+      <p className="muted">Visa hela planeringen i en översikt med 3 × 3 veckor. Tryck på en vecka för att zooma in och se lektionerna.</p>
+      <button type="button" className="primary" onClick={() => {
+        setCalendarOpen(true)
+        window.setTimeout(() => document.getElementById('teacher-year-calendar')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
+      }}>Visa årskalender och zooma</button>
+    </section>
     <section className="card" aria-live="polite">
       {status && <p className="status">{status}</p>}
     </section>
@@ -1058,7 +1066,7 @@ function TeacherApp({ session }) {
       </details>
     </section>
 
-    {calendarOpen && <YearCalendar weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={nationalExamsForPlan(plan)} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} />}
+    {calendarOpen && <div id="teacher-year-calendar"><YearCalendar weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={nationalExamsForPlan(plan)} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} /></div>}
 
     <section className="card" aria-label="Skollov och studiedagar">
       <h3>Skollov och studiedagar</h3>
