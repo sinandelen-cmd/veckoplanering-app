@@ -325,3 +325,7 @@ assert.doesNotMatch(app, /<div className="a4-demo-controls">/)
 assert.match(app, /function ImportantDatesForWeek/)
 
 assert.match(css, /\.calendar-month-row\{[^}]*overflow-x:auto/)
+
+assert.match(app, /className="calendar-delete-week"/)
+assert.match(app, /onDeleteWeek=\{weekStart =>/)
+assert.match(app, /Vill du radera vecka/)
