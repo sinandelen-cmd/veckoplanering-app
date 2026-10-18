@@ -1245,8 +1245,16 @@ function TeacherApp({ session }) {
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline">
 <section className="card">
       <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
-      <div className="year-grid">
-        {weeks.map((week, index) => ({ week, index })).sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).map(({ week, index }, displayIndex, ordered) => <div className="chapter-week-group" key={`${week.weekNumber}-${index}`}>
+      <div className="teacher-months">
+        {Object.values(weeks.map((week, index) => ({ week, index })).sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((months, item) => {
+          const monthKey = (item.week.weekStart || '').slice(0, 7)
+          if (!months[monthKey]) months[monthKey] = { date: new Date(item.week.weekStart + 'T12:00:00'), items: [] }
+          months[monthKey].items.push(item)
+          return months
+        }, {})).map(group => <section className="teacher-month-section" key={group.date.toISOString()} style={{ backgroundColor: MONTH_PASTELS[group.date.getMonth()] }}>
+          <h3 className="teacher-month-title">{new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeric' }).format(group.date)}</h3>
+          <div className="teacher-month-weeks">
+          {group.items.map(({ week, index }, displayIndex, ordered) => <div className="chapter-week-group" key={`${week.weekNumber}-${index}`}>
           {week.chapter?.trim() && (displayIndex === 0 || week.chapter !== ordered[displayIndex - 1]?.week.chapter) && <h3 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h3>}
           <article className="week-card" id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
           <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><label className="student-visibility-toggle week-heading-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever`} /><span>{week.hidden ? "Visa inte i elevvyn" : "Visa i elevvyn"}</span></label><strong style={{ fontSize: "1.45rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 5 }}>Vecka <input type="number" aria-label="Ändra veckonummer" style={{ width: "3.3ch", minWidth: 66, fontSize: "1.45rem", fontWeight: 800, padding: "4px 6px" }} min="1" max="53" value={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Ändra veckonumret för att flytta veckan och dess datum" onChange={e => {
@@ -1277,6 +1285,8 @@ function TeacherApp({ session }) {
             <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
           </details>
         </article></div>)}
+          </div>
+        </section>)}
       </div>
       <div className="button-row week-add-actions">
         <button type="button" className="secondary" disabled={weeks.length >= 52} onClick={() => setPlan(p => {
