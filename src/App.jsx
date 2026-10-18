@@ -563,7 +563,7 @@ function nationalExamsForPlan(plan) {
   return NATIONAL_EXAMS_2026_27.filter(item => item.grade === grade)
 }
 
-function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], onClose, onUpdateWeek, onSave, isDirty, busy, saveStatus, entryType = 'lektion' }) {
+function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], onClose, onUpdateWeek, onAddWeek, onSave, isDirty, busy, saveStatus, entryType = 'lektion' }) {
   // Årsöversikt i nio veckor per sida, tre kolumner och tre rader.
   const [selectedWeekIndex, setSelectedWeekIndex] = useState(null)
   const [overviewPage, setOverviewPage] = useState(0)
@@ -604,6 +604,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], onClose,
         <span>Sida {currentPage + 1} av {pageCount}</span>
         <button type="button" className="secondary" disabled={currentPage >= pageCount - 1} onClick={() => setOverviewPage(page => Math.min(pageCount - 1, page + 1))}>Nästa 9 →</button>
       </div>
+      <div className="calendar-add-week-actions"><button type="button" className="primary" disabled={busy || weeks.length >= 52} onClick={() => { onAddWeek?.(); setSelectedWeekIndex(null); setOverviewPage(Math.floor(weeks.length / 9)) }}>+ Lägg till vecka</button><span className="muted">Ny vecka visas i kalendern. Spara utkast när du är klar.</span></div>
       <div className="calendar-week-grid" style={{ "--week-grid-columns": 3 }}>{orderedWeeks.slice(currentPage * 9, (currentPage + 1) * 9).map((week, localIndex) => {
         const index = currentPage * 9 + localIndex
         const date = new Date(`${week.weekStart}T12:00:00`)
@@ -1116,7 +1117,14 @@ function TeacherApp({ session }) {
       </details>
     </section>
 
-    {calendarOpen && <div id="teacher-year-calendar"><YearCalendar weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={nationalExamsForPlan(plan)} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} /></div>}
+    {calendarOpen && <div id="teacher-year-calendar"><YearCalendar weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={nationalExamsForPlan(plan)} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onAddWeek={() => setPlan(p => {
+      const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
+      if (existing.length >= 52) return p
+      const latest = [...existing].sort((a, b) => b.weekStart.localeCompare(a.weekStart))[0]
+      const nextDate = addWeeks(latest.weekStart, 1)
+      const newWeek = makeWeeks({ ...p, startDate: nextDate, startWeek: calendarWeekNumber(nextDate), weeks: 1 }, 1)[0]
+      return { ...p, weeks: existing.length + 1, weeksData: [...existing, newWeek] }
+    })} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} /></div>}
 
     <details className="card optional-planning-section" aria-label="Skollov och studiedagar"><summary><strong>Skollov och studiedagar</strong><span>Lägg till lov och studiedagar vid behov</span></summary><div className="optional-planning-content">
       <h3>Skollov och studiedagar</h3>
