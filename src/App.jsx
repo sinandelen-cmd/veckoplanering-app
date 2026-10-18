@@ -958,11 +958,11 @@ function TeacherApp({ session }) {
   }
   return <div className="planning-layout"><Navigation active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} onOpenPlan={loadPlan} onNavigate={id => { setTeacherTab(id); if (id === 'elevvy') setPreviewStudents(true) }} onNew={createPlan} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} /><main className="shell" id="lararvy">
     <header className="topbar">
-      <div><p className="eyebrow">{teacherTab === "mina" ? "MINA PLANERINGAR" : teacherTab === "elevvy" ? "ELEV VY" : "LÄRARVY"}</p><h1>{APP_TITLE}</h1><p className="muted">{session.user.email}</p></div>
+      <div><p className="eyebrow">{teacherTab === "mina" ? "MINA PLANERINGAR" : teacherTab === "elevvy" ? "ELEV VY" : "LÄRARVY"}</p><h1>{teacherTab === "mina" ? "Mina planeringar" : (plan.title?.trim() || "Ny planering")}</h1><p className="muted">{session.user.email}</p></div>
       <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
     </header>
 
-    <div className="planning-context"><strong>{plan.title || 'Ny årsplanering'}</strong><span aria-live="polite">{busy ? 'Sparar…' : isDirty ? 'Osparade ändringar' : selectedId ? 'Sparad' : 'Inte sparad'}</span></div>
+    <div className="planning-context"><span aria-live="polite">{busy ? 'Sparar…' : isDirty ? 'Osparade ändringar' : selectedId ? 'Sparad' : 'Inte sparad'}</span></div>
 
     {(isDirty || busy) && <div className="quick-save-bar" role="region" aria-label="Snabbspara årsplanering">
       <span aria-live="polite">{busy ? "Sparar…" : "Osparade ändringar"}</span>
