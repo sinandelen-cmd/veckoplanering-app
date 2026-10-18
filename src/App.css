@@ -1123,3 +1123,17 @@ body { background: #fffaf2; color: var(--ink); }
 @media (max-width: 650px) {
   .optional-planning-section > summary { align-items: flex-start; flex-wrap: wrap; }
 }
+
+/* Ny planering är en egen arbetsyta, inte en underflik till Lärarvy. */
+.planning-layout.view-new .planning-top-navigation { display: none; }
+.planning-layout.view-new > .shell { background: #fffaf0; }
+.planning-layout.view-new .teacher-tab-panel.simple-setup-active > .simple-setup-card {
+  display: block;
+  margin-top: 12px;
+}
+.planning-layout.view-new .sidebar-new.selected {
+  background: #f6bfc9;
+  outline: 2px solid #bb6672;
+  outline-offset: 1px;
+}
+.planning-layout.view-new .topbar { border-bottom: 2px solid #efd6a2; }
