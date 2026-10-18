@@ -702,11 +702,11 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
         return <div className="calendar-week-wrapper" key={`${week.weekStart}-${index}`} style={{ backgroundColor: weekColor(week.weekStart) }}>
           <button type="button" className="calendar-delete-week" disabled={busy || orderedWeeks.length <= 1} title={`Radera vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`} aria-label={`Radera vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`} onClick={() => onDeleteWeek?.(week.weekStart)}>🗑️ <span>Radera vecka</span></button>
           
-          <label className="calendar-week-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => { const originalIndex = weeks.findIndex(item => item.weekStart === week.weekStart); if (originalIndex >= 0) onUpdateWeek?.(originalIndex, { hidden: !e.target.checked }) }} /><span>{week.hidden ? "Döljd för elever" : "Visa för elever"}</span></label>
+          <button type="button" className={`calendar-week-eye ${week.hidden ? 'is-hidden' : 'is-visible'}`} title={week.hidden ? 'Visa vecka för elever' : 'Dölj vecka för elever'} aria-label={week.hidden ? `Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever` : `Dölj vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever`} aria-pressed={!week.hidden} onClick={() => { const originalIndex = weeks.findIndex(item => item.weekStart === week.weekStart); if (originalIndex >= 0) onUpdateWeek?.(originalIndex, { hidden: !week.hidden }) }}>{week.hidden ? '◉' : '👁'}</button>
           <button type="button" className="calendar-week-tile" onClick={() => { setSelectedWeekIndex(index); setSelectedLessonIndex(null) }} aria-label={`Zooma in vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`}>
           
           <strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>
-          <span className="calendar-tile-date">{formatDate(week.weekStart)}</span><span className="calendar-tile-visibility" aria-hidden="true">{week.hidden ? "🙈 Dold för elever" : "👁️ Synlig för elever"}</span>
+          <span className="calendar-tile-date">{formatDate(week.weekStart)}</span>
           {schoolClosures.filter(item => validSchoolClosure(item) && item.startDate < addWeeks(week.weekStart, 1) && item.endDate >= week.weekStart).map(item => <span key={item.id} className="calendar-holiday">📅 {item.name}{item.verified ? "" : " · ej verifierat"}</span>)}
           {nationalExams.filter(exam => exam.date >= week.weekStart && exam.date < addWeeks(week.weekStart, 1)).map(exam => <span key={exam.date + exam.subject + exam.part} className="calendar-holiday">🔒 NP {exam.subject} · {formatDate(exam.date)}</span>)}
           
