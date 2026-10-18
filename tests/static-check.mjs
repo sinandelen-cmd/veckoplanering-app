@@ -281,7 +281,7 @@ assert.match(nav, /top-navigation-link[^\n]*>Elevvy/)
 assert.match(app, /Redigera och importera underlag/)
 
 // Tillfälligt A4-demoinnehåll får inte följa med när läraren byter planering.
-assert.match(app, /setTeacherTab\('arsplan'\); setPreviewStudents\(false\); setA4Demo\(false\); setStatus\('Planeringen är öppnad.'/)
+assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(false\); setPreviewStudents\(false\); setA4Demo\(false\); setStatus\('Planeringen är öppnad.'/)
 assert.match(app, /setTeacherTab\('arsplan'\); setPreviewStudents\(false\); setA4Demo\(false\)/)
 
 assert.match(app, /function insertExampleWeek\(\)/)
