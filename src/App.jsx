@@ -946,7 +946,7 @@ function TeacherApp({ session }) {
           ? `Publicerad: ${window.location.origin}/elev/${slug}`
           : keepPublished
             ? 'Ändringarna är sparade. Eleverna ser fortfarande den senast publicerade versionen.'
-            : 'Utkast sparat.'
+            : 'Planeringen är sparad.'
         setStatus(newerEdits ? `${message} Nya ändringar i redigeraren är ännu inte sparade.` : message)
       }
     } catch (error) {
@@ -1320,14 +1320,6 @@ function TeacherApp({ session }) {
       </details>
     </section>
 
-    {!simpleSetup && <div id="teacher-year-calendar"><YearCalendar startOnFirstWeek={weeks.length === 1} weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={[]} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onAddWeek={() => setPlan(p => {
-      const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
-      if (existing.length >= 52) return p
-      const latest = [...existing].sort((a, b) => b.weekStart.localeCompare(a.weekStart))[0]
-      const nextDate = addWeeks(latest.weekStart, 1)
-      const newWeek = makeWeeks({ ...p, startDate: nextDate, startWeek: calendarWeekNumber(nextDate), weeks: 1 }, 1)[0]
-      return { ...p, weeks: existing.length + 1, weeksData: [...existing, newWeek] }
-    })} onDeleteWeek={weekStart => { if (busy || weeks.length <= 1) return; const week = weeks.find(item => item.weekStart === weekStart); if (!week) return; if (!window.confirm(`Vill du radera vecka ${calendarWeekNumber(weekStart) ?? week.weekNumber} och allt innehåll i den? Ändringen sparas först när du väljer Spara ändringar.`)) return; setPlan(p => { const remaining = displayWeeks(p).filter(item => item.weekStart !== weekStart); return remaining.length ? { ...p, weeks: remaining.length, weeksData: remaining } : p }) }} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} /></div>}
 
     {false && <>
     <details className="card optional-planning-section" aria-label="Skollov och studiedagar"><summary><strong>Skollov och studiedagar</strong><span>Lägg till lov och studiedagar vid behov</span></summary><div className="optional-planning-content">
@@ -1375,6 +1367,14 @@ function TeacherApp({ session }) {
     </div>}
 
     </div>
+    {teacherTab === "arsplan" && !simpleSetup && <div id="teacher-year-calendar"><YearCalendar startOnFirstWeek={weeks.length === 1} weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={[]} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onAddWeek={() => setPlan(p => {
+      const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
+      if (existing.length >= 52) return p
+      const latest = [...existing].sort((a, b) => b.weekStart.localeCompare(a.weekStart))[0]
+      const nextDate = addWeeks(latest.weekStart, 1)
+      const newWeek = makeWeeks({ ...p, startDate: nextDate, startWeek: calendarWeekNumber(nextDate), weeks: 1 }, 1)[0]
+      return { ...p, weeks: existing.length + 1, weeksData: [...existing, newWeek] }
+    })} onDeleteWeek={weekStart => { if (busy || weeks.length <= 1) return; const week = weeks.find(item => item.weekStart === weekStart); if (!week) return; if (!window.confirm(`Vill du radera vecka ${calendarWeekNumber(weekStart) ?? week.weekNumber} och allt innehåll i den? Ändringen sparas först när du väljer Spara ändringar.`)) return; setPlan(p => { const remaining = displayWeeks(p).filter(item => item.weekStart !== weekStart); return remaining.length ? { ...p, weeks: remaining.length, weeksData: remaining } : p }) }} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} /></div>}
     <div className="teacher-tab-panel legacy-post-creation-panel" hidden={true}>
     <section className="card import-card"><h2>Redigera och importera underlag</h2>
       <p className="eyebrow">IMPORT</p><h2>Excel, Word, PDF eller text</h2>
