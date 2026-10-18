@@ -1361,7 +1361,7 @@ function TeacherApp({ session }) {
 
     </div>
     <div className="teacher-tab-panel" id="panel-elevvy" role="tabpanel" aria-labelledby="tab-elevvy" hidden={teacherTab !== "elevvy"}>
-    {previewStudents && <section className="card preview-panel" id="elevvy"><h2>Förhandsvisning för elever</h2><p className="muted">Detta är endast en förhandsvisning. Inget publiceras.</p><div className="a4-demo-controls"><button type="button" className="secondary" aria-pressed={a4Demo} onClick={() => setA4Demo(value => !value)}>{a4Demo ? "Visa min planering igen" : "Visa tillfälligt A4-test med långa veckor"}</button>{a4Demo && <strong>Testinnehåll – sparas inte och publiceras inte.</strong>}</div><StudentView plan={a4Demo ? a4DemoPlan(sanitizeForStudents({ ...plan, weeksData: weeks })) : sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
+    {previewStudents && <section className="card preview-panel" id="elevvy"><h2>Förhandsvisning för elever</h2><p className="muted">Detta är endast en förhandsvisning. Inget publiceras.</p><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
 
     </div>
     <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
