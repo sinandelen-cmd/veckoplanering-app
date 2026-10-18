@@ -1320,7 +1320,7 @@ function TeacherApp({ session }) {
       </details>
     </section>
 
-    {calendarOpen && <div id="teacher-year-calendar"><YearCalendar startOnFirstWeek={weeks.length === 1} weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={[]} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onAddWeek={() => setPlan(p => {
+    {!simpleSetup && <div id="teacher-year-calendar"><YearCalendar startOnFirstWeek={weeks.length === 1} weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={[]} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onAddWeek={() => setPlan(p => {
       const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
       if (existing.length >= 52) return p
       const latest = [...existing].sort((a, b) => b.weekStart.localeCompare(a.weekStart))[0]
@@ -1329,6 +1329,7 @@ function TeacherApp({ session }) {
       return { ...p, weeks: existing.length + 1, weeksData: [...existing, newWeek] }
     })} onDeleteWeek={weekStart => { if (busy || weeks.length <= 1) return; const week = weeks.find(item => item.weekStart === weekStart); if (!week) return; if (!window.confirm(`Vill du radera vecka ${calendarWeekNumber(weekStart) ?? week.weekNumber} och allt innehåll i den? Ändringen sparas först när du väljer Spara ändringar.`)) return; setPlan(p => { const remaining = displayWeeks(p).filter(item => item.weekStart !== weekStart); return remaining.length ? { ...p, weeks: remaining.length, weeksData: remaining } : p }) }} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} /></div>}
 
+    {false && <>
     <details className="card optional-planning-section" aria-label="Skollov och studiedagar"><summary><strong>Skollov och studiedagar</strong><span>Lägg till lov och studiedagar vid behov</span></summary><div className="optional-planning-content">
       <h3>Skollov och studiedagar</h3>
       <p>Lägg själv till lov, studiedagar, röda dagar och nationella prov vid behov. Inget läggs in automatiskt.</p>
@@ -1363,6 +1364,7 @@ function TeacherApp({ session }) {
       {publicationIssues.length ? <div role="status"><strong>Kontrollera:</strong><ul>{publicationIssues.map(issue => <li key={issue}>{issue}</li>)}</ul></div> : <p className="publication-ready">✓ Grunduppgifterna är ifyllda. Granska elevvyn innan du publicerar.</p>}
       <p className="muted">Spara utkast eller välj Publicera för elever när planeringen är klar.</p>
     </section>
+    </>}
     <section className="card calendar-primary-actions" aria-label="Spara och publicera årsplaneringen">
       <div className="button-row">
         <button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
@@ -1373,7 +1375,7 @@ function TeacherApp({ session }) {
     </div>}
 
     </div>
-    <div className="teacher-tab-panel" hidden={teacherTab !== "arsplan"}>
+    <div className="teacher-tab-panel" hidden={true}>
     <section className="card import-card"><h2>Redigera och importera underlag</h2>
       <p className="eyebrow">IMPORT</p><h2>Excel, Word, PDF eller text</h2>
       <p className="muted">Ladda upp ett underlag. Texten delas preliminärt över veckorna så att du kan granska och justera.</p>
