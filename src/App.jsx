@@ -633,6 +633,12 @@ function TeacherApp({ session }) {
   const [plan, setPlan] = useState(emptyPlan())
   const [plans, setPlans] = useState([])
   const [showArchive, setShowArchive] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
+  const [shareRecipient, setShareRecipient] = useState("")
+  const [sharePassword, setSharePassword] = useState("")
+  const [shareToken, setShareToken] = useState("")
+  const [receivedToken, setReceivedToken] = useState("")
+  const [shareMessage, setShareMessage] = useState("")
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [simpleSetup, setSimpleSetup] = useState(false)
   const [simpleMore, setSimpleMore] = useState(false)
@@ -867,6 +873,39 @@ function TeacherApp({ session }) {
     setSimpleSetup(false); setSelectedId(row.id); savedPlanRef.current = JSON.stringify(openedPlan); setSavedRevision(revision => revision + 1); setPlan(openedPlan); setTeacherTab('arsplan'); setCalendarOpen(false); setPreviewStudents(false); setA4Demo(false); setStatus('Planeringen är öppnad.'); window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  async function shareWithColleague(event) {
+    event.preventDefault()
+    if (!selectedId || !shareRecipient.trim() || !sharePassword) return
+    if (isDirty) { setShareMessage('Spara dina ändringar innan du delar planeringen.'); return }
+    setBusy(true)
+    setShareMessage('')
+    try {
+      const { data, error } = await supabase.rpc('create_plan_share_invite', {
+        p_plan_id: selectedId, p_recipient_email: shareRecipient.trim(), p_password: sharePassword,
+      })
+      if (error) throw error
+      setShareToken(data)
+      setSharePassword('')
+      setShareMessage('Inbjudan skapad. Ge engångskoden till kollegan på ett säkert sätt. Koden gäller i sju dagar.')
+    } catch (error) { setShareMessage('Kunde inte skapa inbjudan: ' + error.message) }
+    finally { setBusy(false) }
+  }
+
+  async function receiveColleagueCopy(event) {
+    event.preventDefault()
+    if (!receivedToken.trim()) return
+    setBusy(true)
+    setShareMessage('')
+    try {
+      const { error } = await supabase.rpc('claim_plan_share_invite', { p_token: receivedToken.trim() })
+      if (error) throw error
+      setReceivedToken('')
+      setShareMessage('Kopian finns nu under Mina planeringar. Den är privat och får inte delas vidare.')
+      await loadPlans()
+    } catch (error) { setShareMessage('Kunde inte ta emot kopian: ' + error.message) }
+    finally { setBusy(false) }
+  }
+
   async function clonePlan(row) {
     if (busy) return
     const source = planFromRow(row)
@@ -880,7 +919,7 @@ function TeacherApp({ session }) {
     if (schoolYear === null) return
     setBusy(true)
     try {
-      const clone = { ...source, title, subject, className, schoolYear, archived: false, published: false, publicSlug: '' }
+      const clone = { ...source, title, subject, className, schoolYear, archived: false, published: false, publicSlug: '', receivedCopy: Boolean(source.receivedCopy) }
       const { error } = await supabase.from('veckoplanering').insert({
         user_id: session.user.id, title, week_start: clone.startDate, content: JSON.stringify(clone), subject, class_name: className, school_year: schoolYear,
         start_date: clone.startDate, weeks: clone.weeks, published: false, public_slug: null, updated_at: new Date().toISOString(),
@@ -1000,9 +1039,34 @@ function TeacherApp({ session }) {
   return <div className={`planning-layout ${teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}`}><Navigation active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} onOpenPlan={loadPlan} onNavigate={id => { setTeacherTab(id === 'mina' ? 'arsplan' : id); if (id === 'elevvy') setPreviewStudents(true) }} onOpenExample={openExample} onOpenArchive={() => { setShowArchive(true); setTeacherTab('mina') }} onNew={createPlan} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} /><main className="shell" id="lararvy">
     <header className="topbar">
       <div><p className="eyebrow">{teacherTab === "new" ? "NY PLANERING" : teacherTab === "mina" ? "MINA PLANERINGAR" : teacherTab === "elevvy" ? "ELEVVY" : "LÄRARVY"}</p><h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Mina planeringar" : (plan.title?.trim() || "Ny planering")}</h1><p className="muted">{session.user.email}</p></div>
-      <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
+      <div className="topbar-share-actions">
+        <button type="button" className="secondary share-settings-trigger" aria-expanded={shareOpen} onClick={() => { setShareOpen(open => !open); setShareToken(''); setShareMessage('') }} title="Klona och dela med kollega">⚙ Klona / dela</button>
+        <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
+      </div>
     </header>
 
+    {shareOpen && <section className="card colleague-share-panel" aria-label="Klona och dela med kollega">
+      <div className="share-panel-heading"><div><h2>Klona och dela</h2><p className="muted">Kollegan får en egen, privat kopia. Den kan inte delas vidare via Årsplanering.</p></div><button type="button" className="secondary" onClick={() => setShareOpen(false)}>Stäng</button></div>
+      <div className="colleague-share-grid">
+        <form onSubmit={shareWithColleague}>
+          <h3>Dela din planering</h3>
+          {plan.receivedCopy ? <p className="muted">Den här planeringen är mottagen från en kollega och kan inte delas vidare.</p> : <>
+            <label>Kollegans e-postadress<input type="email" required autoComplete="email" value={shareRecipient} onChange={e => setShareRecipient(e.target.value)} placeholder="kollega@skola.se" /></label>
+            <label>Delningskod<input type="password" required autoComplete="off" value={sharePassword} onChange={e => setSharePassword(e.target.value)} placeholder="Ange delningskod" /></label>
+            <button type="submit" className="primary" disabled={busy || !selectedId}>Skapa inbjudan</button>
+            {!selectedId && <p className="muted">Spara och öppna en planering först.</p>}
+            {shareToken && <div className="share-invite-code"><label>Engångskod till kollegan<input readOnly value={shareToken} onFocus={e => e.target.select()} /></label><button type="button" className="secondary" onClick={() => navigator.clipboard?.writeText(shareToken)}>Kopiera kod</button></div>}
+          </>}
+        </form>
+        <form onSubmit={receiveColleagueCopy}>
+          <h3>Ta emot en planering</h3>
+          <p className="muted">Logga in på ditt eget konto och skriv in engångskoden från kollegan.</p>
+          <label>Engångskod<input required value={receivedToken} onChange={e => setReceivedToken(e.target.value)} placeholder="Klistra in koden" /></label>
+          <button type="submit" className="secondary" disabled={busy}>Ta emot privat kopia</button>
+        </form>
+      </div>
+      {shareMessage && <p role="status" className="share-feedback">{shareMessage}</p>}
+    </section>}
     <div className="planning-context"><span aria-live="polite">{busy ? 'Sparar…' : isDirty ? 'Osparade ändringar' : selectedId ? 'Sparad' : 'Inte sparad'}</span></div>
 
     {(isDirty || busy) && <div className="quick-save-bar" role="region" aria-label="Snabbspara årsplanering">
