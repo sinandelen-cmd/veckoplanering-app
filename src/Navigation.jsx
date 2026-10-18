@@ -7,10 +7,6 @@ export default function Navigation({ active = 'mina', onNavigate, onNew, plans =
       <div className="sidebar-plan-list" aria-label="Sparade planeringar">
         {plans.length === 0 ? <p className="sidebar-empty">Inga sparade planeringar ännu</p> : plans.map(row => <div key={row.id} className="sidebar-plan-entry" style={getPlanTheme ? { '--item-accent': getPlanTheme(row).accent, '--item-light': getPlanTheme(row).light, '--item-ink': getPlanTheme(row).ink } : undefined}><button type="button" style={getPlanTheme ? { '--item-accent': getPlanTheme(row).accent, '--item-light': getPlanTheme(row).light, '--item-ink': getPlanTheme(row).ink } : undefined} className={selectedId === row.id ? 'sidebar-plan selected' : 'sidebar-plan'} aria-current={selectedId === row.id ? 'true' : undefined} onClick={() => onOpenPlan(row)} title={row.title || 'Utan namn'}>{row.title || 'Utan namn'}</button><button type="button" className="sidebar-plan-delete" onClick={() => onDeletePlan?.(row)} aria-label={`Radera planering ${row.title || 'Utan namn'}`} title="Radera planering">🗑️</button></div>)}
       </div>
-      <div className="sidebar-brand sidebar-examples-heading">Testplaneringar (påhittade)</div>
-      <button type="button" className="sidebar-plan" onClick={() => onOpenExample?.("math")}>Exempel: Matematik åk 6</button>
-      <button type="button" className="sidebar-plan" onClick={() => onOpenExample?.("swedish")}>Exempel: Svenska åk 5</button>
-      <button type="button" className="sidebar-plan" onClick={() => onOpenExample?.("science")}>Exempel: NO åk 7</button>
       <button type="button" className="sidebar-link sidebar-archive-link" onClick={onOpenArchive}>Arkiv</button>
     </aside>
     <nav className="planning-top-navigation planning-view-switcher" aria-label="Vyer för öppen planering" role="tablist">
