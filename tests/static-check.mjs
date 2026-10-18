@@ -256,7 +256,7 @@ assert.match(css, /\.student-print-page \.lesson \{\s*display: block !important;
 assert.match(css, /\.student-print-page \.student-week-card,[\s\S]*?break-inside: auto !important;/, 'Långa veckor måste kunna fortsätta på nästa sida')
 assert.doesNotMatch(css, /\.student-print-page \.topic-cell span\s*\{[^}]*font-size:\s*8pt\s*!important;/, 'Sid- och uppgiftsrutor får inte använda 8 pt')
 
-assert.match(app, /const \[teacherTab, setTeacherTab\] = useState\("mina"\)/)
+assert.match(app, /const \[teacherTab, setTeacherTab\] = useState\("arsplan"\)/)
 for (const tab of ['arsplan', 'elevvy', 'mina']) {
   assert.match(app, new RegExp('teacherTab !== "' + tab + '"'), 'Lärarflik saknas: ' + tab)
 }
@@ -301,3 +301,13 @@ assert.match(app, /setStudentPlan\(publicDemoWeek42\(\)\)/)
 
 assert.match(app, /orderedWeeks\.slice\(currentPage \* 9, \(currentPage \+ 1\) \* 9\)/)
 assert.match(app, /Nästa 9/)
+
+// Kollegdelning måste vara serververifierad och privata kopior får inte delas vidare.
+assert.match(app, /supabase\.rpc\('create_plan_share_invite'/)
+assert.match(app, /supabase\.rpc\('claim_plan_share_invite'/)
+assert.match(app, /receivedCopy: Boolean\(source\.receivedCopy\)/)
+assert.match(sql, /create or replace function public\.create_plan_share_invite/)
+assert.match(sql, /create or replace function public\.claim_plan_share_invite/)
+assert.match(sql, /from public\.plan_received_copies where plan_id = p_plan_id/)
+assert.match(sql, /crypt\(coalesce\(p_password, ''\), v_secret\)/)
+assert.doesNotMatch(app, /56-12-77/, 'Delningskoden får inte finnas i klientkoden')
