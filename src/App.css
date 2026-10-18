@@ -1101,3 +1101,25 @@ body { background: #fffaf2; color: var(--ink); }
 }
 .compact-status-card { padding: 10px 16px !important; }
 .compact-status-card .status { margin: 0; }
+
+/* Lugnare valfria delar: öppna bara när läraren behöver dem. */
+.optional-planning-section > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+  padding: 2px 0;
+  color: #82404a;
+}
+.optional-planning-section > summary::-webkit-details-marker { display: none; }
+.optional-planning-section > summary span { color: #86666a; font-size: .88rem; font-weight: 400; }
+.optional-planning-section > summary::after { content: "⌄"; font-size: 1.3rem; flex-shrink: 0; }
+.optional-planning-section[open] > summary::after { content: "⌃"; }
+.optional-planning-content { padding-top: 16px; }
+.optional-planning-content > h2:first-child,
+.optional-planning-content > h3:first-child { display: none; }
+@media (max-width: 650px) {
+  .optional-planning-section > summary { align-items: flex-start; flex-wrap: wrap; }
+}
