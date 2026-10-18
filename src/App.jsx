@@ -884,6 +884,7 @@ function TeacherApp({ session }) {
         p_plan_id: selectedId, p_recipient_email: shareRecipient.trim(), p_password: sharePassword,
       })
       if (error) throw error
+      if (typeof data === 'string' && data.startsWith('ERROR:')) throw new Error(data.slice(6))
       setShareToken(data)
       setSharePassword('')
       setShareMessage('Inbjudan skapad. Ge engångskoden till kollegan på ett säkert sätt. Koden gäller i sju dagar.')
