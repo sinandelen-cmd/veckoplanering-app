@@ -1625,9 +1625,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
     {lessons.map((lesson, i) => ({ lesson, i })).filter(({ lesson }) => (editable || lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || ''))))).map(({ lesson, i }) => <section className="lesson" key={i}>
       <div className="lesson-heading">
         {editable ? <div className="lesson-edit-heading">
-          <span className="lesson-number-inline">{entryType === 'dag' ? (lesson.name || WEEKDAYS[i]) : `Lektion ${i + 1}`}</span>
-          {entryType !== 'dag' && <label>Dag <select aria-label={'Veckodag för ' + (lesson.name || 'lektion ' + (i + 1))} value={lesson.day || ''} onChange={e => changeLesson(i, { ...lesson, day: e.target.value })}><option value="">Välj dag</option>{WEEKDAYS.map(day => <option key={day} value={day}>{day}</option>)}</select></label>}
-          {lessonDayDate(week.weekStart, entryType === 'dag' ? lesson.name : lesson.day) && <span className="lesson-day-date">{lessonDayDate(week.weekStart, entryType === 'dag' ? lesson.name : lesson.day)}</span>}
+          <span className="lesson-number-inline">{entryType === 'dag' ? (lesson.name || WEEKDAYS[i]) : (lesson.day || 'Välj dag')} · {entryType === 'dag' ? `Lektion ${i + 1}` : `Lektion ${i + 1}`}{lessonDayDate(week.weekStart, entryType === 'dag' ? lesson.name : lesson.day) ? ` · ${lessonDayDate(week.weekStart, entryType === 'dag' ? lesson.name : lesson.day)}` : ''}</span>
         </div> : <h4>
           {(() => {
             const day = entryType === 'dag' ? (lesson.name || WEEKDAYS[i]) : lesson.day
