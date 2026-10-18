@@ -757,6 +757,7 @@ function TeacherApp({ session }) {
     ...(!String(plan.subject || '').trim() ? ['Ange ämne.'] : []),
     ...(!visibleTeacherWeeks.length ? ['Visa minst en vecka för elever.'] : []),
     ...(weeksWithContent.length === 0 ? ['Fyll i innehåll i minst en synlig vecka.'] : []),
+    ...(visibleTeacherWeeks.some(week => !validSchoolClosure({ name: 'Vecka', startDate: week.weekStart, endDate: week.weekStart })) ? ['Rätta startdatum på synliga veckor.'] : []),
     ...((plan.schoolClosures || []).some(item => !validSchoolClosure(item)) ? ['Kontrollera datum för lov och studiedagar.'] : []),
   ]
 
@@ -830,6 +831,16 @@ function TeacherApp({ session }) {
     if (!String(plan.title || '').trim()) return setStatus('Skriv ett namn på årsplaneringen.')
     if (!String(plan.subject || '').trim()) return setStatus('Skriv ämne.')
     if ((plan.schoolClosures || []).some(item => !validSchoolClosure(item))) return setStatus('Rätta namn och datum för lov/studiedagar innan du sparar eller publicerar.')
+    if (publish && !weeks.some(week => week && !week.hidden && (
+      String(week.content || '').trim() || String(week.chapter || '').trim() ||
+      week.items?.length || week.pages?.some(item => String(item || '').trim()) ||
+      week.assignments?.some(item => String(item || '').trim()) ||
+      week.links?.some(item => resourceInfo(typeof item === 'string' ? item : item?.url || '')) ||
+      week.lessons?.some(lesson => lesson.topics?.some(topic => String(topic.name || '').trim() ||
+        topic.pages?.some(item => String(item || '').trim()) ||
+        topic.assignments?.some(item => String(item || '').trim()) ||
+        topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || ''))))
+    ))) return setStatus('Ingen synlig vecka har innehåll. Lägg till minst en uppgift eller ett lektionsinnehåll innan du publicerar.')
     if (publish && !sanitizeForStudents({ ...plan, weeksData: weeks }).weeksData.length) return setStatus('Det finns inga synliga veckor att publicera. Markera minst en vecka med ”Visa för elever”.')
     if (publish && weeks.some(week => week && !week.hidden && !validSchoolClosure({ name: 'Vecka', startDate: week.weekStart, endDate: week.weekStart }))) return setStatus('En synlig vecka saknar giltigt startdatum. Rätta veckans datum innan publicering.')
     setBusy(true)
