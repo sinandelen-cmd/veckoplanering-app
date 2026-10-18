@@ -587,12 +587,12 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
   return <><main style={planThemeStyle(plan)} className={`shell student-shell ${printPage === null ? "student-screen-view" : "student-print-page"} ${printPage !== null && visibleWeeks.length === 1 ? "student-print-spacious" : ""}`}>
-    <header className="student-header">
+    {!preview && <header className="student-header">
       <div><p className="eyebrow">{preview ? 'FÖRHANDSVISNING' : 'PUBLICERAD ÅRSPLANERING'}</p><h1>{plan.title}</h1><p className="muted">{[plan.subject, plan.className, plan.schoolYear].filter(Boolean).join(' · ')}</p></div>
 
       {!preview && <span className="public-badge">Publicerad</span>}
-    </header>
-    {printPage === null && jumpStudentWeek && <nav className="student-week-shortcut" aria-label="Hitta aktuell planering">
+    </header>}
+    {!preview && printPage === null && jumpStudentWeek && <nav className="student-week-shortcut" aria-label="Hitta aktuell planering">
       <a href={'#student-week-' + jumpStudentWeek.weekStart}>{currentStudentWeek ? '📍 Gå till den här veckan' : '📍 Gå till nästa planerade vecka'} · vecka {calendarWeekNumber(jumpStudentWeek.weekStart) ?? jumpStudentWeek.weekNumber} ↓</a>
     </nav>}
     {studentWeeks.length === 0 && <p className="card empty" role="status">{plan.autoReleaseWeeks ? "Ingen vecka är publicerad för elever ännu. Nästa vecka visas automatiskt när dess måndag börjar." : "Det finns inga synliga veckor i den här planeringen ännu."}</p>}
@@ -1173,13 +1173,13 @@ function TeacherApp({ session }) {
     setStatus('Fyll i uppgifterna och välj Skapa planering.')
   }
   return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}`}><Navigation active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={id => { setTeacherTab(id === 'mina' ? 'arsplan' : id); if (id === 'mina' || id === 'arsplan') setCalendarOpen(true); if (id === 'elevvy') setPreviewStudents(true) }} onOpenExample={openExample} onOpenArchive={() => { setShowArchive(true); setTeacherTab('mina') }} onNew={createPlan} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} /><main className="shell" id="lararvy">
-    <header className="topbar">
+    {teacherTab !== "elevvy" && <header className="topbar">
       <div><p className="eyebrow">{teacherTab === "new" ? "NY PLANERING" : teacherTab === "mina" ? "MINA PLANERINGAR" : teacherTab === "elevvy" ? "ELEVVY" : "LÄRARVY"}</p><h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Mina planeringar" : (plan.title?.trim() || "Ny planering")}</h1><p className="muted">{session.user.email}</p></div>
       {teacherTab !== "elevvy" && <div className="topbar-share-actions">
         <button type="button" className="secondary share-settings-trigger" aria-expanded={shareOpen} onClick={() => { setShareOpen(open => !open); setShareToken(''); setShareMessage('') }} title="Klona och dela med kollega">⚙ Klona / dela</button>
         <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
       </div>}
-    </header>
+    </header>}
 
     {teacherTab !== "elevvy" && shareOpen && <section className="card colleague-share-panel" aria-label="Klona och dela med kollega">
       <div className="share-panel-heading"><div><h2>Klona och dela</h2><p className="muted">Kollegan får en egen, privat kopia. Den kan inte delas vidare via Årsplanering.</p></div><button type="button" className="secondary" onClick={() => setShareOpen(false)}>Stäng</button></div>
