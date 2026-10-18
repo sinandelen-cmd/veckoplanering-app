@@ -612,7 +612,7 @@ function nationalExamsForPlan(plan) {
   return NATIONAL_EXAMS_2026_27.filter(item => item.grade === grade)
 }
 
-function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], onClose, onUpdateWeek, onAddWeek, onSave, isDirty, busy, saveStatus, entryType = 'lektion' }) {
+function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], onClose, onUpdateWeek, onAddWeek, onDeleteWeek, onSave, isDirty, busy, saveStatus, entryType = 'lektion' }) {
   // Årsöversikt i nio veckor per sida, tre kolumner och tre rader.
   const [selectedWeekIndex, setSelectedWeekIndex] = useState(null)
   const [overviewPage, setOverviewPage] = useState(0)
@@ -661,6 +661,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], onClose,
               const date = new Date(week.weekStart + 'T12:00:00')
               const topics = (week.lessons || []).flatMap(lesson => (lesson.topics || []).map(topic => topic.name).filter(Boolean))
         return <div className="calendar-week-wrapper" key={`${week.weekStart}-${index}`}>
+          <button type="button" className="calendar-delete-week" disabled={busy || orderedWeeks.length <= 1} title={`Radera vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`} aria-label={`Radera vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`} onClick={() => onDeleteWeek?.(week.weekStart)}>🗑️ <span>Radera vecka</span></button>
           <label className="calendar-week-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => { const originalIndex = weeks.findIndex(item => item.weekStart === week.weekStart); if (originalIndex >= 0) onUpdateWeek?.(originalIndex, { hidden: !e.target.checked }) }} /> Visa för elever</label>
           <button type="button" className="calendar-week-tile" onClick={() => { setSelectedWeekIndex(index); setSelectedLessonIndex(null) }} aria-label={`Zooma in vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`}>
           
@@ -1260,7 +1261,7 @@ function TeacherApp({ session }) {
       const nextDate = addWeeks(latest.weekStart, 1)
       const newWeek = makeWeeks({ ...p, startDate: nextDate, startWeek: calendarWeekNumber(nextDate), weeks: 1 }, 1)[0]
       return { ...p, weeks: existing.length + 1, weeksData: [...existing, newWeek] }
-    })} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} /></div>}
+    })} onDeleteWeek={weekStart => { if (busy || weeks.length <= 1) return; const week = weeks.find(item => item.weekStart === weekStart); if (!week) return; if (!window.confirm(`Vill du radera vecka ${calendarWeekNumber(weekStart) ?? week.weekNumber} och allt innehåll i den? Ändringen sparas först när du väljer Spara ändringar.`)) return; setPlan(p => { const remaining = displayWeeks(p).filter(item => item.weekStart !== weekStart); return remaining.length ? { ...p, weeks: remaining.length, weeksData: remaining } : p }) }} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} /></div>}
 
     <details className="card optional-planning-section" aria-label="Skollov och studiedagar"><summary><strong>Skollov och studiedagar</strong><span>Lägg till lov och studiedagar vid behov</span></summary><div className="optional-planning-content">
       <h3>Skollov och studiedagar</h3>
