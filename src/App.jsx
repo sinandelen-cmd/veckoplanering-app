@@ -14,8 +14,8 @@ import { NATIONAL_EXAMS_2026_27, NATIONAL_EXAM_PERIODS_2026_27 } from './nationa
 const APP_TITLE = 'Årsplanering'
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker
 const DEFAULT_WEEKS = 1
-const WEEK_COLORS = ['#fff0d5', '#fce0e8', '#e5e3ff', '#dff4e6', '#dceefb', '#fce9d9']
-const DAY_COLORS = ['#fce1e8', '#fff0ca', '#e1e8ff', '#def2e5', '#e6e0fb', '#ffe8d9', '#dceff2']
+const WEEK_COLORS = ['#fffcf5', '#fff9fa', '#fafaff', '#f8fcf9', '#f8fbff', '#fffbf7']
+const DAY_COLORS = ['#fff6f8', '#fffdf3', '#f6f8ff', '#f4fcf7', '#f8f6ff', '#fffaf5', '#f5fbfc']
 function weekColor(weekStart) { const d = new Date(weekStart + 'T12:00:00'); return WEEK_COLORS[Math.floor((d.getDate() - 1) / 7) % WEEK_COLORS.length] }
 
 function weekMonthLabel(iso) {
@@ -627,7 +627,7 @@ function calendarWeekNumber(dateString) {
   const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1))
   return Math.ceil((((utc - yearStart) / 86400000) + 1) / 7)
 }
-const MONTH_PASTELS = ['#f2f7ff','#fff2f8','#f6f2ff','#fffbe8','#fff4ef','#f0faff','#fff8e8','#fff0e9','#f5f2ff','#fff9e9','#f1f4fa','#fff1f6']
+const MONTH_PASTELS = ['#fafcff','#fffafd','#fcfaff','#fffdf6','#fffbf8','#f8fdff','#fffdf8','#fffbf9','#fcfaff','#fffdf7','#fafbfe','#fffafd']
 
 function isSchoolYear2026_27(value) {
   return /^(?:2026\s*[/–-]\s*(?:2027|27)|26\s*[/–-]\s*27|HT\s*(?:20)?26\s*[/–-]?\s*VT\s*(?:20)?27)$/i.test(String(value || '').trim())
