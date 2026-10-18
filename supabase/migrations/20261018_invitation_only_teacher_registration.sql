@@ -52,7 +52,7 @@ revoke all on function public.claim_plan_share_invite(text) from public;
 grant execute on function public.claim_plan_share_invite(text) to authenticated;
 
 -- Reject uninvited self-service registration at the database boundary.
--- Existing accounts remain unaffected. The invite is consumed on successful signup.
+-- Existing accounts remain unaffected. AFTER INSERT is required because consumed_by and the copied plan reference the newly inserted auth user.
 create or replace function public.enforce_teacher_signup_invite()
 returns trigger language plpgsql security definer set search_path = '' as $$
 declare v_token text; v_inv public.teacher_share_invites%rowtype;
@@ -76,5 +76,5 @@ begin
   return new;
 end $$;
 drop trigger if exists require_teacher_invite_on_signup on auth.users;
-create trigger require_teacher_invite_on_signup before insert on auth.users
+create trigger require_teacher_invite_on_signup after insert on auth.users
 for each row execute function public.enforce_teacher_signup_invite();
