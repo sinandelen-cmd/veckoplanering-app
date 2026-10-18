@@ -1231,8 +1231,8 @@ function TeacherApp({ session }) {
     </div>}
 
     
-    {selectedId && !calendarOpen && teacherTab !== "elevvy" && teacherTab !== "new" && <div className="expanded-weeks-inline">
-    <section className="card">
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline">
+<section className="card">
       <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
       <div className="year-grid">
         {weeks.map((week, index) => ({ week, index })).sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).map(({ week, index }, displayIndex, ordered) => <div className="chapter-week-group" key={`${week.weekNumber}-${index}`}>
@@ -1264,7 +1264,28 @@ function TeacherApp({ session }) {
             <summary>Extra veckomaterial (sidor, uppgifter och länkar)</summary>
             <p className="muted">Använd i första hand momenten under varje lektion. Här kan du även lägga material för hela veckan.</p>
             <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
-          </div>}
+          </details>
+        </article></div>)}
+      </div>
+      <div className="button-row week-add-actions">
+        <button type="button" className="secondary" disabled={weeks.length >= 52} onClick={() => setPlan(p => {
+          const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
+          const nextNumber = Math.max(...existing.map(w => Number(w.weekNumber) || 0)) + 1
+          if (nextNumber > 53) { setStatus('Det går inte att lägga till fler veckor efter vecka 53.'); return p }
+          const latest = [...existing].sort((a, b) => Number(b.weekNumber) - Number(a.weekNumber))[0]
+          const newWeek = makeWeeks({ ...p, startWeek: nextNumber, startDate: addWeeks(latest?.weekStart || p.startDate, 1), weeks: 1 }, 1)[0]
+          return { ...p, weeks: existing.length + 1, weeksData: [...existing, newWeek] }
+        })}>+ Lägg till vecka</button>
+      </div>
+      <div className="sticky-actions button-row">
+        
+        <button className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
+        <button className="primary" disabled={busy} onClick={() => save(true)}>Publicera för elever</button>
+      </div>
+      {isDirty && <p className="unsaved-notice" role="status">Osparade ändringar – välj Spara utkast innan du lämnar sidan.</p>}
+      {status && <p className="status">{status}</p>}
+    </section>
+    </div>}
     {selectedId && calendarOpen && teacherTab !== "elevvy" && teacherTab !== "new" && <div id="teacher-year-calendar"><YearCalendar key="embedded-calendar" embedded={true} onOpen={() => setCalendarOpen(true)} startOnFirstWeek={weeks.length === 1} weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={[]} onClose={() => { setCalendarOpen(false); setTeacherTab("arsplan"); window.scrollTo({ top: 0, behavior: "smooth" }) }} onUpdateWeek={updateWeek} onAddWeek={() => setPlan(p => {
       const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
       if (existing.length >= 52) return p
