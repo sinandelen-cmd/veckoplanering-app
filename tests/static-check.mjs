@@ -20,7 +20,7 @@ assert.match(sql, /drop policy if exists "Public can view published annual plans
 assert.match(redirects, /\/\*\s+\/index\.html\s+200/)
 // Regression checks for the student view and publication safety.
 assert.match(app, /const pageSize = Math\.min\(6, columns \* rows\)/)
-assert.match(app, /studentWeeks\.slice\(currentPage \* pageSize, \(currentPage \+ 1\) \* pageSize\)/)
+assert.match(app, /\? studentWeeks\s*:/)
 assert.match(app, /const printGroups = singlePrintWeek \? \[\{ weeks: studentWeeks\.filter\(week => week\.weekStart === singlePrintWeek\) \}\] : groupStudentWeeksForPrint\(studentWeeks\)/)
 // Långa veckor får brytas mellan lektioner, aldrig avsiktligt mitt i en lektion.
 assert.match(css, /\.student-print-page \.student-week-card,[\s\S]*?break-inside: auto !important/)
@@ -28,12 +28,12 @@ assert.match(css, /\.student-print-page \.lesson \{[\s\S]*?break-inside: avoid-p
 assert.match(css, /\.student-print-page \.lesson-heading \{[\s\S]*?break-after: avoid-page !important/)
 assert.match(app, /printWeekStart=\{singlePrintWeek\}/)
 assert.match(app, /printWeekStart \? studentWeeks\.filter\(week => week\.weekStart === printWeekStart\)/)
-assert.match(app, /className="print-single-week"/)
+assert.doesNotMatch(app, /className="print-single-week"/)
 assert.match(app, /window\.addEventListener\('afterprint', clearPrintSelection\)/)
 assert.match(app, /printGroups\[printPage\]\?\.weeks/)
 assert.match(app, /function isoWeekYear\(dateString\)/)
 assert.match(app, /weekStart \|\| `number-\$\{other\.weekNumber\}`/)
-assert.match(app, /\.sort\(\(a, b\) => \(a\.weekStart \|\| ''\)\.localeCompare\(b\.weekStart \|\| ''\)\)/)
+assert.match(app, /\.sort\(\(a, b\) => \(b\.weekStart \|\| ''\)\.localeCompare\(a\.weekStart \|\| ''\)\)/)
 assert.match(app, /const keepPublished = !publish && databasePublished/)
 assert.match(app, /\.select\('published,public_slug'\)/)
 assert.match(app, /publishedPayload = publish \? sanitizeForStudents\(payload\) : null/)
@@ -181,7 +181,7 @@ for (const plan of [
 ]) assert.deepEqual(nationalExamsForPlan(plan), [], 'Nationella prov får inte visas för fel planering')
 
 const sanitizeForStudentsRuntime = new Function(
-  'displayWeeks', 'makeWeeks', 'resourceInfo',
+  'displayWeeks', 'makeWeeks', 'resourceInfo', 'validSchoolClosure',
   extractFunction('sanitizeForStudents', 'function resourceInfo') + '; return sanitizeForStudents'
 )(
   plan => plan.weeksData,
@@ -232,7 +232,7 @@ assert.match(css, /@page\s*\{\s*size:\s*A4 portrait/)
 assert.match(css, /\.student-print-page\s+\*\s*\{\s*font-size:\s*10pt\s*!important/)
 assert.match(css, /\.student-print-page\s+\.lessons,[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\)\s*!important/)
 assert.match(css, /\.student-print-page\s+\.topic-cell span[\s\S]*?overflow:\s*visible\s*!important/)
-assert.match(app, /className="print-single-week"/)
+assert.doesNotMatch(app, /className="print-single-week"/)
 assert.match(printSource, /textLength > 1100/)
 assert.match(printSource, /groups.push/)
 
@@ -251,12 +251,12 @@ assert.match(app, /printWeekStart \? studentWeeks\.filter\(week => week\.weekSta
 assert.match(app, /function a4DemoPlan\(plan\)/)
 assert.match(app, /Array\.from\(\{ length: 3 \}, \(_, index\) =>/, 'A4-testet ska innehålla tre veckor')
 assert.match(app, /Test med långa texter och länkar/)
-assert.match(app, /Testinnehåll – sparas inte och publiceras inte\./)
+assert.doesNotMatch(app, /<div className="a4-demo-controls">/)
 assert.match(css, /\.student-print-page \.lesson \{\s*display: block !important;\s*break-inside: avoid-page !important;/, 'Lektioner ska inte delas vid A4-utskrift')
 assert.match(css, /\.student-print-page \.student-week-card,[\s\S]*?break-inside: auto !important;/, 'Långa veckor måste kunna fortsätta på nästa sida')
 assert.doesNotMatch(css, /\.student-print-page \.topic-cell span\s*\{[^}]*font-size:\s*8pt\s*!important;/, 'Sid- och uppgiftsrutor får inte använda 8 pt')
 
-assert.match(app, /const \[teacherTab, setTeacherTab\] = useState\("arsplan"\)/)
+assert.match(app, /const [\\[]teacherTab, setTeacherTab[\\]] = useState\\("arsplan"\\)/)
 for (const tab of ['arsplan', 'elevvy', 'mina']) {
   assert.match(app, new RegExp('teacherTab !== "' + tab + '"'), 'Lärarflik saknas: ' + tab)
 }
@@ -312,3 +312,10 @@ assert.match(sql, /create or replace function public\.claim_plan_share_invite/)
 assert.match(sql, /from public\.plan_received_copies where plan_id = p_plan_id/)
 assert.match(sql, /crypt\(coalesce\(p_password, ''\), v_secret\)/)
 assert.doesNotMatch(app, /56-12-77/, 'Delningskoden får inte finnas i klientkoden')
+
+// Elevvyn ska vara en sammanhängande läsvy utan utskriftsknappar eller sidbläddring.
+assert.match(app, /function ImportantDatesForWeek/)
+assert.match(app, /<ImportantDatesForWeek week=\{week\} plan=\{plan\}/)
+assert.match(app, /schoolClosures: Array\.isArray\(plan\?\.schoolClosures\)/)
+assert.doesNotMatch(app, /<nav className="student-pager"/)
+assert.doesNotMatch(app, /<div className="a4-demo-controls">/)
