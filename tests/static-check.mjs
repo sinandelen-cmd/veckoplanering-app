@@ -347,3 +347,10 @@ assert.match(app, /Dolda veckor:/)
 assert.match(app, /const sourceWeeks = Array\.isArray\(plan\?\.weeksData\) \?/)
 assert.match(app, /autoReleaseWeeks: plan\?\.autoReleaseWeeks === true/)
 assert.match(app, /supports_automatic_week_release/)
+
+// SQL-migrationen måste ha en enda välformad RPC för veckosläpp.
+assert.equal((sql.match(/create or replace function public\.get_public_annual_plan\(/g) || []).length, 1)
+assert.equal((sql.match(/create or replace function public\.supports_automatic_week_release\(/g) || []).length, 1)
+assert.match(sql, /as \$func\$ select true; \$func\$;/)
+assert.match(sql, /Europe\/Stockholm/)
+assert.match(sql, /'\{schoolClosures\}'/)
