@@ -13,10 +13,10 @@ export default function Navigation({ active = 'mina', onNavigate, onNew, plans =
       <button type="button" className="sidebar-plan" onClick={() => onOpenExample?.("science")}>Exempel: NO åk 7</button>
       <button type="button" className="sidebar-link sidebar-archive-link" onClick={onOpenArchive}>Arkiv</button>
     </aside>
-    <nav className="planning-top-navigation" aria-label="Vyer för öppen planering" role="tablist">
-      <button type="button" className={active === 'arsplan' || active === 'redigera' ? 'top-navigation-link active' : 'top-navigation-link'} role="tab" id="tab-lararvy" aria-selected={active === 'arsplan' || active === 'redigera'} aria-controls="panel-lararvy" onClick={() => onNavigate('arsplan')}>Lärarvy</button>
-      <button type="button" className={active === 'elevvy' ? 'top-navigation-link active' : 'top-navigation-link'} role="tab" id="tab-elevvy" aria-selected={active === 'elevvy'} aria-controls="panel-elevvy" onClick={() => onNavigate('elevvy')}>Elevvy</button>
-      {onToggleCalendar && active === 'arsplan' && <button type="button" className="top-navigation-link top-calendar" role="button" onClick={onToggleCalendar} aria-pressed={calendarOpen}>{calendarOpen ? 'Dölj kalender' : 'Visa kalender'}</button>}
+    <nav className="planning-top-navigation planning-view-switcher" aria-label="Vyer för öppen planering" role="tablist">
+      <button type="button" className={active === 'arsplan' || active === 'redigera' ? 'top-navigation-link active' : 'top-navigation-link'} role="tab" id="tab-lararvy" aria-selected={active === 'arsplan' || active === 'redigera'} aria-controls="panel-lararvy" onClick={() => { onNavigate('arsplan'); if (calendarOpen) onToggleCalendar?.() }}><span aria-hidden="true">▦</span> Årsplanering</button>
+      <button type="button" className={calendarOpen && active === 'arsplan' ? 'top-navigation-link top-calendar active' : 'top-navigation-link top-calendar'} role="button" onClick={() => { if (active !== 'arsplan') onNavigate('arsplan'); if (!calendarOpen) onToggleCalendar?.() }} aria-pressed={calendarOpen}><span aria-hidden="true">▦</span> Kalendervy</button>
+      <button type="button" className={active === 'elevvy' ? 'top-navigation-link active' : 'top-navigation-link'} role="tab" id="tab-elevvy" aria-selected={active === 'elevvy'} aria-controls="panel-elevvy" onClick={() => onNavigate('elevvy')}><span aria-hidden="true">♧</span> Elevvy</button>
     </nav>
   </>
 }
