@@ -622,7 +622,17 @@ function isSchoolYear2026_27(value) {
 function nationalExamsForPlan(plan) {
   const grade = String(plan.grade || '').replace(/[^0-9]/g, '')
   if (plan.schoolForm !== 'grundskola' || !isSchoolYear2026_27(plan.schoolYear) || !['3', '6', '9'].includes(grade)) return []
-  return NATIONAL_EXAMS_2026_27.filter(item => item.grade === grade)
+  const subject = String(plan.subject || '').toLowerCase().trim()
+  const matchesSubject = exam => {
+    const examSubject = String(exam.subject || '').toLowerCase()
+    if (/matematik|^ma$/.test(subject)) return /matematik/.test(examSubject)
+    if (/svenska som andraspråk|^sva$/.test(subject)) return /svenska som andraspråk/.test(examSubject)
+    if (/svenska|^sv$/.test(subject)) return /svenska/.test(examSubject) && !/andraspråk/.test(examSubject)
+    if (/engelska|^en$/.test(subject)) return /engelska/.test(examSubject)
+    if (/biologi|fysik|kemi|geografi|historia|religion|samhällskunskap/.test(subject)) return examSubject.includes(subject)
+    return false
+  }
+  return NATIONAL_EXAMS_2026_27.filter(item => item.grade === grade && matchesSubject(item))
 }
 
 function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnFirstWeek = false, onClose, onUpdateWeek, onAddWeek, onDeleteWeek, onSave, isDirty, busy, saveStatus, entryType = 'lektion' }) {
@@ -1191,7 +1201,7 @@ function TeacherApp({ session }) {
         <div className="form-grid">
           <label>Planeringens namn<input required value={plan.title} onChange={event => setPlan(p => ({ ...p, title: event.target.value }))} placeholder="Matematik höstterminen" /></label>
           <label>Ämne<input required value={plan.subject} onChange={event => setPlan(p => ({ ...p, subject: event.target.value }))} placeholder="Matematik" /></label>
-          <label>Klass / årskurs<input value={plan.className} onChange={event => setPlan(p => ({ ...p, className: event.target.value, grade: p.grade || (event.target.value.match(/^\s*(3|6|9)\s*[A-Za-z]?\s*$/)?.[1] || ''), schoolForm: p.schoolForm || 'grundskola' }))} placeholder="6A" /></label>
+          <label>Klass / årskurs<input value={plan.className} onChange={event => setPlan(p => ({ ...p, className: event.target.value, grade: (event.target.value.match(/^\s*(3|6|9)\s*[A-Za-z]?\s*$/)?.[1] || p.grade), schoolForm: p.schoolForm || 'grundskola' }))} placeholder="6A" /></label>
           <label>Läsår<input value={plan.schoolYear} onChange={event => setPlan(p => ({ ...p, schoolYear: event.target.value }))} placeholder="2026–2027" /></label>
           <label>Startdatum<input type="date" required value={plan.startDate} onChange={event => { if (event.target.value) setPlan(p => ({ ...p, startDate: mondayOf(`${event.target.value}T12:00:00`), weeksData: [] })) }} /></label>
           <p className="muted">Planeringen börjar med en vecka. Lägg till fler veckor efter sista veckan när du behöver. Importerade underlag kan innehålla flera veckor.</p>
