@@ -1252,7 +1252,7 @@ function TeacherApp({ session }) {
     </section>}
     {status && <section className="card compact-status-card" aria-live="polite"><p className="status">{status}</p></section>}
 
-    <div className="unified-planning-form" aria-label="Inställningar och publicering"><h2 className="settings-publication-title">Inställningar och publicering</h2>
+    {!simpleSetup && <div className="unified-planning-form" aria-label="Inställningar och publicering"><h2 className="settings-publication-title">Inställningar och publicering</h2>
     <section className="card teacher-settings-card">
       <details className="teacher-settings-details">
         <summary><strong>Grunduppgifter och inställningar</strong><span>Ändra namn, ämne, skolform, läsår och visningsalternativ</span></summary>
@@ -1381,7 +1381,7 @@ function TeacherApp({ session }) {
         
       </div>
     </section>
-    </div>
+    </div>}
 
     </div>
     <div className="teacher-tab-panel" hidden={teacherTab !== "arsplan"}>
