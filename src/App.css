@@ -1179,3 +1179,48 @@ body { background: #fffaf2; color: var(--ink); }
 @media (max-width: 420px) {
   .planning-layout.view-teacher .teacher-tab-panel:not([hidden]) > .teacher-settings-card .form-grid { grid-template-columns: 1fr; }
 }
+
+/* Extra uppgifter ska se ut exakt som tabellen i Ny planering. */
+.simple-setup-card .simple-extra-fields {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #f0dcc6;
+}
+.simple-setup-card .simple-extra-fields h3 {
+  margin: 0 0 14px;
+  font-size: 1rem;
+  color: #82404a;
+}
+.simple-setup-card .form-grid,
+.simple-setup-card .simple-extra-fields .form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 12px;
+  align-items: start;
+}
+.simple-setup-card .form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  font-size: .9rem;
+}
+.simple-setup-card .form-grid input,
+.simple-setup-card .form-grid select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 37px;
+  background: #fff;
+  border: 1px solid #bdd7ca;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+@media (max-width: 650px) {
+  .simple-setup-card .form-grid,
+  .simple-setup-card .simple-extra-fields .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 420px) {
+  .simple-setup-card .form-grid,
+  .simple-setup-card .simple-extra-fields .form-grid { grid-template-columns: 1fr; }
+}
