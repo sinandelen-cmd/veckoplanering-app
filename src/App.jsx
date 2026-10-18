@@ -845,9 +845,9 @@ function TeacherApp({ session }) {
     if (publish && !sanitizeForStudents({ ...plan, weeksData: weeks }).weeksData.length) return setStatus('Det finns inga synliga veckor att publicera. Markera minst en vecka med ”Visa för elever”.')
     if (publish && weeks.some(week => week && !week.hidden && !validSchoolClosure({ name: 'Vecka', startDate: week.weekStart, endDate: week.weekStart }))) return setStatus('En synlig vecka saknar giltigt startdatum. Rätta veckans datum innan publicering.')
     if (publish && !window.confirm(
-      'Publicera planeringen för elever?\\n\\n' +
-      'Synliga veckor: ' + weeks.filter(week => week && !week.hidden).length + '\\n' +
-      'Dolda veckor: ' + weeks.filter(week => week && week.hidden).length + '\\n\\n' +
+      'Publicera planeringen för elever?\n\n' +
+      'Synliga veckor: ' + weeks.filter(week => week && !week.hidden).length + '\n' +
+      'Dolda veckor: ' + weeks.filter(week => week && week.hidden).length + '\n\n' +
       'Endast den publicerade elevversionen uppdateras. Kontrollera gärna Elevvy först.'
     )) return
     setBusy(true)
