@@ -966,3 +966,36 @@ body { background: #fffaf2; color: var(--ink); }
 @media (max-width: 750px) {
   .planning-sidebar { border-bottom-color: #efd7b4; }
 }
+
+/* Tydliga, separata färgteman för de två flikarna. */
+.planning-layout.view-teacher {
+  --view-accent: #c18b24;
+  --view-border: #f1d48b;
+  --view-surface: #fff9e8;
+}
+.planning-layout.view-student {
+  --view-accent: #b85e71;
+  --view-border: #efbdc9;
+  --view-surface: #fff0f3;
+}
+.planning-layout.view-teacher > .shell { background: #fffaf0; }
+.planning-layout.view-student > .shell { background: #fff3f5; }
+.planning-layout.view-teacher .planning-top-navigation { background: #ffe9a8; border-bottom: 3px solid #d5a43c; }
+.planning-layout.view-student .planning-top-navigation { background: #ffdce4; border-bottom: 3px solid #cf8193; }
+.planning-layout .planning-top-navigation .top-navigation-link.active {
+  background: var(--view-surface);
+  color: #57383d;
+  border: 2px solid var(--view-accent);
+  box-shadow: 0 2px 7px rgba(80, 48, 51, .1);
+  font-weight: 800;
+}
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) > .card,
+.planning-layout.view-student .teacher-tab-panel:not([hidden]) > .card {
+  border-color: var(--view-border);
+}
+.planning-layout.view-teacher .topbar { border-bottom: 3px solid #f1d48b; }
+.planning-layout.view-student .topbar { border-bottom: 3px solid #efbdc9; }
+.planning-layout.view-teacher .topbar .eyebrow { color: #996c1d; }
+.planning-layout.view-student .topbar .eyebrow { color: #aa5368; }
+.planning-layout.view-teacher .planning-context { background: #fff0c5; }
+.planning-layout.view-student .planning-context { background: #ffe0e7; }
