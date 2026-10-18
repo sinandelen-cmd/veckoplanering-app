@@ -624,7 +624,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], onClose,
         <span>Sida {currentPage + 1} av {pageCount}</span>
         <button type="button" className="secondary" disabled={currentPage >= pageCount - 1} onClick={() => setOverviewPage(page => Math.min(pageCount - 1, page + 1))}>Nästa 9 →</button>
       </div>
-      <div className="calendar-add-week-actions"><button type="button" className="primary" disabled={busy || weeks.length >= 52} onClick={() => { onAddWeek?.(); setSelectedWeekIndex(null); setOverviewPage(Math.floor(weeks.length / 9)) }}>+ Lägg till vecka</button><span className="muted">Ny vecka visas i kalendern. Spara utkast när du är klar.</span></div>
+      
       <div className="calendar-week-grid" style={{ "--week-grid-columns": 3 }}>{orderedWeeks.slice(currentPage * 9, (currentPage + 1) * 9).map((week, localIndex) => {
         const index = currentPage * 9 + localIndex
         const date = new Date(`${week.weekStart}T12:00:00`)
@@ -645,6 +645,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], onClose,
           </button>
         </div>
       })}</div>
+      <div className="calendar-add-week-actions calendar-add-week-bottom"><button type="button" className="primary" disabled={busy || weeks.length >= 52} onClick={() => { onAddWeek?.(); setSelectedWeekIndex(null); setOverviewPage(Math.floor(weeks.length / 9)) }}>+ Lägg till ny vecka efter sista veckan</button><span className="muted">{weeks.length >= 52 ? 'Maximalt 52 veckor i en planering.' : 'Den nya veckan läggs sist. Spara utkast när du är klar.'}</span></div>
     </>}
   </section>
 }
