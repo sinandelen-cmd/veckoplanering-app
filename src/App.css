@@ -1781,3 +1781,9 @@ body { background: #fffaf2; color: var(--ink); }
 .expanded-weeks-inline .teacher-month-weeks > .chapter-week-group:nth-child(4n+3) .week-card { background:#e8f2ff!important; border-color:#c4d9f3!important; }
 .expanded-weeks-inline .teacher-month-weeks > .chapter-week-group:nth-child(4n) .week-card { background:#fff0df!important; border-color:#f2d5b2!important; }
 .expanded-weeks-inline .teacher-month-weeks > .chapter-week-group .week-card { box-shadow:0 3px 10px rgba(52,67,89,.07)!important; }
+
+/* Stor tillbakaknapp uppe till vänster i en öppnad kalendervecka. */
+.calendar-page .calendar-top:has(.calendar-return-overview){display:flex!important;flex-direction:column-reverse!important;align-items:flex-start!important;gap:16px!important}
+.calendar-page .calendar-zoom-controls-left{width:100%!important;display:flex!important;justify-content:flex-start!important;align-items:flex-start!important;margin:0!important}
+.calendar-page .calendar-return-overview{display:inline-flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;font-size:clamp(17px,1.7vw,22px)!important;font-weight:850!important;min-height:64px!important;padding:16px 26px!important;border-radius:14px!important;background:#d9eafa!important;border:2px solid #75a5cd!important;color:#184b70!important;box-shadow:0 3px 0 #a2c7e5!important}
+.calendar-page .calendar-return-overview:hover{background:#c7e2f9!important}
