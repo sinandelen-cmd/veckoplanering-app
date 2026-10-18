@@ -354,3 +354,7 @@ assert.equal((sql.match(/create or replace function public\.supports_automatic_w
 assert.match(sql, /as \$func\$ select true; \$func\$;/)
 assert.match(sql, /Europe\/Stockholm/)
 assert.match(sql, /'\{schoolClosures\}'/)
+
+// Datumintervall ska alltid visas för elever, inte bara vid utskrift.
+assert.match(app, /<span>\{studentWeekDateRange\(week\.weekStart\)\}<\/span>/)
+assert.doesNotMatch(app, /printPage !== null && <span>\{studentWeekDateRange/)
