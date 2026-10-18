@@ -634,6 +634,7 @@ function TeacherApp({ session }) {
   const [showArchive, setShowArchive] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [simpleSetup, setSimpleSetup] = useState(false)
+  const [simpleMore, setSimpleMore] = useState(false)
   const [teacherTab, setTeacherTab] = useState("arsplan")
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
@@ -989,6 +990,7 @@ function TeacherApp({ session }) {
     const fresh = emptyPlan()
     try { window.sessionStorage.removeItem(`arsplanering-last-open-${session.user.id}`) } catch { /* Lagring kan vara blockerad */ }
     setSimpleSetup(true)
+    setSimpleMore(false)
     setPlan(fresh); setSelectedId(null); savedPlanRef.current = JSON.stringify(fresh)
     setSavedRevision(revision => revision + 1)
     setTeacherTab('new'); setCalendarOpen(false); setPreviewStudents(false); setA4Demo(false)
@@ -1020,7 +1022,8 @@ function TeacherApp({ session }) {
           <label>Startdatum<input type="date" required value={plan.startDate} onChange={event => { if (event.target.value) setPlan(p => ({ ...p, startDate: mondayOf(`${event.target.value}T12:00:00`), weeksData: [] })) }} /></label>
           <label>Antal veckor<input type="number" min="1" max="60" value={plan.weeks} onChange={event => setPlan(p => ({ ...p, weeks: Math.max(1, Math.min(60, Number(event.target.value) || 1)), weeksData: [] }))} /></label>
         </div>
-        <div className="button-row"><button type="submit" className="primary" disabled={busy}>{busy ? 'Skapar…' : 'Skapa planering'}</button><button type="button" className="secondary" onClick={() => setSimpleSetup(false)}>Fler inställningar</button></div>
+        {simpleMore && <div className="simple-extra-fields"><h3>Fler uppgifter</h3><div className="form-grid"><label>Skolform<input value={plan.schoolForm || ""} onChange={e => setPlan(p => ({ ...p, schoolForm: e.target.value }))} placeholder="Grundskola" /></label><label>Årskurs<input value={plan.grade || ""} onChange={e => setPlan(p => ({ ...p, grade: e.target.value }))} placeholder="6" /></label><label>Lektioner per vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 1)) }))} /></label><label>Kommun<input value={plan.municipality || ""} onChange={e => setPlan(p => ({ ...p, municipality: e.target.value }))} /></label></div></div>}
+        <div className="button-row"><button type="submit" className="primary" disabled={busy}>{busy ? 'Skapar…' : 'Skapa planering'}</button><button type="button" className="secondary" onClick={() => setSimpleMore(v => !v)}>{simpleMore ? "Dölj fler inställningar" : "Fler inställningar"</button></div>
       </form>
       {status && <p className="status" role="status">{status}</p>}
     </section>}
