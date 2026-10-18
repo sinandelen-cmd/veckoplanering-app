@@ -1116,14 +1116,6 @@ function TeacherApp({ session }) {
       </form>
       {status && <p className="status" role="status">{status}</p>}
     </section>}
-    <section className="card teacher-calendar-actions" aria-label="Årskalender och zoom">
-      <h2>Årskalender – {plan.title?.trim() || 'Ny planering'}</h2>
-      <p className="muted">Visa hela planeringen i en översikt med 3 × 3 veckor. Tryck på en vecka för att zooma in och se lektionerna.</p>
-      <button type="button" className="primary" onClick={() => {
-        setCalendarOpen(true)
-        window.setTimeout(() => document.getElementById('teacher-year-calendar')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
-      }}>Visa årskalender och zooma</button>
-    </section>
     {status && <section className="card compact-status-card" aria-live="polite"><p className="status">{status}</p></section>}
 
     <div className="unified-planning-form" aria-label="Planeringens övriga uppgifter">
@@ -1284,6 +1276,10 @@ function TeacherApp({ session }) {
       </div>}
     </section>
 
+    <div className="week-overview-toolbar" aria-label="Årskalender och zoom"><strong>Veckor i planeringen</strong><button type="button" className="primary" onClick={() => {
+        setCalendarOpen(true)
+        window.setTimeout(() => document.getElementById('teacher-year-calendar')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
+      }}>Visa årskalender och zooma</button></div>
     <details className="legacy-week-editor"><summary>Detaljerad veckoredigering (vid behov)</summary>
     <section className="card">
       <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
