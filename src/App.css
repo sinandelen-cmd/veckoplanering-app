@@ -1541,3 +1541,5 @@ body { background: #fffaf2; color: var(--ink); }
 .student-screen-view .student-week-identity strong { font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 900; line-height: 1.15; }
 .student-screen-view .lesson-heading .lesson-day-date { font-size: .78rem; font-weight: 500; opacity: .8; white-space: nowrap; }
 .student-screen-view .lesson-heading h4 { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px; }
+
+.student-important-dates{display:grid;gap:7px;margin:10px 0}.student-important-date{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:9px 12px;border-radius:10px;background:#fff3d6}.student-important-date-study{background:#e9efff}.student-important-date-exam{background:#ffe8ed}.student-important-date strong{min-width:95px}.student-important-date strong small{font-size:.75em;font-weight:500;margin-left:3px}.student-important-date span small{opacity:.8}
