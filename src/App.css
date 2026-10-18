@@ -1737,3 +1737,11 @@ body { background: #fffaf2; color: var(--ink); }
   box-shadow:0 4px 0 #77b7d2!important;
 }
 .planning-layout.view-teacher .week-add-actions{display:flex;justify-content:center;margin:24px 0}
+
+/* Årskalender i lärarvyn: färgglada månadsgrupper med redigerbara veckor inuti. */
+.expanded-weeks-inline .teacher-months{display:flex;flex-direction:column;gap:22px;width:100%}
+.expanded-weeks-inline .teacher-month-section{padding:18px;border-radius:18px;border:1px solid rgba(85,75,75,.12);min-width:0}
+.expanded-weeks-inline .teacher-month-title{font-size:clamp(23px,2.4vw,32px);font-weight:850;text-transform:capitalize;margin:0 0 16px;color:#68485e;border-bottom:2px solid currentColor;padding-bottom:10px}
+.expanded-weeks-inline .teacher-month-weeks{display:flex;flex-direction:column;gap:14px}
+.expanded-weeks-inline .teacher-month-weeks .chapter-week-group{width:100%;min-width:0}
+.expanded-weeks-inline .teacher-month-weeks .week-card{width:100%;box-sizing:border-box;margin:0}
