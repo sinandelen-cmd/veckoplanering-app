@@ -1688,3 +1688,9 @@ body { background: #fffaf2; color: var(--ink); }
 .calendar-week-heading-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .calendar-week-heading-row .calendar-visibility-large-toggle{display:flex;align-items:center;justify-content:center;flex:0 0 42px;width:42px;height:42px;margin:0;cursor:pointer}
 .calendar-week-heading-row .calendar-visibility-large-toggle input{width:30px;height:30px;margin:0;accent-color:#8c4b65;cursor:pointer}
+
+/* Stängd årsöversikt: visa alla skapade månader och veckor direkt i lärarvyn. */
+.planning-layout .calendar-overlay.calendar-embedded{position:relative!important;inset:auto!important;z-index:auto!important;max-width:none!important;width:100%;margin:12px 0 24px!important;overflow:visible!important;box-shadow:none!important;background:transparent;border:0;padding:0!important}
+.calendar-embedded .calendar-top{margin-bottom:12px}
+.calendar-embedded .calendar-months{width:100%}
+.calendar-embedded .calendar-month-section{width:100%}
