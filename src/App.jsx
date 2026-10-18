@@ -621,9 +621,9 @@ function nationalExamsForPlan(plan) {
   return NATIONAL_EXAMS_2026_27.filter(item => item.grade === grade)
 }
 
-function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], onClose, onUpdateWeek, onAddWeek, onDeleteWeek, onSave, isDirty, busy, saveStatus, entryType = 'lektion' }) {
+function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnFirstWeek = false, onClose, onUpdateWeek, onAddWeek, onDeleteWeek, onSave, isDirty, busy, saveStatus, entryType = 'lektion' }) {
   // Årsöversikt i nio veckor per sida, tre kolumner och tre rader.
-  const [selectedWeekIndex, setSelectedWeekIndex] = useState(null)
+  const [selectedWeekIndex, setSelectedWeekIndex] = useState(startOnFirstWeek ? 0 : null)
   const [overviewPage, setOverviewPage] = useState(0)
   const [selectedLessonIndex, setSelectedLessonIndex] = useState(null)
   const orderedWeeks = [...weeks].filter(week => week && /^\d{4}-\d{2}-\d{2}$/.test(week.weekStart || '')).sort((a, b) => a.weekStart.localeCompare(b.weekStart))
@@ -899,7 +899,7 @@ function TeacherApp({ session }) {
       const { data, error } = await query
       if (error) setStatus(`Kunde inte spara: ${error.message}`)
       else {
-        if (simpleSetup) { setSimpleSetup(false); setTeacherTab('arsplan') }
+        if (simpleSetup) { setSimpleSetup(false); setTeacherTab('arsplan'); setCalendarOpen(true) }
         setSelectedId(data.id)
         try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(data.id)) } catch { /* Lagring kan vara blockerad */ }
         const refreshed = await loadPlans()
@@ -1185,7 +1185,7 @@ function TeacherApp({ session }) {
         <div className="form-grid">
           <label>Planeringens namn<input required value={plan.title} onChange={event => setPlan(p => ({ ...p, title: event.target.value }))} placeholder="Matematik höstterminen" /></label>
           <label>Ämne<input required value={plan.subject} onChange={event => setPlan(p => ({ ...p, subject: event.target.value }))} placeholder="Matematik" /></label>
-          <label>Klass / årskurs<input value={plan.className} onChange={event => setPlan(p => ({ ...p, className: event.target.value }))} placeholder="6A" /></label>
+          <label>Klass / årskurs<input value={plan.className} onChange={event => setPlan(p => ({ ...p, className: event.target.value, grade: p.grade || (event.target.value.match(/^\s*(3|6|9)\s*[A-Za-z]?\s*$/)?.[1] || ''), schoolForm: p.schoolForm || 'grundskola' }))} placeholder="6A" /></label>
           <label>Läsår<input value={plan.schoolYear} onChange={event => setPlan(p => ({ ...p, schoolYear: event.target.value }))} placeholder="2026–2027" /></label>
           <label>Startdatum<input type="date" required value={plan.startDate} onChange={event => { if (event.target.value) setPlan(p => ({ ...p, startDate: mondayOf(`${event.target.value}T12:00:00`), weeksData: [] })) }} /></label>
           <p className="muted">Planeringen börjar med en vecka. Lägg till fler veckor efter sista veckan när du behöver. Importerade underlag kan innehålla flera veckor.</p>
@@ -1300,7 +1300,7 @@ function TeacherApp({ session }) {
       </details>
     </section>
 
-    {calendarOpen && <div id="teacher-year-calendar"><YearCalendar weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={nationalExamsForPlan(plan)} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onAddWeek={() => setPlan(p => {
+    {calendarOpen && <div id="teacher-year-calendar"><YearCalendar startOnFirstWeek={weeks.length === 1} weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={nationalExamsForPlan(plan)} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onAddWeek={() => setPlan(p => {
       const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
       if (existing.length >= 52) return p
       const latest = [...existing].sort((a, b) => b.weekStart.localeCompare(a.weekStart))[0]
