@@ -1042,3 +1042,13 @@ body { background: #fffaf2; color: var(--ink); }
   .planning-top-navigation { flex-wrap: wrap; }
   .planning-top-navigation .top-navigation-link[role="tab"] { flex: 1 1 auto; text-align: center; }
 }
+
+/* Inget streck under flikarna, varken i lärarvy eller elevvy. */
+.planning-layout.view-teacher .planning-top-navigation,
+.planning-layout.view-student .planning-top-navigation {
+  border-bottom: 0;
+}
+.planning-layout .planning-top-navigation .top-navigation-link[role="tab"][aria-selected="true"] {
+  top: 0;
+  border-bottom: 0;
+}
