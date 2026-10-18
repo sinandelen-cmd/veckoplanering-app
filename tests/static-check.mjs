@@ -334,3 +334,7 @@ assert.match(app, /Kontroll före publicering/)
 assert.match(app, /currentStudentWeekStart = mondayOf\(new Date\(\)\)/)
 assert.match(app, /student-week-shortcut/)
 assert.match(css, /\.publication-readiness/)
+
+assert.match(app, /Ingen synlig vecka har innehåll/)
+assert.match(app, /📅 Viktiga datum/)
+assert.match(app, /Rätta startdatum på synliga veckor/)
