@@ -1402,3 +1402,10 @@ body { background: #fffaf2; color: var(--ink); }
 .share-invite-code { width:100%; display:flex; flex-direction:column; gap:9px; padding:12px; background:#fff4d7; border-radius:9px; }
 .share-feedback { padding:12px; background:#fff4d7; border-radius:8px; }
 @media(max-width:650px) { .colleague-share-grid { grid-template-columns:1fr; } .share-panel-heading { flex-wrap:wrap; } }
+
+/* Tydlig synlighetsruta vid veckorubriken i lärarvyn. */
+.week-heading-visibility { display:inline-flex; align-items:center; gap:10px; padding:9px 13px; border:1px solid #e8c5b8; background:#fff4d7; border-radius:11px; cursor:pointer; font-weight:700; color:#85414c; min-height:44px; }
+.week-heading-visibility input[type="checkbox"] { width:30px; height:30px; min-width:30px; margin:0; cursor:pointer; accent-color:#b75565; }
+.week-heading-visibility:has(input:not(:checked)) { background:#fff0ef; border-color:#e4b2b4; }
+.week-heading-visibility:focus-within { outline:3px solid #e9bf71; outline-offset:2px; }
+@media(max-width:650px) { .week-heading-visibility { width:100%; box-sizing:border-box; } }
