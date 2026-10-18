@@ -329,3 +329,8 @@ assert.match(css, /\.calendar-month-row\{[^}]*overflow-x:auto/)
 assert.match(app, /className="calendar-delete-week"/)
 assert.match(app, /onDeleteWeek=\{weekStart =>/)
 assert.match(app, /Vill du radera vecka/)
+
+assert.match(app, /Kontroll före publicering/)
+assert.match(app, /currentStudentWeekStart = mondayOf\(new Date\(\)\)/)
+assert.match(app, /student-week-shortcut/)
+assert.match(css, /\.publication-readiness/)
