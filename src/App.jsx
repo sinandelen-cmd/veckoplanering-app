@@ -651,7 +651,7 @@ function nationalExamsForPlan(plan) {
   return NATIONAL_EXAMS_2026_27.filter(item => item.grade === grade && matchesSubject(item))
 }
 
-function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnFirstWeek = false, embedded = false, onOpen, onClose, onUpdateWeek, onAddWeek, onDeleteWeek, onSave, isDirty, busy, saveStatus, entryType = 'lektion' }) {
+function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnFirstWeek = false, embedded = false, onOpen, onClose, onUpdateWeek, onSetAllVisibility, onAddWeek, onDeleteWeek, onSave, isDirty, busy, saveStatus, entryType = 'lektion' }) {
   // Årsöversikt i nio veckor per sida, tre kolumner och tre rader.
   const [selectedWeekIndex, setSelectedWeekIndex] = useState(null)
   const [overviewPage, setOverviewPage] = useState(0)
@@ -707,6 +707,10 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
       <button type="button" className="secondary calendar-overview-button" onClick={() => { setSelectedWeekIndex(null); setSelectedLessonIndex(null) }}>← Till översikten</button>
     </div> : <>
       <p className="calendar-overview-count">{orderedWeeks.length} planerade veckor · varje månad har en egen färg och sina veckor.</p>
+      <div className="calendar-bulk-visibility" style={{ display: 'flex', gap: 12, alignItems: 'center', margin: '12px 0 18px', flexWrap: 'wrap' }}>
+        <button type="button" className="secondary" disabled={busy} onClick={() => onSetAllVisibility?.(!orderedWeeks.every(week => !week.hidden))} style={{ padding: '12px 18px', fontSize: '1rem', fontWeight: 800, background: '#e4f6e9', border: '2px solid #80b69a', borderRadius: 12 }}>{orderedWeeks.every(week => !week.hidden) ? '☑ Dölj alla veckor i Elevvy' : '☐ Visa alla veckor i Elevvy'}</button>
+        <span className="muted">{orderedWeeks.filter(week => !week.hidden).length} av {orderedWeeks.length} veckor visas för elever</span>
+      </div>
       <div className="calendar-months">
         {Object.values(orderedWeeks.reduce((months, week, index) => {
           const monthKey = week.weekStart.slice(0, 7)
@@ -850,6 +854,11 @@ function TeacherApp({ session }) {
 
   function updateWeek(index, changes) {
     setPlan(p => ({ ...p, weeksData: displayWeeks(p).map((week, i) => i === index ? { ...week, ...changes } : week) }))
+  }
+
+  function setAllWeeksVisibility(visible) {
+    setPlan(p => ({ ...p, weeksData: displayWeeks(p).map(week => ({ ...week, hidden: !visible })) }))
+    setStatus(visible ? 'Alla veckor visas nu i Elevvy. Ändringen sparas automatiskt.' : 'Alla veckor är nu dolda i Elevvy. Ändringen sparas automatiskt.')
   }
 
   function insertExampleWeek() {
@@ -1246,6 +1255,7 @@ function TeacherApp({ session }) {
 
     
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline">
+    <div className="calendar-bulk-visibility" style={{ margin: '8px 0 18px' }}><button type="button" className="secondary" disabled={busy} onClick={() => setAllWeeksVisibility(!weeks.every(week => !week.hidden))} style={{ padding: '13px 20px', fontSize: '1.05rem', fontWeight: 800, background: '#e4f6e9', border: '2px solid #80b69a', borderRadius: 12 }}>{weeks.every(week => !week.hidden) ? '☑ Dölj alla veckor i Elevvy' : '☐ Visa alla veckor i Elevvy'}</button></div>
 <section className="card">
       <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
       <div className="teacher-months">
@@ -1309,7 +1319,7 @@ function TeacherApp({ session }) {
       {status && <p className="status">{status}</p>}
     </section>
     </div>}
-    {selectedId && calendarOpen && teacherTab !== "elevvy" && teacherTab !== "new" && <div id="teacher-year-calendar"><YearCalendar key="month-overview" embedded={false} onOpen={() => setCalendarOpen(true)} startOnFirstWeek={weeks.length === 1} weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={[]} onClose={() => { setCalendarOpen(false); setTeacherTab("arsplan"); window.scrollTo({ top: 0, behavior: "smooth" }) }} onUpdateWeek={updateWeek} onAddWeek={() => setPlan(p => {
+    {selectedId && calendarOpen && teacherTab !== "elevvy" && teacherTab !== "new" && <div id="teacher-year-calendar"><YearCalendar key="month-overview" embedded={false} onOpen={() => setCalendarOpen(true)} startOnFirstWeek={weeks.length === 1} weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={[]} onClose={() => { setCalendarOpen(false); setTeacherTab("arsplan"); window.scrollTo({ top: 0, behavior: "smooth" }) }} onUpdateWeek={updateWeek} onSetAllVisibility={setAllWeeksVisibility} onAddWeek={() => setPlan(p => {
       const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
       if (existing.length >= 52) return p
       const latest = [...existing].sort((a, b) => b.weekStart.localeCompare(a.weekStart))[0]
