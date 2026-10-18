@@ -501,9 +501,9 @@ function ImportantDatesForWeek({ week, plan }) {
   const dates = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(monday)
     date.setDate(monday.getDate() + index)
-    return { date: toIsoDate(date), day: WEEKDAYS[index] }
+    return { date: toIsoDate(date), day: ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag'][index] }
   })
-  const closures = (plan.schoolClosures || []).filter(validSchoolClosure)
+  const closures = (Array.isArray(plan.schoolClosures) ? plan.schoolClosures : []).filter(validSchoolClosure)
   const exams = nationalExamsForPlan(plan)
   const entries = dates.flatMap(({ date, day }) => {
     const events = closures.filter(item => item.startDate <= date && item.endDate >= date)
