@@ -734,9 +734,9 @@ function TeacherApp({ session }) {
   const [receivedToken, setReceivedToken] = useState("")
   const [shareMessage, setShareMessage] = useState("")
   const [calendarOpen, setCalendarOpen] = useState(false)
-  const [simpleSetup, setSimpleSetup] = useState(false)
+  const [simpleSetup, setSimpleSetup] = useState(true)
   const [simpleMore, setSimpleMore] = useState(false)
-  const [teacherTab, setTeacherTab] = useState("arsplan")
+  const [teacherTab, setTeacherTab] = useState("new")
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
@@ -811,6 +811,8 @@ function TeacherApp({ session }) {
         if (lastPlan && JSON.stringify(latestPlanRef.current) === savedPlanRef.current) {
           // Skriv inte över ändringar som läraren hann göra medan listan laddades.
           const restored = planFromRow(lastPlan)
+          setSimpleSetup(false)
+          setTeacherTab("arsplan")
           setSelectedId(lastPlan.id)
           savedPlanRef.current = JSON.stringify(restored)
           setSavedRevision(revision => revision + 1)
