@@ -1630,3 +1630,15 @@ body { background: #fffaf2; color: var(--ink); }
 .planning-layout .topic-name textarea{padding:12px 14px;min-height:78px;border:1px solid #b7d5c9;border-radius:10px;background:#fff;box-shadow:0 1px 2px #4333330b;resize:vertical}
 .planning-layout .topic-name textarea:focus{outline:2px solid #a4d9c9;outline-offset:1px}
 .planning-layout .topic-column.assignments .topic-cell input,.planning-layout .topic-column.assignments .topic-cell span{font-size:12px!important;font-weight:700!important;line-height:1.5}
+
+/* Moment, page numbers and assignment numbers match the prominent lesson heading. */
+.planning-layout .topic-name textarea,
+.planning-layout .topic-name-display,
+.planning-layout .topic-column.pages .topic-cell input,
+.planning-layout .topic-column.pages .topic-cell span,
+.planning-layout .topic-column.assignments .topic-cell input,
+.planning-layout .topic-column.assignments .topic-cell span,
+.planning-layout .topic-column .topic-custom-heading input,
+.planning-layout .topic-column h5{font-size:17px!important;font-weight:800!important;line-height:1.45!important;color:#633943!important;letter-spacing:0!important}
+.planning-layout .topic-name textarea,.planning-layout .topic-column .topic-cell input{font-family:inherit}
+.planning-layout .topic-name textarea::placeholder,.planning-layout .topic-column .topic-cell input::placeholder{font-size:17px;font-weight:700;opacity:.65}
