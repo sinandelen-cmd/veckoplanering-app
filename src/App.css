@@ -1591,3 +1591,7 @@ body { background: #fffaf2; color: var(--ink); }
 .calendar-month-section > h3 { font-size: clamp(24px, 3vw, 34px); font-weight: 900; }
 .calendar-week-tile { background: rgba(255,255,255,.66) !important; }
 .lesson-edit-heading .lesson-number-inline { background: var(--lesson-day-color, #d9f4f0) !important; border-color: rgba(90,100,100,.18) !important; color: #483e4b !important; }
+
+.calendar-week-heading-row { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+.calendar-month-corner { margin-left:auto; padding:8px 13px; border-radius:12px; background:#fff0c8; color:#784558; font-size:16px; font-weight:850; white-space:nowrap; }
+.calendar-tile-month { font-size:12px; padding:5px 8px; align-self:flex-end; }
