@@ -896,7 +896,7 @@ function TeacherApp({ session }) {
     if (!String(plan.title || '').trim()) return setStatus('Skriv ett namn på årsplaneringen.')
     if (!String(plan.subject || '').trim()) return setStatus('Skriv ämne.')
     if ((plan.schoolClosures || []).some(item => !validSchoolClosure(item))) return setStatus('Rätta namn och datum för lov/studiedagar innan du sparar eller publicerar.')
-    if (publish && !weeks.some(week => week && !week.hidden && (
+    if (publish && !automatic && !weeks.some(week => week && !week.hidden && (
       String(week.content || '').trim() || String(week.chapter || '').trim() ||
       week.items?.length || week.pages?.some(item => String(item || '').trim()) ||
       week.assignments?.some(item => String(item || '').trim()) ||
@@ -906,7 +906,7 @@ function TeacherApp({ session }) {
         topic.assignments?.some(item => String(item || '').trim()) ||
         topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || ''))))
     ))) return setStatus('Ingen synlig vecka har innehåll. Lägg till minst en uppgift eller ett lektionsinnehåll innan du publicerar.')
-    if (publish && !sanitizeForStudents({ ...plan, weeksData: weeks }).weeksData.length) return setStatus('Det finns inga synliga veckor att publicera. Markera minst en vecka med ”Visa för elever”.')
+    if (publish && !automatic && !sanitizeForStudents({ ...plan, weeksData: weeks }).weeksData.length) return setStatus('Det finns inga synliga veckor att publicera. Markera minst en vecka med ”Visa för elever”.')
     if (publish && weeks.some(week => week && !week.hidden && !validSchoolClosure({ name: 'Vecka', startDate: week.weekStart, endDate: week.weekStart }))) return setStatus('En synlig vecka saknar giltigt startdatum. Rätta veckans datum innan publicering.')
     if (publish && !automatic && !window.confirm(
       'Publicera planeringen för elever?\n\n' +
@@ -991,8 +991,7 @@ function TeacherApp({ session }) {
     if (!selectedId || simpleSetup || busy || !isDirty || teacherTab === 'new') return undefined
     const timer = window.setTimeout(() => {
       if (JSON.stringify(latestPlanRef.current) !== savedPlanRef.current) {
-        const hasContent = weeks.some(week => !week.hidden && (String(week.content || '').trim() || String(week.chapter || '').trim() || (week.lessons || []).some(lesson => (lesson.topics || []).some(topic => String(topic.name || '').trim() || (topic.pages || []).some(Boolean) || (topic.assignments || []).some(Boolean) || (topic.links || []).some(Boolean)))))
-        void save(Boolean(hasContent), true)
+        void save(true, true)
       }
     }, 1400)
     return () => window.clearTimeout(timer)
@@ -1218,6 +1217,7 @@ function TeacherApp({ session }) {
   return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}`}><Navigation active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={id => { setTeacherTab(id === 'mina' ? 'arsplan' : id); if (id === 'mina' || id === 'arsplan') setCalendarOpen(false); if (id === 'elevvy') { setPreviewStudents(true); setCalendarOpen(false) } else { setPreviewStudents(false) } }} onOpenExample={openExample} onOpenArchive={() => { setShowArchive(true); setTeacherTab('mina') }} onNew={createPlan} onToggleCalendar={() => { setTeacherTab('arsplan'); setCalendarOpen(true) }} calendarOpen={calendarOpen} /><main className="shell" id="lararvy">
     {teacherTab !== "elevvy" && <header className="topbar">
       <div><h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Mina planeringar" : (plan.title?.trim() || "Ny planering")}</h1><p className="muted">{session.user.email}</p></div>
+      {selectedId && calendarOpen && teacherTab === "arsplan" && <button type="button" className="secondary" style={{ fontSize: '1.05rem', fontWeight: 800, padding: '13px 20px', borderRadius: 12, background: '#f3e6fc', border: '2px solid #bba1d5' }} onClick={() => { setCalendarOpen(false); setShowArchive(true); setTeacherTab('mina') }}>🗂 Arkiv · kopiera · återanvänd</button>}
       {selectedId && teacherTab === "arsplan" && <div className="student-plan-link" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <button type="button" className="secondary" style={{ background: '#d8f0fc', border: '2px solid #499ac1', color: '#124b6a', fontWeight: 850, fontSize: '1.1rem', padding: '14px 22px', borderRadius: 12 }} onClick={async () => {
           const row = plans.find(item => item.id === selectedId)
@@ -1342,7 +1342,7 @@ function TeacherApp({ session }) {
     {simpleSetup && <section className="card simple-setup-card" aria-label="Skapa ny planering">
       <h2>Skapa en ny planering</h2>
       <p className="muted">Fyll i uppgifterna och tryck på Skapa planering. Du kan lägga till lektioner och material efteråt.</p>
-      <form onSubmit={event => { event.preventDefault(); save(false) }}>
+      <form onSubmit={event => { event.preventDefault(); save(true, true) }}>
         <div className="form-grid">
           <label>Planeringens namn<input required value={plan.title} onChange={event => setPlan(p => ({ ...p, title: event.target.value }))} placeholder="Matematik höstterminen" /></label>
           <label>Ämne<input required value={plan.subject} onChange={event => setPlan(p => ({ ...p, subject: event.target.value }))} placeholder="Matematik" /></label>
