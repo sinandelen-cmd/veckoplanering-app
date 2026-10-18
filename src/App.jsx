@@ -1614,6 +1614,18 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
   const editable = typeof onChange === 'function'
   const changeLessons = next => onChange?.({ lessons: next, ...(entryType === 'dag' ? { daysCustomized: true } : {}) })
   const changeLesson = (i, next) => changeLessons(lessons.map((lesson, index) => index === i ? next : lesson))
+  const normalizeLessonOrder = items => items.map((lesson, index) => ({ ...lesson, name: `Lektion ${index + 1}` }))
+  const moveLesson = (index, direction) => {
+    const target = index + direction
+    if (target < 0 || target >= lessons.length) return
+    const next = [...lessons]
+    const sourceDay = next[index].day
+    const targetDay = next[target].day
+    ;[next[index], next[target]] = [next[target], next[index]]
+    next[index] = { ...next[index], day: sourceDay }
+    next[target] = { ...next[target], day: targetDay }
+    changeLessons(normalizeLessonOrder(next))
+  }
   return <div className="lessons">
     {lessons.map((lesson, i) => ({ lesson, i })).filter(({ lesson }) => (editable || lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || ''))))).map(({ lesson, i }) => <section className="lesson" key={i}>
       <div className="lesson-heading">
@@ -1629,7 +1641,8 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
             return <>{showDay && <span>{dayLabel}</span>}{showDay && showLesson && ' · '}{showLesson && <span>{name}</span>}{lessonDayDate(week.weekStart, day) && <span className="lesson-day-date"> · {lessonDayDate(week.weekStart, day)}</span>}</>
           })()}
         </h4>}
-        {editable && <button type="button" className="remove-small" onClick={() => { if (!(lesson.topics || []).some(topic => topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm(entryType === 'dag' ? 'Ta bort dagen och allt innehåll i den?' : 'Ta bort lektionen och allt innehåll i den?')) changeLessons(lessons.filter((_, index) => index !== i)) }}>× Ta bort {entryType === 'dag' ? 'dag' : 'lektion'}</button>}
+        {editable && entryType !== 'dag' && <div className="lesson-reorder-controls"><button type="button" disabled={i === 0} aria-label={`Flytta lektion ${i + 1} uppåt`} onClick={() => moveLesson(i, -1)}>↑ Flytta upp</button><button type="button" disabled={i === lessons.length - 1} aria-label={`Flytta lektion ${i + 1} nedåt`} onClick={() => moveLesson(i, 1)}>↓ Flytta ned</button></div>}
+        {editable && <button type="button" className="remove-small" onClick={() => { if (!(lesson.topics || []).some(topic => topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm(entryType === 'dag' ? 'Ta bort dagen och allt innehåll i den?' : 'Ta bort lektionen och allt innehåll i den?')) changeLessons(entryType === 'dag' ? lessons.filter((_, index) => index !== i) : normalizeLessonOrder(lessons.filter((_, index) => index !== i))) }}>× Ta bort {entryType === 'dag' ? 'dag' : 'lektion'}</button>}
       </div>
       {(lesson.topics || []).map((topic, j) => ({ topic, j })).filter(({ topic }) => (editable || topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || '')))).map(({ topic, j }) => {
         const updateTopic = next => changeLesson(i, { ...lesson, topics: (lesson.topics || []).map((item, index) => index === j ? next : item) })
@@ -1684,15 +1697,9 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
           return aIndex < 0 || bIndex < 0 ? 0 : aIndex - bIndex
         }))
       } else {
-        const used = new Set(lessons.map(lesson => lesson.name))
-        let number = 1
-        while (used.has(`Lektion ${number}`)) number += 1
-        const next = [...lessons, { name: `Lektion ${number}`, topics: [] }]
-        changeLessons(next.sort((a, b) => {
-          const aNumber = /^Lektion (\d+)$/.exec(a.name || '')
-          const bNumber = /^Lektion (\d+)$/.exec(b.name || '')
-          return aNumber && bNumber ? Number(aNumber[1]) - Number(bNumber[1]) : 0
-        }))
+        const lastDayIndex = lessons.length ? WEEKDAYS.indexOf(lessons[lessons.length - 1].day) : -1
+        const nextDay = WEEKDAYS[(lastDayIndex + 1) % WEEKDAYS.length]
+        changeLessons(normalizeLessonOrder([...lessons, { name: `Lektion ${lessons.length + 1}`, day: nextDay, topics: [] }]))
       }
     }}>{entryType === 'dag' ? `+ Lägg tillbaka ${WEEKDAYS.find(day => !lessons.some(lesson => lesson.name === day)) || 'dag'}` : '+ Lägg till lektion'}</button>}
   </div>
