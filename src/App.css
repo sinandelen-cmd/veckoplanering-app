@@ -1582,3 +1582,12 @@ body { background: #fffaf2; color: var(--ink); }
 /* Prominent single-line day · lesson · date heading, styled like a pastel moment card. */
 .lesson-edit-heading { display: flex; align-items: center; width: 100%; min-width: 0; }
 .lesson-edit-heading .lesson-number-inline { display: block; box-sizing: border-box; width: 100%; padding: 15px 18px; border-radius: 13px; background: #d9f4f0; border: 2px solid #a8dcd5; color: #215b59; font-size: clamp(18px, 2vw, 23px); font-weight: 800; line-height: 1.4; overflow-wrap: anywhere; }
+
+/* Color hierarchy: distinct months, weeks, and lesson days. */
+.calendar-week-heading-row h2 { font-size: clamp(34px, 5vw, 54px) !important; font-weight: 900 !important; line-height: 1.1; letter-spacing: -.03em; }
+.calendar-week-detail { border-radius: 18px; padding: 18px !important; }
+.calendar-week-wrapper { border-radius: 14px; padding: 9px; }
+.calendar-month-section { border-radius: 20px; border: 2px solid rgba(92,70,80,.12); padding: 18px; }
+.calendar-month-section > h3 { font-size: clamp(24px, 3vw, 34px); font-weight: 900; }
+.calendar-week-tile { background: rgba(255,255,255,.66) !important; }
+.lesson-edit-heading .lesson-number-inline { background: var(--lesson-day-color, #d9f4f0) !important; border-color: rgba(90,100,100,.18) !important; color: #483e4b !important; }
