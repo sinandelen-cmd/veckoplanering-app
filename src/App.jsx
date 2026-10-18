@@ -854,6 +854,13 @@ function TeacherApp({ session }) {
     setBusy(true)
     setStatus('Sparar...')
     try {
+      if (publish && plan.autoReleaseWeeks === true) {
+        const { data: releaseSupported, error: releaseError } = await supabase.rpc('supports_automatic_week_release')
+        if (releaseError || releaseSupported !== true) {
+          setStatus('Automatisk veckopublicering kräver den senaste Supabase-migrationen. Ingen publicering gjordes.')
+          return
+        }
+      }
       // Databasens publiceringsstatus och länk kontrolleras även vid ompublicering.
       // Utkast får aldrig skriva över elevversionen.
       let databasePublished = false
