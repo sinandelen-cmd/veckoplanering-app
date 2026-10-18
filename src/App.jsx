@@ -333,7 +333,7 @@ function sanitizeForStudents(plan) {
     published: true,
     entryType: plan?.entryType === 'dag' ? 'dag' : 'lektion',
     lessonDisplay: ['dag-lektion', 'bara-dag', 'bara-lektion'].includes(plan?.lessonDisplay) ? plan.lessonDisplay : 'bara-lektion',
-    themeId: planTheme(plan).id,
+    themeId: String(plan?.themeId || ''),
     studentLayout: plan?.studentLayout === 'list' ? 'list' : 'grid',
     studentColumns: Math.max(1, Math.min(3, Number(plan?.studentColumns) || 3)),
     studentRows: Math.max(1, Math.min(6, Number(plan?.studentRows) || 2)),
