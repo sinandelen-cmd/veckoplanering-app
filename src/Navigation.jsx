@@ -4,7 +4,6 @@ export default function Navigation({ active = 'mina', onNavigate, onNew, plans =
     <aside className="planning-sidebar" aria-label="Mina planeringar">
       <button type="button" className="sidebar-new" onClick={onNew}>+ Ny planering</button>
       <div className="sidebar-brand">Mina planeringar</div>
-      <button type="button" className={active === 'mina' ? 'sidebar-link active' : 'sidebar-link'} aria-current={active === 'mina' ? 'page' : undefined} onClick={() => onNavigate('mina')}>Öppna lärarvy</button>
       <div className="sidebar-plan-list" aria-label="Sparade planeringar">
         {plans.length === 0 ? <p className="sidebar-empty">Inga sparade planeringar ännu</p> : plans.map(row => <button key={row.id} type="button" className={selectedId === row.id ? 'sidebar-plan selected' : 'sidebar-plan'} aria-current={selectedId === row.id ? 'true' : undefined} onClick={() => onOpenPlan(row)} title={row.title || 'Utan namn'}>{row.title || 'Utan namn'}</button>)}
       </div>
