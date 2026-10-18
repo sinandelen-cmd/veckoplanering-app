@@ -19,6 +19,14 @@ Testa endast förhandsversionen. Ändra inte produktionen eller databasschemat u
 - [ ] Ändra lovdatum: verifieringsmarkeringen ska återställas.
 - [ ] Kontrollera att nationella prov endast visas för rätt läsår, skolform och årskurs.
 
+## Automatisk veckopublicering – måste testas efter SQL-migration
+- [ ] Installera senaste `supabase-migration.sql` i en godkänd testdatabas innan funktionen aktiveras. Gör ingen produktionsmigration utan separat beslut.
+- [ ] Utan migration: försök aktivera automatisk veckopublicering. Publiceringen ska stoppas.
+- [ ] Med migration: publicera med funktionen aktiverad och både aktuell, framtida och dold vecka.
+- [ ] Öppna den offentliga RPC:n anonymt: endast veckor vars måndag har inträffat i Europe/Stockholm får returneras. Framtida och dolda veckor får inte finnas ens i råsvaret.
+- [ ] Kontrollera måndag 00:00 svensk tid och tidsomställning vinter-/sommartid.
+- [ ] Kontrollera att utkast inte ändrar redan publicerat material och att ompublicering uppdaterar samma länk.
+
 ## Elevvy
 - [ ] Dolda veckor och läraranteckningar syns inte.
 - [ ] Kapitel, lektioner, uppgifter, sidor och tillåtna länkar visas.
