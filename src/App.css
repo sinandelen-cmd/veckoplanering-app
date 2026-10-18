@@ -1274,3 +1274,103 @@ body { background: #fffaf2; color: var(--ink); }
 @media(max-width:420px) {
   .planning-layout.view-teacher .unified-planning-form > .teacher-settings-card .form-grid { grid-template-columns: 1fr; }
 }
+
+/* Veckor och lektioner: samma kompakta formulärstil som Ny planering. */
+.planning-layout.view-teacher .week-card {
+  background: #fffdf8;
+  border: 1px solid #efd1bd;
+  border-radius: 14px;
+  box-shadow: none;
+  padding: clamp(14px,2vw,20px);
+  margin-bottom: 12px;
+}
+.planning-layout.view-teacher .week-card .week-top {
+  border-bottom: 1px solid #f1e4d5;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+}
+.planning-layout.view-teacher .week-card .week-top strong {
+  color: #82404a;
+}
+.planning-layout.view-teacher .week-card .chapter-editor,
+.planning-layout.view-teacher .week-card .lesson-edit-heading label {
+  font-weight: 600;
+  color: #71414a;
+}
+.planning-layout.view-teacher .week-card input,
+.planning-layout.view-teacher .week-card select,
+.planning-layout.view-teacher .week-card textarea {
+  background: #fff;
+  border: 1px solid #bdd7ca;
+  border-radius: 8px;
+  box-shadow: none;
+}
+.planning-layout.view-teacher .week-card .chapter-editor input,
+.planning-layout.view-teacher .week-card > textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+.planning-layout.view-teacher .week-card .lessons {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+.planning-layout.view-teacher .week-card .lesson {
+  background: #fffaf3;
+  border: 1px solid #f0dcc6;
+  border-radius: 10px;
+  padding: 14px;
+  margin: 0;
+  box-shadow: none;
+}
+.planning-layout.view-teacher .week-card .lesson-edit-heading {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+.planning-layout.view-teacher .week-card .lesson-edit-heading > input {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.planning-layout.view-teacher .week-card .topic {
+  background: transparent;
+  border: 0;
+  border-top: 1px solid #f1e4d5;
+  border-radius: 0;
+  padding: 12px 0 0;
+  margin-top: 12px;
+  box-shadow: none;
+}
+.planning-layout.view-teacher .week-card .topic-grid {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 12px;
+  align-items: start;
+}
+.planning-layout.view-teacher .week-card .topic-grid input {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+.planning-layout.view-teacher .week-card .topic-column h5 {
+  margin: 0 0 6px;
+  color: #82404a;
+}
+.planning-layout.view-teacher .week-card .legacy-week-details {
+  border-top: 1px solid #f1e4d5;
+  margin-top: 12px;
+  padding-top: 12px;
+}
+@media(max-width:650px) {
+  .planning-layout.view-teacher .week-card .topic-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+  .planning-layout.view-teacher .week-card .topic-name {
+    grid-column: 1 / -1;
+  }
+}
+@media(max-width:390px) {
+  .planning-layout.view-teacher .week-card .topic-grid { grid-template-columns: 1fr; }
+  .planning-layout.view-teacher .week-card .topic-name { grid-column: auto; }
+}
