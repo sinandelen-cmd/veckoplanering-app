@@ -628,7 +628,7 @@ function calendarWeekNumber(dateString) {
   const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1))
   return Math.ceil((((utc - yearStart) / 86400000) + 1) / 7)
 }
-const MONTH_PASTELS = ['#fafcff','#fffafd','#fcfaff','#fffdf6','#fffbf8','#f8fdff','#fffdf8','#fffbf9','#fcfaff','#fffdf7','#fafbfe','#fffafd']
+const MONTH_PASTELS = ['#e5f0fc','#f8e5f1','#e9e5fb','#e5f5e8','#fff0cf','#ffe6dc','#e3f4f8','#f6e6f5','#e7f1d8','#ffead1','#eee5fb','#fce5e5']
 
 function isSchoolYear2026_27(value) {
   return /^(?:2026\s*[/–-]\s*(?:2027|27)|26\s*[/–-]\s*27|HT\s*(?:20)?26\s*[/–-]?\s*VT\s*(?:20)?27)$/i.test(String(value || '').trim())
@@ -693,7 +693,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
           if (!groups.has(key)) groups.set(key, { date, weeks: [] })
           groups.get(key).weeks.push({ week, index })
           return groups
-        }, new Map()).values()).map(group => <section className="calendar-month-section" key={group.date.toISOString()} style={{ backgroundColor: MONTH_PASTELS[group.date.getMonth()] }}>
+        }, new Map()).values()).map(group => <section className="calendar-month-section" key={group.date.toISOString()} style={{ backgroundColor: MONTH_PASTELS[group.date.getMonth()], "--month-accent": ["#5089b8","#b96597","#8068b2","#568b69","#b68a32","#b9735a","#548e9b","#a26e9e","#72914d","#b47a43","#7d6ab0","#b76977"][group.date.getMonth()] }}>
           <h3>{new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeric' }).format(group.date)}</h3>
           <div className="calendar-month-row" style={{ "--month-week-count": group.weeks.length }}>
             {group.weeks.map(({ week, index }) => {
