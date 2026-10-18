@@ -1677,3 +1677,9 @@ body { background: #fffaf2; color: var(--ink); }
 .calendar-month-row .calendar-week-checkbox{position:absolute;left:3px;top:45%;transform:translateY(-50%);width:38px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:transparent;border:0}
 .calendar-month-row .calendar-week-checkbox input{width:27px;height:27px;accent-color:#8c4b65;cursor:pointer;margin:0}
 @media(max-width:700px){.calendar-month-row .calendar-week-checkbox{width:27px;left:0}.calendar-month-row .calendar-week-checkbox input{width:23px;height:23px}}
+
+/* Lesson ordering controls */
+.lesson-reorder-controls{display:flex;align-items:center;gap:6px;margin-left:auto}
+.lesson-reorder-controls button{background:#fff4dc;border:1px solid #e7cba1;border-radius:8px;color:#78444b;font-weight:700;font-size:12px;padding:7px 10px;cursor:pointer}
+.lesson-reorder-controls button:disabled{opacity:.35;cursor:not-allowed}
+@media(max-width:650px){.lesson-heading{flex-wrap:wrap}.lesson-reorder-controls{margin-left:0}.lesson-reorder-controls button{padding:6px}}
