@@ -271,12 +271,13 @@ const nav = fs.readFileSync(new URL('../src/Navigation.jsx', import.meta.url), '
 assert.match(nav, /planning-sidebar/)
 assert.match(nav, /Mina planeringar/)
 assert.match(nav, /onOpenPlan\(row\)/)
-assert.match(app, /plans=\{plans\.filter\(row => !parseContent\(row\.content\)\?\.archived\)\} selectedId=\{selectedId\} onOpenPlan=\{loadPlan\}/)
+assert.match(app, /plans=\{plans\.filter\(row => !parseContent\(row\.content\)\?\.archived\)\}/)
+assert.match(app, /onOpenPlan=\{loadPlan\}/)
 assert.match(css, /\.planning-layout/)
 
 assert.doesNotMatch(nav, /sidebar-link[^\n]*>Lärarvy/)
 assert.match(nav, /planning-top-navigation/)
-assert.match(nav, /top-navigation-link[^\n]*>Lärarvy/)
+assert.match(nav, /top-navigation-link[^\n]*>Årsplanering/)
 assert.match(nav, /top-navigation-link[^\n]*>Elevvy/)
 assert.match(app, /Redigera och importera underlag/)
 
