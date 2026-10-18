@@ -912,3 +912,57 @@ nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a
   .planning-sidebar { border-right: 0; border-bottom: 1px solid #d9e5f6; }
   .planning-top-navigation { position: static; }
 }
+
+/* Soligt, ljust gul-rött tema för Årsplanering. */
+:root {
+  --green-900: #753f40;
+  --green-700: #a84c55;
+  --green-600: #bd6670;
+  --green-100: #fff0c8;
+  --green-050: #fffaf0;
+  --ink: #4b3437;
+  --muted: #80676a;
+  --line: #f1d9cc;
+}
+body { background: #fffaf2; color: var(--ink); }
+.primary { background: #b65b65; color: #fff; }
+.primary:hover { background: #9d4854; }
+.secondary { background: #fff0bf; color: #714147; }
+.secondary:hover { background: #ffe6a3; }
+.planning-sidebar {
+  background: #fff5cf;
+  color: #694044;
+  border-right: 1px solid #efd7b4;
+}
+.sidebar-brand { color: #874b52; }
+.sidebar-new {
+  background: #f8cbd0;
+  color: #71353d;
+  border-color: #eeb5bd !important;
+}
+.sidebar-new:hover { background: #f5b9c1; }
+.sidebar-link { color: #713f45; background: #fffaf0; }
+.sidebar-link.active { background: #ffe3a0; color: #653f2b; }
+.sidebar-plan { background: #fffdf7; color: #713f45; border-color: #f1d6c9 !important; }
+.sidebar-plan:hover { background: #ffe8d9; }
+.sidebar-plan.selected { background: #fbd5d8; color: #71353d; }
+.sidebar-empty { color: #8a6b69; }
+.planning-top-navigation {
+  background: #ffe5a6;
+  color: #703d43;
+  border-bottom: 1px solid #f2cfa6;
+}
+.planning-top-navigation button { color: #703d43; }
+.planning-top-navigation .top-navigation-link.active {
+  background: #fffaf1;
+  color: #913f4b;
+}
+.planning-top-navigation button:hover { background: #ffd5ae; }
+.planning-top-navigation button:focus-visible,
+.planning-sidebar button:focus-visible { outline-color: #bd6670; }
+.public-navigation { background: #ffe5a6; }
+.public-navigation a { color: #703d43; }
+.card, .brand-card { border-color: #f1d9cc; }
+@media (max-width: 750px) {
+  .planning-sidebar { border-bottom-color: #efd7b4; }
+}
