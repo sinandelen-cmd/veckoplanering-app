@@ -342,3 +342,8 @@ assert.match(app, /Rätta startdatum på synliga veckor/)
 assert.match(app, /if \(publish && !window\.confirm\(/)
 assert.match(app, /Synliga veckor:/)
 assert.match(app, /Dolda veckor:/)
+
+// En tom veckolista från serverns automatiska publiceringsfilter får aldrig ersättas med en ny vecka.
+assert.match(app, /const sourceWeeks = Array\.isArray\(plan\?\.weeksData\) \?/)
+assert.match(app, /autoReleaseWeeks: plan\?\.autoReleaseWeeks === true/)
+assert.match(app, /supports_automatic_week_release/)
