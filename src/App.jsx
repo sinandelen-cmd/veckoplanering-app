@@ -1242,7 +1242,7 @@ function TeacherApp({ session }) {
     </section>}
     {status && <section className="card compact-status-card" aria-live="polite"><p className="status">{status}</p></section>}
 
-    <div className="unified-planning-form" aria-label="Planeringens övriga uppgifter">
+    <div className="unified-planning-form" aria-label="Inställningar och publicering"><h2 className="settings-publication-title">Inställningar och publicering</h2>
     <section className="card teacher-settings-card">
       <details className="teacher-settings-details">
         <summary><strong>Grunduppgifter och inställningar</strong><span>Ändra namn, ämne, skolform, läsår och visningsalternativ</span></summary>
@@ -1332,7 +1332,7 @@ function TeacherApp({ session }) {
 
     <details className="card optional-planning-section" aria-label="Skollov och studiedagar"><summary><strong>Skollov och studiedagar</strong><span>Lägg till lov och studiedagar vid behov</span></summary><div className="optional-planning-content">
       <h3>Skollov och studiedagar</h3>
-      <p>Nationella helgdagar visas automatiskt. Lägg till och anpassa lov, studiedagar och andra lokala ledigheter här.</p>
+      <p>Lägg själv till lov, studiedagar, röda dagar och nationella prov vid behov. Inget läggs in automatiskt.</p>
       {(plan.schoolClosures || []).map(item => <div className="form-grid" key={item.id}>
         <label>Benämning<input value={item.name} onChange={e => setPlan(p => ({ ...p, schoolClosures: (p.schoolClosures || []).map(v => v.id === item.id ? { ...v, name: e.target.value } : v) }))} /></label>
         <label>Från<input type="date" value={item.startDate} onChange={e => setPlan(p => ({ ...p, schoolClosures: (p.schoolClosures || []).map(v => v.id === item.id ? { ...v, startDate: e.target.value, verified: false } : v) }))} /></label>
@@ -1352,28 +1352,17 @@ function TeacherApp({ session }) {
       <p>Höstlov vecka 44, sportlov vecka 9, jullov 22 december–6 januari och påsklov veckan efter påsk är preliminära exempel, inte kommunens beslutade lovdatum. Kontrollera alltid mot kommunens eller skolans läsårstider och ändra vid behov.</p>
     </div></details>
 
-    <details className="card optional-planning-section" aria-label="Nationella prov"><summary><strong>Nationella prov</strong><span>Datum och information från Skolverket</span></summary><div className="optional-planning-content">
-      <h2>Nationella prov – Skolverkets datum 2026/27</h2>
-      <p className="muted">Datumen och provperioderna är avstämda mot Skolverkets publicerade schema (kontrollerat 17 oktober 2026). Årskurs 9 börjar kl. 09.00 på fasta provdagar; årskurs 6 har ingen nationellt fastställd starttid. Kontrollera eventuella senare ändringar hos Skolverket. Muntliga prov och årskurs 3 har provperioder.</p>
-      <p><a href="https://www.skolverket.se/prov-och-bedomning/nationella-prov/provdatum/provdatum-for-grundskola-sameskola-specialskola" target="_blank" rel="noopener noreferrer">Kontrollera aktuella provdatum hos Skolverket ↗</a></p>
-      {plan.schoolForm === 'grundskola' && isSchoolYear2026_27(plan.schoolYear) && ['3','6','9'].includes(String(plan.grade || '').replace(/[^0-9]/g, '')) ? <>
-        {NATIONAL_EXAM_PERIODS_2026_27.filter(item => item.grade === String(plan.grade).replace(/[^0-9]/g, '')).map(item => <p key={item.subject}><strong>{item.subject}:</strong> {item.start}–{item.end} (provperiod)</p>)}
-        <ul>{NATIONAL_EXAMS_2026_27.filter(item => item.grade === String(plan.grade).replace(/[^0-9]/g, '')).map(item => <li key={item.date + item.subject + item.part}>{item.date} {item.startTime ? `kl. ${item.startTime}` : ""} – {item.subject}, delprov {item.part} <span aria-label="Låst datum">🔒</span></li>)}</ul>
-      </> : <p className="muted">Välj grundskola, läsåret 2026/27 och årskurs 3, 6 eller 9. Datum för andra skolformer och läsår visas inte förrän de har kontrollerats separat.</p>}
-      <a href="https://www.skolverket.se/prov-och-bedomning/nationella-prov/provdatum/provdatum-for-grundskola-sameskola-specialskola" target="_blank" rel="noreferrer">Kontrollera datum hos Skolverket</a>
-    </div></details>
-
     <section className="card automatic-week-release" aria-label="Automatisk veckopublicering">
-      <h3>Automatisk visning av veckor</h3>
-      <label className="automatic-release-toggle"><input type="checkbox" checked={plan.autoReleaseWeeks === true} disabled={busy} onChange={e => setPlan(p => ({ ...p, autoReleaseWeeks: e.target.checked }))} /> Visa varje synlig vecka automatiskt från veckans måndag</label>
+      <h3>Elevvisning och publicering</h3>
+      <label className="automatic-release-toggle"><input type="checkbox" checked={plan.autoReleaseWeeks === true} disabled={busy} onChange={e => setPlan(p => ({ ...p, autoReleaseWeeks: e.target.checked }))} /> Visa veckor automatiskt enligt veckans publiceringsdatum</label>
       <label>Antal veckor som visas samtidigt för elever<input type="number" min="1" max="12" value={plan.visibleWeekCount || 2} onChange={e => setPlan(p => ({ ...p, visibleWeekCount: Math.max(1, Math.min(12, Number(e.target.value) || 2)) }))} /></label>
-      <p className="muted">Dolda veckor visas aldrig. Funktionen kräver att den senaste Supabase-migrationen är installerad innan du publicerar. Tider följer svensk tid.</p>
+      <p className="muted">Dolda veckor visas inte. Du kan välja publiceringsdatum och döljningsdatum under Elevvisning i varje vecka.</p>
     </section>
     <section className="card publication-readiness" aria-label="Kontroll före publicering">
-      <h3>Kontroll före publicering</h3>
+      <h3>Redo att publicera?</h3>
       <p><strong>{visibleTeacherWeeks.length}</strong> synliga veckor · <strong>{weeksWithContent.length}</strong> med innehåll · <strong>{weeks.length - visibleTeacherWeeks.length}</strong> dolda veckor</p>
-      {publicationIssues.length ? <div role="status"><strong>Kontrollera innan eleverna får länken:</strong><ul>{publicationIssues.map(issue => <li key={issue}>{issue}</li>)}</ul></div> : <p className="publication-ready">✓ Grunduppgifterna är ifyllda. Granska elevvyn innan du publicerar.</p>}
-      <p className="muted">Spara utkast påverkar inte den redan publicerade elevversionen. Publicera för elever uppdaterar elevversionen.</p>
+      {publicationIssues.length ? <div role="status"><strong>Kontrollera:</strong><ul>{publicationIssues.map(issue => <li key={issue}>{issue}</li>)}</ul></div> : <p className="publication-ready">✓ Grunduppgifterna är ifyllda. Granska elevvyn innan du publicerar.</p>}
+      <p className="muted">Spara utkast eller välj Publicera för elever när planeringen är klar.</p>
     </section>
     <section className="card calendar-primary-actions" aria-label="Spara och publicera årsplaneringen">
       <div className="button-row">
