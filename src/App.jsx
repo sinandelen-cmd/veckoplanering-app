@@ -1241,7 +1241,7 @@ function TeacherApp({ session }) {
 
     {teacherTab !== "elevvy" && (isDirty || busy) && <div className="quick-save-bar" role="region" aria-label="Snabbspara årsplanering">
       <span aria-live="polite">{busy ? "Sparar…" : "Osparade ändringar"}</span>
-      <button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
+      <span className="autosave-info">Sparas automatiskt</span>
     </div>}
 
     
@@ -1309,7 +1309,7 @@ function TeacherApp({ session }) {
       {status && <p className="status">{status}</p>}
     </section>
     </div>}
-    {selectedId && calendarOpen && teacherTab !== "elevvy" && teacherTab !== "new" && <div id="teacher-year-calendar"><YearCalendar key="embedded-calendar" embedded={true} onOpen={() => setCalendarOpen(true)} startOnFirstWeek={weeks.length === 1} weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={[]} onClose={() => { setCalendarOpen(false); setTeacherTab("arsplan"); window.scrollTo({ top: 0, behavior: "smooth" }) }} onUpdateWeek={updateWeek} onAddWeek={() => setPlan(p => {
+    {selectedId && calendarOpen && teacherTab !== "elevvy" && teacherTab !== "new" && <div id="teacher-year-calendar"><YearCalendar key="month-overview" embedded={false} onOpen={() => setCalendarOpen(true)} startOnFirstWeek={weeks.length === 1} weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={[]} onClose={() => { setCalendarOpen(false); setTeacherTab("arsplan"); window.scrollTo({ top: 0, behavior: "smooth" }) }} onUpdateWeek={updateWeek} onAddWeek={() => setPlan(p => {
       const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
       if (existing.length >= 52) return p
       const latest = [...existing].sort((a, b) => b.weekStart.localeCompare(a.weekStart))[0]
@@ -1466,8 +1466,8 @@ function TeacherApp({ session }) {
     </>}
     <section className="card calendar-primary-actions" aria-label="Spara och publicera årsplaneringen">
       <div className="button-row">
-        <button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
-        <button type="button" className="primary" disabled={busy} onClick={() => save(true)}>Publicera för elever</button>
+        <span className="autosave-info">Sparas automatiskt</span>
+        <span className="autosave-info">Publiceras automatiskt när det finns innehåll</span>
         
       </div>
     </section>
@@ -1501,7 +1501,7 @@ function TeacherApp({ session }) {
       </div>}
     </section>
 
-    <div className="button-row" aria-label="Spara planering"><button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara ändringar</button><button type="button" className="primary" disabled={busy} onClick={() => save(true)}>Publicera för elever</button></div>
+    <div className="button-row" aria-label="Spara planering"><button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara ändringar</button><span className="autosave-info">Publiceras automatiskt när det finns innehåll</span></div>
     <div className="week-overview-toolbar" aria-label="Årskalender och zoom"><strong>Veckor i planeringen <span className="week-count-badge">{weeks.length} {weeks.length === 1 ? "vecka" : "veckor"}</span></strong><button type="button" className="primary" onClick={() => {
         setCalendarOpen(true)
         window.setTimeout(() => document.getElementById('teacher-year-calendar')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
