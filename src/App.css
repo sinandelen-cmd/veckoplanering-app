@@ -1774,3 +1774,10 @@ body { background: #fffaf2; color: var(--ink); }
 .expanded-weeks-inline .lesson-list>button.secondary,
 .calendar-inline-week .lessons>button.secondary,
 .calendar-inline-week .lesson-list>button.secondary{background:#d8ecff!important;color:#1c507c!important;border:2px solid #86b7de!important;font-weight:800!important;padding:13px 20px!important;border-radius:12px!important}
+
+/* Samma tydliga växlande veckofärger som i Elevvy, inom varje månad. */
+.expanded-weeks-inline .teacher-month-weeks > .chapter-week-group:nth-child(4n+1) .week-card { background:#f0eaff!important; border-color:#d9cafa!important; }
+.expanded-weeks-inline .teacher-month-weeks > .chapter-week-group:nth-child(4n+2) .week-card { background:#e5f6ef!important; border-color:#bde5d0!important; }
+.expanded-weeks-inline .teacher-month-weeks > .chapter-week-group:nth-child(4n+3) .week-card { background:#e8f2ff!important; border-color:#c4d9f3!important; }
+.expanded-weeks-inline .teacher-month-weeks > .chapter-week-group:nth-child(4n) .week-card { background:#fff0df!important; border-color:#f2d5b2!important; }
+.expanded-weeks-inline .teacher-month-weeks > .chapter-week-group .week-card { box-shadow:0 3px 10px rgba(52,67,89,.07)!important; }
