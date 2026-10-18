@@ -1718,3 +1718,22 @@ body { background: #fffaf2; color: var(--ink); }
 .expanded-weeks-inline .week-add-actions{margin:22px 0;justify-content:center}
 .expanded-weeks-inline .week-add-actions button{background:#c7e9f8!important;color:#12465f!important;border:2px solid #5a9cb9!important;border-radius:14px!important;font-size:1.2rem!important;font-weight:800!important;padding:16px 30px!important;min-height:60px;box-shadow:0 3px 0 #8bbfd4}
 .expanded-weeks-inline .week-add-actions button:hover{background:#aee1f4!important}
+
+/* Extra stor och tydlig Lägg till vecka-knapp på lärarsidan. */
+.expanded-weeks-inline .week-add-actions > button,
+.planning-layout.view-teacher .week-add-actions > button {
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:min(100%,420px)!important;
+  min-height:76px!important;
+  padding:20px 32px!important;
+  font-size:clamp(20px,2vw,26px)!important;
+  font-weight:850!important;
+  background:#bce9fa!important;
+  color:#12435c!important;
+  border:3px solid #4b9bbd!important;
+  border-radius:16px!important;
+  box-shadow:0 4px 0 #77b7d2!important;
+}
+.planning-layout.view-teacher .week-add-actions{display:flex;justify-content:center;margin:24px 0}
