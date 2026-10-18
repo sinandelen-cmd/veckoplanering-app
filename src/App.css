@@ -1611,3 +1611,12 @@ body { background: #fffaf2; color: var(--ink); }
 .calendar-month-row .calendar-week-eye.is-visible{background:#fff0a9;color:#805020;box-shadow:0 0 0 3px #ffe8a0}
 .calendar-month-row .calendar-week-eye.is-hidden{background:#edf0ef;color:#90969b;opacity:.65}
 @media(max-width:700px){.calendar-month-row .calendar-week-wrapper{padding-left:30px}.calendar-month-row .calendar-week-eye{left:1px;width:26px;height:38px;font-size:19px}}
+
+/* Month-by-month overview: every created week fits in its month's single row. */
+.calendar-months{display:flex;flex-direction:column;gap:18px;width:100%;min-width:0}
+.calendar-month-section{width:100%;min-width:0;border-left:6px solid var(--month-accent,#b88c99);box-sizing:border-box}
+.calendar-month-section>h3{color:var(--month-accent,#78404b);border-bottom:2px solid var(--month-accent,#b88c99);padding-bottom:10px;margin-bottom:12px}
+.calendar-month-section .calendar-month-row{display:grid!important;grid-template-columns:repeat(var(--month-week-count,5),minmax(0,1fr))!important;gap:8px;overflow-x:visible!important;overflow-y:visible;max-width:100%;scroll-snap-type:none}
+.calendar-month-section .calendar-week-wrapper{width:100%;min-width:0;max-width:none;box-sizing:border-box}
+.calendar-month-section .calendar-week-tile{min-width:0;overflow-wrap:anywhere}
+@media(max-width:700px){.calendar-month-section{padding:8px}.calendar-month-section .calendar-month-row{gap:3px}.calendar-month-section .calendar-week-wrapper{padding:4px 2px 4px 27px}.calendar-month-section .calendar-week-eye{width:23px;left:2px}.calendar-month-section .calendar-week-tile strong{font-size:.85rem}.calendar-month-section .calendar-delete-week span{display:none}}
