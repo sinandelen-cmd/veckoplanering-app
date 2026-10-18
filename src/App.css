@@ -1503,3 +1503,10 @@ body { background: #fffaf2; color: var(--ink); }
 .planning-layout.view-teacher .week-card .week-heading-visibility input[type="checkbox"] { width:30px; height:30px; min-width:30px; accent-color:#b75565; }
 .planning-layout.view-teacher .week-card .week-heading-visibility:has(input:not(:checked)) { background:#fff0f0; border-color:#e4adb2; }
 @media(max-width:600px) { .planning-save-state { font-size:.86rem; } .week-overview-toolbar { align-items:flex-start; } }
+
+/* Redigerbara rubriker för Sida och Uppgift – samma enkla fältstil. */
+.topic-column .topic-custom-heading { display:block; margin:0 0 6px; }
+.topic-column .topic-custom-heading input { display:block; width:100%; min-width:0; box-sizing:border-box; padding:7px 9px; border:1px dashed #d4a4a4; border-radius:7px; background:#fffaf3; color:#82404a; font:inherit; font-weight:700; }
+.topic-column .topic-custom-heading input::placeholder { color:#82404a; opacity:1; }
+.topic-column .topic-custom-heading input:focus { border-style:solid; outline:2px solid #f2d39c; outline-offset:1px; }
+.topic-column h5 { overflow-wrap:anywhere; }
