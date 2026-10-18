@@ -1751,3 +1751,10 @@ body { background: #fffaf2; color: var(--ink); }
 .planning-layout #teacher-year-calendar{width:100%;position:relative;z-index:auto}
 .planning-layout .calendar-page .calendar-close-button{display:none!important}
 @media(max-width:600px){.planning-layout .calendar-overlay.calendar-page{padding:14px 10px!important}}
+
+/* Kalendervy ska använda EXAKT samma sidyta som Lärarvy, inte en helskärmsdialog. */
+.planning-layout #lararvy:has(.calendar-page){width:min(1180px,calc(100% - 28px))!important;max-width:1180px!important;margin:28px auto!important;padding:0!important;position:relative!important;overflow:visible!important}
+.planning-layout #lararvy:has(.calendar-page)>:not(#teacher-year-calendar){display:none!important}
+.planning-layout #lararvy #teacher-year-calendar{display:block;width:100%;max-width:100%;margin:0;position:static!important;inset:auto!important;transform:none!important}
+.planning-layout #lararvy #teacher-year-calendar>.calendar-overlay.calendar-page{position:relative!important;inset:auto!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important;z-index:0!important;overflow:visible!important;max-width:100%!important;min-height:0!important;width:100%!important;height:auto!important;margin:0!important;padding:0!important;border:none!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;filter:none!important;backdrop-filter:none!important}
+.planning-layout #lararvy #teacher-year-calendar>.calendar-page::before,.planning-layout #lararvy #teacher-year-calendar>.calendar-page::after{display:none!important}
