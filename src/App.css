@@ -1683,3 +1683,8 @@ body { background: #fffaf2; color: var(--ink); }
 .lesson-reorder-controls button{background:#fff4dc;border:1px solid #e7cba1;border-radius:8px;color:#78444b;font-weight:700;font-size:12px;padding:7px 10px;cursor:pointer}
 .lesson-reorder-controls button:disabled{opacity:.35;cursor:not-allowed}
 @media(max-width:650px){.lesson-heading{flex-wrap:wrap}.lesson-reorder-controls{margin-left:0}.lesson-reorder-controls button{padding:6px}}
+
+/* Large, label-free visibility checkbox directly before selected week heading. */
+.calendar-week-heading-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.calendar-week-heading-row .calendar-visibility-large-toggle{display:flex;align-items:center;justify-content:center;flex:0 0 42px;width:42px;height:42px;margin:0;cursor:pointer}
+.calendar-week-heading-row .calendar-visibility-large-toggle input{width:30px;height:30px;margin:0;accent-color:#8c4b65;cursor:pointer}
