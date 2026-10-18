@@ -23,9 +23,9 @@ begin
   end if;
   if p_recipient_email !~* '^[^@ ]+@[^@ ]+\.[^@ ]+$' then raise exception 'Ogiltig e-postadress'; end if;
   if length(p_password)<6 then raise exception 'Delningskoden måste ha minst 6 tecken'; end if;
-  v_token := encode(gen_random_bytes(24),'hex');
+  v_token := encode(extensions.gen_random_bytes(24),'hex');
   insert into public.teacher_share_invites(sender_id,plan_id,recipient_email,token_hash)
-  values(auth.uid(),p_plan_id,lower(trim(p_recipient_email)),encode(digest(v_token,'sha256'),'hex'));
+  values(auth.uid(),p_plan_id,lower(trim(p_recipient_email)),encode(extensions.digest(v_token,'sha256'),'hex'));
   return v_token;
 end $$;
 revoke all on function public.create_plan_share_invite(bigint,text,text) from public;
@@ -37,7 +37,7 @@ declare v_inv public.teacher_share_invites%rowtype;
 begin
   if auth.uid() is null then raise exception 'Logga in först'; end if;
   select * into v_inv from public.teacher_share_invites
-  where token_hash=encode(digest(trim(p_token),'sha256'),'hex')
+  where token_hash=encode(extensions.digest(trim(p_token),'sha256'),'hex')
     and consumed_at is null and expires_at>now() for update;
   if not found then raise exception 'Koden är ogiltig, använd eller har gått ut'; end if;
   if lower(coalesce(auth.jwt()->>'email',''))<>v_inv.recipient_email then raise exception 'Koden gäller en annan e-postadress'; end if;
@@ -62,7 +62,7 @@ begin
     raise exception 'Registrering kräver en inbjudningskod';
   end if;
   select * into v_inv from public.teacher_share_invites
-    where token_hash=encode(digest(trim(v_token),'sha256'),'hex')
+    where token_hash=encode(extensions.digest(trim(v_token),'sha256'),'hex')
       and recipient_email=lower(trim(new.email))
       and consumed_at is null and expires_at>now()
     for update;
