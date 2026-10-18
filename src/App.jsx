@@ -1222,30 +1222,15 @@ function TeacherApp({ session }) {
         </div>
         <div className="card" style={{ marginTop: 14 }}><h3>Mitt veckoschema</h3><label>Antal lektioner per vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 1)) }))} /></label><div className="form-grid">{Array.from({ length: plan.lessonsPerWeek }, (_, i) => <label key={i}>Lektion {i + 1} – dag<select value={plan.lessonDays?.[i] || ''} onChange={e => setPlan(p => ({ ...p, lessonDays: Array.from({ length: Math.max(1, Number(p.lessonsPerWeek) || 3) }, (_, j) => j === i ? e.target.value : (p.lessonDays?.[j] || '')) }))}><option value="">Välj dag</option>{WEEKDAYS.map(day => <option key={day} value={day}>{day}</option>)}</select></label>)}</div><p className="muted">Samma dagar och lektionsnummer läggs automatiskt in i varje ny vecka. Du kan ändra dem senare.</p></div>
         {simpleMore && <div className="simple-extra-fields"><h3>Fler uppgifter</h3><div className="form-grid"><label>Skolform<input value={plan.schoolForm || ""} onChange={e => setPlan(p => ({ ...p, schoolForm: e.target.value }))} placeholder="Grundskola" /></label><label>Årskurs<input value={plan.grade || ""} onChange={e => setPlan(p => ({ ...p, grade: e.target.value }))} placeholder="6" /></label><label>Lektioner per vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 1)) }))} /></label><label>Kommun<input value={plan.municipality || ""} onChange={e => setPlan(p => ({ ...p, municipality: e.target.value }))} /></label></div>
-          <div className="simple-closure-section">
-            <h3>Lov och studiedagar</h3>
-            <p className="muted">Ange datum för din skola. Förslag behöver kontrolleras mot kommunens läsårstider.</p>
-            {(plan.schoolClosures || []).map(item => <div className="simple-closure-row" key={item.id}>
-              <div className="form-grid">
-                <label>Typ / namn<input value={item.name || ''} onChange={e => setPlan(p => ({ ...p, schoolClosures: (p.schoolClosures || []).map(v => v.id === item.id ? { ...v, name: e.target.value } : v) }))} /></label>
-                <label>Från datum<input type="date" value={item.startDate || ''} onChange={e => setPlan(p => ({ ...p, schoolClosures: (p.schoolClosures || []).map(v => v.id === item.id ? { ...v, startDate: e.target.value } : v) }))} /></label>
-                <label>Till datum<input type="date" value={item.endDate || ''} onChange={e => setPlan(p => ({ ...p, schoolClosures: (p.schoolClosures || []).map(v => v.id === item.id ? { ...v, endDate: e.target.value } : v) }))} /></label>
-              </div>
-              {!validSchoolClosure(item) && <p role="alert">Kontrollera namn och datum.</p>}
-              <button type="button" className="secondary" onClick={() => setPlan(p => ({ ...p, schoolClosures: (p.schoolClosures || []).filter(v => v.id !== item.id) }))}>Ta bort</button>
-            </div>)}
-            <div className="button-row">
-              <button type="button" className="secondary" onClick={() => setPlan(p => ({ ...p, schoolClosures: [...(p.schoolClosures || []), { id: crypto.randomUUID(), name: 'Lov', startDate: p.startDate, endDate: p.startDate, verified: false }] }))}>+ Lägg till lov</button>
-              <button type="button" className="secondary" onClick={() => setPlan(p => ({ ...p, schoolClosures: [...(p.schoolClosures || []), { id: crypto.randomUUID(), name: 'Studiedag', startDate: p.startDate, endDate: p.startDate, verified: false }] }))}>+ Lägg till studiedag</button>
-            </div>
-          </div>
-          <div className="simple-exams-section">
-            <h3>Nationella prov (NP)</h3>
-            <p className="muted">Visas automatiskt för grundskolans årskurs 3, 6 och 9 under läsåret 2026/27. Kontrollera alltid aktuella datum hos Skolverket.</p>
-            {nationalExamsForPlan(plan).length ? <ul>{nationalExamsForPlan(plan).map(exam => <li key={exam.date + exam.subject + exam.part}>{exam.date} – {exam.subject}, delprov {exam.part}</li>)}</ul> : <p className="muted">Inga nationella provdatum visas för de valda uppgifterna. Välj skolform Grundskola och årskurs 3, 6 eller 9 om det är aktuellt.</p>}
-            <a href="https://www.skolverket.se/prov-och-bedomning/nationella-prov/provdatum/provdatum-for-grundskola-sameskola-specialskola" target="_blank" rel="noopener noreferrer">Kontrollera NP-datum hos Skolverket ↗</a>
-          </div>
         </div>}
+        <section className="simple-import-section" aria-label="Importera underlag">
+          <h3>Importera underlag (valfritt)</h3>
+          <p className="muted">Bifoga Excel, Word eller PDF, eller klistra in din planering här.</p>
+          <label>Bifoga planering<input type="file" accept=".xlsx,.xls,.docx,.pdf,.txt,.csv" disabled={busy} onChange={e => { const file = e.target.files?.[0]; e.target.value = ''; if (file) importFile(file) }} /></label>
+          <label>Klistra in planering<textarea value={pasteText} placeholder="Klistra in din planering, kursplan eller lektionsinnehåll…" onChange={e => setPasteText(e.target.value)} /></label>
+          <button type="button" className="secondary" disabled={busy || !pasteText.trim()} onClick={distributePastedText}>Importera inklistrad text</button>
+          {pendingImport && <div className="import-preview"><h3>Förhandsgranska: {pendingImport.source}</h3><p>Granska innan du använder importen.</p>{pendingImport.weeksData.slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length })); setPendingImport(null); setStatus('Importen är inlagd. Granska och skapa planeringen.') }}>Använd import</button><button type="button" className="secondary" onClick={() => setPendingImport(null)}>Avbryt</button></div></div>}
+        </section>
         <div className="button-row"><button type="submit" className="primary" disabled={busy}>{busy ? 'Skapar…' : 'Skapa planering'}</button><button type="button" className="secondary" onClick={() => setSimpleMore(v => !v)}>{simpleMore ? "Dölj fler inställningar" : "Fler inställningar"}</button></div>
       </form>
       {status && <p className="status" role="status">{status}</p>}
