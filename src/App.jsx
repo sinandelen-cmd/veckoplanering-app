@@ -330,6 +330,9 @@ function sanitizeForStudents(plan) {
     subject: String(plan?.subject || ''),
     className: String(plan?.className || ''),
     schoolYear: String(plan?.schoolYear || ''),
+    grade: String(plan?.grade || ''),
+    schoolForm: String(plan?.schoolForm || ''),
+    schoolClosures: Array.isArray(plan?.schoolClosures) ? plan.schoolClosures.filter(validSchoolClosure).map(item => ({ name: item.name, startDate: item.startDate, endDate: item.endDate, verified: Boolean(item.verified) })) : [],
     published: true,
     entryType: plan?.entryType === 'dag' ? 'dag' : 'lektion',
     lessonDisplay: ['dag-lektion', 'bara-dag', 'bara-lektion'].includes(plan?.lessonDisplay) ? plan.lessonDisplay : 'bara-lektion',
@@ -491,6 +494,32 @@ function a4DemoPlan(plan) {
   return { ...plan, title: 'A4-TEST – INTE SPARAD', studentLayout: 'grid', weeksData }
 }
 
+function ImportantDatesForWeek({ week, plan }) {
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(week?.weekStart || '')) return null
+  const monday = new Date(week.weekStart + 'T12:00:00')
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
+  const dates = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(monday)
+    date.setDate(monday.getDate() + index)
+    return { date: toIsoDate(date), day: WEEKDAYS[index] }
+  })
+  const closures = (plan.schoolClosures || []).filter(validSchoolClosure)
+  const exams = nationalExamsForPlan(plan)
+  const entries = dates.flatMap(({ date, day }) => {
+    const events = closures.filter(item => item.startDate <= date && item.endDate >= date)
+      .map(item => ({ name: item.name, kind: /studiedag/i.test(item.name) ? 'study' : 'holiday', verified: item.verified }))
+    events.push(...exams.filter(item => item.date === date).map(item => ({ name: 'NP – ' + item.subject + ', delprov ' + item.part, kind: 'exam', verified: true })))
+    return events.map(event => ({ ...event, date, day }))
+  })
+  if (!entries.length) return null
+  return <div className="student-important-dates" aria-label="Viktiga datum denna vecka">
+    {entries.map((item, index) => <div className={`student-important-date student-important-date-${item.kind}`} key={item.date + item.name + index}>
+      <strong>{item.day} <small>{Number(item.date.slice(8))}/{Number(item.date.slice(5, 7))}</small></strong>
+      <span>{item.kind === 'exam' ? '📝' : item.kind === 'study' ? '📘' : '🌼'} {item.name}{!item.verified && <small> · Kontrollera datum</small>}</span>
+    </div>)}
+  </div>
+}
+
 function StudentView({ plan, error, preview = false, printPage = null, printWeekStart = null }) {
   const [page, setPage] = useState(0)
   const [singlePrintWeek, setSinglePrintWeek] = useState(null)
@@ -550,7 +579,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
         </div>
         {!/^Vecka\s+\d+$/i.test(week.title || '') && week.title?.trim() && <h3>{week.title}</h3>}
         <div className="week-content">{week.content || (!week.pages?.length && !week.assignments?.length && !week.links?.length && !week.lessons?.some(lesson => lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.length || topic.assignments?.length || topic.links?.length)) ? 'Ingen planering angiven ännu.' : '')}</div>
-        <LessonDetails week={week} entryType={plan.entryType || 'lektion'} lessonDisplay={plan.lessonDisplay || 'bara-lektion'} />
+        <ImportantDatesForWeek week={week} plan={plan} />\n        <LessonDetails week={week} entryType={plan.entryType || 'lektion'} lessonDisplay={plan.lessonDisplay || 'bara-lektion'} />
         <WeekDetails week={week} />
       </article></div>)}
     </section>
