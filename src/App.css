@@ -999,3 +999,46 @@ body { background: #fffaf2; color: var(--ink); }
 .planning-layout.view-student .topbar .eyebrow { color: #aa5368; }
 .planning-layout.view-teacher .planning-context { background: #fff0c5; }
 .planning-layout.view-student .planning-context { background: #ffe0e7; }
+
+/* Riktiga flikar: aktiv flik sitter visuellt ihop med innehållsytan. */
+.planning-top-navigation {
+  gap: .35rem;
+  padding: .65rem 1rem 0;
+  align-items: flex-end;
+}
+.planning-top-navigation .top-navigation-link[role="tab"] {
+  border: 2px solid transparent;
+  border-bottom: 0;
+  border-radius: 12px 12px 0 0;
+  padding: .8rem 1.35rem;
+  font-weight: 750;
+  margin-bottom: 0;
+  min-height: 46px;
+}
+.planning-top-navigation .top-navigation-link[role="tab"][aria-selected="false"] {
+  background: rgba(255,255,255,.42);
+  color: #80565c;
+}
+.planning-layout.view-teacher .planning-top-navigation .top-navigation-link[role="tab"][aria-selected="true"] {
+  background: #fffaf0;
+  border-color: #d5a43c;
+  color: #7c551b;
+  box-shadow: none;
+  position: relative;
+  top: 3px;
+}
+.planning-layout.view-student .planning-top-navigation .top-navigation-link[role="tab"][aria-selected="true"] {
+  background: #fff3f5;
+  border-color: #cf8193;
+  color: #98495c;
+  box-shadow: none;
+  position: relative;
+  top: 3px;
+}
+.planning-layout.view-teacher .planning-top-navigation { border-bottom: 3px solid #d5a43c; }
+.planning-layout.view-student .planning-top-navigation { border-bottom: 3px solid #cf8193; }
+.planning-top-navigation .top-calendar { align-self: center; margin-bottom: .55rem; }
+@media (max-width: 750px) {
+  .planning-top-navigation { flex-wrap: wrap; }
+  .planning-top-navigation .top-navigation-link[role="tab"] { flex: 1 1 auto; text-align: center; }
+}
