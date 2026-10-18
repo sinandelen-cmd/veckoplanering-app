@@ -1745,3 +1745,9 @@ body { background: #fffaf2; color: var(--ink); }
 .expanded-weeks-inline .teacher-month-weeks{display:flex;flex-direction:column;gap:14px}
 .expanded-weeks-inline .teacher-month-weeks .chapter-week-group{width:100%;min-width:0}
 .expanded-weeks-inline .teacher-month-weeks .week-card{width:100%;box-sizing:border-box;margin:0}
+
+/* Kalendervy är en vanlig flik/sida, aldrig en modal ovanpå lärarvyn. */
+.planning-layout .calendar-overlay.calendar-page{position:static!important;inset:auto!important;z-index:auto!important;display:block!important;width:100%!important;max-width:none!important;min-height:calc(100vh - 170px);height:auto!important;overflow:visible!important;overscroll-behavior:auto!important;margin:0!important;padding:20px 22px!important;background:#fffaf0!important;border:0!important;border-radius:0!important;box-shadow:none!important;box-sizing:border-box!important}
+.planning-layout #teacher-year-calendar{width:100%;position:relative;z-index:auto}
+.planning-layout .calendar-page .calendar-close-button{display:none!important}
+@media(max-width:600px){.planning-layout .calendar-overlay.calendar-page{padding:14px 10px!important}}
