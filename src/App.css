@@ -1137,3 +1137,45 @@ body { background: #fffaf2; color: var(--ink); }
   outline-offset: 1px;
 }
 .planning-layout.view-new .topbar { border-bottom: 2px solid #efd6a2; }
+
+/* Kompakt tabellkänsla som formuläret Skapa ny planering. */
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) > .teacher-settings-card,
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) > .optional-planning-section,
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) > .calendar-primary-actions {
+  max-width: 860px;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) > .optional-planning-section > summary {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(180px, 1.4fr) 24px;
+  align-items: center;
+  gap: 12px;
+}
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) > .teacher-settings-card .form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) > .teacher-settings-card input,
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) > .teacher-settings-card select {
+  width: 100%;
+  min-width: 0;
+}
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) > .calendar-primary-actions {
+  background: #fffdf8;
+}
+@media (max-width: 700px) {
+  .planning-layout.view-teacher .teacher-tab-panel:not([hidden]) > .teacher-settings-card .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .planning-layout.view-teacher .teacher-tab-panel:not([hidden]) > .optional-planning-section > summary {
+    grid-template-columns: 1fr 24px;
+  }
+  .planning-layout.view-teacher .teacher-tab-panel:not([hidden]) > .optional-planning-section > summary span { grid-column: 1; }
+}
+@media (max-width: 420px) {
+  .planning-layout.view-teacher .teacher-tab-panel:not([hidden]) > .teacher-settings-card .form-grid { grid-template-columns: 1fr; }
+}
