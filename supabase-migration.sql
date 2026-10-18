@@ -84,6 +84,13 @@ $$;
 revoke all on function public.get_public_annual_plan(text) from public;
 grant execute on function public.get_public_annual_plan(text) to anon, authenticated;
 
+-- Förhindra att klienten aktiverar automatisk publicering mot en gammal RPC.
+create or replace function public.supports_automatic_week_release()
+returns boolean language sql stable security definer set search_path = public
+as $ select true; $;
+revoke all on function public.supports_automatic_week_release() from public;
+grant execute on function public.supports_automatic_week_release() to authenticated;
+
 -- Kollegdelning: privata, fristående kopior med spärr mot vidare delning.
 -- Delningskoden lagras ENDAST som hash i databasen. Konfigurera separat via SQL Editor:
 -- insert into private_share_settings(id, pass_hash)
