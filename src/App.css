@@ -1387,3 +1387,18 @@ body { background: #fffaf2; color: var(--ink); }
 .simple-setup-card .simple-closure-row .button-row,
 .simple-setup-card .simple-closure-section .button-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .simple-setup-card .simple-exams-section ul { padding-left: 20px; line-height: 1.6; }
+
+/* Kollegdelning: diskret kugghjul och lättläst formulär. */
+.topbar-share-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+.share-settings-trigger { background:#fff0bf; color:#82404a; border:1px solid #e9cf9b; border-radius:9px; font-weight:700; }
+.colleague-share-panel { background:#fffdf8; border:1px solid #efd1bd; border-radius:15px; margin:12px 0; padding:20px; box-shadow:none; }
+.share-panel-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+.share-panel-heading h2 { margin:0 0 6px; color:#82404a; }
+.colleague-share-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; }
+.colleague-share-grid form { display:flex; flex-direction:column; align-items:flex-start; gap:10px; padding:12px; border:1px solid #f1e0d0; border-radius:10px; }
+.colleague-share-grid h3 { color:#82404a; margin:0; }
+.colleague-share-grid label { display:flex; flex-direction:column; gap:5px; width:100%; color:#71414a; font-weight:600; }
+.colleague-share-grid input { box-sizing:border-box; width:100%; min-width:0; border:1px solid #bdd7ca; border-radius:8px; padding:9px 11px; background:white; }
+.share-invite-code { width:100%; display:flex; flex-direction:column; gap:9px; padding:12px; background:#fff4d7; border-radius:9px; }
+.share-feedback { padding:12px; background:#fff4d7; border-radius:8px; }
+@media(max-width:650px) { .colleague-share-grid { grid-template-columns:1fr; } .share-panel-heading { flex-wrap:wrap; } }
