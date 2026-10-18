@@ -739,6 +739,19 @@ function TeacherApp({ session }) {
 
 
   const weeks = displayWeeks(plan)
+  const visibleTeacherWeeks = weeks.filter(week => week && !week.hidden)
+  const weeksWithContent = visibleTeacherWeeks.filter(week => Boolean(
+    String(week.content || '').trim() || String(week.chapter || '').trim() ||
+    week.items?.length || week.pages?.length || week.assignments?.length || week.links?.length ||
+    week.lessons?.some(lesson => lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.length || topic.assignments?.length || topic.links?.length))
+  ))
+  const publicationIssues = [
+    ...(!String(plan.title || '').trim() ? ['Ange planeringens namn.'] : []),
+    ...(!String(plan.subject || '').trim() ? ['Ange ämne.'] : []),
+    ...(!visibleTeacherWeeks.length ? ['Visa minst en vecka för elever.'] : []),
+    ...(weeksWithContent.length === 0 ? ['Fyll i innehåll i minst en synlig vecka.'] : []),
+    ...((plan.schoolClosures || []).some(item => !validSchoolClosure(item)) ? ['Kontrollera datum för lov och studiedagar.'] : []),
+  ]
 
   async function loadPlans() {
     const { data, error } = await supabase.from('veckoplanering')
@@ -1296,6 +1309,12 @@ function TeacherApp({ session }) {
       <a href="https://www.skolverket.se/prov-och-bedomning/nationella-prov/provdatum/provdatum-for-grundskola-sameskola-specialskola" target="_blank" rel="noreferrer">Kontrollera datum hos Skolverket</a>
     </div></details>
 
+    <section className="card publication-readiness" aria-label="Kontroll före publicering">
+      <h3>Kontroll före publicering</h3>
+      <p><strong>{visibleTeacherWeeks.length}</strong> synliga veckor · <strong>{weeksWithContent.length}</strong> med innehåll · <strong>{weeks.length - visibleTeacherWeeks.length}</strong> dolda veckor</p>
+      {publicationIssues.length ? <div role="status"><strong>Kontrollera innan eleverna får länken:</strong><ul>{publicationIssues.map(issue => <li key={issue}>{issue}</li>)}</ul></div> : <p className="publication-ready">✓ Grunduppgifterna är ifyllda. Granska elevvyn innan du publicerar.</p>}
+      <p className="muted">Spara utkast påverkar inte den redan publicerade elevversionen. Publicera för elever uppdaterar elevversionen.</p>
+    </section>
     <section className="card calendar-primary-actions" aria-label="Spara och publicera årsplaneringen">
       <div className="button-row">
         <button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
