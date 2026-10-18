@@ -24,6 +24,7 @@ Testa endast förhandsversionen. Ändra inte produktionen eller databasschemat u
 - [ ] Utan migration: försök aktivera automatisk veckopublicering. Publiceringen ska stoppas.
 - [ ] Med migration: publicera med funktionen aktiverad och både aktuell, framtida och dold vecka.
 - [ ] Öppna den offentliga RPC:n anonymt: endast veckor vars måndag har inträffat i Europe/Stockholm får returneras. Framtida och dolda veckor får inte finnas ens i råsvaret.
+- [ ] Kontrollera att framtida lov och studiedagar inte läcker genom fältet `schoolClosures` när automatiken är på.
 - [ ] Kontrollera måndag 00:00 svensk tid och tidsomställning vinter-/sommartid.
 - [ ] Kontrollera att utkast inte ändrar redan publicerat material och att ompublicering uppdaterar samma länk.
 
