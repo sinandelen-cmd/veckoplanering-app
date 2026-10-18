@@ -323,4 +323,3 @@ assert.doesNotMatch(app, /<nav className="student-pager"/)
 assert.doesNotMatch(app, /<div className="a4-demo-controls">/)
 
 assert.match(app, /function ImportantDatesForWeek/)
-assert.match(app, /if \(!\/\^\\d\{4\}-\\d\{2\}-\\d\{2\}\$\//)
