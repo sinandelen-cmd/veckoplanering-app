@@ -136,7 +136,9 @@ begin
   select pass_hash into v_secret from public.private_share_settings where id = true;
   if v_secret is null then raise exception 'Delningskoden är inte aktiverad av administratören'; end if;
   if crypt(coalesce(p_password, ''), v_secret) is distinct from v_secret then
-    raise exception 'Fel delningskod';
+    -- Returnera ett statusvärde i stället för att kasta fel, så försöket
+    -- verkligen sparas och spärren mot upprepade gissningar fungerar.
+    return 'ERROR:Fel delningskod';
   end if;
   if not exists(select 1 from public.veckoplanering
                 where id = p_plan_id and user_id = v_user) then
@@ -189,10 +191,38 @@ begin
     v_src.subject, v_src.school_year,v_src.class_name,v_src.start_date,v_src.weeks,
     false,null,null,now()) returning id into v_new;
   insert into public.plan_received_copies(plan_id,recipient_id,original_owner_id)
-  values(v_new,v_user,v_inv.owner_id);
+  values(v_new,v_user,v_inv.owner_id)
+  on conflict (plan_id) do update set original_owner_id = excluded.original_owner_id;
   update public.plan_share_invitations set claimed_at = now() where id = v_inv.id;
   return v_new;
 end;
 $$;
 revoke all on function public.claim_plan_share_invite(text) from public, anon;
 grant execute on function public.claim_plan_share_invite(text) to authenticated;
+
+-- Även kopior som återanvänds eller klonas i appen förblir spärrade.
+-- Klienten kan inte ändra eller ta bort receivedCopy på en redan mottagen kopia.
+create or replace function public.preserve_received_copy_lock()
+returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  v_was_locked boolean;
+begin
+  if tg_op = 'UPDATE' then
+    select exists(select 1 from public.plan_received_copies where plan_id = old.id) into v_was_locked;
+    if v_was_locked then
+      new.content := (coalesce(nullif(new.content,'')::jsonb, '{}'::jsonb)
+        || '{"receivedCopy":true}'::jsonb)::text;
+    end if;
+  elsif tg_op = 'INSERT' and coalesce((nullif(new.content,'')::jsonb ->> 'receivedCopy')::boolean,false) then
+    -- Registrera kopior av mottagna planeringar, även efter Återanvänd som ny.
+    insert into public.plan_received_copies(plan_id,recipient_id,original_owner_id)
+    values(new.id,new.user_id,new.user_id)
+    on conflict (plan_id) do nothing;
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists preserve_received_copy_lock_trigger on public.veckoplanering;
+create trigger preserve_received_copy_lock_trigger
+before insert or update of content on public.veckoplanering
+for each row execute function public.preserve_received_copy_lock();
