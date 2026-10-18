@@ -1245,7 +1245,7 @@ function AnnualApp() {
   const [password, setPassword] = useState('')
   const [status, setStatus] = useState('')
 
-  const isPublicDemo = window.location.pathname.replace(/\\/$/, '') === '/elev/demo-vecka-42'
+  const isPublicDemo = window.location.pathname.replace(/\/$/, '') === '/elev/demo-vecka-42'
 
   const studentSlug = useMemo(() => {
     const match = window.location.pathname.match(/^\/elev\/([^/]+)\/?$/)
