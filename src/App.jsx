@@ -669,7 +669,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
   return <section className="calendar-overlay" aria-label="Årsplanering månad för månad">
     <div className="calendar-top">
       <div><div className="calendar-week-heading-row">{selectedWeek && <label className="calendar-visibility-large-toggle" title={selectedWeek.hidden ? "Visa veckan för elever" : "Dölj veckan för elever"}><input type="checkbox" aria-label={`Visa vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber} för elever`} checked={!selectedWeek.hidden} onChange={e => editSelectedWeek({ hidden: !e.target.checked })} /></label>}<h2>{selectedWeek ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : `Årsöversikt · månad för månad`}</h2>{selectedWeek && <span className="calendar-month-corner">{weekMonthLabel(selectedWeek.weekStart)}</span>}</div><p>{selectedWeek ? (selectedWeek.chapter || (!/^Vecka\s+\d+$/i.test(selectedWeek.title || "") ? selectedWeek.title : "") || "") : "Välj en vecka för att zooma in och se dina dagar eller lektioner."}</p></div>
-      <div className="calendar-zoom-controls"><button type="button" className="secondary calendar-close-button" onClick={() => { if (selectedWeek) { setSelectedLessonIndex(null); setSelectedWeekIndex(null) } else { onClose?.() } }}>✕ Stäng</button></div>
+      <div className="calendar-zoom-controls"><button type="button" className="secondary calendar-close-button" onClick={() => { setSelectedLessonIndex(null); setSelectedWeekIndex(null); setOverviewPage(0) }}>✕ Stäng</button></div>
     </div>
     {selectedWeek ? <div className="calendar-week-detail" style={{ backgroundColor: weekColor(selectedWeek.weekStart) }}>
       <p><strong>{(/^Vecka\s+\d+$/i.test(selectedWeek.title || '') ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : selectedWeek.title) || `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}`}</strong> · {formatDate(selectedWeek.weekStart)}</p>
@@ -1210,7 +1210,7 @@ function TeacherApp({ session }) {
       <button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
     </div>}
 
-    {selectedId && calendarOpen && teacherTab !== "elevvy" && teacherTab !== "new" && <div id="teacher-year-calendar"><YearCalendar startOnFirstWeek={weeks.length === 1} weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={[]} onClose={() => { setCalendarOpen(false); setTeacherTab("arsplan"); window.scrollTo({ top: 0, behavior: "smooth" }) }} onUpdateWeek={updateWeek} onAddWeek={() => setPlan(p => {
+    {selectedId && teacherTab !== "elevvy" && teacherTab !== "new" && <div id="teacher-year-calendar"><YearCalendar startOnFirstWeek={weeks.length === 1} weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={[]} onClose={() => { setTeacherTab("arsplan"); window.scrollTo({ top: 0, behavior: "smooth" }) }} onUpdateWeek={updateWeek} onAddWeek={() => setPlan(p => {
       const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
       if (existing.length >= 52) return p
       const latest = [...existing].sort((a, b) => b.weekStart.localeCompare(a.weekStart))[0]
