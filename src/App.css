@@ -1224,3 +1224,53 @@ body { background: #fffaf2; color: var(--ink); }
   .simple-setup-card .form-grid,
   .simple-setup-card .simple-extra-fields .form-grid { grid-template-columns: 1fr; }
 }
+
+/* En sammanhängande tabell/formulärruta, enligt Ny planering. */
+.planning-layout.view-teacher .teacher-tab-panel:not([hidden]) > .unified-planning-form {
+  max-width: 860px;
+  margin: 14px auto;
+  padding: 20px;
+  border: 1px solid #efd1bd;
+  border-radius: 15px;
+  background: #fffdf8;
+  box-shadow: none;
+}
+.planning-layout.view-teacher .unified-planning-form > .card,
+.planning-layout.view-teacher .unified-planning-form > details.card,
+.planning-layout.view-teacher .unified-planning-form > section.card {
+  max-width: none;
+  margin: 0;
+  padding: 14px 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.planning-layout.view-teacher .unified-planning-form > :not(:first-child) {
+  border-top: 1px solid #f2e3d4 !important;
+}
+.planning-layout.view-teacher .unified-planning-form > .teacher-settings-card .form-grid {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 12px;
+}
+.planning-layout.view-teacher .unified-planning-form > details.optional-planning-section > summary {
+  display: grid;
+  grid-template-columns: minmax(130px,1fr) minmax(150px,1.5fr) 20px;
+  gap: 10px;
+  align-items: center;
+}
+.planning-layout.view-teacher .unified-planning-form .calendar-primary-actions .button-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+@media(max-width:650px) {
+  .planning-layout.view-teacher .teacher-tab-panel:not([hidden]) > .unified-planning-form { padding: 14px; }
+  .planning-layout.view-teacher .unified-planning-form > .teacher-settings-card .form-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .planning-layout.view-teacher .unified-planning-form > details.optional-planning-section > summary { grid-template-columns: 1fr 20px; }
+  .planning-layout.view-teacher .unified-planning-form > details.optional-planning-section > summary span { grid-column: 1; }
+}
+@media(max-width:420px) {
+  .planning-layout.view-teacher .unified-planning-form > .teacher-settings-card .form-grid { grid-template-columns: 1fr; }
+}
