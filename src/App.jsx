@@ -632,8 +632,8 @@ function TeacherApp({ session }) {
   const [plan, setPlan] = useState(emptyPlan())
   const [plans, setPlans] = useState([])
   const [showArchive, setShowArchive] = useState(false)
-  const [calendarOpen, setCalendarOpen] = useState(true)
-  const [teacherTab, setTeacherTab] = useState("mina")
+  const [calendarOpen, setCalendarOpen] = useState(false)
+  const [teacherTab, setTeacherTab] = useState("arsplan")
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
@@ -735,6 +735,7 @@ function TeacherApp({ session }) {
     savedPlanRef.current = JSON.stringify(demo)
     setSavedRevision(revision => revision + 1)
     setTeacherTab('arsplan')
+    setCalendarOpen(false)
     setPreviewStudents(false)
     setA4Demo(false)
     setStatus('Fiktiv vecka 42 visas nu i Lärarvy. Den är inte sparad och inga tidigare planeringar har ändrats. PowerPoint och PDF kan läggas till som egna länkar.')
@@ -859,7 +860,7 @@ function TeacherApp({ session }) {
     if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
     try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(row.id)) } catch { /* Lagring kan vara blockerad */ }
     const openedPlan = planFromRow(row)
-    setSelectedId(row.id); savedPlanRef.current = JSON.stringify(openedPlan); setSavedRevision(revision => revision + 1); setPlan(openedPlan); setTeacherTab('arsplan'); setPreviewStudents(false); setA4Demo(false); setStatus('Planeringen är öppnad.'); window.scrollTo({ top: 0, behavior: 'smooth' })
+    setSelectedId(row.id); savedPlanRef.current = JSON.stringify(openedPlan); setSavedRevision(revision => revision + 1); setPlan(openedPlan); setTeacherTab('arsplan'); setCalendarOpen(false); setPreviewStudents(false); setA4Demo(false); setStatus('Planeringen är öppnad.'); window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function clonePlan(row) {
@@ -947,16 +948,49 @@ function TeacherApp({ session }) {
     }
   }
 
+  const openExample = kind => {
+    if (busy) return
+    if (isDirty && !window.confirm('Du har osparade ändringar. Vill du öppna en påhittad testplanering utan att spara dem?')) return
+    let example
+    if (kind === 'math') {
+      example = publicDemoWeek42()
+    } else {
+      const swedish = kind === 'swedish'
+      example = { ...emptyPlan(), title: swedish ? 'EXEMPEL – Svenska åk 5: Berättelser' : 'EXEMPEL – NO åk 7: Ekosystem',
+        subject: swedish ? 'Svenska' : 'NO', className: swedish ? 'Årskurs 5' : 'Årskurs 7',
+        startDate: '2026-10-12', weeks: 3, lessonsPerWeek: 3, published: false }
+      const titles = swedish
+        ? ['Berättelsens början', 'Personer och miljö', 'Skriv och bearbeta']
+        : ['Näringskedjor', 'Producenter och konsumenter', 'Ekosystem i närmiljön']
+      example.weeksData = makeWeeks(example, 3).map((week, i) => ({
+        ...week, chapter: titles[i], content: titles[i],
+        lessons: week.lessons.map((lesson, j) => ({
+          ...lesson, topics: [{ name: titles[i], pages: [swedish ? `${20 + i * 4}–${23 + i * 4}` : `${50 + i * 4}–${53 + i * 4}`],
+            assignments: [`Uppgift ${j + 1}–${j + 3}`], links: [] }]
+        }))
+      }))
+    }
+    setSelectedId(null)
+    setPlan(example)
+    savedPlanRef.current = JSON.stringify(example)
+    setSavedRevision(revision => revision + 1)
+    setTeacherTab('arsplan')
+    setCalendarOpen(false)
+    setPreviewStudents(false)
+    setA4Demo(false)
+    setStatus('Påhittad testplanering öppnad. Den är inte sparad i ditt konto.')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
   const createPlan = () => {
     if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
     const fresh = emptyPlan()
     try { window.sessionStorage.removeItem(`arsplanering-last-open-${session.user.id}`) } catch { /* Lagring kan vara blockerad */ }
     setPlan(fresh); setSelectedId(null); savedPlanRef.current = JSON.stringify(fresh)
     setSavedRevision(revision => revision + 1)
-    setTeacherTab('arsplan'); setPreviewStudents(false); setA4Demo(false)
+    setTeacherTab('arsplan'); setCalendarOpen(false); setPreviewStudents(false); setA4Demo(false)
     setStatus('Ny planering klar. Spara utkast när du har fyllt i din planering.')
   }
-  return <div className="planning-layout"><Navigation active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} onOpenPlan={loadPlan} onNavigate={id => { setTeacherTab(id); if (id === 'elevvy') setPreviewStudents(true) }} onNew={createPlan} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} /><main className="shell" id="lararvy">
+  return <div className="planning-layout"><Navigation active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} onOpenPlan={loadPlan} onNavigate={id => { setTeacherTab(id === 'mina' ? 'arsplan' : id); if (id === 'elevvy') setPreviewStudents(true) }} onOpenExample={openExample} onOpenArchive={() => { setShowArchive(true); setTeacherTab('mina') }} onNew={createPlan} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} /><main className="shell" id="lararvy">
     <header className="topbar">
       <div><p className="eyebrow">{teacherTab === "mina" ? "MINA PLANERINGAR" : teacherTab === "elevvy" ? "ELEV VY" : "LÄRARVY"}</p><h1>{teacherTab === "mina" ? "Mina planeringar" : (plan.title?.trim() || "Ny planering")}</h1><p className="muted">{session.user.email}</p></div>
       <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
