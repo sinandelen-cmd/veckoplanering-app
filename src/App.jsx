@@ -168,7 +168,7 @@ function emptyPlan() {
   return {
     title: '', subject: '', schoolYear: '', className: '', county: '', municipality: '', schoolForm: '', grade: '', course: '', schoolClosures: [],
     startDate: mondayOf(), startWeek: 1, entryType: 'lektion', lessonDisplay: 'bara-lektion', studentLayout: 'grid', studentColumns: 3, studentRows: 2, lessonsPerWeek: 3, weeks: DEFAULT_WEEKS, weeksData: [],
-    published: false, publicSlug: '',
+    published: false, publicSlug: '', autoReleaseWeeks: false,
   }
 }
 
@@ -334,6 +334,7 @@ function sanitizeForStudents(plan) {
     schoolForm: String(plan?.schoolForm || ''),
     schoolClosures: Array.isArray(plan?.schoolClosures) ? plan.schoolClosures.filter(item => validSchoolClosure(item) && sourceWeeks.some(week => { if (!week || week.hidden || !/^\d{4}-\d{2}-\d{2}$/.test(week.weekStart || '')) return false; const monday = new Date(week.weekStart + 'T12:00:00'); monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7)); const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6); return item.startDate <= toIsoDate(sunday) && item.endDate >= toIsoDate(monday) })).map(item => ({ name: item.name, startDate: item.startDate, endDate: item.endDate, verified: Boolean(item.verified) })) : [],
     published: true,
+    autoReleaseWeeks: plan?.autoReleaseWeeks === true,
     entryType: plan?.entryType === 'dag' ? 'dag' : 'lektion',
     lessonDisplay: ['dag-lektion', 'bara-dag', 'bara-lektion'].includes(plan?.lessonDisplay) ? plan.lessonDisplay : 'bara-lektion',
     themeId: String(plan?.themeId || ''),
@@ -1334,6 +1335,11 @@ function TeacherApp({ session }) {
       <a href="https://www.skolverket.se/prov-och-bedomning/nationella-prov/provdatum/provdatum-for-grundskola-sameskola-specialskola" target="_blank" rel="noreferrer">Kontrollera datum hos Skolverket</a>
     </div></details>
 
+    <section className="card automatic-week-release" aria-label="Automatisk veckopublicering">
+      <h3>Automatisk visning av veckor</h3>
+      <label className="automatic-release-toggle"><input type="checkbox" checked={plan.autoReleaseWeeks === true} disabled={busy} onChange={e => setPlan(p => ({ ...p, autoReleaseWeeks: e.target.checked }))} /> Visa varje synlig vecka automatiskt från veckans måndag</label>
+      <p className="muted">Dolda veckor visas aldrig. Funktionen kräver att den senaste Supabase-migrationen är installerad innan du publicerar. Tider följer svensk tid.</p>
+    </section>
     <section className="card publication-readiness" aria-label="Kontroll före publicering">
       <h3>Kontroll före publicering</h3>
       <p><strong>{visibleTeacherWeeks.length}</strong> synliga veckor · <strong>{weeksWithContent.length}</strong> med innehåll · <strong>{weeks.length - visibleTeacherWeeks.length}</strong> dolda veckor</p>
