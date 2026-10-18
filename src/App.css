@@ -1705,3 +1705,11 @@ body { background: #fffaf2; color: var(--ink); }
 .calendar-inline-week .calendar-visibility-large-toggle{position:static;margin:0;flex:none}
 .calendar-inline-week .calendar-visibility-large-toggle input{width:28px;height:28px}
 .calendar-inline-week .lesson-details{width:100%}
+
+/* Kalendervy: en pastellfärgad månadsrad med upp till fyra veckokort per rad. */
+.calendar-months{display:flex;flex-direction:column;gap:16px;width:100%}
+.calendar-month-section{width:100%;border-radius:16px;padding:16px;box-sizing:border-box}
+.calendar-month-row{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px}
+.calendar-month-row>.calendar-week-wrapper{min-width:0}
+@media(max-width:850px){.calendar-month-row{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:520px){.calendar-month-row{grid-template-columns:minmax(0,1fr)!important}}
