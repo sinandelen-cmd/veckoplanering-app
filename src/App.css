@@ -1694,3 +1694,14 @@ body { background: #fffaf2; color: var(--ink); }
 .calendar-embedded .calendar-top{margin-bottom:12px}
 .calendar-embedded .calendar-months{width:100%}
 .calendar-embedded .calendar-month-section{width:100%}
+
+/* Lärarvy: fullständiga veckor staplade vertikalt, med redigerbara lektioner. */
+.calendar-inline-weeks{display:flex;flex-direction:column;gap:20px;width:100%;margin:16px 0 24px}
+.calendar-inline-week{border:1px solid #d9d8d0;border-radius:15px;padding:18px;min-width:0}
+.calendar-inline-week-heading{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+.calendar-inline-week-heading h2{margin:0;font-size:clamp(26px,3vw,40px);color:#005746}
+.calendar-inline-week-heading .calendar-delete-week{margin-left:auto;width:auto;max-width:190px}
+.calendar-inline-date{font-weight:650}
+.calendar-inline-week .calendar-visibility-large-toggle{position:static;margin:0;flex:none}
+.calendar-inline-week .calendar-visibility-large-toggle input{width:28px;height:28px}
+.calendar-inline-week .lesson-details{width:100%}
