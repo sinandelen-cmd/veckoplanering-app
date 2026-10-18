@@ -1114,7 +1114,7 @@ function TeacherApp({ session }) {
 
     {calendarOpen && <div id="teacher-year-calendar"><YearCalendar weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={nationalExamsForPlan(plan)} onClose={() => setCalendarOpen(false)} onUpdateWeek={updateWeek} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} /></div>}
 
-    <section className="card" aria-label="Skollov och studiedagar">
+    <details className="card optional-planning-section" aria-label="Skollov och studiedagar"><summary><strong>Skollov och studiedagar</strong><span>Lägg till lov och studiedagar vid behov</span></summary><div className="optional-planning-content">
       <h3>Skollov och studiedagar</h3>
       <p>Nationella helgdagar visas automatiskt. Lägg till och anpassa lov, studiedagar och andra lokala ledigheter här.</p>
       {(plan.schoolClosures || []).map(item => <div className="form-grid" key={item.id}>
@@ -1134,9 +1134,9 @@ function TeacherApp({ session }) {
         return { ...p, schoolClosures: [...existing, ...additions] }
       })}>+ Föreslå lov (redigerbara datum)</button>
       <p>Höstlov vecka 44, sportlov vecka 9, jullov 22 december–6 januari och påsklov veckan efter påsk är preliminära exempel, inte kommunens beslutade lovdatum. Kontrollera alltid mot kommunens eller skolans läsårstider och ändra vid behov.</p>
-    </section>
+    </div></details>
 
-    <section className="card" aria-label="Nationella prov enligt Skolverket">
+    <details className="card optional-planning-section" aria-label="Nationella prov"><summary><strong>Nationella prov</strong><span>Datum och information från Skolverket</span></summary><div className="optional-planning-content">
       <h2>Nationella prov – Skolverkets datum 2026/27</h2>
       <p className="muted">Datumen och provperioderna är avstämda mot Skolverkets publicerade schema (kontrollerat 17 oktober 2026). Årskurs 9 börjar kl. 09.00 på fasta provdagar; årskurs 6 har ingen nationellt fastställd starttid. Kontrollera eventuella senare ändringar hos Skolverket. Muntliga prov och årskurs 3 har provperioder.</p>
       <p><a href="https://www.skolverket.se/prov-och-bedomning/nationella-prov/provdatum/provdatum-for-grundskola-sameskola-specialskola" target="_blank" rel="noopener noreferrer">Kontrollera aktuella provdatum hos Skolverket ↗</a></p>
@@ -1145,7 +1145,7 @@ function TeacherApp({ session }) {
         <ul>{NATIONAL_EXAMS_2026_27.filter(item => item.grade === String(plan.grade).replace(/[^0-9]/g, '')).map(item => <li key={item.date + item.subject + item.part}>{item.date} {item.startTime ? `kl. ${item.startTime}` : ""} – {item.subject}, delprov {item.part} <span aria-label="Låst datum">🔒</span></li>)}</ul>
       </> : <p className="muted">Välj grundskola, läsåret 2026/27 och årskurs 3, 6 eller 9. Datum för andra skolformer och läsår visas inte förrän de har kontrollerats separat.</p>}
       <a href="https://www.skolverket.se/prov-och-bedomning/nationella-prov/provdatum/provdatum-for-grundskola-sameskola-specialskola" target="_blank" rel="noreferrer">Kontrollera datum hos Skolverket</a>
-    </section>
+    </div></details>
 
     <section className="card calendar-primary-actions" aria-label="Spara och publicera årsplaneringen">
       <div className="button-row">
