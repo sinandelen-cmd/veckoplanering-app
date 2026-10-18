@@ -551,6 +551,10 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     .sort((a, b) => weekContentScore(b) - weekContentScore(a))
     .filter((week, index, weeks) => weeks.findIndex(other => (other.weekStart || `number-${other.weekNumber}`) === (week.weekStart || `number-${week.weekNumber}`)) === index)
     .sort((a, b) => (b.weekStart || '').localeCompare(a.weekStart || '')) : []
+  const currentStudentWeekStart = mondayOf(new Date())
+  const currentStudentWeek = studentWeeks.find(week => week.weekStart === currentStudentWeekStart)
+  const upcomingStudentWeek = [...studentWeeks].reverse().find(week => week.weekStart >= currentStudentWeekStart)
+  const jumpStudentWeek = currentStudentWeek || upcomingStudentWeek
   const pages = Math.max(1, Math.ceil(studentWeeks.length / pageSize))
   // Längre elevveckor får mer plats på A4. Grupperna består alltid av hela veckor.
   const printGroups = singlePrintWeek ? [{ weeks: studentWeeks.filter(week => week.weekStart === singlePrintWeek) }] : groupStudentWeeksForPrint(studentWeeks)
@@ -567,11 +571,14 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
 
       <span className="public-badge">{preview ? "Förhandsvisning" : "Publicerad"}</span>
     </header>
+    {printPage === null && jumpStudentWeek && <nav className="student-week-shortcut" aria-label="Hitta aktuell planering">
+      <a href={'#student-week-' + jumpStudentWeek.weekStart}>{currentStudentWeek ? '📍 Gå till den här veckan' : '📍 Gå till nästa planerade vecka'} · vecka {calendarWeekNumber(jumpStudentWeek.weekStart) ?? jumpStudentWeek.weekNumber} ↓</a>
+    </nav>}
     {studentWeeks.length === 0 && <p className="card empty" role="status">Det finns inga synliga veckor i den här planeringen ännu.</p>}
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
       {visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
         {week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
-        <article className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
+        <article id={"student-week-" + week.weekStart} className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
 
         <div className="week-top student-week-top">
           <div className="student-week-identity"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>{printPage !== null && <span>{studentWeekDateRange(week.weekStart)}</span>}</div>
