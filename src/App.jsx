@@ -590,7 +590,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     <header className="student-header">
       <div><p className="eyebrow">{preview ? 'FÖRHANDSVISNING' : 'PUBLICERAD ÅRSPLANERING'}</p><h1>{plan.title}</h1><p className="muted">{[plan.subject, plan.className, plan.schoolYear].filter(Boolean).join(' · ')}</p></div>
 
-      <span className="public-badge">{preview ? "Förhandsvisning" : "Publicerad"}</span>
+      {!preview && <span className="public-badge">Publicerad</span>}
     </header>
     {printPage === null && jumpStudentWeek && <nav className="student-week-shortcut" aria-label="Hitta aktuell planering">
       <a href={'#student-week-' + jumpStudentWeek.weekStart}>{currentStudentWeek ? '📍 Gå till den här veckan' : '📍 Gå till nästa planerade vecka'} · vecka {calendarWeekNumber(jumpStudentWeek.weekStart) ?? jumpStudentWeek.weekNumber} ↓</a>
