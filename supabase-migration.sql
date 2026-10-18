@@ -202,19 +202,26 @@ grant execute on function public.claim_plan_share_invite(text) to authenticated;
 
 -- Även kopior som återanvänds eller klonas i appen förblir spärrade.
 -- Klienten kan inte ändra eller ta bort receivedCopy på en redan mottagen kopia.
+
 create or replace function public.preserve_received_copy_lock()
 returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
-declare
-  v_was_locked boolean;
 begin
-  if tg_op = 'UPDATE' then
-    select exists(select 1 from public.plan_received_copies where plan_id = old.id) into v_was_locked;
-    if v_was_locked then
-      new.content := (coalesce(nullif(new.content,'')::jsonb, '{}'::jsonb)
-        || '{"receivedCopy":true}'::jsonb)::text;
-    end if;
-  elsif tg_op = 'INSERT' and coalesce((nullif(new.content,'')::jsonb ->> 'receivedCopy')::boolean,false) then
-    -- Registrera kopior av mottagna planeringar, även efter Återanvänd som ny.
+  if exists(select 1 from public.plan_received_copies where plan_id = old.id) then
+    new.content := (coalesce(nullif(new.content,'')::jsonb, '{}'::jsonb)
+      || '{"receivedCopy":true}'::jsonb)::text;
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists preserve_received_copy_lock_trigger on public.veckoplanering;
+create trigger preserve_received_copy_lock_trigger
+before update of content on public.veckoplanering
+for each row execute function public.preserve_received_copy_lock();
+
+create or replace function public.register_received_copy_clone()
+returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
+begin
+  if coalesce((nullif(new.content,'')::jsonb ->> 'receivedCopy')::boolean,false) then
     insert into public.plan_received_copies(plan_id,recipient_id,original_owner_id)
     values(new.id,new.user_id,new.user_id)
     on conflict (plan_id) do nothing;
@@ -222,7 +229,7 @@ begin
   return new;
 end;
 $$;
-drop trigger if exists preserve_received_copy_lock_trigger on public.veckoplanering;
-create trigger preserve_received_copy_lock_trigger
-before insert or update of content on public.veckoplanering
-for each row execute function public.preserve_received_copy_lock();
+drop trigger if exists register_received_copy_clone_trigger on public.veckoplanering;
+create trigger register_received_copy_clone_trigger
+after insert on public.veckoplanering
+for each row execute function public.register_received_copy_clone();
