@@ -192,7 +192,8 @@ const sanitizeForStudentsRuntime = new Function(
       return ['http:', 'https:'].includes(parsed.protocol) && !parsed.username && !parsed.password
         ? { label: 'Webblänk' } : null
     } catch { return null }
-  }
+  },
+  item => Boolean(item?.name && item?.startDate && item?.endDate && item.startDate <= item.endDate)
 )
 const studentFixture = {
   title: 'Testplan', subject: 'Matematik', entryType: 'lektion',
