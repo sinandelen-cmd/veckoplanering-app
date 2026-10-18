@@ -50,12 +50,31 @@ for delete to authenticated using (auth.uid() = user_id);
 drop policy if exists "Public can view published weekly plans" on public.veckoplanering;
 drop policy if exists "Public can view published annual plans" on public.veckoplanering;
 
+-- Publiceringsfiltret körs i databasen, aldrig enbart i elevens webbläsare.
+-- Opt-in: autoReleaseWeeks=true gör framtida veckor osynliga fram till
+-- måndagen i respektive vecka (Europe/Stockholm).
 create or replace function public.get_public_annual_plan(slug_value text)
 returns table (published_content text)
 language sql stable security definer
 set search_path = public
 as $$
-  select v.published_content
+  select case
+    when coalesce((v.published_content::jsonb ->> 'autoReleaseWeeks')::boolean, false) then
+      jsonb_set(
+        v.published_content::jsonb,
+        '{weeksData}',
+        coalesce((
+          select jsonb_agg(w.week order by w.ordinality)
+          from jsonb_array_elements(
+            case when jsonb_typeof(v.published_content::jsonb -> 'weeksData') = 'array'
+              then v.published_content::jsonb -> 'weeksData' else '[]'::jsonb end
+          ) with ordinality as w(week, ordinality)
+          where (w.week ->> 'weekStart') ~ '^\\d{4}-\\d{2}-\\d{2}$'
+            and (w.week ->> 'weekStart')::date <= (now() at time zone 'Europe/Stockholm')::date
+        ), '[]'::jsonb)
+      )::text
+    else v.published_content
+  end as published_content
   from public.veckoplanering v
   where v.published = true
     and v.public_slug = slug_value
