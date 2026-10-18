@@ -882,7 +882,7 @@ function TeacherApp({ session }) {
     setStatus('Fiktiv vecka 42 visas nu i Lärarvy. Den är inte sparad och inga tidigare planeringar har ändrats. PowerPoint och PDF kan läggas till som egna länkar.')
   }
 
-  async function save(publish) {
+  async function save(publish, automatic = false) {
     if (busy) return
     if (!String(plan.title || '').trim()) return setStatus('Skriv ett namn på årsplaneringen.')
     if (!String(plan.subject || '').trim()) return setStatus('Skriv ämne.')
@@ -899,7 +899,7 @@ function TeacherApp({ session }) {
     ))) return setStatus('Ingen synlig vecka har innehåll. Lägg till minst en uppgift eller ett lektionsinnehåll innan du publicerar.')
     if (publish && !sanitizeForStudents({ ...plan, weeksData: weeks }).weeksData.length) return setStatus('Det finns inga synliga veckor att publicera. Markera minst en vecka med ”Visa för elever”.')
     if (publish && weeks.some(week => week && !week.hidden && !validSchoolClosure({ name: 'Vecka', startDate: week.weekStart, endDate: week.weekStart }))) return setStatus('En synlig vecka saknar giltigt startdatum. Rätta veckans datum innan publicering.')
-    if (publish && !window.confirm(
+    if (publish && !automatic && !window.confirm(
       'Publicera planeringen för elever?\n\n' +
       'Synliga veckor: ' + weeks.filter(week => week && !week.hidden).length + '\n' +
       'Dolda veckor: ' + weeks.filter(week => week && week.hidden).length + '\n\n' +
@@ -981,7 +981,10 @@ function TeacherApp({ session }) {
   useEffect(() => {
     if (!selectedId || simpleSetup || busy || !isDirty || teacherTab === 'new') return undefined
     const timer = window.setTimeout(() => {
-      if (JSON.stringify(latestPlanRef.current) !== savedPlanRef.current) void save(false)
+      if (JSON.stringify(latestPlanRef.current) !== savedPlanRef.current) {
+        const hasContent = weeks.some(week => !week.hidden && (String(week.content || '').trim() || String(week.chapter || '').trim() || (week.lessons || []).some(lesson => (lesson.topics || []).some(topic => String(topic.name || '').trim() || (topic.pages || []).some(Boolean) || (topic.assignments || []).some(Boolean) || (topic.links || []).some(Boolean)))))
+        void save(Boolean(hasContent), true)
+      }
     }, 1400)
     return () => window.clearTimeout(timer)
   }, [plan, selectedId, simpleSetup, busy, isDirty, teacherTab])
@@ -1300,8 +1303,7 @@ function TeacherApp({ session }) {
       </div>
       <div className="sticky-actions button-row">
         
-        <button className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
-        <button className="primary" disabled={busy} onClick={() => save(true)}>Publicera för elever</button>
+        <span className="autosave-info" role="status">Ändringar sparas och publiceras automatiskt när lektionerna har innehåll.</span>
       </div>
       {isDirty && <p className="unsaved-notice" role="status">Osparade ändringar – välj Spara utkast innan du lämnar sidan.</p>}
       {status && <p className="status">{status}</p>}
@@ -1552,8 +1554,7 @@ function TeacherApp({ session }) {
       </div>
       <div className="sticky-actions button-row">
         
-        <button className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
-        <button className="primary" disabled={busy} onClick={() => save(true)}>Publicera för elever</button>
+        <span className="autosave-info" role="status">Ändringar sparas och publiceras automatiskt när lektionerna har innehåll.</span>
       </div>
       {isDirty && <p className="unsaved-notice" role="status">Osparade ändringar – välj Spara utkast innan du lämnar sidan.</p>}
       {status && <p className="status">{status}</p>}
