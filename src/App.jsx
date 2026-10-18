@@ -1218,19 +1218,23 @@ function TeacherApp({ session }) {
   return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}`}><Navigation active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={id => { setTeacherTab(id === 'mina' ? 'arsplan' : id); if (id === 'mina' || id === 'arsplan') setCalendarOpen(false); if (id === 'elevvy') { setPreviewStudents(true); setCalendarOpen(false) } else { setPreviewStudents(false) } }} onOpenExample={openExample} onOpenArchive={() => { setShowArchive(true); setTeacherTab('mina') }} onNew={createPlan} onToggleCalendar={() => { setTeacherTab('arsplan'); setCalendarOpen(true) }} calendarOpen={calendarOpen} /><main className="shell" id="lararvy">
     {teacherTab !== "elevvy" && <header className="topbar">
       <div><h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Mina planeringar" : (plan.title?.trim() || "Ny planering")}</h1><p className="muted">{session.user.email}</p></div>
-      {teacherTab !== "elevvy" && selectedId && <div className="student-plan-link" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        {plans.find(row => row.id === selectedId)?.published && plans.find(row => row.id === selectedId)?.public_slug ? <>
-          <button type="button" className="secondary" onClick={async () => { const slug = plans.find(row => row.id === selectedId)?.public_slug; if (!slug) return; const url = window.location.origin + '/elev/' + encodeURIComponent(slug); try { await navigator.clipboard.writeText(url); setStatus('Elevlänken för just denna planering har kopierats.') } catch { window.prompt('Kopiera elevlänken:', url) } }}>🔗 Kopiera elevlänk</button>
-          <a href={`/elev/${encodeURIComponent(plans.find(row => row.id === selectedId).public_slug)}`} target="_blank" rel="noopener noreferrer">Öppna elevlänk ↗</a>
-        </> : <span className="muted" style={{ fontSize: 12 }}>Elevlänk skapas när planeringen publiceras.</span>}
+      {selectedId && teacherTab === "arsplan" && <div className="student-plan-link" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <button type="button" className="secondary" style={{ background: '#d8f0fc', border: '2px solid #499ac1', color: '#124b6a', fontWeight: 850, fontSize: '1.1rem', padding: '14px 22px', borderRadius: 12 }} onClick={async () => {
+          const row = plans.find(item => item.id === selectedId)
+          const slug = row?.public_slug
+          if (!row?.published || !slug) { setStatus('Den här planeringen saknar ännu en publicerad elevlänk. Lägg till lektionsinnehåll så att planeringen kan publiceras automatiskt.'); return }
+          const url = window.location.origin + '/elev/' + encodeURIComponent(slug)
+          try { await navigator.clipboard.writeText(url); setStatus('Elevlänken för just denna planering har kopierats.') } catch { window.prompt('Kopiera elevlänken:', url) }
+        }}>🔗 Kopiera elevlänk</button>
+        {plans.find(row => row.id === selectedId)?.published && plans.find(row => row.id === selectedId)?.public_slug ? <a href={`/elev/${encodeURIComponent(plans.find(row => row.id === selectedId).public_slug)}`} target="_blank" rel="noopener noreferrer">Öppna elevlänk ↗</a> : <span className="muted" style={{ fontSize: 12 }}>Elevlänk blir aktiv när planeringen publicerats.</span>}
       </div>}
-      {teacherTab !== "elevvy" && <div className="topbar-share-actions">
+      {teacherTab === "new" && <div className="topbar-share-actions">
         <button type="button" className="secondary share-settings-trigger" aria-expanded={shareOpen} onClick={() => { setShareOpen(open => !open); setShareToken(''); setShareMessage('') }} title="Klona och dela med kollega">⚙ Klona / dela</button>
         <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
       </div>}
     </header>}
 
-    {teacherTab !== "elevvy" && shareOpen && <section className="card colleague-share-panel" aria-label="Klona och dela med kollega">
+    {teacherTab === "new" && shareOpen && <section className="card colleague-share-panel" aria-label="Klona och dela med kollega">
       <div className="share-panel-heading"><div><h2>Klona och dela</h2><p className="muted">Kollegan får en egen, privat kopia. Den kan inte delas vidare via Årsplanering.</p></div><button type="button" className="secondary" onClick={() => setShareOpen(false)}>Stäng</button></div>
       <div className="colleague-share-grid">
         <form onSubmit={shareWithColleague}>
