@@ -1032,15 +1032,7 @@ function TeacherApp({ session }) {
         window.setTimeout(() => document.getElementById('teacher-year-calendar')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
       }}>Visa årskalender och zooma</button>
     </section>
-    <section className="card" aria-live="polite">
-      {status && <p className="status">{status}</p>}
-    </section>
-
-    <section className="card" aria-label="Exempelvecka">
-      <h2>Prova en exempelvecka</h2>
-      <p className="muted">Öppna en separat fiktiv planering för vecka 42 (12–16 oktober 2026), med fem lektioner, moment, sidor, uppgifter och olika YouTube-länkar. Dina sparade planeringar påverkas inte.</p>
-      <button type="button" className="secondary" disabled={busy} onClick={insertExampleWeek}>Visa fiktiv vecka 42 i planeringen</button>
-    </section>
+    {status && <section className="card compact-status-card" aria-live="polite"><p className="status">{status}</p></section>}
 
     <section className="card teacher-settings-card">
       <details className="teacher-settings-details">
