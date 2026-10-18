@@ -976,6 +976,16 @@ function TeacherApp({ session }) {
     }
   }
 
+  // Spara automatiskt enbart redan skapade planeringar som utkast.
+  // Publicerad elevversion påverkas inte förrän läraren väljer Publicera.
+  useEffect(() => {
+    if (!selectedId || simpleSetup || busy || !isDirty || teacherTab === 'new') return undefined
+    const timer = window.setTimeout(() => {
+      if (JSON.stringify(latestPlanRef.current) !== savedPlanRef.current) void save(false)
+    }, 1400)
+    return () => window.clearTimeout(timer)
+  }, [plan, selectedId, simpleSetup, busy, isDirty, teacherTab])
+
   async function unpublish(row) {
     if (busy) return
     setBusy(true)
