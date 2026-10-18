@@ -70,7 +70,7 @@ as $$
               then v.published_content::jsonb -> 'weeksData' else '[]'::jsonb end
           ) with ordinality as w(week, ordinality)
           where (w.week ->> 'weekStart') ~ '^\\d{4}-\\d{2}-\\d{2}$'
-            and (w.week ->> 'weekStart')::date <= (now() at time zone 'Europe/Stockholm')::date
+            and date_trunc('week', (w.week ->> 'weekStart')::date::timestamp)::date <= (now() at time zone 'Europe/Stockholm')::date
         ), '[]'::jsonb)
       )::text
     else v.published_content
