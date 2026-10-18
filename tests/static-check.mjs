@@ -302,8 +302,8 @@ assert.match(app, /function publicDemoWeek42\(\)/)
 assert.match(app, /\/elev\/demo-vecka-42/)
 assert.match(app, /setStudentPlan\(publicDemoWeek42\(\)\)/)
 
-assert.match(app, /orderedWeeks\.slice\(currentPage \* 9, \(currentPage \+ 1\) \* 9\)/)
-assert.match(app, /Nästa 9/)
+assert.match(app, /className="calendar-month-row"/)
+assert.match(app, /className="calendar-month-section"/)
 
 // Kollegdelning måste vara serververifierad och privata kopior får inte delas vidare.
 assert.match(app, /supabase\.rpc\('create_plan_share_invite'/)
@@ -323,3 +323,5 @@ assert.doesNotMatch(app, /<nav className="student-pager"/)
 assert.doesNotMatch(app, /<div className="a4-demo-controls">/)
 
 assert.match(app, /function ImportantDatesForWeek/)
+
+assert.match(css, /\.calendar-month-row\{[^}]*overflow-x:auto/)
