@@ -1230,7 +1230,7 @@ function TeacherApp({ session }) {
       <button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
     </div>}
 
-    {selectedId && teacherTab === "arsplan" && <div className="button-row" style={{ margin: "12px 0" }}><button type="button" className="primary" onClick={() => setCalendarOpen(open => !open)}>{calendarOpen ? "✕ Stäng kalendervy – visa lärarvy" : "▦ Kalendervy"}</button></div>}
+    {selectedId && teacherTab === "arsplan" && <div className="button-row" style={{ margin: "12px 0", justifyContent: "flex-end" }}><button type="button" className="primary" onClick={() => setCalendarOpen(open => !open)}>{calendarOpen ? "✕ Stäng" : "▦ Kalendervisning"}</button></div>}
     {selectedId && !calendarOpen && teacherTab !== "elevvy" && teacherTab !== "new" && <div className="expanded-weeks-inline">
     <section className="card">
       <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
