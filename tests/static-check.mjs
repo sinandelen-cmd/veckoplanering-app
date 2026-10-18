@@ -181,7 +181,7 @@ for (const plan of [
 ]) assert.deepEqual(nationalExamsForPlan(plan), [], 'Nationella prov får inte visas för fel planering')
 
 const sanitizeForStudentsRuntime = new Function(
-  'displayWeeks', 'makeWeeks', 'resourceInfo', 'validSchoolClosure',
+  'displayWeeks', 'makeWeeks', 'resourceInfo', 'validSchoolClosure', 'toIsoDate',
   extractFunction('sanitizeForStudents', 'function resourceInfo') + '; return sanitizeForStudents'
 )(
   plan => plan.weeksData,
@@ -193,7 +193,8 @@ const sanitizeForStudentsRuntime = new Function(
         ? { label: 'Webblänk' } : null
     } catch { return null }
   },
-  item => Boolean(item?.name && item?.startDate && item?.endDate && item.startDate <= item.endDate)
+  item => Boolean(item?.name && item?.startDate && item?.endDate && item.startDate <= item.endDate),
+  date => { const d = new Date(date); return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-') }
 )
 const studentFixture = {
   title: 'Testplan', subject: 'Matematik', entryType: 'lektion',
@@ -320,3 +321,6 @@ assert.match(app, /<ImportantDatesForWeek week=\{week\} plan=\{plan\}/)
 assert.match(app, /schoolClosures: Array\.isArray\(plan\?\.schoolClosures\)/)
 assert.doesNotMatch(app, /<nav className="student-pager"/)
 assert.doesNotMatch(app, /<div className="a4-demo-controls">/)
+
+assert.match(app, /function ImportantDatesForWeek/)
+assert.match(app, /if \(!\/\^\\d\{4\}-\\d\{2\}-\\d\{2\}\$\//)
