@@ -1570,3 +1570,11 @@ body { background: #fffaf2; color: var(--ink); }
 .planning-sidebar .sidebar-plan-delete { flex: 0 0 40px; width: 40px; min-height: 42px; padding: 7px; background: #fff0ef; color: #913f4b; border: 1px solid #e4b2b4; border-radius: 10px; cursor: pointer; }
 .planning-sidebar .sidebar-plan-delete:hover { background: #ffd9da; }
 .planning-sidebar .sidebar-plan-delete:focus-visible { outline: 3px solid #b75565; outline-offset: 2px; }
+
+/* One compact, expandable control for weekly student visibility and dates. */
+.calendar-smart-visibility { border: 1px solid #e4c2a0; border-radius: 12px; background: #fff9e9; margin: 12px 0 18px; padding: 10px 14px; }
+.calendar-smart-visibility summary { cursor: pointer; font-weight: 800; color: #79364b; padding: 5px 0; }
+.calendar-smart-visibility summary:focus-visible { outline: 3px solid #b75565; outline-offset: 3px; }
+.calendar-smart-visibility-options { display: grid; gap: 12px; margin-top: 14px; }
+.calendar-smart-visibility-options > label:not(.automatic-release-toggle) { display: grid; gap: 6px; }
+.calendar-smart-visibility-options input[type="date"] { max-width: 100%; }
