@@ -1661,3 +1661,14 @@ body { background: #fffaf2; color: var(--ink); }
 .topic-grid .topic-fixed-heading h5{margin:0}
 .topic-grid .remove-topic-column{font-size:12px!important;font-weight:700!important;white-space:nowrap;padding:6px 9px;border-radius:8px}
 .topic-grid .restore-topic-column{align-self:start;min-height:42px;border:1px dashed #a8c8bf;border-radius:10px}
+
+/* Final lesson-editor typography: identical prominence to day/lesson heading. */
+.topic .topic-grid .topic-name textarea,
+.topic .topic-grid .topic-name-display,
+.topic .topic-grid .topic-cell input,
+.topic .topic-grid .topic-cell span,
+.topic .topic-grid .topic-fixed-heading h5{font-family:inherit!important;font-size:18px!important;font-weight:900!important;line-height:1.4!important;color:#56353f!important}
+.topic .topic-grid .topic-name textarea{font-size:18px!important;font-weight:900!important;min-height:78px}
+.topic-grid.without-pages:not(.without-assignments){grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.topic-grid.without-assignments:not(.without-pages){grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.topic-grid.without-pages.without-assignments{grid-template-columns:minmax(0,1fr)}
