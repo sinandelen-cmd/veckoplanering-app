@@ -1067,7 +1067,7 @@ function TeacherApp({ session }) {
       </div>
       {shareMessage && <p role="status" className="share-feedback">{shareMessage}</p>}
     </section>}
-    <div className="planning-context"><span aria-live="polite">{busy ? 'Sparar…' : isDirty ? 'Osparade ändringar' : selectedId ? 'Sparad' : 'Inte sparad'}</span></div>
+    <div className="planning-context"><span className={`planning-save-state ${busy ? "saving" : isDirty ? "unsaved" : selectedId ? "saved" : "new"}`} aria-live="polite"><span aria-hidden="true">{busy ? "◌" : isDirty ? "●" : selectedId ? "✓" : "○"}</span> {busy ? "Sparar ändringarna…" : isDirty ? "Osparade ändringar – spara innan du lämnar sidan" : selectedId ? "Alla ändringar sparade" : "Ny planering – inte sparad"}</span></div>
 
     {(isDirty || busy) && <div className="quick-save-bar" role="region" aria-label="Snabbspara årsplanering">
       <span aria-live="polite">{busy ? "Sparar…" : "Osparade ändringar"}</span>
@@ -1276,7 +1276,7 @@ function TeacherApp({ session }) {
       </div>}
     </section>
 
-    <div className="week-overview-toolbar" aria-label="Årskalender och zoom"><strong>Veckor i planeringen</strong><button type="button" className="primary" onClick={() => {
+    <div className="week-overview-toolbar" aria-label="Årskalender och zoom"><strong>Veckor i planeringen <span className="week-count-badge">{weeks.length} {weeks.length === 1 ? "vecka" : "veckor"}</span></strong><button type="button" className="primary" onClick={() => {
         setCalendarOpen(true)
         window.setTimeout(() => document.getElementById('teacher-year-calendar')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
       }}>Visa årskalender och zooma</button></div>
