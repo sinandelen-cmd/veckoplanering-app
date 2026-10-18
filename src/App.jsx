@@ -18,6 +18,16 @@ const WEEK_COLORS = ['#fff0d5', '#fce0e8', '#e5e3ff', '#dff4e6', '#dceefb', '#fc
 const DAY_COLORS = ['#fce1e8', '#fff0ca', '#e1e8ff', '#def2e5', '#e6e0fb', '#ffe8d9', '#dceff2']
 function weekColor(weekStart) { const d = new Date(weekStart + 'T12:00:00'); return WEEK_COLORS[Math.floor((d.getDate() - 1) / 7) % WEEK_COLORS.length] }
 
+function weekMonthLabel(iso) {
+ const d = new Date(iso + 'T12:00:00')
+ const y = d.getFullYear(), m = d.getMonth()
+ const first = new Date(y,m,1), last = new Date(y,m+1,0)
+ const monday = date => { const x = new Date(date); x.setDate(x.getDate() - ((x.getDay()+6)%7)); return x }
+ const firstWeek = calendarWeekNumber(toIsoDate(monday(first)))
+ const lastWeek = calendarWeekNumber(toIsoDate(monday(last)))
+ const name = new Intl.DateTimeFormat('sv-SE',{month:'long'}).format(d)
+ return name[0].toUpperCase()+name.slice(1)+' V'+firstWeek+'–V'+lastWeek
+}
 const WEEKDAYS = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag']
 
 function toIsoDate(date) {
@@ -591,7 +601,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
         <article id={"student-week-" + week.weekStart} className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
 
         <div className="week-top student-week-top">
-          <div className="student-week-identity"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{studentWeekDateRange(week.weekStart)}</span></div>
+          <div className="student-week-identity"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span className="calendar-month-corner calendar-tile-month">{weekMonthLabel(week.weekStart)}</span><span>{studentWeekDateRange(week.weekStart)}</span></div>
           {printPage !== null && studentMonthInfo(week.weekStart) && <div className="student-month-info" style={{ backgroundColor: studentMonthInfo(week.weekStart).color }}><strong>{studentMonthInfo(week.weekStart).name}</strong><span>{studentMonthInfo(week.weekStart).weeks}</span></div>}
         </div>
         {!/^Vecka\s+\d+$/i.test(week.title || '') && week.title?.trim() && <h3>{week.title}</h3>}
@@ -656,7 +666,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
   }
   return <section className="calendar-overlay" aria-label="Årsplanering månad för månad">
     <div className="calendar-top">
-      <div><div className="calendar-week-heading-row"><h2>{selectedWeek ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : `Årsöversikt · månad för månad`}</h2>{selectedWeek && <span className="calendar-heading-visibility">{selectedWeek.hidden ? "🙈 Dold för elever" : "👁️ Synlig för elever"}</span>}</div><p>{selectedWeek ? (selectedWeek.chapter || (/^Vecka\s+\d+$/i.test(selectedWeek.title || '') ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : selectedWeek.title) || 'Din planering') : 'Välj en vecka för att zooma in och se dina dagar eller lektioner.'}</p></div>
+      <div><div className="calendar-week-heading-row"><h2>{selectedWeek ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : `Årsöversikt · månad för månad`}</h2>{selectedWeek && <span className="calendar-month-corner">{weekMonthLabel(selectedWeek.weekStart)}</span>}{selectedWeek && <span className="calendar-heading-visibility">{selectedWeek.hidden ? "🙈 Dold för elever" : "👁️ Synlig för elever"}</span>}</div><p>{selectedWeek ? (selectedWeek.chapter || (/^Vecka\s+\d+$/i.test(selectedWeek.title || '') ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : selectedWeek.title) || 'Din planering') : 'Välj en vecka för att zooma in och se dina dagar eller lektioner.'}</p></div>
       <div className="calendar-zoom-controls">{selectedWeek && <button type="button" className="secondary calendar-overview-button" onClick={back}>← Tillbaka</button>}<button type="button" className="secondary calendar-close-button" onClick={onClose}>✕ Stäng</button></div>
     </div>
     {selectedWeek ? <div className="calendar-week-detail" style={{ backgroundColor: weekColor(selectedWeek.weekStart) }}>
