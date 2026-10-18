@@ -1713,3 +1713,8 @@ body { background: #fffaf2; color: var(--ink); }
 .calendar-month-row>.calendar-week-wrapper{min-width:0}
 @media(max-width:850px){.calendar-month-row{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media(max-width:520px){.calendar-month-row{grid-template-columns:minmax(0,1fr)!important}}
+
+/* Tydlig knapp för att skapa ytterligare veckor i lärarvyn. */
+.expanded-weeks-inline .week-add-actions{margin:22px 0;justify-content:center}
+.expanded-weeks-inline .week-add-actions button{background:#c7e9f8!important;color:#12465f!important;border:2px solid #5a9cb9!important;border-radius:14px!important;font-size:1.2rem!important;font-weight:800!important;padding:16px 30px!important;min-height:60px;box-shadow:0 3px 0 #8bbfd4}
+.expanded-weeks-inline .week-add-actions button:hover{background:#aee1f4!important}
