@@ -1620,3 +1620,7 @@ body { background: #fffaf2; color: var(--ink); }
 .calendar-month-section .calendar-week-wrapper{width:100%;min-width:0;max-width:none;box-sizing:border-box}
 .calendar-month-section .calendar-week-tile{min-width:0;overflow-wrap:anywhere}
 @media(max-width:700px){.calendar-month-section{padding:8px}.calendar-month-section .calendar-month-row{gap:3px}.calendar-month-section .calendar-week-wrapper{padding:4px 2px 4px 27px}.calendar-month-section .calendar-week-eye{width:23px;left:2px}.calendar-month-section .calendar-week-tile strong{font-size:.85rem}.calendar-month-section .calendar-delete-week span{display:none}}
+
+/* Calendar overview: each complete month occupies its own full-width row. */
+.calendar-overlay .calendar-months{display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-auto-flow:row!important;align-items:stretch;width:100%;gap:18px}
+.calendar-overlay .calendar-months>.calendar-month-section{grid-column:1 / -1!important;display:block;width:100%;max-width:none;min-width:0;margin:0;box-sizing:border-box}
