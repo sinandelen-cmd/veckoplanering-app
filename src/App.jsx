@@ -576,7 +576,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     {printPage === null && jumpStudentWeek && <nav className="student-week-shortcut" aria-label="Hitta aktuell planering">
       <a href={'#student-week-' + jumpStudentWeek.weekStart}>{currentStudentWeek ? '📍 Gå till den här veckan' : '📍 Gå till nästa planerade vecka'} · vecka {calendarWeekNumber(jumpStudentWeek.weekStart) ?? jumpStudentWeek.weekNumber} ↓</a>
     </nav>}
-    {studentWeeks.length === 0 && <p className="card empty" role="status">Det finns inga synliga veckor i den här planeringen ännu.</p>}
+    {studentWeeks.length === 0 && <p className="card empty" role="status">{plan.autoReleaseWeeks ? "Ingen vecka är publicerad för elever ännu. Nästa vecka visas automatiskt när dess måndag börjar." : "Det finns inga synliga veckor i den här planeringen ännu."}</p>}
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
       {visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
         {week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
