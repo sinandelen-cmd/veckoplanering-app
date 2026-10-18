@@ -291,7 +291,7 @@ assert.match(app, /archived: false, published: false/)
 assert.match(app, /Arkiv \(/)
 assert.match(app, /async function setArchived\(row, archived\)/)
 
-assert.match(app, /Visa fiktiv vecka 42 i planeringen/)
+assert.match(app, /function openExample\(/)
 assert.match(app, /startDate: '2026-10-12', weeks: 1/)
 assert.match(app, /setSelectedId\(null\)/)
 
