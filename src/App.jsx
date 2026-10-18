@@ -666,6 +666,26 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
     if (selectedLessonIndex !== null) setSelectedLessonIndex(null)
     else setSelectedWeekIndex(null)
   }
+  if (embedded) return <section className="calendar-inline-weeks" aria-label="Alla skapade veckor och lektioner">
+    {orderedWeeks.map(week => {
+      const originalIndex = weeks.findIndex(item => item.weekStart === week.weekStart)
+      const weekNo = calendarWeekNumber(week.weekStart) ?? week.weekNumber
+      return <article key={week.weekStart} className="calendar-inline-week" style={{ backgroundColor: weekColor(week.weekStart) }}>
+        <div className="calendar-inline-week-heading">
+          <label className="calendar-visibility-large-toggle" title={week.hidden ? 'Visa veckan för elever' : 'Dölj veckan för elever'}>
+            <input type="checkbox" checked={!week.hidden} aria-label={`Visa vecka ${weekNo} för elever`} onChange={event => onUpdateWeek?.(originalIndex, { hidden: !event.target.checked })} />
+          </label>
+          <h2>Vecka {weekNo}</h2>
+          <span className="calendar-month-corner">{weekMonthLabel(week.weekStart)}</span>
+          <span className="calendar-inline-date">{formatDate(week.weekStart)}</span>
+          <button type="button" className="calendar-delete-week danger" disabled={busy || orderedWeeks.length <= 1} onClick={() => onDeleteWeek?.(week.weekStart)}>🗑️ Radera vecka</button>
+        </div>
+        <LessonDetails week={week} onChange={changes => onUpdateWeek?.(originalIndex, changes)} entryType={entryType} />
+      </article>
+    })}
+    <div className="calendar-add-week-actions"><button type="button" className="primary" disabled={busy || orderedWeeks.length >= 52} onClick={() => onAddWeek?.()}>+ Lägg till ny vecka</button><button type="button" className="secondary" onClick={onOpen}>Visa årsöversikt</button><button type="button" className="calendar-save-button" disabled={busy || !isDirty} onClick={onSave}>{busy ? 'Sparar...' : 'Spara ändringar'}</button></div>
+    {saveStatus && <p role="status">{saveStatus}</p>}
+  </section>
   return <section className={embedded ? "calendar-overlay calendar-embedded" : "calendar-overlay"} aria-label="Årsplanering månad för månad">
     <div className="calendar-top">
       <div><div className="calendar-week-heading-row">{selectedWeek && <label className="calendar-visibility-large-toggle" title={selectedWeek.hidden ? "Visa veckan för elever" : "Dölj veckan för elever"}><input type="checkbox" aria-label={`Visa vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber} för elever`} checked={!selectedWeek.hidden} onChange={e => editSelectedWeek({ hidden: !e.target.checked })} /></label>}<h2>{selectedWeek ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : `Årsöversikt · månad för månad`}</h2>{selectedWeek && <span className="calendar-month-corner">{weekMonthLabel(selectedWeek.weekStart)}</span>}</div><p>{selectedWeek ? (selectedWeek.chapter || (!/^Vecka\s+\d+$/i.test(selectedWeek.title || "") ? selectedWeek.title : "") || "") : "Välj en vecka för att zooma in och se dina dagar eller lektioner."}</p></div>
