@@ -1465,7 +1465,7 @@ function TeacherApp({ session }) {
         <button type="button" className={showArchive ? 'primary' : 'secondary'} aria-pressed={showArchive} onClick={() => setShowArchive(true)}>Arkiv ({plans.filter(row => parseContent(row.content)?.archived).length})</button>
       </div>
       {!plans.some(row => Boolean(parseContent(row.content)?.archived) === showArchive) ? <p className="muted">{showArchive ? 'Arkivet är tomt.' : 'Du har inga aktiva årsplaneringar ännu.'}</p> : <div className="library-list">
-        {plans.filter(row => Boolean(parseContent(row.content)?.archived) === showArchive).map(row => <article className="library-item" key={row.id}>
+        {plans.filter(row => Boolean(parseContent(row.content)?.archived) === showArchive).map(row => <article className="library-item" key={row.id} style={{ '--item-accent': planTheme(parseContent(row.content), row.id).accent, '--item-light': planTheme(parseContent(row.content), row.id).light, '--item-ink': planTheme(parseContent(row.content), row.id).ink }}>
           <div><strong className="library-title">{row.title}</strong><p className="muted">{[row.subject, row.class_name, row.school_year].filter(Boolean).join(' · ')}</p></div>
           <div className="button-row">
             <span className={`status-badge ${row.published ? 'published' : 'draft'}`}>{row.published ? 'Publicerad' : 'Utkast'}</span>
