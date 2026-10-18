@@ -695,7 +695,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
           return groups
         }, new Map()).values()).map(group => <section className="calendar-month-section" key={group.date.toISOString()} style={{ backgroundColor: MONTH_PASTELS[group.date.getMonth()] }}>
           <h3>{new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeric' }).format(group.date)}</h3>
-          <div className="calendar-month-row">
+          <div className="calendar-month-row" style={{ "--month-week-count": group.weeks.length }}>
             {group.weeks.map(({ week, index }) => {
               const date = new Date(week.weekStart + 'T12:00:00')
               const topics = (week.lessons || []).flatMap(lesson => (lesson.topics || []).map(topic => topic.name).filter(Boolean))
