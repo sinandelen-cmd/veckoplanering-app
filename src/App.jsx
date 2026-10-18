@@ -571,7 +571,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     .filter(week => { if (!week || week.hidden) return false; const today = toIsoDate(new Date()); if (week.autoVisibility === true) return today >= week.weekStart && today < addWeeks(week.weekStart, 2); if (week.publishDate && today < week.publishDate) return false; if (week.hideDate && today >= week.hideDate) return false; return true })
     .sort((a, b) => weekContentScore(b) - weekContentScore(a))
     .filter((week, index, weeks) => weeks.findIndex(other => (other.weekStart || `number-${other.weekNumber}`) === (week.weekStart || `number-${week.weekNumber}`)) === index)
-    .sort((a, b) => (b.weekStart || '').localeCompare(a.weekStart || '')) : []
+    .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || '')) : []
   const currentStudentWeekStart = mondayOf(new Date())
   const currentStudentWeek = studentWeeks.find(week => week.weekStart === currentStudentWeekStart)
   const upcomingStudentWeek = [...studentWeeks].reverse().find(week => week.weekStart >= currentStudentWeekStart)
@@ -607,7 +607,8 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
         </div>
         {!/^Vecka\s+\d+$/i.test(week.title || '') && week.title?.trim() && <h3>{week.title}</h3>}
         <div className="week-content">{week.content || (!week.pages?.length && !week.assignments?.length && !week.links?.length && !week.lessons?.some(lesson => lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.length || topic.assignments?.length || topic.links?.length)) ? 'Ingen planering angiven ännu.' : '')}</div>
-        <ImportantDatesForWeek week={week} plan={plan} />\n        <LessonDetails week={week} entryType={plan.entryType || 'lektion'} lessonDisplay={plan.lessonDisplay || 'bara-lektion'} />
+        <ImportantDatesForWeek week={week} plan={plan} />
+        <LessonDetails week={week} entryType={plan.entryType || 'lektion'} lessonDisplay={plan.lessonDisplay || 'bara-lektion'} />
         <WeekDetails week={week} />
       </article></div>)}
     </section>
@@ -1174,13 +1175,13 @@ function TeacherApp({ session }) {
   return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}`}><Navigation active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={id => { setTeacherTab(id === 'mina' ? 'arsplan' : id); if (id === 'mina' || id === 'arsplan') setCalendarOpen(true); if (id === 'elevvy') setPreviewStudents(true) }} onOpenExample={openExample} onOpenArchive={() => { setShowArchive(true); setTeacherTab('mina') }} onNew={createPlan} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} /><main className="shell" id="lararvy">
     <header className="topbar">
       <div><p className="eyebrow">{teacherTab === "new" ? "NY PLANERING" : teacherTab === "mina" ? "MINA PLANERINGAR" : teacherTab === "elevvy" ? "ELEVVY" : "LÄRARVY"}</p><h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Mina planeringar" : (plan.title?.trim() || "Ny planering")}</h1><p className="muted">{session.user.email}</p></div>
-      <div className="topbar-share-actions">
+      {teacherTab !== "elevvy" && <div className="topbar-share-actions">
         <button type="button" className="secondary share-settings-trigger" aria-expanded={shareOpen} onClick={() => { setShareOpen(open => !open); setShareToken(''); setShareMessage('') }} title="Klona och dela med kollega">⚙ Klona / dela</button>
         <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
-      </div>
+      </div>}
     </header>
 
-    {shareOpen && <section className="card colleague-share-panel" aria-label="Klona och dela med kollega">
+    {teacherTab !== "elevvy" && shareOpen && <section className="card colleague-share-panel" aria-label="Klona och dela med kollega">
       <div className="share-panel-heading"><div><h2>Klona och dela</h2><p className="muted">Kollegan får en egen, privat kopia. Den kan inte delas vidare via Årsplanering.</p></div><button type="button" className="secondary" onClick={() => setShareOpen(false)}>Stäng</button></div>
       <div className="colleague-share-grid">
         <form onSubmit={shareWithColleague}>
@@ -1464,7 +1465,7 @@ function TeacherApp({ session }) {
 
     </div>
     <div className="teacher-tab-panel" id="panel-elevvy" role="tabpanel" aria-labelledby="tab-elevvy" hidden={teacherTab !== "elevvy"}>
-    {previewStudents && <section className="card preview-panel" id="elevvy"><h2>Förhandsvisning för elever</h2><p className="muted">Detta är endast en förhandsvisning. Inget publiceras.</p><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
+    {previewStudents && <section className="student-preview-clean" id="elevvy"><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
 
     </div>
     <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
@@ -1627,7 +1628,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
     changeLessons(normalizeLessonOrder(next))
   }
   return <div className="lessons">
-    {lessons.map((lesson, i) => ({ lesson, i })).filter(({ lesson }) => (editable || lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || ''))))).map(({ lesson, i }) => <section className="lesson" key={i}>
+    {lessons.map((lesson, i) => ({ lesson, i })).sort((a, b) => editable ? a.i - b.i : (WEEKDAYS.indexOf(a.lesson.day || a.lesson.name) + 5) % 5 - (WEEKDAYS.indexOf(b.lesson.day || b.lesson.name) + 5) % 5).map(({ lesson, i }) => <section className="lesson" key={i}>
       <div className="lesson-heading">
         {editable ? <div className="lesson-edit-heading" style={{ '--lesson-day-color': DAY_COLORS[Math.max(0, WEEKDAYS.indexOf(entryType === 'dag' ? lesson.name : lesson.day)) % DAY_COLORS.length] }}>
           <span className="lesson-number-inline">{entryType === 'dag' ? (lesson.name || WEEKDAYS[i]) : (lesson.day || 'Välj dag')} · {entryType === 'dag' ? `Lektion ${i + 1}` : `Lektion ${i + 1}`}{lessonDayDate(week.weekStart, entryType === 'dag' ? lesson.name : lesson.day) ? ` · ${lessonDayDate(week.weekStart, entryType === 'dag' ? lesson.name : lesson.day)}` : ''}</span>
