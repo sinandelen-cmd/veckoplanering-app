@@ -13,7 +13,8 @@ export default function Navigation({ active = 'mina', onNavigate, onNew, plans =
       <button type="button" className={(active === 'arsplan' || active === 'redigera') && !calendarOpen ? 'top-navigation-link active' : 'top-navigation-link'} role="tab" id="tab-lararvy" aria-selected={(active === 'arsplan' || active === 'redigera') && !calendarOpen} aria-controls="panel-lararvy" onClick={() => onNavigate('arsplan')}><span aria-hidden="true">▦</span> Lärarvy</button>
 
       <button type="button" className={active === 'elevvy' ? 'top-navigation-link active' : 'top-navigation-link'} role="tab" id="tab-elevvy" aria-selected={active === 'elevvy'} aria-controls="panel-elevvy" onClick={() => onNavigate('elevvy')}><span aria-hidden="true">♧</span> Elevvy</button>
-      {selectedId && active !== "new" && active !== "elevvy" && <button type="button" className="top-calendar" onClick={onToggleCalendar} aria-expanded={calendarOpen} style={{ marginLeft: "auto", alignSelf: "center", marginBottom: "6px", background: "#fffaf0", border: "1px solid #d5a43c", color: "#75434a", fontWeight: 800 }}>{calendarOpen ? "✕ Stäng" : "▦ Kalendervy"}</button>}
+      {selectedId && active !== "new" && <button type="button" className={calendarOpen && active !== "elevvy" ? "top-navigation-link active" : "top-navigation-link"} role="tab" aria-selected={calendarOpen && active !== "elevvy"} onClick={onToggleCalendar}><span aria-hidden="true">▦</span> Kalendervy</button>}
+      {active === "elevvy" && <button type="button" className="top-navigation-close" onClick={() => onNavigate("arsplan")} style={{ marginLeft:"auto", alignSelf:"center", marginBottom:6 }}>✕ Stäng</button>}
     </nav>
   </>
 }
