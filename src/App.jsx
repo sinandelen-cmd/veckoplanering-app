@@ -1023,7 +1023,7 @@ function TeacherApp({ session }) {
           <label>Antal veckor<input type="number" min="1" max="60" value={plan.weeks} onChange={event => setPlan(p => ({ ...p, weeks: Math.max(1, Math.min(60, Number(event.target.value) || 1)), weeksData: [] }))} /></label>
         </div>
         {simpleMore && <div className="simple-extra-fields"><h3>Fler uppgifter</h3><div className="form-grid"><label>Skolform<input value={plan.schoolForm || ""} onChange={e => setPlan(p => ({ ...p, schoolForm: e.target.value }))} placeholder="Grundskola" /></label><label>Årskurs<input value={plan.grade || ""} onChange={e => setPlan(p => ({ ...p, grade: e.target.value }))} placeholder="6" /></label><label>Lektioner per vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 1)) }))} /></label><label>Kommun<input value={plan.municipality || ""} onChange={e => setPlan(p => ({ ...p, municipality: e.target.value }))} /></label></div></div>}
-        <div className="button-row"><button type="submit" className="primary" disabled={busy}>{busy ? 'Skapar…' : 'Skapa planering'}</button><button type="button" className="secondary" onClick={() => setSimpleMore(v => !v)}>{simpleMore ? "Dölj fler inställningar" : "Fler inställningar"</button></div>
+        <div className="button-row"><button type="submit" className="primary" disabled={busy}>{busy ? 'Skapar…' : 'Skapa planering'}</button><button type="button" className="secondary" onClick={() => setSimpleMore(v => !v)}>{simpleMore ? "Dölj fler inställningar" : "Fler inställningar"}</button></div>
       </form>
       {status && <p className="status" role="status">{status}</p>}
     </section>}
@@ -1037,6 +1037,7 @@ function TeacherApp({ session }) {
     </section>
     {status && <section className="card compact-status-card" aria-live="polite"><p className="status">{status}</p></section>}
 
+    <div className="unified-planning-form" aria-label="Planeringens övriga uppgifter">
     <section className="card teacher-settings-card">
       <details className="teacher-settings-details">
         <summary><strong>Grunduppgifter och inställningar</strong><span>Ändra namn, ämne, skolform, läsår och visningsalternativ</span></summary>
@@ -1157,6 +1158,7 @@ function TeacherApp({ session }) {
         
       </div>
     </section>
+    </div>
 
     </div>
     <div className="teacher-tab-panel" hidden={teacherTab !== "arsplan"}>
