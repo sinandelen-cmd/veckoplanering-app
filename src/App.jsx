@@ -633,6 +633,7 @@ function TeacherApp({ session }) {
   const [plans, setPlans] = useState([])
   const [showArchive, setShowArchive] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [simpleSetup, setSimpleSetup] = useState(false)
   const [teacherTab, setTeacherTab] = useState("arsplan")
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
@@ -789,6 +790,7 @@ function TeacherApp({ session }) {
       const { data, error } = await query
       if (error) setStatus(`Kunde inte spara: ${error.message}`)
       else {
+        setSimpleSetup(false)
         setSelectedId(data.id)
         try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(data.id)) } catch { /* Lagring kan vara blockerad */ }
         const refreshed = await loadPlans()
@@ -860,7 +862,7 @@ function TeacherApp({ session }) {
     if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
     try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(row.id)) } catch { /* Lagring kan vara blockerad */ }
     const openedPlan = planFromRow(row)
-    setSelectedId(row.id); savedPlanRef.current = JSON.stringify(openedPlan); setSavedRevision(revision => revision + 1); setPlan(openedPlan); setTeacherTab('arsplan'); setCalendarOpen(false); setPreviewStudents(false); setA4Demo(false); setStatus('Planeringen är öppnad.'); window.scrollTo({ top: 0, behavior: 'smooth' })
+    setSimpleSetup(false); setSelectedId(row.id); savedPlanRef.current = JSON.stringify(openedPlan); setSavedRevision(revision => revision + 1); setPlan(openedPlan); setTeacherTab('arsplan'); setCalendarOpen(false); setPreviewStudents(false); setA4Demo(false); setStatus('Planeringen är öppnad.'); window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function clonePlan(row) {
@@ -970,6 +972,7 @@ function TeacherApp({ session }) {
         }))
       }))
     }
+    setSimpleSetup(false)
     setSelectedId(null)
     setPlan(example)
     savedPlanRef.current = JSON.stringify(example)
@@ -985,6 +988,7 @@ function TeacherApp({ session }) {
     if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
     const fresh = emptyPlan()
     try { window.sessionStorage.removeItem(`arsplanering-last-open-${session.user.id}`) } catch { /* Lagring kan vara blockerad */ }
+    setSimpleSetup(true)
     setPlan(fresh); setSelectedId(null); savedPlanRef.current = JSON.stringify(fresh)
     setSavedRevision(revision => revision + 1)
     setTeacherTab('arsplan'); setCalendarOpen(false); setPreviewStudents(false); setA4Demo(false)
@@ -1003,7 +1007,23 @@ function TeacherApp({ session }) {
       <button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
     </div>}
 
-    <div className="teacher-tab-panel" id="panel-lararvy" role="tabpanel" aria-labelledby="tab-lararvy" hidden={teacherTab !== "arsplan"}>
+    <div className={`teacher-tab-panel ${simpleSetup ? "simple-setup-active" : ""}`} id="panel-lararvy" role="tabpanel" aria-labelledby="tab-lararvy" hidden={teacherTab !== "arsplan"}>
+    {simpleSetup && <section className="card simple-setup-card" aria-label="Skapa ny planering">
+      <h2>Skapa en ny planering</h2>
+      <p className="muted">Fyll i uppgifterna och tryck på Skapa planering. Du kan lägga till lektioner och material efteråt.</p>
+      <form onSubmit={event => { event.preventDefault(); save(false) }}>
+        <div className="form-grid">
+          <label>Planeringens namn<input required value={plan.title} onChange={event => setPlan(p => ({ ...p, title: event.target.value }))} placeholder="Matematik höstterminen" /></label>
+          <label>Ämne<input required value={plan.subject} onChange={event => setPlan(p => ({ ...p, subject: event.target.value }))} placeholder="Matematik" /></label>
+          <label>Klass / årskurs<input value={plan.className} onChange={event => setPlan(p => ({ ...p, className: event.target.value }))} placeholder="6A" /></label>
+          <label>Läsår<input value={plan.schoolYear} onChange={event => setPlan(p => ({ ...p, schoolYear: event.target.value }))} placeholder="2026–2027" /></label>
+          <label>Startdatum<input type="date" required value={plan.startDate} onChange={event => { if (event.target.value) setPlan(p => ({ ...p, startDate: mondayOf(`${event.target.value}T12:00:00`), weeksData: [] })) }} /></label>
+          <label>Antal veckor<input type="number" min="1" max="60" value={plan.weeks} onChange={event => setPlan(p => ({ ...p, weeks: Math.max(1, Math.min(60, Number(event.target.value) || 1)), weeksData: [] }))} /></label>
+        </div>
+        <div className="button-row"><button type="submit" className="primary" disabled={busy}>{busy ? 'Skapar…' : 'Skapa planering'}</button><button type="button" className="secondary" onClick={() => setSimpleSetup(false)}>Fler inställningar</button></div>
+      </form>
+      {status && <p className="status" role="status">{status}</p>}
+    </section>}
     <section className="card teacher-calendar-actions" aria-label="Årskalender och zoom">
       <h2>Årskalender – {plan.title?.trim() || 'Ny planering'}</h2>
       <p className="muted">Visa hela planeringen i en översikt med 3 × 3 veckor. Tryck på en vecka för att zooma in och se lektionerna.</p>
