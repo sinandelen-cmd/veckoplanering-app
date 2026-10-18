@@ -1551,3 +1551,8 @@ body { background: #fffaf2; color: var(--ink); }
 .publication-readiness{border:1px solid #e6d7f1;background:#fffafd}.publication-readiness h3{margin:0 0 8px}.publication-readiness ul{margin:8px 0;padding-left:24px}.publication-readiness li{margin:4px 0}.publication-ready{font-weight:700;color:#235d46}.student-week-shortcut{margin:14px 0 20px}.student-week-shortcut a{display:inline-flex;align-items:center;min-height:44px;padding:10px 17px;border-radius:14px;background:#fff0b9;color:#4c3656;font-weight:800;text-decoration:none;border:1px solid #e9d48e}.student-week-shortcut a:hover,.student-week-shortcut a:focus-visible{background:#ffe69c;text-decoration:underline}.student-week-card{scroll-margin-top:18px}.student-week-card:target{outline:3px solid #e6bd64;outline-offset:3px}
 
 .student-important-dates h4{margin:0 0 10px;font-size:1rem;font-weight:850;color:#493653}.student-important-date{line-height:1.5}.student-important-date strong{min-width:115px}.publication-readiness{line-height:1.5}.publication-readiness .muted{margin-bottom:0}
+
+/* Keep the automatic week-release checkbox aligned with its label on all screens. */
+.automatic-release-toggle { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.automatic-release-toggle input[type="checkbox"] { width: 22px; height: 22px; min-width: 22px; margin: 0; padding: 0; flex: 0 0 22px; accent-color: #b75565; cursor: pointer; }
+.automatic-release-toggle:focus-within { outline: 2px solid #b75565; outline-offset: 4px; border-radius: 4px; }
