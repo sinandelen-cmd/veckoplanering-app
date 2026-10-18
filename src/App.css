@@ -1417,3 +1417,11 @@ body { background: #fffaf2; color: var(--ink); }
 .calendar-heading-visibility input[type="checkbox"] { width:34px; height:34px; min-width:34px; accent-color:#b75565; cursor:pointer; }
 .calendar-heading-visibility:has(input:not(:checked)) { background:#fff0f0; border-color:#df9ca4; }
 @media(max-width:650px) { .calendar-heading-visibility { width:auto; max-width:100%; } }
+
+.topic-name textarea { width:100%; min-height:72px; height:auto; overflow:visible; resize:vertical; white-space:pre-wrap; overflow-wrap:anywhere; box-sizing:border-box; line-height:1.5; }
+.topic-name-display { display:block; white-space:pre-wrap; overflow-wrap:anywhere; }
+.topic-column,.topic-cell { min-width:0; }
+.topic-cell { display:flex; align-items:center; gap:4px; }
+.topic-cell input { flex:1 1 auto; width:100%; min-width:0; box-sizing:border-box; white-space:nowrap; font-variant-numeric:tabular-nums; padding:8px 4px; }
+.topic-cell .remove-small { flex:0 0 auto; }
+.topic-cell span { white-space:nowrap; font-variant-numeric:tabular-nums; }
