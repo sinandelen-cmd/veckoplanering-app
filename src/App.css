@@ -1578,3 +1578,7 @@ body { background: #fffaf2; color: var(--ink); }
 .calendar-smart-visibility-options { display: grid; gap: 12px; margin-top: 14px; }
 .calendar-smart-visibility-options > label:not(.automatic-release-toggle) { display: grid; gap: 6px; }
 .calendar-smart-visibility-options input[type="date"] { max-width: 100%; }
+
+/* Prominent single-line day · lesson · date heading, styled like a pastel moment card. */
+.lesson-edit-heading { display: flex; align-items: center; width: 100%; min-width: 0; }
+.lesson-edit-heading .lesson-number-inline { display: block; box-sizing: border-box; width: 100%; padding: 15px 18px; border-radius: 13px; background: #d9f4f0; border: 2px solid #a8dcd5; color: #215b59; font-size: clamp(18px, 2vw, 23px); font-weight: 800; line-height: 1.4; overflow-wrap: anywhere; }
