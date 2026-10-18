@@ -1556,3 +1556,10 @@ body { background: #fffaf2; color: var(--ink); }
 .automatic-release-toggle { display: flex; align-items: center; gap: 12px; cursor: pointer; }
 .automatic-release-toggle input[type="checkbox"] { width: 22px; height: 22px; min-width: 22px; margin: 0; padding: 0; flex: 0 0 22px; accent-color: #b75565; cursor: pointer; }
 .automatic-release-toggle:focus-within { outline: 2px solid #b75565; outline-offset: 4px; border-radius: 4px; }
+
+/* Each saved planning has its own recognizable pastel color, including the library. */
+.planning-sidebar .sidebar-plan:not(.sidebar-new) { background: var(--item-light, #fffdf7) !important; color: var(--item-ink, #713f45) !important; border: 2px solid var(--item-accent, #c78e9c) !important; border-left-width: 8px !important; }
+.planning-sidebar .sidebar-plan:not(.sidebar-new):hover { filter: brightness(.97); }
+.planning-sidebar .sidebar-plan:not(.sidebar-new).selected { box-shadow: inset 0 0 0 2px var(--item-accent, #c78e9c); font-weight: 800; }
+.library-item[style] { background: var(--item-light, #fffdf7) !important; border-left: 8px solid var(--item-accent, #c78e9c) !important; }
+.library-item[style] .library-title { color: var(--item-ink, #713f45); }
