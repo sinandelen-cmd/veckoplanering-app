@@ -1409,3 +1409,11 @@ body { background: #fffaf2; color: var(--ink); }
 .week-heading-visibility:has(input:not(:checked)) { background:#fff0ef; border-color:#e4b2b4; }
 .week-heading-visibility:focus-within { outline:3px solid #e9bf71; outline-offset:2px; }
 @media(max-width:650px) { .week-heading-visibility { width:100%; box-sizing:border-box; } }
+
+/* Stor och lättillgänglig elevsynlighet intill Vecka-rubriken i kalenderns zoomläge. */
+.calendar-week-heading-row { display:flex; align-items:center; flex-wrap:wrap; gap:14px; }
+.calendar-week-heading-row h2 { margin:0; }
+.calendar-heading-visibility { display:inline-flex; align-items:center; gap:12px; min-height:52px; padding:10px 16px; font-size:1rem; background:#fff2c8; border:2px solid #d9b78b; border-radius:12px; cursor:pointer; }
+.calendar-heading-visibility input[type="checkbox"] { width:34px; height:34px; min-width:34px; accent-color:#b75565; cursor:pointer; }
+.calendar-heading-visibility:has(input:not(:checked)) { background:#fff0f0; border-color:#df9ca4; }
+@media(max-width:650px) { .calendar-heading-visibility { width:auto; max-width:100%; } }
