@@ -168,7 +168,7 @@ function emptyPlan() {
   return {
     title: '', subject: '', schoolYear: '', className: '', county: '', municipality: '', schoolForm: '', grade: '', course: '', schoolClosures: [],
     startDate: mondayOf(), startWeek: 1, entryType: 'lektion', lessonDisplay: 'bara-lektion', studentLayout: 'grid', studentColumns: 3, studentRows: 2, lessonsPerWeek: 3, weeks: DEFAULT_WEEKS, weeksData: [],
-    published: false, publicSlug: '', autoReleaseWeeks: false,
+    published: false, publicSlug: '', autoReleaseWeeks: false, visibleWeekCount: 2,
   }
 }
 
@@ -335,6 +335,7 @@ function sanitizeForStudents(plan) {
     schoolClosures: Array.isArray(plan?.schoolClosures) ? plan.schoolClosures.filter(item => validSchoolClosure(item) && sourceWeeks.some(week => { if (!week || week.hidden || !/^\d{4}-\d{2}-\d{2}$/.test(week.weekStart || '')) return false; const monday = new Date(week.weekStart + 'T12:00:00'); monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7)); const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6); return item.startDate <= toIsoDate(sunday) && item.endDate >= toIsoDate(monday) })).map(item => ({ name: item.name, startDate: item.startDate, endDate: item.endDate, verified: Boolean(item.verified) })) : [],
     published: true,
     autoReleaseWeeks: plan?.autoReleaseWeeks === true,
+    visibleWeekCount: Math.max(1, Math.min(12, Number(plan?.visibleWeekCount) || 2)),
     entryType: plan?.entryType === 'dag' ? 'dag' : 'lektion',
     lessonDisplay: ['dag-lektion', 'bara-dag', 'bara-lektion'].includes(plan?.lessonDisplay) ? plan.lessonDisplay : 'bara-lektion',
     themeId: String(plan?.themeId || ''),
@@ -348,6 +349,8 @@ function sanitizeForStudents(plan) {
       .map((week, index) => ({
         weekNumber: Number.isInteger(week.weekNumber) ? week.weekNumber : index + 1,
         weekStart: typeof week.weekStart === 'string' ? week.weekStart : '',
+        publishDate: /^\d{4}-\d{2}-\d{2}$/.test(week.publishDate || '') ? week.publishDate : '',
+        hideDate: /^\d{4}-\d{2}-\d{2}$/.test(week.hideDate || '') ? week.hideDate : '',
         title: typeof week.title === 'string' ? week.title : '',
         chapter: typeof week.chapter === 'string' ? week.chapter.slice(0, 160) : '',
         lessons: Array.isArray(week.lessons) ? week.lessons.filter(lesson => lesson && typeof lesson === 'object').map(lesson => ({ name: String(lesson.name || ''), day: String(lesson.day || ''), topics: Array.isArray(lesson.topics) ? lesson.topics.filter(topic => topic && typeof topic === 'object').map(topic => ({ name: String(topic.name || ''), pagesLabel: String(topic.pagesLabel || '').slice(0, 60), assignmentsLabel: String(topic.assignmentsLabel || '').slice(0, 60), pages: Array.isArray(topic.pages) ? topic.pages.map(String) : [], assignments: Array.isArray(topic.assignments) ? topic.assignments.map(String) : [], links: Array.isArray(topic.links) ? topic.links.filter(link => link && resourceInfo(typeof link === 'string' ? link : link.url)).map(link => typeof link === 'string' ? { url: link.trim(), label: resourceInfo(link).label } : { url: String(link.url).trim(), label: String(link.label || resourceInfo(link.url).label) }) : [] })) : [] })) : [],
@@ -647,6 +650,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
       {schoolClosures.filter(item => validSchoolClosure(item) && item.startDate < addWeeks(selectedWeek.weekStart, 1) && item.endDate >= selectedWeek.weekStart).map(item => <p key={item.id} className="calendar-holiday"><strong>{item.verified ? "Skolledigt:" : "Skolledigt (ej verifierat):"}</strong> {item.name} · {formatDate(item.startDate)}–{formatDate(item.endDate)}</p>)}
       {nationalExams.filter(exam => exam.date >= selectedWeek.weekStart && exam.date < addWeeks(selectedWeek.weekStart, 1)).map(exam => <p key={exam.date + exam.subject + exam.part} className="calendar-holiday"><strong>🔒 Nationellt prov:</strong> {exam.subject}, delprov {exam.part} · {formatDate(exam.date)}{exam.startTime ? ` kl. ${exam.startTime}` : ''}</p>)}
       {publicHolidaysInWeek(selectedWeek.weekStart).map(holiday => <p key={holiday.date} className="calendar-holiday"><strong>Röd dag:</strong> {holiday.name} · {formatDate(holiday.date)}</p>)}
+      <div className="calendar-publication-dates"><label>Publicera för elever från<input type="date" value={selectedWeek.publishDate || ''} onChange={e => editSelectedWeek({ publishDate: e.target.value })} /></label><label>Dölj för elever från<input type="date" value={selectedWeek.hideDate || ''} onChange={e => editSelectedWeek({ hideDate: e.target.value })} /></label></div>
       {selectedWeek.content && <p>{selectedWeek.content}</p>}
       <LessonDetails week={selectedWeek} onChange={editSelectedWeek} entryType={entryType} />
       <div className="calendar-edit-actions">
@@ -1347,6 +1351,7 @@ function TeacherApp({ session }) {
     <section className="card automatic-week-release" aria-label="Automatisk veckopublicering">
       <h3>Automatisk visning av veckor</h3>
       <label className="automatic-release-toggle"><input type="checkbox" checked={plan.autoReleaseWeeks === true} disabled={busy} onChange={e => setPlan(p => ({ ...p, autoReleaseWeeks: e.target.checked }))} /> Visa varje synlig vecka automatiskt från veckans måndag</label>
+      <label>Antal veckor som visas samtidigt för elever<input type="number" min="1" max="12" value={plan.visibleWeekCount || 2} onChange={e => setPlan(p => ({ ...p, visibleWeekCount: Math.max(1, Math.min(12, Number(e.target.value) || 2)) }))} /></label>
       <p className="muted">Dolda veckor visas aldrig. Funktionen kräver att den senaste Supabase-migrationen är installerad innan du publicerar. Tider följer svensk tid.</p>
     </section>
     <section className="card publication-readiness" aria-label="Kontroll före publicering">
