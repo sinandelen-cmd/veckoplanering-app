@@ -1624,3 +1624,9 @@ body { background: #fffaf2; color: var(--ink); }
 /* Calendar overview: each complete month occupies its own full-width row. */
 .calendar-overlay .calendar-months{display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-auto-flow:row!important;align-items:stretch;width:100%;gap:18px}
 .calendar-overlay .calendar-months>.calendar-month-section{grid-column:1 / -1!important;display:block;width:100%;max-width:none;min-width:0;margin:0;box-sizing:border-box}
+
+/* Moment: readable, consistently bold 12px assignment/topic text. */
+.planning-layout .topic-name textarea,.planning-layout .topic-name-display{font-size:12px!important;font-weight:700!important;line-height:1.55;color:#56383f;letter-spacing:.01em}
+.planning-layout .topic-name textarea{padding:12px 14px;min-height:78px;border:1px solid #b7d5c9;border-radius:10px;background:#fff;box-shadow:0 1px 2px #4333330b;resize:vertical}
+.planning-layout .topic-name textarea:focus{outline:2px solid #a4d9c9;outline-offset:1px}
+.planning-layout .topic-column.assignments .topic-cell input,.planning-layout .topic-column.assignments .topic-cell span{font-size:12px!important;font-weight:700!important;line-height:1.5}
