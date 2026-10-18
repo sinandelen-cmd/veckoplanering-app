@@ -1203,9 +1203,9 @@ function TeacherApp({ session }) {
       </div>
       {shareMessage && <p role="status" className="share-feedback">{shareMessage}</p>}
     </section>}
-    <div className="planning-context"><span className={`planning-save-state ${busy ? "saving" : isDirty ? "unsaved" : selectedId ? "saved" : "new"}`} aria-live="polite"><span aria-hidden="true">{busy ? "◌" : isDirty ? "●" : selectedId ? "✓" : "○"}</span> {busy ? "Sparar ändringarna…" : isDirty ? "Osparade ändringar – spara innan du lämnar sidan" : selectedId ? "Alla ändringar sparade" : "Ny planering – inte sparad"}</span></div>
+    {teacherTab !== "elevvy" && <div className="planning-context"><span className={`planning-save-state ${busy ? "saving" : isDirty ? "unsaved" : selectedId ? "saved" : "new"}`} aria-live="polite"><span aria-hidden="true">{busy ? "◌" : isDirty ? "●" : selectedId ? "✓" : "○"}</span> {busy ? "Sparar ändringarna…" : isDirty ? "Osparade ändringar – spara innan du lämnar sidan" : selectedId ? "Alla ändringar sparade" : "Ny planering – inte sparad"}</span></div>}
 
-    {(isDirty || busy) && <div className="quick-save-bar" role="region" aria-label="Snabbspara årsplanering">
+    {teacherTab !== "elevvy" && (isDirty || busy) && <div className="quick-save-bar" role="region" aria-label="Snabbspara årsplanering">
       <span aria-live="polite">{busy ? "Sparar…" : "Osparade ändringar"}</span>
       <button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
     </div>}
