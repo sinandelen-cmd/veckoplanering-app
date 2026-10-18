@@ -790,7 +790,7 @@ function TeacherApp({ session }) {
       const { data, error } = await query
       if (error) setStatus(`Kunde inte spara: ${error.message}`)
       else {
-        setSimpleSetup(false)
+        if (simpleSetup) { setSimpleSetup(false); setTeacherTab('arsplan') }
         setSelectedId(data.id)
         try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(data.id)) } catch { /* Lagring kan vara blockerad */ }
         const refreshed = await loadPlans()
@@ -991,12 +991,12 @@ function TeacherApp({ session }) {
     setSimpleSetup(true)
     setPlan(fresh); setSelectedId(null); savedPlanRef.current = JSON.stringify(fresh)
     setSavedRevision(revision => revision + 1)
-    setTeacherTab('arsplan'); setCalendarOpen(false); setPreviewStudents(false); setA4Demo(false)
-    setStatus('Ny planering klar. Spara utkast när du har fyllt i din planering.')
+    setTeacherTab('new'); setCalendarOpen(false); setPreviewStudents(false); setA4Demo(false)
+    setStatus('Fyll i uppgifterna och välj Skapa planering.')
   }
-  return <div className={`planning-layout ${teacherTab === "elevvy" ? "view-student" : "view-teacher"}`}><Navigation active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} onOpenPlan={loadPlan} onNavigate={id => { setTeacherTab(id === 'mina' ? 'arsplan' : id); if (id === 'elevvy') setPreviewStudents(true) }} onOpenExample={openExample} onOpenArchive={() => { setShowArchive(true); setTeacherTab('mina') }} onNew={createPlan} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} /><main className="shell" id="lararvy">
+  return <div className={`planning-layout ${teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}`}><Navigation active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} onOpenPlan={loadPlan} onNavigate={id => { setTeacherTab(id === 'mina' ? 'arsplan' : id); if (id === 'elevvy') setPreviewStudents(true) }} onOpenExample={openExample} onOpenArchive={() => { setShowArchive(true); setTeacherTab('mina') }} onNew={createPlan} onToggleCalendar={() => setCalendarOpen(open => !open)} calendarOpen={calendarOpen} /><main className="shell" id="lararvy">
     <header className="topbar">
-      <div><p className="eyebrow">{teacherTab === "mina" ? "MINA PLANERINGAR" : teacherTab === "elevvy" ? "ELEV VY" : "LÄRARVY"}</p><h1>{teacherTab === "mina" ? "Mina planeringar" : (plan.title?.trim() || "Ny planering")}</h1><p className="muted">{session.user.email}</p></div>
+      <div><p className="eyebrow">{teacherTab === "new" ? "NY PLANERING" : teacherTab === "mina" ? "MINA PLANERINGAR" : teacherTab === "elevvy" ? "ELEVVY" : "LÄRARVY"}</p><h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Mina planeringar" : (plan.title?.trim() || "Ny planering")}</h1><p className="muted">{session.user.email}</p></div>
       <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
     </header>
 
@@ -1007,7 +1007,7 @@ function TeacherApp({ session }) {
       <button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara utkast</button>
     </div>}
 
-    <div className={`teacher-tab-panel ${simpleSetup ? "simple-setup-active" : ""}`} id="panel-lararvy" role="tabpanel" aria-labelledby="tab-lararvy" hidden={teacherTab !== "arsplan"}>
+    <div className={`teacher-tab-panel ${simpleSetup ? "simple-setup-active" : ""}`} id="panel-lararvy" role="tabpanel" aria-labelledby="tab-lararvy" hidden={teacherTab !== "arsplan" && teacherTab !== "new"}>
     {simpleSetup && <section className="card simple-setup-card" aria-label="Skapa ny planering">
       <h2>Skapa en ny planering</h2>
       <p className="muted">Fyll i uppgifterna och tryck på Skapa planering. Du kan lägga till lektioner och material efteråt.</p>
