@@ -332,7 +332,7 @@ function sanitizeForStudents(plan) {
     schoolYear: String(plan?.schoolYear || ''),
     grade: String(plan?.grade || ''),
     schoolForm: String(plan?.schoolForm || ''),
-    schoolClosures: Array.isArray(plan?.schoolClosures) ? plan.schoolClosures.filter(validSchoolClosure).map(item => ({ name: item.name, startDate: item.startDate, endDate: item.endDate, verified: Boolean(item.verified) })) : [],
+    schoolClosures: Array.isArray(plan?.schoolClosures) ? plan.schoolClosures.filter(item => validSchoolClosure(item) && sourceWeeks.some(week => { if (!week || week.hidden || !/^\d{4}-\d{2}-\d{2}$/.test(week.weekStart || '')) return false; const monday = new Date(week.weekStart + 'T12:00:00'); monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7)); const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6); return item.startDate <= toIsoDate(sunday) && item.endDate >= toIsoDate(monday) })).map(item => ({ name: item.name, startDate: item.startDate, endDate: item.endDate, verified: Boolean(item.verified) })) : [],
     published: true,
     entryType: plan?.entryType === 'dag' ? 'dag' : 'lektion',
     lessonDisplay: ['dag-lektion', 'bara-dag', 'bara-lektion'].includes(plan?.lessonDisplay) ? plan.lessonDisplay : 'bara-lektion',
@@ -495,7 +495,7 @@ function a4DemoPlan(plan) {
 }
 
 function ImportantDatesForWeek({ week, plan }) {
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(week?.weekStart || '')) return null
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(week?.weekStart || '')) return null
   const monday = new Date(week.weekStart + 'T12:00:00')
   monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
   const dates = Array.from({ length: 7 }, (_, index) => {
