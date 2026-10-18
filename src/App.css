@@ -1758,3 +1758,19 @@ body { background: #fffaf2; color: var(--ink); }
 .planning-layout #lararvy #teacher-year-calendar{display:block;width:100%;max-width:100%;margin:0;position:static!important;inset:auto!important;transform:none!important}
 .planning-layout #lararvy #teacher-year-calendar>.calendar-overlay.calendar-page{position:relative!important;inset:auto!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important;z-index:0!important;overflow:visible!important;max-width:100%!important;min-height:0!important;width:100%!important;height:auto!important;margin:0!important;padding:0!important;border:none!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;filter:none!important;backdrop-filter:none!important}
 .planning-layout #lararvy #teacher-year-calendar>.calendar-page::before,.planning-layout #lararvy #teacher-year-calendar>.calendar-page::after{display:none!important}
+
+/* Mer luft mellan veckorna och tydliga separata pastellkort. */
+.expanded-weeks-inline .teacher-month-weeks{gap:30px!important}
+.expanded-weeks-inline .teacher-month-weeks>.chapter-week-group{margin-bottom:10px!important}
+.expanded-weeks-inline .teacher-month-weeks .week-card{border:2px solid #e0cbd1!important;border-radius:18px!important;padding:20px!important;box-shadow:0 7px 18px rgba(91,54,68,.10)!important}
+.expanded-weeks-inline .teacher-month-weeks>.chapter-week-group:nth-child(4n+1) .week-card{background:#fff0f4!important}
+.expanded-weeks-inline .teacher-month-weeks>.chapter-week-group:nth-child(4n+2) .week-card{background:#ebf8ee!important}
+.expanded-weeks-inline .teacher-month-weeks>.chapter-week-group:nth-child(4n+3) .week-card{background:#eef3ff!important}
+.expanded-weeks-inline .teacher-month-weeks>.chapter-week-group:nth-child(4n) .week-card{background:#fff6e3!important}
+.calendar-inline-weeks{gap:32px!important}
+.calendar-inline-week{padding:24px!important;border:2px solid #e5cfd5!important;border-radius:18px!important;box-shadow:0 7px 18px rgba(91,54,68,.10)!important}
+/* Lägg till lektion skiljs visuellt från de gula momentknapparna. */
+.expanded-weeks-inline .lessons>button.secondary,
+.expanded-weeks-inline .lesson-list>button.secondary,
+.calendar-inline-week .lessons>button.secondary,
+.calendar-inline-week .lesson-list>button.secondary{background:#d8ecff!important;color:#1c507c!important;border:2px solid #86b7de!important;font-weight:800!important;padding:13px 20px!important;border-radius:12px!important}
