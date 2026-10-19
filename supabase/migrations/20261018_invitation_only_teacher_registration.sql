@@ -1,9 +1,10 @@
--- Apply to a separate test Supabase database first. Do not run on production without a migration plan.
+-- Invitation-only signup, supporting empty-workspace invitations (null plan_id).
+-- Validate against an isolated database before applying to the shared production database.
 create extension if not exists pgcrypto;
 create table if not exists public.teacher_share_invites (
   id uuid primary key default gen_random_uuid(),
   sender_id uuid not null references auth.users(id),
-  plan_id bigint not null references public.veckoplanering(id),
+  plan_id bigint references public.veckoplanering(id),
   recipient_email text not null,
   token_hash text not null unique,
   expires_at timestamptz not null default (now() + interval '7 days'),
@@ -18,11 +19,11 @@ returns text language plpgsql security definer set search_path = '' as $$
 declare v_token text;
 begin
   if auth.uid() is null then raise exception 'Logga in först'; end if;
-  if not exists(select 1 from public.veckoplanering where id=p_plan_id and user_id=auth.uid() and coalesce((content::jsonb->>'receivedCopy')::boolean,false)=false) then
+  if p_plan_id is not null and not exists(select 1 from public.veckoplanering where id=p_plan_id and user_id=auth.uid() and coalesce((content::jsonb->>'receivedCopy')::boolean,false)=false) then
     raise exception 'Du kan bara dela din egen originalplanering';
   end if;
   if p_recipient_email !~* '^[^@ ]+@[^@ ]+\.[^@ ]+$' then raise exception 'Ogiltig e-postadress'; end if;
-  if length(p_password)<6 then raise exception 'Delningskoden måste ha minst 6 tecken'; end if;
+  -- The server generates the one-time code. p_password is retained only for compatibility.
   v_token := encode(extensions.gen_random_bytes(24),'hex');
   insert into public.teacher_share_invites(sender_id,plan_id,recipient_email,token_hash)
   values(auth.uid(),p_plan_id,lower(trim(p_recipient_email)),encode(extensions.digest(v_token,'sha256'),'hex'));
@@ -41,11 +42,13 @@ begin
     and consumed_at is null and expires_at>now() for update;
   if not found then raise exception 'Koden är ogiltig, använd eller har gått ut'; end if;
   if lower(coalesce(auth.jwt()->>'email',''))<>v_inv.recipient_email then raise exception 'Koden gäller en annan e-postadress'; end if;
+  if v_inv.plan_id is not null then
   insert into public.veckoplanering(user_id,title,week_start,content,subject,school_year,class_name,start_date,weeks,published,is_published)
   select auth.uid(),title,week_start,
     (coalesce(content,'{}')::jsonb || '{"receivedCopy":true,"archived":false,"published":false}'::jsonb)::text,
     subject,school_year,class_name,start_date,weeks,false,false
   from public.veckoplanering where id=v_inv.plan_id;
+  end if;
   update public.teacher_share_invites set consumed_at=now(),consumed_by=auth.uid() where id=v_inv.id;
 end $$;
 revoke all on function public.claim_plan_share_invite(text) from public;
@@ -68,11 +71,13 @@ begin
     for update;
   if not found then raise exception 'Ogiltig eller förbrukad inbjudningskod'; end if;
   update public.teacher_share_invites set consumed_at=now(),consumed_by=new.id where id=v_inv.id;
+  if v_inv.plan_id is not null then
   insert into public.veckoplanering(user_id,title,week_start,content,subject,school_year,class_name,start_date,weeks,published,is_published)
   select new.id,title,week_start,
     (coalesce(content,'{}')::jsonb || '{"receivedCopy":true,"archived":false,"published":false}'::jsonb)::text,
     subject,school_year,class_name,start_date,weeks,false,false
   from public.veckoplanering where id=v_inv.plan_id;
+  end if;
   return new;
 end $$;
 drop trigger if exists require_teacher_invite_on_signup on auth.users;
