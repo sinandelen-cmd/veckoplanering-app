@@ -1747,9 +1747,11 @@ function AnnualApp() {
     const pending = colleagues.filter(item => item.status === 'pending')
     const approved = colleagues.filter(item => item.status === 'approved')
     const rejected = colleagues.filter(item => item.status === 'rejected')
-    return <><main className="shell"><section className="card">
-      <h2><button type="button" aria-expanded={showAdminPanel} aria-controls="admin-teacher-panel" onClick={() => setShowAdminPanel(value => !value)}>{showAdminPanel ? "▾ Dölj" : "▸ Visa"} Administratör – lärarkonton</button></h2>
-      {showAdminPanel && <div id="admin-teacher-panel">
+    return <>
+      <main className="shell"><div style={{ display: "flex", justifyContent: "flex-end" }}><button type="button" aria-expanded={showAdminPanel} aria-controls="admin-teacher-panel" onClick={() => setShowAdminPanel(value => !value)}>{showAdminPanel ? "← Tillbaka till årsplaneringen" : "Administration"}</button></div></main>
+      {showAdminPanel ? <main className="shell"><section className="card">
+      <div id="admin-teacher-panel">
+      <h2>Administratör – lärarkonton</h2>
       <p>Endast du kan godkänna nya lärarkonton.</p>
       {adminError && <p role="alert">{adminError}</p>}
       {adminNotice && <p role="status" style={{ padding: 12, border: '1px solid #27844a', borderRadius: 8, background: '#e9f7ed', color: '#165b30', fontWeight: 700 }}>✓ {adminNotice}</p>}
@@ -1765,7 +1767,8 @@ function AnnualApp() {
       {rejected.length > 0 && <><h3>Avslagna ansökningar ({rejected.length})</h3>{rejected.map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – Avslagen</div>)}</>}
       <button type="button" onClick={loadRequests}>Uppdatera listorna</button>
       </div>
-    </section></main><TeacherApp key={session.user.id} session={session} /></>
+    </section></main> : <TeacherApp key={session.user.id} session={session} />}
+    </>
   }
   return <TeacherApp key={session.user.id} session={session} />
 }
