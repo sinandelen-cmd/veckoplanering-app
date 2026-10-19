@@ -1645,6 +1645,7 @@ function AnnualApp() {
   const [adminNotice, setAdminNotice] = useState('')
   const [reviewingUserId, setReviewingUserId] = useState(null)
   const [showApprovedTeachers, setShowApprovedTeachers] = useState(false)
+  const [showAdminPanel, setShowAdminPanel] = useState(false)
   const isAdmin = session?.user?.id === 'fa85f509-bf1c-43c4-bc82-78777232a339'
 
   useEffect(() => {
@@ -1747,7 +1748,8 @@ function AnnualApp() {
     const approved = colleagues.filter(item => item.status === 'approved')
     const rejected = colleagues.filter(item => item.status === 'rejected')
     return <><main className="shell"><section className="card">
-      <h2>Administratör – lärarkonton</h2>
+      <h2><button type="button" aria-expanded={showAdminPanel} aria-controls="admin-teacher-panel" onClick={() => setShowAdminPanel(value => !value)}>{showAdminPanel ? "▾ Dölj" : "▸ Visa"} Administratör – lärarkonton</button></h2>
+      {showAdminPanel && <div id="admin-teacher-panel">
       <p>Endast du kan godkänna nya lärarkonton.</p>
       {adminError && <p role="alert">{adminError}</p>}
       {adminNotice && <p role="status" style={{ padding: 12, border: '1px solid #27844a', borderRadius: 8, background: '#e9f7ed', color: '#165b30', fontWeight: 700 }}>✓ {adminNotice}</p>}
@@ -1762,6 +1764,7 @@ function AnnualApp() {
       {showApprovedTeachers && <div id="approved-teachers-list">{approved.length === 0 && <p>Inga kollegor är godkända ännu.</p>}{approved.map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – ✓ Godkänd</div>)}</div>}
       {rejected.length > 0 && <><h3>Avslagna ansökningar ({rejected.length})</h3>{rejected.map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – Avslagen</div>)}</>}
       <button type="button" onClick={loadRequests}>Uppdatera listorna</button>
+      </div>
     </section></main><TeacherApp key={session.user.id} session={session} /></>
   }
   return <TeacherApp key={session.user.id} session={session} />
