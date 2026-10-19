@@ -258,7 +258,7 @@ assert.match(css, /\.student-print-page \.lesson \{\s*display: block !important;
 assert.match(css, /\.student-print-page \.student-week-card,[\s\S]*?break-inside: auto !important;/, 'Långa veckor måste kunna fortsätta på nästa sida')
 assert.doesNotMatch(css, /\.student-print-page \.topic-cell span\s*\{[^}]*font-size:\s*8pt\s*!important;/, 'Sid- och uppgiftsrutor får inte använda 8 pt')
 
-assert.match(app, /const \[teacherTab, setTeacherTab\] = useState\("arsplan"\)/)
+assert.match(app, /const \[teacherTab, setTeacherTab\] = useState\("new"\)/)
 for (const tab of ['arsplan', 'elevvy', 'mina']) {
   assert.match(app, new RegExp('teacherTab !== "' + tab + '"'), 'Lärarflik saknas: ' + tab)
 }
