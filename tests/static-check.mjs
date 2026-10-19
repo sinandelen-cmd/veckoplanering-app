@@ -308,6 +308,8 @@ assert.match(app, /className="calendar-month-section"/)
 
 // Kollegieinbjudan skjuts upp till en separat release utan databasmigrationer.
 assert.match(app, /false && teacherTab === "new" && shareOpen/)
+assert.match(app, /teacherTab === "new" && <div className="topbar-share-actions">/)
+assert.match(app, /onClick=\{\(\) => supabase\.auth\.signOut\(\)\}>Logga ut/)
 assert.doesNotMatch(sql, /create or replace function public\.create_plan_share_invite/)
 assert.doesNotMatch(sql, /create or replace function public\.claim_plan_share_invite/)
 
