@@ -306,15 +306,10 @@ assert.match(app, /setStudentPlan\(publicDemoWeek42\(\)\)/)
 assert.match(app, /className="calendar-month-row"/)
 assert.match(app, /className="calendar-month-section"/)
 
-// Kollegdelning måste vara serververifierad och privata kopior får inte delas vidare.
-assert.match(app, /supabase\.rpc\('create_plan_share_invite'/)
-assert.match(app, /supabase\.rpc\('claim_plan_share_invite'/)
-assert.match(app, /receivedCopy: Boolean\(source\.receivedCopy\)/)
-assert.match(sql, /create or replace function public\.create_plan_share_invite/)
-assert.match(sql, /create or replace function public\.claim_plan_share_invite/)
-assert.match(sql, /from public\.plan_received_copies where plan_id = p_plan_id/)
-assert.match(sql, /crypt\(coalesce\(p_password, ''\), v_secret\)/)
-assert.doesNotMatch(app, /56-12-77/, 'Delningskoden får inte finnas i klientkoden')
+// Kollegieinbjudan skjuts upp till en separat release utan databasmigrationer.
+assert.match(app, /false && teacherTab === "new" && shareOpen/)
+assert.doesNotMatch(sql, /create or replace function public\.create_plan_share_invite/)
+assert.doesNotMatch(sql, /create or replace function public\.claim_plan_share_invite/)
 
 // Elevvyn ska vara en sammanhängande läsvy utan utskriftsknappar eller sidbläddring.
 assert.match(app, /function ImportantDatesForWeek/)
