@@ -747,7 +747,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
   </section>
 }
 
-function TeacherApp({ session }) {
+function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin, adminContent }) {
   const [plan, setPlan] = useState(emptyPlan())
   const [plans, setPlans] = useState([])
   const [showArchive, setShowArchive] = useState(false)
@@ -1212,7 +1212,8 @@ function TeacherApp({ session }) {
     setTeacherTab('new'); setCalendarOpen(false); setPreviewStudents(false); setA4Demo(false)
     setStatus('Fyll i uppgifterna och välj Skapa planering.')
   }
-  return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}`}><Navigation active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={id => { setTeacherTab(id === 'mina' ? 'arsplan' : id); if (id === 'mina' || id === 'arsplan') setCalendarOpen(false); if (id === 'elevvy') { setPreviewStudents(true); setCalendarOpen(false) } else { setPreviewStudents(false) } }} onOpenExample={openExample} onOpenArchive={() => { setShowArchive(true); setTeacherTab('mina') }} onNew={createPlan} onToggleCalendar={() => { setTeacherTab('arsplan'); setCalendarOpen(true) }} calendarOpen={calendarOpen} /><main className="shell" id="lararvy">
+  return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}`}><Navigation active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={id => { setTeacherTab(id === 'mina' ? 'arsplan' : id); if (id === 'mina' || id === 'arsplan') setCalendarOpen(false); if (id === 'elevvy') { setPreviewStudents(true); setCalendarOpen(false) } else { setPreviewStudents(false) } }} onOpenExample={openExample} onOpenArchive={() => { setShowArchive(true); setTeacherTab('mina') }} onNew={createPlan} onToggleCalendar={() => { setTeacherTab('arsplan'); setCalendarOpen(true) }} calendarOpen={calendarOpen} isAdmin={isAdmin} adminOpen={adminOpen} onOpenAdmin={onToggleAdmin} /><main className="shell" id="lararvy">
+  {adminOpen ? adminContent : <>
     {teacherTab !== "elevvy" && <header className="topbar">
       <div><h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Mina planeringar" : (plan.title?.trim() || "Ny planering")}</h1><p className="muted">{session.user.email}</p></div>
       {selectedId && teacherTab === "arsplan" && <div className="archive-plan-actions" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -1608,6 +1609,7 @@ function TeacherApp({ session }) {
       <p className="muted">Arkivering döljer bara planeringen från den aktiva listan. Publicerade elevlänkar påverkas inte.</p>
     </section>
     </div>
+  </>}
   </main></div>
 }
 
@@ -1747,10 +1749,8 @@ function AnnualApp() {
     const pending = colleagues.filter(item => item.status === 'pending')
     const approved = colleagues.filter(item => item.status === 'approved')
     const rejected = colleagues.filter(item => item.status === 'rejected')
-    return <>
-      <main className="shell"><div style={{ display: "flex", justifyContent: "flex-end" }}><button type="button" aria-expanded={showAdminPanel} aria-controls="admin-teacher-panel" onClick={() => setShowAdminPanel(value => !value)}>{showAdminPanel ? "← Tillbaka till årsplaneringen" : "Administration"}</button></div></main>
-      {showAdminPanel ? <main className="shell"><section className="card">
-      <div id="admin-teacher-panel">
+    return <TeacherApp key={session.user.id} session={session} isAdmin adminOpen={showAdminPanel} onToggleAdmin={() => setShowAdminPanel(value => !value)} adminContent={<>
+      <section className="card" id="admin-teacher-panel">
       <h2>Administratör – lärarkonton</h2>
       <p>Endast du kan godkänna nya lärarkonton.</p>
       {adminError && <p role="alert">{adminError}</p>}
@@ -1766,9 +1766,8 @@ function AnnualApp() {
       {showApprovedTeachers && <div id="approved-teachers-list">{approved.length === 0 && <p>Inga kollegor är godkända ännu.</p>}{approved.map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – ✓ Godkänd</div>)}</div>}
       {rejected.length > 0 && <><h3>Avslagna ansökningar ({rejected.length})</h3>{rejected.map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – Avslagen</div>)}</>}
       <button type="button" onClick={loadRequests}>Uppdatera listorna</button>
-      </div>
-    </section></main> : <TeacherApp key={session.user.id} session={session} />}
-    </>
+      </section>
+    </>} />
   }
   return <TeacherApp key={session.user.id} session={session} />
 }
