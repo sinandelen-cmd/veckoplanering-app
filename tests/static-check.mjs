@@ -344,12 +344,11 @@ assert.match(app, /const sourceWeeks = Array\.isArray\(plan\?\.weeksData\) \?/)
 assert.match(app, /autoReleaseWeeks: plan\?\.autoReleaseWeeks === true/)
 assert.match(app, /supports_automatic_week_release/)
 
-// SQL-migrationen måste ha en enda välformad RPC för veckosläpp.
+// Release använder befintligt databasschema och stoppar automatiskt veckosläpp
+// om servern ännu saknar stödet. SQL uppgraderas separat efter granskning.
 assert.equal((sql.match(/create or replace function public\.get_public_annual_plan\(/g) || []).length, 1)
-assert.equal((sql.match(/create or replace function public\.supports_automatic_week_release\(/g) || []).length, 1)
-assert.match(sql, /as \$func\$ select true; \$func\$;/)
-assert.match(sql, /Europe\/Stockholm/)
-assert.match(sql, /'\{schoolClosures\}'/)
+assert.match(app, /supabase\.rpc\('supports_automatic_week_release'\)/)
+assert.match(app, /if \(releaseError \|\| releaseSupported !== true\)/)
 
 // Datumintervall ska alltid visas för elever, inte bara vid utskrift.
 assert.match(app, /<span>\{studentWeekDateRange\(week\.weekStart\)\}<\/span>/)
