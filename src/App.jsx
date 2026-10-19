@@ -1644,6 +1644,7 @@ function AnnualApp() {
   const [adminError, setAdminError] = useState('')
   const [adminNotice, setAdminNotice] = useState('')
   const [reviewingUserId, setReviewingUserId] = useState(null)
+  const [showApprovedTeachers, setShowApprovedTeachers] = useState(false)
   const isAdmin = session?.user?.id === 'fa85f509-bf1c-43c4-bc82-78777232a339'
 
   useEffect(() => {
@@ -1757,9 +1758,8 @@ function AnnualApp() {
         <button type="button" disabled={Boolean(reviewingUserId)} onClick={() => reviewRequest(item.user_id, true)}>{reviewingUserId === item.user_id ? 'Sparar…' : 'Godkänn'}</button>{' '}
         <button type="button" disabled={Boolean(reviewingUserId)} onClick={() => reviewRequest(item.user_id, false)}>Avslå</button>
       </div>)}
-      <h3>Godkända lärare ({approved.length})</h3>
-      {approved.length === 0 && <p>Inga kollegor är godkända ännu.</p>}
-      {approved.map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – ✓ Godkänd</div>)}
+      <h3><button type="button" aria-expanded={showApprovedTeachers} aria-controls="approved-teachers-list" onClick={() => setShowApprovedTeachers(value => !value)}>{showApprovedTeachers ? "▾ Dölj" : "▸ Visa"} godkända lärare ({approved.length})</button></h3>
+      {showApprovedTeachers && <div id="approved-teachers-list">{approved.length === 0 && <p>Inga kollegor är godkända ännu.</p>}{approved.map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – ✓ Godkänd</div>)}</div>}
       {rejected.length > 0 && <><h3>Avslagna ansökningar ({rejected.length})</h3>{rejected.map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – Avslagen</div>)}</>}
       <button type="button" onClick={loadRequests}>Uppdatera listorna</button>
     </section></main><TeacherApp key={session.user.id} session={session} /></>
