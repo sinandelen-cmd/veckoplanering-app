@@ -1740,7 +1740,30 @@ function AnnualApp() {
   if (!session) return <><Navigation /><Login email={email} password={password} setEmail={setEmail} setPassword={setPassword} onSubmit={login} onSignUp={signUp} status={status} /></>
   if (accessLoading) return <><Navigation /><main className="shell"><section className="card"><h2>Kontrollerar lärarbehörighet…</h2></section></main></>
   if (access !== 'approved') return <><Navigation /><main className="shell narrow-shell"><section className="card"><h1>Ansökan om lärarkonto</h1><p>{access === 'pending' ? 'Ditt konto väntar på administratörens godkännande.' : access === 'rejected' ? 'Din ansökan har avslagits.' : 'Behörigheten kunde inte kontrolleras. Försök igen senare.'}</p><button type="button" onClick={() => supabase.auth.signOut()}>Logga ut</button></section></main></>
-  if (isAdmin) return <><main className="shell"><section className="card"><h2>Administratör – läraransökningar</h2><p>Endast du kan godkänna nya lärarkonton.</p>{adminError && <p role="alert">{adminError}</p>}{adminNotice && <p role="status" style={{ padding: 12, border: '1px solid #27844a', borderRadius: 8, background: '#e9f7ed', color: '#165b30', fontWeight: 700 }}>✓ {adminNotice}</p>}{requests.filter(item => item.user_id !== session.user.id).map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – {item.status === 'approved' ? '✓ Godkänd' : item.status === 'rejected' ? 'Avslagen' : 'Väntar på godkännande'} {item.status === 'pending' && <><button type="button" disabled={Boolean(reviewingUserId)} onClick={() => reviewRequest(item.user_id, true)}>{reviewingUserId === item.user_id ? 'Sparar…' : 'Godkänn'}</button> <button type="button" disabled={Boolean(reviewingUserId)} onClick={() => reviewRequest(item.user_id, false)}>Avslå</button></>}</div>)}<button type="button" onClick={loadRequests}>Uppdatera ansökningar</button></section></main><TeacherApp key={session.user.id} session={session} /></>
+  if (isAdmin) {
+    const colleagues = requests.filter(item => item.user_id !== session.user.id)
+    const pending = colleagues.filter(item => item.status === 'pending')
+    const approved = colleagues.filter(item => item.status === 'approved')
+    const rejected = colleagues.filter(item => item.status === 'rejected')
+    return <><main className="shell"><section className="card">
+      <h2>Administratör – lärarkonton</h2>
+      <p>Endast du kan godkänna nya lärarkonton.</p>
+      {adminError && <p role="alert">{adminError}</p>}
+      {adminNotice && <p role="status" style={{ padding: 12, border: '1px solid #27844a', borderRadius: 8, background: '#e9f7ed', color: '#165b30', fontWeight: 700 }}>✓ {adminNotice}</p>}
+      <h3>Väntande ansökningar ({pending.length})</h3>
+      {pending.length === 0 && <p>Inga ansökningar väntar på godkännande.</p>}
+      {pending.map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}>
+        <strong>{item.email}</strong> – Väntar på godkännande{' '}
+        <button type="button" disabled={Boolean(reviewingUserId)} onClick={() => reviewRequest(item.user_id, true)}>{reviewingUserId === item.user_id ? 'Sparar…' : 'Godkänn'}</button>{' '}
+        <button type="button" disabled={Boolean(reviewingUserId)} onClick={() => reviewRequest(item.user_id, false)}>Avslå</button>
+      </div>)}
+      <h3>Godkända lärare ({approved.length})</h3>
+      {approved.length === 0 && <p>Inga kollegor är godkända ännu.</p>}
+      {approved.map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – ✓ Godkänd</div>)}
+      {rejected.length > 0 && <><h3>Avslagna ansökningar ({rejected.length})</h3>{rejected.map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – Avslagen</div>)}</>}
+      <button type="button" onClick={loadRequests}>Uppdatera listorna</button>
+    </section></main><TeacherApp key={session.user.id} session={session} /></>
+  }
   return <TeacherApp key={session.user.id} session={session} />
 }
 
