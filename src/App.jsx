@@ -1730,7 +1730,7 @@ function AnnualApp() {
     event.preventDefault()
     if (password.length < 6) { setStatus('Lösenordet måste ha minst 6 tecken.'); return }
     setStatus('Skapar konto...')
-    const { data, error } = await supabase.auth.signUp({ email: email.trim(), password })
+    const { data, error } = await supabase.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: 'https://min-arsplanering.netlify.app/' } })
     if (error) { setStatus('Kunde inte skapa konto. ' + error.message); return }
     setPassword('')
     setStatus(data.session ? 'Kontot är skapat. Vänta på administratörens godkännande.' : 'Kontot är registrerat. Bekräfta din e-postadress och vänta på administratörens godkännande.')
