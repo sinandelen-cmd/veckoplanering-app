@@ -172,8 +172,8 @@ const nationalExamsForPlan = new Function(
   '\n' + extractFunction('nationalExamsForPlan', 'function YearCalendar') +
   '; return nationalExamsForPlan'
 )(NATIONAL_EXAMS_2026_27)
-assert.equal(nationalExamsForPlan({ schoolForm: 'grundskola', schoolYear: '2026/27', grade: '6' }).length, 6)
-assert.equal(nationalExamsForPlan({ schoolForm: 'grundskola', schoolYear: 'HT26–VT27', grade: '9' }).length, 9)
+assert.equal(nationalExamsForPlan({ schoolForm: 'grundskola', schoolYear: '2026/27', grade: '6', subject: 'Matematik' }).length, 2)
+assert.equal(nationalExamsForPlan({ schoolForm: 'grundskola', schoolYear: 'HT26–VT27', grade: '9', subject: 'Engelska' }).length, 2)
 for (const plan of [
   { schoolForm: 'gymnasium', schoolYear: '2026/27', grade: '9' },
   { schoolForm: 'grundskola', schoolYear: '2025/26', grade: '9' },
