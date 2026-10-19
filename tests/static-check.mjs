@@ -340,7 +340,7 @@ assert.match(app, /Ingen synlig vecka har innehåll/)
 assert.match(app, /📅 Viktiga datum/)
 assert.match(app, /Rätta startdatum på synliga veckor/)
 
-assert.match(app, /if \(publish && !window\.confirm\(/)
+assert.match(app, /if \(publish && !automatic && !window\.confirm\(/)
 assert.match(app, /Synliga veckor:/)
 assert.match(app, /Dolda veckor:/)
 
