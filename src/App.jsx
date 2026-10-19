@@ -1051,20 +1051,19 @@ function TeacherApp({ session }) {
 
   async function shareWithColleague(event) {
     event.preventDefault()
-    if (!selectedId || !shareRecipient.trim() || !sharePassword) return
+    if (!shareRecipient.trim()) return
     if (plan.receivedCopy) { setShareMessage('En mottagen kopia får inte delas vidare.'); return }
-    if (isDirty) { setShareMessage('Spara dina ändringar innan du delar planeringen.'); return }
+    if (selectedId && isDirty) { setShareMessage('Spara dina ändringar innan du delar planeringen.'); return }
     setBusy(true)
     setShareMessage('')
     try {
       const { data, error } = await supabase.rpc('create_plan_share_invite', {
-        p_plan_id: selectedId, p_recipient_email: shareRecipient.trim(), p_password: sharePassword,
+        p_plan_id: null, p_recipient_email: shareRecipient.trim(), p_password: '',
       })
       if (error) throw error
       if (typeof data === 'string' && data.startsWith('ERROR:')) throw new Error(data.slice(6))
       setShareToken(data)
-      setSharePassword('')
-      setShareMessage('Inbjudan skapad. Skicka engångskoden privat till kollegan. Ingen e-post skickas automatiskt. Koden gäller i sju dagar.')
+      setShareMessage('Inbjudan skapad. Skicka engångskoden privat till kollegan. Kollegan får ett eget konto och börjar med en tom planering. Koden gäller i sju dagar.')
     } catch (error) { setShareMessage('Kunde inte skapa inbjudan: ' + error.message) }
     finally { setBusy(false) }
   }
@@ -1238,15 +1237,13 @@ function TeacherApp({ session }) {
     </header>}
 
     {teacherTab === "new" && shareOpen && <section className="card colleague-share-panel" aria-label="Klona och dela med kollega">
-      <div className="share-panel-heading"><div><h2>Klona och dela</h2><p className="muted">Kollegan får en egen, privat kopia. Den kan inte delas vidare via Årsplanering.</p></div><button type="button" className="secondary" onClick={() => setShareOpen(false)}>Stäng</button></div>
+      <div className="share-panel-heading"><div><h2>Klona och dela</h2><p className="muted">Kollegan skapar ett eget konto och börjar med en tom planering.</p></div><button type="button" className="secondary" onClick={() => setShareOpen(false)}>Stäng</button></div>
       <div className="colleague-share-grid">
         <form onSubmit={shareWithColleague}>
-          <h3>Dela din planering</h3><p className="muted">Kollegan behöver ett eget konto med samma e-postadress som du anger. Du skickar engångskoden själv – ingen e-post skickas automatiskt.</p>
+          <h3>Bjud in en kollega</h3><p className="muted">Kollegan behöver ett eget konto med samma e-postadress som du anger. Du skickar engångskoden själv – ingen e-post skickas automatiskt.</p>
           {plan.receivedCopy ? <p className="muted">Den här planeringen är mottagen från en kollega och kan inte delas vidare.</p> : <>
             <label>Kollegans e-postadress<input type="email" required autoComplete="email" value={shareRecipient} onChange={e => setShareRecipient(e.target.value)} placeholder="kollega@skola.se" /></label>
-            <label>Delningskod<input type="password" required autoComplete="off" value={sharePassword} onChange={e => setSharePassword(e.target.value)} placeholder="Ange delningskod" /></label>
-            <button type="submit" className="primary" disabled={busy || !selectedId}>Skapa inbjudan</button>
-            {!selectedId && <p className="muted">Spara och öppna en planering först.</p>}
+            <button type="submit" className="primary" disabled={busy}>Skapa inbjudan</button>
             {shareToken && <div className="share-invite-code"><label>Engångskod till kollegan<input readOnly value={shareToken} onFocus={e => e.target.select()} /></label><button type="button" className="secondary" onClick={() => navigator.clipboard?.writeText(shareToken)}>Kopiera kod</button></div>}
           </>}
         </form>
