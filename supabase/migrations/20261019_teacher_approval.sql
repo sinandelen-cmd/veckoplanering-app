@@ -27,3 +27,15 @@ begin
 end $$;
 revoke all on function public.admin_review_teacher_request(uuid,boolean) from public;
 grant execute on function public.admin_review_teacher_request(uuid,boolean) to authenticated;
+
+drop policy if exists "Users can view their own weekly plans" on public.veckoplanering;
+create policy "approved teachers select" on public.veckoplanering for select to authenticated using (user_id=auth.uid() and exists(select 1 from public.teacher_access where user_id=auth.uid() and status='approved'));
+
+drop policy if exists "Users can insert their own weekly plans" on public.veckoplanering;
+create policy "approved teachers insert" on public.veckoplanering for insert to authenticated with check (user_id=auth.uid() and exists(select 1 from public.teacher_access where user_id=auth.uid() and status='approved'));
+
+drop policy if exists "Users can update their own weekly plans" on public.veckoplanering;
+create policy "approved teachers update" on public.veckoplanering for update to authenticated using (user_id=auth.uid() and exists(select 1 from public.teacher_access where user_id=auth.uid() and status='approved')) with check (user_id=auth.uid() and exists(select 1 from public.teacher_access where user_id=auth.uid() and status='approved'));
+
+drop policy if exists "Users can delete their own weekly plans" on public.veckoplanering;
+create policy "approved teachers delete" on public.veckoplanering for delete to authenticated using (user_id=auth.uid() and exists(select 1 from public.teacher_access where user_id=auth.uid() and status='approved'));
