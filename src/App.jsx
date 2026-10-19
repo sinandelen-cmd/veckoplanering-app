@@ -1642,6 +1642,8 @@ function AnnualApp() {
   const [accessLoading, setAccessLoading] = useState(true)
   const [requests, setRequests] = useState([])
   const [adminError, setAdminError] = useState('')
+  const [adminNotice, setAdminNotice] = useState('')
+  const [reviewingUserId, setReviewingUserId] = useState(null)
   const isAdmin = session?.user?.id === 'fa85f509-bf1c-43c4-bc82-78777232a339'
 
   useEffect(() => {
@@ -1671,9 +1673,18 @@ function AnnualApp() {
   useEffect(() => { if (isAdmin && access === 'approved') loadRequests() }, [isAdmin, access])
 
   async function reviewRequest(userId, approve) {
-    const { error } = await supabase.rpc('admin_review_teacher_request', { p_user_id: userId, p_approve: approve })
-    if (error) setAdminError('Kunde inte ändra ansökan.')
-    else await loadRequests()
+    if (reviewingUserId) return
+    const applicant = requests.find(item => item.user_id === userId)
+    setReviewingUserId(userId)
+    setAdminNotice('')
+    setAdminError('')
+    try {
+      const { error } = await supabase.rpc('admin_review_teacher_request', { p_user_id: userId, p_approve: approve })
+      if (error) { setAdminError('Kunde inte ändra ansökan. Försök igen.'); return }
+      setRequests(previous => previous.map(item => item.user_id === userId ? { ...item, status: approve ? 'approved' : 'rejected' } : item))
+      setAdminNotice(`${applicant?.email || 'Lärarkontot'} har ${approve ? 'godkänts' : 'avslagits'}.`)
+      await loadRequests()
+    } finally { setReviewingUserId(null) }
   }
 
   const isPublicDemo = window.location.pathname.replace(/\/$/, '') === '/elev/demo-vecka-42'
@@ -1729,7 +1740,7 @@ function AnnualApp() {
   if (!session) return <><Navigation /><Login email={email} password={password} setEmail={setEmail} setPassword={setPassword} onSubmit={login} onSignUp={signUp} status={status} /></>
   if (accessLoading) return <><Navigation /><main className="shell"><section className="card"><h2>Kontrollerar lärarbehörighet…</h2></section></main></>
   if (access !== 'approved') return <><Navigation /><main className="shell narrow-shell"><section className="card"><h1>Ansökan om lärarkonto</h1><p>{access === 'pending' ? 'Ditt konto väntar på administratörens godkännande.' : access === 'rejected' ? 'Din ansökan har avslagits.' : 'Behörigheten kunde inte kontrolleras. Försök igen senare.'}</p><button type="button" onClick={() => supabase.auth.signOut()}>Logga ut</button></section></main></>
-  if (isAdmin) return <><main className="shell"><section className="card"><h2>Administratör – läraransökningar</h2><p>Endast du kan godkänna nya lärarkonton.</p>{adminError && <p role="alert">{adminError}</p>}{requests.filter(item => item.user_id !== session.user.id).map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – {item.status} <button type="button" onClick={() => reviewRequest(item.user_id, true)}>Godkänn</button> <button type="button" onClick={() => reviewRequest(item.user_id, false)}>Avslå</button></div>)}<button type="button" onClick={loadRequests}>Uppdatera ansökningar</button></section></main><TeacherApp key={session.user.id} session={session} /></>
+  if (isAdmin) return <><main className="shell"><section className="card"><h2>Administratör – läraransökningar</h2><p>Endast du kan godkänna nya lärarkonton.</p>{adminError && <p role="alert">{adminError}</p>}{adminNotice && <p role="status" style={{ padding: 12, border: '1px solid #27844a', borderRadius: 8, background: '#e9f7ed', color: '#165b30', fontWeight: 700 }}>✓ {adminNotice}</p>}{requests.filter(item => item.user_id !== session.user.id).map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – {item.status === 'approved' ? '✓ Godkänd' : item.status === 'rejected' ? 'Avslagen' : 'Väntar på godkännande'} {item.status === 'pending' && <><button type="button" disabled={Boolean(reviewingUserId)} onClick={() => reviewRequest(item.user_id, true)}>{reviewingUserId === item.user_id ? 'Sparar…' : 'Godkänn'}</button> <button type="button" disabled={Boolean(reviewingUserId)} onClick={() => reviewRequest(item.user_id, false)}>Avslå</button></>}</div>)}<button type="button" onClick={loadRequests}>Uppdatera ansökningar</button></section></main><TeacherApp key={session.user.id} session={session} /></>
   return <TeacherApp key={session.user.id} session={session} />
 }
 
