@@ -279,7 +279,8 @@ assert.match(css, /\.planning-layout/)
 
 assert.doesNotMatch(nav, /sidebar-link[^\n]*>Lärarvy/)
 assert.match(nav, /planning-top-navigation/)
-assert.match(nav, /top-navigation-link[^\n]*Årsplanering<\/button>/)
+assert.match(nav, /top-navigation-link[^\n]*Lärarvy<\/button>/)
+assert.match(nav, /top-navigation-link[^\n]*Kalendervy<\/button>/)
 assert.match(nav, /top-navigation-link[^\n]*Elevvy<\/button>/)
 assert.match(app, /Redigera och importera underlag/)
 
