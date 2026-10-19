@@ -1722,7 +1722,7 @@ function AnnualApp() {
   async function login(event) {
     event.preventDefault(); setStatus('Loggar in...')
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) setStatus('Inloggningen misslyckades. Kontrollera e-post och lösenord.')
+    if (error) setStatus(error.code === 'email_not_confirmed' || /email not confirmed/i.test(error.message || '') ? 'E-postadressen är inte bekräftad. Öppna bekräftelsemejlet från Supabase och klicka på länken innan du loggar in.' : 'Inloggningen misslyckades. Kontrollera e-post och lösenord.')
     else { setPassword(''); setStatus('') }
   }
 
