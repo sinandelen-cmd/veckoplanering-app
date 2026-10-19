@@ -1638,6 +1638,43 @@ function AnnualApp() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [status, setStatus] = useState('')
+  const [access, setAccess] = useState(null)
+  const [accessLoading, setAccessLoading] = useState(true)
+  const [requests, setRequests] = useState([])
+  const [adminError, setAdminError] = useState('')
+  const isAdmin = session?.user?.id === 'fa85f509-bf1c-43c4-bc82-78777232a339'
+
+  useEffect(() => {
+    if (!session?.user?.id) { setAccess(null); setAccessLoading(false); return }
+    let cancelled = false
+    setAccessLoading(true)
+    supabase.from('teacher_access').select('status').eq('user_id', session.user.id).maybeSingle()
+      .then(async ({ data, error }) => {
+        if (cancelled) return
+        if (error) { setAccess('error'); setAccessLoading(false); return }
+        if (!data) {
+          const result = await supabase.from('teacher_access').insert({ user_id: session.user.id })
+          if (cancelled) return
+          setAccess(result.error ? 'error' : 'pending')
+        } else setAccess(data.status)
+        setAccessLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [session?.user?.id])
+
+  async function loadRequests() {
+    const { data, error } = await supabase.rpc('admin_list_teacher_requests')
+    if (error) setAdminError('Kunde inte läsa ansökningarna.')
+    else { setRequests(data || []); setAdminError('') }
+  }
+
+  useEffect(() => { if (isAdmin && access === 'approved') loadRequests() }, [isAdmin, access])
+
+  async function reviewRequest(userId, approve) {
+    const { error } = await supabase.rpc('admin_review_teacher_request', { p_user_id: userId, p_approve: approve })
+    if (error) setAdminError('Kunde inte ändra ansökan.')
+    else await loadRequests()
+  }
 
   const isPublicDemo = window.location.pathname.replace(/\/$/, '') === '/elev/demo-vecka-42'
 
@@ -1690,6 +1727,9 @@ function AnnualApp() {
   if (loading) return <><Navigation /><main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar...</p></section></main></>
   if (studentSlug) return <><Navigation /><StudentView plan={studentPlan} error={studentError} /></>
   if (!session) return <><Navigation /><Login email={email} password={password} setEmail={setEmail} setPassword={setPassword} onSubmit={login} onSignUp={signUp} status={status} /></>
+  if (accessLoading) return <><Navigation /><main className="shell"><section className="card"><h2>Kontrollerar lärarbehörighet…</h2></section></main></>
+  if (access !== 'approved') return <><Navigation /><main className="shell narrow-shell"><section className="card"><h1>Ansökan om lärarkonto</h1><p>{access === 'pending' ? 'Ditt konto väntar på administratörens godkännande.' : access === 'rejected' ? 'Din ansökan har avslagits.' : 'Behörigheten kunde inte kontrolleras. Försök igen senare.'}</p><button type="button" onClick={() => supabase.auth.signOut()}>Logga ut</button></section></main></>
+  if (isAdmin) return <><Navigation /><main className="shell"><section className="card"><h2>Administratör – läraransökningar</h2><p>Endast du kan godkänna nya lärarkonton.</p>{adminError && <p role="alert">{adminError}</p>}{requests.filter(item => item.user_id !== session.user.id).map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – {item.status} <button type="button" onClick={() => reviewRequest(item.user_id, true)}>Godkänn</button> <button type="button" onClick={() => reviewRequest(item.user_id, false)}>Avslå</button></div>)}<button type="button" onClick={loadRequests}>Uppdatera ansökningar</button></section></main><TeacherApp key={session.user.id} session={session} /></>
   return <TeacherApp key={session.user.id} session={session} />
 }
 
