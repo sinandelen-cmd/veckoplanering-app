@@ -1231,13 +1231,13 @@ function TeacherApp({ session }) {
         }}>🔗 Kopiera elevlänk</button>
         {plans.find(row => row.id === selectedId)?.published && plans.find(row => row.id === selectedId)?.public_slug ? <a href={`/elev/${encodeURIComponent(plans.find(row => row.id === selectedId).public_slug)}`} target="_blank" rel="noopener noreferrer">Öppna elevlänk ↗</a> : <span className="muted" style={{ fontSize: 12 }}>Elevlänk blir aktiv när planeringen publicerats.</span>}
       </div>}
-      {teacherTab === "new" && <div className="topbar-share-actions">
+      {false && teacherTab === "new" && <div className="topbar-share-actions">
         <button type="button" className="secondary share-settings-trigger" aria-expanded={shareOpen} onClick={() => { setShareOpen(open => !open); setShareToken(''); setShareMessage('') }} title="Klona och dela med kollega">⚙ Klona / dela</button>
         <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
       </div>}
     </header>}
 
-    {teacherTab === "new" && shareOpen && <section className="card colleague-share-panel" aria-label="Klona och dela med kollega">
+    {false && teacherTab === "new" && shareOpen && <section className="card colleague-share-panel" aria-label="Klona och dela med kollega">
       <div className="share-panel-heading"><div><h2>Klona och dela</h2><p className="muted">Kollegan skapar ett eget konto och börjar med en tom planering.</p></div><button type="button" className="secondary" onClick={() => setShareOpen(false)}>Stäng</button></div>
       <div className="colleague-share-grid">
         <form onSubmit={shareWithColleague}>
