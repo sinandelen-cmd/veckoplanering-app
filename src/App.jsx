@@ -1329,7 +1329,7 @@ function TeacherApp({ session }) {
       {status && <p className="status">{status}</p>}
     </section>
     </div>}
-    {selectedId && calendarOpen && teacherTab !== "elevvy" && teacherTab !== "new" && <div id="teacher-year-calendar"><YearCalendar key="month-overview" embedded={false} onOpen={() => setCalendarOpen(true)} startOnFirstWeek={weeks.length === 1} weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={[]} onClose={() => { setCalendarOpen(false); setTeacherTab("arsplan"); window.scrollTo({ top: 0, behavior: "smooth" }) }} onUpdateWeek={updateWeek} onSetAllVisibility={setAllWeeksVisibility} onAddWeek={() => setPlan(p => {
+    {selectedId && calendarOpen && teacherTab !== "elevvy" && teacherTab !== "new" && <div id="teacher-year-calendar"><YearCalendar key="month-overview" embedded={false} onOpen={() => setCalendarOpen(true)} startOnFirstWeek={weeks.length === 1} weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={nationalExamsForPlan(plan)} onClose={() => { setCalendarOpen(false); setTeacherTab("arsplan"); window.scrollTo({ top: 0, behavior: "smooth" }) }} onUpdateWeek={updateWeek} onSetAllVisibility={setAllWeeksVisibility} onAddWeek={() => setPlan(p => {
       const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
       if (existing.length >= 52) return p
       const latest = [...existing].sort((a, b) => b.weekStart.localeCompare(a.weekStart))[0]
