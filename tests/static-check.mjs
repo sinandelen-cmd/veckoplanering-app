@@ -272,7 +272,7 @@ assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(false\); setPrev
 const nav = fs.readFileSync(new URL('../src/Navigation.jsx', import.meta.url), 'utf8')
 assert.match(nav, /planning-sidebar/)
 assert.match(nav, /Mina planeringar/)
-assert.match(nav, /onOpenPlan\(row\)/)
+assert.match(nav, /onOpenPlan\?\.\(row\)/)
 assert.match(app, /plans=\{plans\.filter\(row => !parseContent\(row\.content\)\?\.archived\)\}/)
 assert.match(app, /onOpenPlan=\{loadPlan\}/)
 assert.match(css, /\.planning-layout/)
