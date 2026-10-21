@@ -759,6 +759,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [shareMessage, setShareMessage] = useState("")
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [selectedClassName, setSelectedClassName] = useState('')
+  const [showBasePlan, setShowBasePlan] = useState(false)
   const [simpleSetup, setSimpleSetup] = useState(true)
   const [simpleMore, setSimpleMore] = useState(false)
   const [teacherTab, setTeacherTab] = useState("new")
@@ -804,7 +805,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
 
   const weeks = displayWeeks(plan)
   const classOptions = normalizeClassSchedules(plan.classSchedules, plan.lessonsPerWeek)
-  const activeClass = classOptions.find(item => item.name === selectedClassName) || classOptions[0] || null
+  const activeClass = showBasePlan ? null : (classOptions.find(item => item.name === selectedClassName) || classOptions[0] || null)
   const visibleTeacherWeeks = weeks.filter(week => week && !week.hidden)
   const weeksWithContent = visibleTeacherWeeks.filter(week => Boolean(
     String(week.content || '').trim() || String(week.chapter || '').trim() ||
@@ -1273,9 +1274,10 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       <h3>Välj klass – gemensam planering</h3>
       <p className="muted">Välj vilken klass du vill se. Alla klasser har samma lektionsinnehåll, men olika lektionsdagar.</p>
       <div className="button-row" role="group" aria-label="Välj klass">
-        {classOptions.map(item => <button key={item.name} type="button" className={activeClass?.name === item.name ? 'primary' : 'secondary'} aria-pressed={activeClass?.name === item.name} onClick={() => setSelectedClassName(item.name)}>{item.name}</button>)}
+        <button type="button" className={showBasePlan ? 'primary' : 'secondary'} aria-pressed={showBasePlan} onClick={() => setShowBasePlan(true)}>Grundplanering</button>
+        {classOptions.map(item => <button key={item.name} type="button" className={!showBasePlan && activeClass?.name === item.name ? 'primary' : 'secondary'} aria-pressed={activeClass?.name === item.name} onClick={() => { setSelectedClassName(item.name); setShowBasePlan(false) }}>{item.name}</button>)}
       </div>
-      <p><strong>Visar klass: {activeClass?.name}</strong></p>
+      <p><strong>{showBasePlan ? 'Visar grundplaneringen – gemensamt innehåll, utan klassdagar' : `Visar klass: ${activeClass?.name}`}</strong></p>
     </div>}
     <div className="calendar-bulk-visibility" style={{ margin: '8px 0 18px' }}><button type="button" className="secondary" disabled={busy} onClick={() => setAllWeeksVisibility(!weeks.every(week => !week.hidden))} style={{ padding: '13px 20px', fontSize: '1.05rem', fontWeight: 800, background: '#e4f6e9', border: '2px solid #80b69a', borderRadius: 12 }}>{weeks.every(week => !week.hidden) ? '☑ Dölj alla veckor i Elevvy' : '☐ Visa alla veckor i Elevvy'}</button></div>
 <section className="card">
@@ -1373,12 +1375,12 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         <div className="form-grid">
           <label>Planeringens namn<input required value={plan.title} onChange={event => setPlan(p => ({ ...p, title: event.target.value }))} placeholder="Matematik höstterminen" /></label>
           <label>Ämne<input required value={plan.subject} onChange={event => setPlan(p => ({ ...p, subject: event.target.value }))} placeholder="Matematik" /></label>
-          <label>Klass / årskurs<input value={plan.className} onChange={event => setPlan(p => ({ ...p, className: event.target.value, grade: (event.target.value.match(/^\s*(3|6|9)\s*[A-Za-z]?\s*$/)?.[1] || p.grade), schoolForm: p.schoolForm || 'grundskola' }))} placeholder="6A" /></label>
+          {(plan.classSchedules || []).length === 0 && <label>Klass / årskurs<input value={plan.className} onChange={event => setPlan(p => ({ ...p, className: event.target.value, grade: (event.target.value.match(/^\s*(3|6|9)\s*[A-Za-z]?\s*$/)?.[1] || p.grade), schoolForm: p.schoolForm || 'grundskola' }))} placeholder="6A" /></label>}
           <label>Läsår<input value={plan.schoolYear} onChange={event => setPlan(p => ({ ...p, schoolYear: event.target.value }))} placeholder="2026–2027" /></label>
           <label>Startdatum<input type="date" required value={plan.startDate} onChange={event => { if (event.target.value) setPlan(p => ({ ...p, startDate: mondayOf(`${event.target.value}T12:00:00`), weeksData: [] })) }} /></label>
           <p className="muted">Planeringen börjar med en vecka. Lägg till fler veckor efter sista veckan när du behöver. Importerade underlag kan innehålla flera veckor.</p>
         </div>
-        <div className="card" style={{ marginTop: 14 }}><h3>Mitt veckoschema</h3><label>Antal lektioner per vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 1)) }))} /></label><div className="form-grid">{Array.from({ length: plan.lessonsPerWeek }, (_, i) => <label key={i}>Lektion {i + 1} – dag<select value={plan.lessonDays?.[i] || ''} onChange={e => setPlan(p => ({ ...p, lessonDays: Array.from({ length: Math.max(1, Number(p.lessonsPerWeek) || 3) }, (_, j) => j === i ? e.target.value : (p.lessonDays?.[j] || '')) }))}><option value="">Välj dag</option>{WEEKDAYS.map(day => <option key={day} value={day}>{day}</option>)}</select></label>)}</div><p className="muted">Samma dagar och lektionsnummer läggs automatiskt in i varje ny vecka. Du kan ändra dem senare.</p></div>
+        <div className="card" style={{ marginTop: 14 }}><h3>Grundplanering – antal lektioner</h3><label>Antal lektioner per vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 1)) }))} /></label>{(plan.classSchedules || []).length === 0 && <div className="form-grid">{Array.from({ length: plan.lessonsPerWeek }, (_, i) => <label key={i}>Lektion {i + 1} – dag<select value={plan.lessonDays?.[i] || ''} onChange={e => setPlan(p => ({ ...p, lessonDays: Array.from({ length: Math.max(1, Number(p.lessonsPerWeek) || 3) }, (_, j) => j === i ? e.target.value : (p.lessonDays?.[j] || '')) }))}><option value="">Välj dag</option>{WEEKDAYS.map(day => <option key={day} value={day}>{day}</option>)}</select></label>)}</div><p className="muted">Samma dagar och lektionsnummer läggs automatiskt in i varje ny vecka. Du kan ändra dem senare.</p>}{(plan.classSchedules || []).length > 0 && <p className="muted">Skriv innehållet för lektion 1, 2 och 3 en gång. Välj sedan dagarna under varje klass nedan.</p>}</div>
         <div className="card" style={{ marginTop: 14 }}>
           <h3>Gemensam planering för flera klasser</h3>
           <p className="muted">Alla klasser använder samma lektionsinnehåll och veckotakt. Ange separata lektionsdagar för varje klass. Lämna tomt för en vanlig planering.</p>
