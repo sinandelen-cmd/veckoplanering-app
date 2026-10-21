@@ -272,7 +272,7 @@ assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(false\); setPrev
 const nav = fs.readFileSync(new URL('../src/Navigation.jsx', import.meta.url), 'utf8')
 assert.match(nav, /planning-sidebar/)
 assert.match(nav, /Mina planeringar/)
-assert.match(nav, /onOpenPlan\(row\)/)
+assert.match(nav, /onOpenPlan\?\.\(row\)/)
 assert.match(app, /plans=\{plans\.filter\(row => !parseContent\(row\.content\)\?\.archived\)\}/)
 assert.match(app, /onOpenPlan=\{loadPlan\}/)
 assert.match(css, /\.planning-layout/)
@@ -371,3 +371,54 @@ assert.match(approvalSql, /approved teachers delete/)
 assert.match(app, /access !== 'approved'/)
 assert.match(app, /admin_review_teacher_request/)
 assert.match(app, /admin_list_teacher_requests/)
+
+
+// Gemensam årsplanering: obegränsat antal klasser, egna dagar och samma lektionsinnehåll.
+const { normalizeClassSchedules, classScheduleForWeek } = await import('../src/classSchedules.js')
+const manyClasses = Array.from({ length: 125 }, (_, i) => ({
+  name: `Klass ${i + 1}`,
+  lessonDays: i % 2 ? ['Tisdag', 'Torsdag'] : ['Måndag', 'Onsdag'],
+}))
+assert.equal(normalizeClassSchedules(manyClasses, 2).length, 125)
+assert.equal(normalizeClassSchedules([...manyClasses, { name: 'klass 1' }], 2).length, 125)
+const sharedPlan = {
+  lessonsPerWeek: 2,
+  classSchedules: manyClasses,
+  weeksData: [{ lessons: [{ name: 'Algebra' }, { name: 'Funktioner' }] }],
+}
+const restored = JSON.parse(JSON.stringify(sharedPlan))
+assert.deepEqual(classScheduleForWeek(restored, 'Klass 1', 0).map(x => [x.day, x.lesson.name]),
+  [['Måndag', 'Algebra'], ['Onsdag', 'Funktioner']])
+assert.deepEqual(classScheduleForWeek(restored, 'Klass 2', 0).map(x => [x.day, x.lesson.name]),
+  [['Tisdag', 'Algebra'], ['Torsdag', 'Funktioner']])
+assert.match(app, /classSchedules: \[\]/)
+assert.match(app, /normalizeClassSchedules\(plan\.classSchedules, plan\.lessonsPerWeek\)/)
+console.log('Shared class schedule regression checks: OK')
+
+
+// Fyra testklasser vecka 43 (2026), utan att skapa riktiga konton eller planeringar.
+const exampleWeek43 = {
+  lessonsPerWeek: 3,
+  classSchedules: [
+    { name: '8A', lessonDays: ['Måndag', 'Onsdag', 'Fredag'] },
+    { name: '8B', lessonDays: ['Tisdag', 'Torsdag', 'Fredag'] },
+    { name: '8C', lessonDays: ['Måndag', 'Tisdag', 'Torsdag'] },
+    { name: '8D', lessonDays: ['Tisdag', 'Onsdag', 'Fredag'] },
+  ],
+  weeksData: [{
+    weekNumber: 43,
+    weekStart: '2026-10-19',
+    lessons: [
+      { name: 'Lektion 1', topics: [{ name: 'Algebra' }] },
+      { name: 'Lektion 2', topics: [{ name: 'Ekvationer' }] },
+      { name: 'Lektion 3', topics: [{ name: 'Problemlösning' }] },
+    ],
+  }],
+}
+for (const group of exampleWeek43.classSchedules) {
+  const schedule = classScheduleForWeek(exampleWeek43, group.name, 0)
+  assert.deepEqual(schedule.map(item => item.day), group.lessonDays)
+  assert.deepEqual(schedule.map(item => item.lesson.topics[0].name),
+    ['Algebra', 'Ekvationer', 'Problemlösning'])
+}
+console.log('Week 43 test classes 8A–8D: OK')

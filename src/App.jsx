@@ -1,4 +1,5 @@
 import { groupStudentWeeksForPrint } from './printGroups.js'
+import { normalizeClassSchedules } from './classSchedules.js'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import * as XLSX from 'xlsx'
@@ -180,7 +181,7 @@ function planThemeStyle(plan, fallback = '') {
 }
 function emptyPlan() {
   return {
-    title: '', subject: '', schoolYear: '', className: '', county: '', municipality: '', schoolForm: '', grade: '', course: '', schoolClosures: [],
+    title: '', subject: '', schoolYear: '', className: '', classSchedules: [], county: '', municipality: '', schoolForm: '', grade: '', course: '', schoolClosures: [],
     startDate: mondayOf(), startWeek: 1, entryType: 'lektion', lessonDisplay: 'bara-lektion', studentLayout: 'grid', studentColumns: 3, studentRows: 2, lessonsPerWeek: 3, lessonDays: ['Måndag', 'Onsdag', 'Fredag'], weeks: DEFAULT_WEEKS, weeksData: [],
     published: false, publicSlug: '', autoReleaseWeeks: false, visibleWeekCount: 2,
   }
@@ -649,7 +650,7 @@ function nationalExamsForPlan(plan) {
   return NATIONAL_EXAMS_2026_27.filter(item => item.grade === grade && matchesSubject(item))
 }
 
-function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnFirstWeek = false, embedded = false, onOpen, onClose, onUpdateWeek, onSetAllVisibility, onAddWeek, onDeleteWeek, onSave, isDirty, busy, saveStatus, entryType = 'lektion' }) {
+function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnFirstWeek = false, embedded = false, onOpen, onClose, onUpdateWeek, onSetAllVisibility, onAddWeek, onDeleteWeek, onSave, isDirty, busy, saveStatus, entryType = 'lektion', classDays = null, className = '' }) {
   // Årsöversikt i nio veckor per sida, tre kolumner och tre rader.
   const [selectedWeekIndex, setSelectedWeekIndex] = useState(null)
   const [overviewPage, setOverviewPage] = useState(0)
@@ -678,7 +679,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
           <span className="calendar-inline-date">{formatDate(week.weekStart)}</span>
           <button type="button" className="calendar-delete-week danger" disabled={busy || orderedWeeks.length <= 1} onClick={() => onDeleteWeek?.(week.weekStart)}>🗑️ Radera vecka</button>
         </div>
-        <LessonDetails week={week} onChange={changes => onUpdateWeek?.(originalIndex, changes)} entryType={entryType} />
+        <LessonDetails week={week} onChange={changes => onUpdateWeek?.(originalIndex, changes)} entryType={entryType} classDays={classDays} />
       </article>
     })}
     <div className="calendar-add-week-actions"><button type="button" className="primary" disabled={busy || orderedWeeks.length >= 52} onClick={() => onAddWeek?.()}>+ Lägg till ny vecka</button><button type="button" className="secondary" onClick={onOpen}>Visa årsöversikt</button><button type="button" className="calendar-save-button" disabled={busy || !isDirty} onClick={onSave}>{busy ? 'Sparar...' : 'Spara ändringar'}</button></div>
@@ -695,7 +696,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
       {nationalExams.filter(exam => exam.date >= selectedWeek.weekStart && exam.date < addWeeks(selectedWeek.weekStart, 1)).map(exam => <p key={exam.date + exam.subject + exam.part} className="calendar-holiday"><strong>🔒 Nationellt prov:</strong> {exam.subject}, delprov {exam.part} · {formatDate(exam.date)}{exam.startTime ? ` kl. ${exam.startTime}` : ''}</p>)}
       
       {selectedWeek.content && <p>{selectedWeek.content}</p>}
-      <LessonDetails week={selectedWeek} onChange={editSelectedWeek} entryType={entryType} />
+      <LessonDetails week={selectedWeek} onChange={editSelectedWeek} entryType={entryType} classDays={classDays} />
       <div className="calendar-edit-actions">
         <button type="button" className="calendar-save-button" disabled={busy || !isDirty} onClick={onSave}>{busy ? 'Sparar...' : 'Spara ändringar'}</button>
         {isDirty && <span>Du har osparade ändringar.</span>}
@@ -757,6 +758,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [receivedToken, setReceivedToken] = useState("")
   const [shareMessage, setShareMessage] = useState("")
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [selectedClassName, setSelectedClassName] = useState('')
+  const [showBasePlan, setShowBasePlan] = useState(false)
   const [simpleSetup, setSimpleSetup] = useState(true)
   const [simpleMore, setSimpleMore] = useState(false)
   const [teacherTab, setTeacherTab] = useState("new")
@@ -801,6 +804,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
 
 
   const weeks = displayWeeks(plan)
+  const classOptions = normalizeClassSchedules(plan.classSchedules, plan.lessonsPerWeek)
+  const activeClass = showBasePlan ? null : (classOptions.find(item => item.name === selectedClassName) || classOptions[0] || null)
   const visibleTeacherWeeks = weeks.filter(week => week && !week.hidden)
   const weeksWithContent = visibleTeacherWeeks.filter(week => Boolean(
     String(week.content || '').trim() || String(week.chapter || '').trim() ||
@@ -893,6 +898,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     if (busy) return
     if (!String(plan.title || '').trim()) return setStatus('Skriv ett namn på årsplaneringen.')
     if (!String(plan.subject || '').trim()) return setStatus('Skriv ämne.')
+    if ((plan.classSchedules || []).some(item => !String(item.name || '').trim())) return setStatus('Ange namn för varje klass eller ta bort den tomma raden.')
+    if (normalizeClassSchedules(plan.classSchedules, plan.lessonsPerWeek).length !== (plan.classSchedules || []).length) return setStatus('Varje klass måste ha ett unikt namn.')
     if ((plan.schoolClosures || []).some(item => !validSchoolClosure(item))) return setStatus('Rätta namn och datum för lov/studiedagar innan du sparar eller publicerar.')
     if (publish && !automatic && !weeks.some(week => week && !week.hidden && (
       String(week.content || '').trim() || String(week.chapter || '').trim() ||
@@ -1263,9 +1270,18 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
 
     
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline">
+    {classOptions.length > 0 && <div className="card" style={{ marginBottom: 16, border: '2px solid #80b69a' }}>
+      <h3>Välj klass – gemensam planering</h3>
+      <p className="muted">Välj vilken klass du vill se. Alla klasser har samma lektionsinnehåll, men olika lektionsdagar.</p>
+      <div className="button-row" role="group" aria-label="Välj klass">
+        <button type="button" className={showBasePlan ? 'primary' : 'secondary'} aria-pressed={showBasePlan} onClick={() => setShowBasePlan(true)}>Grundplanering</button>
+        {classOptions.map(item => <button key={item.name} type="button" className={!showBasePlan && activeClass?.name === item.name ? 'primary' : 'secondary'} aria-pressed={activeClass?.name === item.name} onClick={() => { setSelectedClassName(item.name); setShowBasePlan(false) }}>{item.name}</button>)}
+      </div>
+      <p><strong>{showBasePlan ? 'Visar grundplaneringen – gemensamt innehåll, utan klassdagar' : `Visar klass: ${activeClass?.name}`}</strong></p>
+    </div>}
     <div className="calendar-bulk-visibility" style={{ margin: '8px 0 18px' }}><button type="button" className="secondary" disabled={busy} onClick={() => setAllWeeksVisibility(!weeks.every(week => !week.hidden))} style={{ padding: '13px 20px', fontSize: '1.05rem', fontWeight: 800, background: '#e4f6e9', border: '2px solid #80b69a', borderRadius: 12 }}>{weeks.every(week => !week.hidden) ? '☑ Dölj alla veckor i Elevvy' : '☐ Visa alla veckor i Elevvy'}</button></div>
 <section className="card">
-      <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
+      <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering{activeClass ? ` – Klass ${activeClass.name}` : ""}</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
       <div className="teacher-months">
         {Object.values(weeks.map((week, index) => ({ week, index })).sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((months, item) => {
           const monthKey = (item.week.weekStart || '').slice(0, 7)
@@ -1278,7 +1294,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           {group.items.map(({ week, index }, displayIndex, ordered) => <div className="chapter-week-group" key={`${week.weekNumber}-${index}`}>
           {week.chapter?.trim() && (displayIndex === 0 || week.chapter !== ordered[displayIndex - 1]?.week.chapter) && <h3 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h3>}
           <article className="week-card" id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
-          <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><label className="student-visibility-toggle week-heading-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever`} /><span>{week.hidden ? "Visa inte i elevvyn" : "Visa i elevvyn"}</span></label><strong style={{ fontSize: "1.45rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 5 }}>Vecka <input type="number" aria-label="Ändra veckonummer" style={{ width: "3.3ch", minWidth: 66, fontSize: "1.45rem", fontWeight: 800, padding: "4px 6px" }} min="1" max="53" value={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Ändra veckonumret för att flytta veckan och dess datum" onChange={e => {
+          <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><label className="student-visibility-toggle week-heading-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever`} /><span>{week.hidden ? "Visa inte i elevvyn" : "Visa i elevvyn"}</span></label>{activeClass && <strong style={{ fontSize: "1.05rem", color: "#175d48" }}>Klass {activeClass.name}</strong>}<strong style={{ fontSize: "1.45rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 5 }}>Vecka <input type="number" aria-label="Ändra veckonummer" style={{ width: "3.3ch", minWidth: 66, fontSize: "1.45rem", fontWeight: 800, padding: "4px 6px" }} min="1" max="53" value={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Ändra veckonumret för att flytta veckan och dess datum" onChange={e => {
             const target = Number(e.target.value)
             const current = calendarWeekNumber(week.weekStart)
             if (!Number.isInteger(target) || target < 1 || target > 53 || current === null) return
@@ -1299,7 +1315,15 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           <label className="chapter-editor">Kapitel / tema (valfritt)<input value={week.chapter || ''} placeholder="Exempel: Kapitel 5 – Taluppfattning" onChange={e => updateWeek(index, { chapter: e.target.value })} /></label>
           {!/^Vecka\s+\d+$/i.test(week.title || '') && <input className="week-title" aria-label="Egen veckorubrik" value={week.title || ''} onChange={e => updateWeek(index, { title: e.target.value })} />}
           <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />
-          <LessonDetails week={week} entryType={plan.entryType || 'lektion'} onChange={changes => updateWeek(index, changes)} />
+          <LessonDetails week={week} entryType={plan.entryType || 'lektion'} classDays={activeClass?.lessonDays} onChange={changes => updateWeek(index, changes)} />
+          {(plan.classSchedules || []).length > 0 && <details className="card" style={{ marginTop: 10 }}>
+            <summary>Klassernas lektionsdagar – vecka {week.weekNumber}</summary>
+            <p className="muted">Samma lektionsinnehåll används för alla klasser. Dagarna är klasspecifika.</p>
+            <div style={{ overflowX: 'auto' }}><table><thead><tr><th>Klass</th>{Array.from({ length: plan.lessonsPerWeek }, (_, i) => <th key={i}>Lektion {i + 1}</th>)}</tr></thead>
+              <tbody>{normalizeClassSchedules(plan.classSchedules, plan.lessonsPerWeek).map(group => <tr key={group.name}><th scope="row">{group.name}</th>{group.lessonDays.map((day, i) => <td key={i}>{day || 'Ej vald'}</td>)}</tr>)}</tbody>
+            </table></div>
+          </details>}
+
           <details className="legacy-week-details" defaultOpen={Boolean(week.pages?.length || week.assignments?.length || week.links?.length)}>
             <summary>Extra veckomaterial (sidor, uppgifter och länkar)</summary>
             <p className="muted">Använd i första hand momenten under varje lektion. Här kan du även lägga material för hela veckan.</p>
@@ -1327,7 +1351,14 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       {status && <p className="status">{status}</p>}
     </section>
     </div>}
-    {selectedId && calendarOpen && teacherTab !== "elevvy" && teacherTab !== "new" && <div id="teacher-year-calendar">{nationalExamsForPlan(plan).length > 0 && <p className="calendar-exam-note">Nationella prov – Skolverkets datum 2026/27 (kontrollerat 17 oktober 2026). Kontrollera aktuella provdatum hos Skolverket.</p>}<YearCalendar key="month-overview" embedded={false} onOpen={() => setCalendarOpen(true)} startOnFirstWeek={weeks.length === 1} weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={nationalExamsForPlan(plan)} onClose={() => { setCalendarOpen(false); setTeacherTab("arsplan"); window.scrollTo({ top: 0, behavior: "smooth" }) }} onUpdateWeek={updateWeek} onSetAllVisibility={setAllWeeksVisibility} onAddWeek={() => setPlan(p => {
+    {selectedId && calendarOpen && classOptions.length > 0 && <div className="card">
+      <label>Visa klass i årskalendern
+        <select value={activeClass?.name || ''} onChange={e => setSelectedClassName(e.target.value)}>
+          {classOptions.map(item => <option key={item.name} value={item.name}>{item.name}</option>)}
+        </select>
+      </label>
+    </div>}
+    {selectedId && calendarOpen && teacherTab !== "elevvy" && teacherTab !== "new" && <div id="teacher-year-calendar">{nationalExamsForPlan(plan).length > 0 && <p className="calendar-exam-note">Nationella prov – Skolverkets datum 2026/27 (kontrollerat 17 oktober 2026). Kontrollera aktuella provdatum hos Skolverket.</p>}<YearCalendar key="month-overview" embedded={false} onOpen={() => setCalendarOpen(true)} startOnFirstWeek={weeks.length === 1} classDays={activeClass?.lessonDays} className={activeClass?.name || ''} weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={nationalExamsForPlan(plan)} onClose={() => { setCalendarOpen(false); setTeacherTab("arsplan"); window.scrollTo({ top: 0, behavior: "smooth" }) }} onUpdateWeek={updateWeek} onSetAllVisibility={setAllWeeksVisibility} onAddWeek={() => setPlan(p => {
       const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
       if (existing.length >= 52) return p
       const latest = [...existing].sort((a, b) => b.weekStart.localeCompare(a.weekStart))[0]
@@ -1344,12 +1375,39 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         <div className="form-grid">
           <label>Planeringens namn<input required value={plan.title} onChange={event => setPlan(p => ({ ...p, title: event.target.value }))} placeholder="Matematik höstterminen" /></label>
           <label>Ämne<input required value={plan.subject} onChange={event => setPlan(p => ({ ...p, subject: event.target.value }))} placeholder="Matematik" /></label>
-          <label>Klass / årskurs<input value={plan.className} onChange={event => setPlan(p => ({ ...p, className: event.target.value, grade: (event.target.value.match(/^\s*(3|6|9)\s*[A-Za-z]?\s*$/)?.[1] || p.grade), schoolForm: p.schoolForm || 'grundskola' }))} placeholder="6A" /></label>
+          {(plan.classSchedules || []).length === 0 && <label>Klass / årskurs<input value={plan.className} onChange={event => setPlan(p => ({ ...p, className: event.target.value, grade: (event.target.value.match(/^\s*(3|6|9)\s*[A-Za-z]?\s*$/)?.[1] || p.grade), schoolForm: p.schoolForm || 'grundskola' }))} placeholder="6A" /></label>}
           <label>Läsår<input value={plan.schoolYear} onChange={event => setPlan(p => ({ ...p, schoolYear: event.target.value }))} placeholder="2026–2027" /></label>
           <label>Startdatum<input type="date" required value={plan.startDate} onChange={event => { if (event.target.value) setPlan(p => ({ ...p, startDate: mondayOf(`${event.target.value}T12:00:00`), weeksData: [] })) }} /></label>
           <p className="muted">Planeringen börjar med en vecka. Lägg till fler veckor efter sista veckan när du behöver. Importerade underlag kan innehålla flera veckor.</p>
         </div>
-        <div className="card" style={{ marginTop: 14 }}><h3>Mitt veckoschema</h3><label>Antal lektioner per vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 1)) }))} /></label><div className="form-grid">{Array.from({ length: plan.lessonsPerWeek }, (_, i) => <label key={i}>Lektion {i + 1} – dag<select value={plan.lessonDays?.[i] || ''} onChange={e => setPlan(p => ({ ...p, lessonDays: Array.from({ length: Math.max(1, Number(p.lessonsPerWeek) || 3) }, (_, j) => j === i ? e.target.value : (p.lessonDays?.[j] || '')) }))}><option value="">Välj dag</option>{WEEKDAYS.map(day => <option key={day} value={day}>{day}</option>)}</select></label>)}</div><p className="muted">Samma dagar och lektionsnummer läggs automatiskt in i varje ny vecka. Du kan ändra dem senare.</p></div>
+        <div className="card" style={{ marginTop: 14 }}><h3>Grundplanering – antal lektioner</h3><label>Antal lektioner per vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 1)) }))} /></label>{(plan.classSchedules || []).length === 0 && <><div className="form-grid">{Array.from({ length: plan.lessonsPerWeek }, (_, i) => <label key={i}>Lektion {i + 1} – dag<select value={plan.lessonDays?.[i] || ''} onChange={e => setPlan(p => ({ ...p, lessonDays: Array.from({ length: Math.max(1, Number(p.lessonsPerWeek) || 3) }, (_, j) => j === i ? e.target.value : (p.lessonDays?.[j] || '')) }))}><option value="">Välj dag</option>{WEEKDAYS.map(day => <option key={day} value={day}>{day}</option>)}</select></label>)}</div><p className="muted">Samma dagar och lektionsnummer läggs automatiskt in i varje ny vecka. Du kan ändra dem senare.</p></>}{(plan.classSchedules || []).length > 0 && <p className="muted">Skriv innehållet för lektion 1, 2 och 3 en gång. Välj sedan dagarna under varje klass nedan.</p>}</div>
+        <div className="card" style={{ marginTop: 14 }}>
+          <h3>Gemensam planering för flera klasser</h3>
+          <p className="muted">Alla klasser använder samma lektionsinnehåll och veckotakt. Ange separata lektionsdagar för varje klass. Lämna tomt för en vanlig planering.</p>
+          {(plan.classSchedules || []).map((group, groupIndex) => <div className="card" key={groupIndex} style={{ marginTop: 10 }}>
+            <div className="form-grid">
+              <label>Klassens namn<input value={group.name} placeholder="Exempel: EK26A" onChange={e => setPlan(p => ({ ...p, classSchedules: p.classSchedules.map((item, i) => i === groupIndex ? { ...item, name: e.target.value } : item) }))} /></label>
+              <div><button type="button" onClick={() => setPlan(p => ({ ...p, classSchedules: p.classSchedules.filter((_, i) => i !== groupIndex) }))}>Ta bort klass</button></div>
+            </div>
+            <div className="form-grid">
+              {Array.from({ length: plan.lessonsPerWeek }, (_, lessonIndex) => <label key={lessonIndex}>Lektion {lessonIndex + 1} – dag
+                <select value={group.lessonDays?.[lessonIndex] || ''} onChange={e => setPlan(p => ({ ...p, classSchedules: p.classSchedules.map((item, i) => i === groupIndex ? { ...item, lessonDays: Array.from({ length: p.lessonsPerWeek }, (_, j) => j === lessonIndex ? e.target.value : (item.lessonDays?.[j] || '')) } : item) }))}>
+                  <option value="">Välj dag</option>{WEEKDAYS.map(day => <option key={day} value={day}>{day}</option>)}
+                </select>
+              </label>)}
+            </div>
+          </div>)}
+          <button type="button" onClick={() => setPlan(p => ({ ...p, classSchedules: [...(p.classSchedules || []), { name: '', lessonDays: [...(p.lessonDays || [])] }] }))}>+ Lägg till klass</button>
+        </div>
+        {(plan.classSchedules || []).length > 0 && <div className="card" style={{ marginTop: 14 }}>
+          <h3>Klassernas lektionsdagar – gemensam veckoplanering</h3>
+          <p className="muted">Varje rad visar när klassen genomför samma lektioner under veckan. Ändra lektionsinnehållet en gång i årsplaneringen.</p>
+          <div style={{ overflowX: 'auto' }}>
+            <table><thead><tr><th>Klass</th>{Array.from({ length: plan.lessonsPerWeek }, (_, i) => <th key={i}>Lektion {i + 1}</th>)}</tr></thead>
+              <tbody>{normalizeClassSchedules(plan.classSchedules, plan.lessonsPerWeek).map(group => <tr key={group.name}><th scope="row">{group.name}</th>{group.lessonDays.map((day, i) => <td key={i}>{day || 'Ej vald'}</td>)}</tr>)}</tbody>
+            </table>
+          </div>
+        </div>}
         {simpleMore && <div className="simple-extra-fields"><h3>Fler uppgifter</h3><div className="form-grid"><label>Skolform<input value={plan.schoolForm || ""} onChange={e => setPlan(p => ({ ...p, schoolForm: e.target.value }))} placeholder="Grundskola" /></label><label>Årskurs<input value={plan.grade || ""} onChange={e => setPlan(p => ({ ...p, grade: e.target.value }))} placeholder="6" /></label><label>Lektioner per vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 1)) }))} /></label><label>Kommun<input value={plan.municipality || ""} onChange={e => setPlan(p => ({ ...p, municipality: e.target.value }))} /></label></div>
         </div>}
         <section className="simple-import-section" aria-label="Importera underlag">
@@ -1520,18 +1578,26 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     </section>
 
     <div className="button-row" aria-label="Spara planering"><button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara ändringar</button><span className="autosave-info">Publiceras automatiskt när det finns innehåll</span></div>
+    {classOptions.length > 0 && <div className="card" style={{ marginBottom: 12 }}>
+      <label>Visa lektionsdagar för klass
+        <select value={activeClass?.name || ''} onChange={e => setSelectedClassName(e.target.value)}>
+          {classOptions.map(item => <option key={item.name} value={item.name}>{item.name}</option>)}
+        </select>
+      </label>
+      <p className="muted">Du redigerar gemensamt lektionsinnehåll. Datum och dagar visas för vald klass utan att ändra övriga klassers scheman.</p>
+    </div>}
     <div className="week-overview-toolbar" aria-label="Årskalender och zoom"><strong>Veckor i planeringen <span className="week-count-badge">{weeks.length} {weeks.length === 1 ? "vecka" : "veckor"}</span></strong><button type="button" className="primary" onClick={() => {
         setCalendarOpen(true)
         window.setTimeout(() => document.getElementById('teacher-year-calendar')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
       }}>Visa årskalender och zooma</button></div>
     <details className="legacy-week-editor"><summary>Detaljerad veckoredigering (vid behov)</summary>
     <section className="card">
-      <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
+      <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering{activeClass ? ` – Klass ${activeClass.name}` : ""}</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
       <div className="year-grid">
         {weeks.map((week, index) => ({ week, index })).sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).map(({ week, index }, displayIndex, ordered) => <div className="chapter-week-group" key={`${week.weekNumber}-${index}`}>
           {week.chapter?.trim() && (displayIndex === 0 || week.chapter !== ordered[displayIndex - 1]?.week.chapter) && <h3 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h3>}
           <article className="week-card" id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
-          <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><label className="student-visibility-toggle week-heading-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever`} /><span>{week.hidden ? "Visa inte i elevvyn" : "Visa i elevvyn"}</span></label><strong style={{ fontSize: "1.45rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 5 }}>Vecka <input type="number" aria-label="Ändra veckonummer" style={{ width: "3.3ch", minWidth: 66, fontSize: "1.45rem", fontWeight: 800, padding: "4px 6px" }} min="1" max="53" value={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Ändra veckonumret för att flytta veckan och dess datum" onChange={e => {
+          <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><label className="student-visibility-toggle week-heading-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever`} /><span>{week.hidden ? "Visa inte i elevvyn" : "Visa i elevvyn"}</span></label>{activeClass && <strong style={{ fontSize: "1.05rem", color: "#175d48" }}>Klass {activeClass.name}</strong>}<strong style={{ fontSize: "1.45rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 5 }}>Vecka <input type="number" aria-label="Ändra veckonummer" style={{ width: "3.3ch", minWidth: 66, fontSize: "1.45rem", fontWeight: 800, padding: "4px 6px" }} min="1" max="53" value={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Ändra veckonumret för att flytta veckan och dess datum" onChange={e => {
             const target = Number(e.target.value)
             const current = calendarWeekNumber(week.weekStart)
             if (!Number.isInteger(target) || target < 1 || target > 53 || current === null) return
@@ -1552,7 +1618,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           <label className="chapter-editor">Kapitel / tema (valfritt)<input value={week.chapter || ''} placeholder="Exempel: Kapitel 5 – Taluppfattning" onChange={e => updateWeek(index, { chapter: e.target.value })} /></label>
           {!/^Vecka\s+\d+$/i.test(week.title || '') && <input className="week-title" aria-label="Egen veckorubrik" value={week.title || ''} onChange={e => updateWeek(index, { title: e.target.value })} />}
           <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />
-          <LessonDetails week={week} entryType={plan.entryType || 'lektion'} onChange={changes => updateWeek(index, changes)} />
+          <LessonDetails week={week} entryType={plan.entryType || 'lektion'} classDays={activeClass?.lessonDays} onChange={changes => updateWeek(index, changes)} />
           <details className="legacy-week-details" defaultOpen={Boolean(week.pages?.length || week.assignments?.length || week.links?.length)}>
             <summary>Extra veckomaterial (sidor, uppgifter och länkar)</summary>
             <p className="muted">Använd i första hand momenten under varje lektion. Här kan du även lägga material för hela veckan.</p>
@@ -1815,9 +1881,10 @@ function lessonDayDate(weekStart, lessonName) {
   date.setDate(date.getDate() - ((date.getDay() + 6) % 7) + index)
   return formatDate(toIsoDate(date))
 }
-function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 'bara-lektion' }) {
+function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 'bara-lektion', classDays = null }) {
   const lessons = Array.isArray(week?.lessons) ? week.lessons : []
   const editable = typeof onChange === 'function'
+  const dayForLesson = (lesson, i) => entryType === 'dag' ? lesson.name : (classDays ? (classDays[i] || '') : lesson.day)
   const changeLessons = next => onChange?.({ lessons: next, ...(entryType === 'dag' ? { daysCustomized: true } : {}) })
   const changeLesson = (i, next) => changeLessons(lessons.map((lesson, index) => index === i ? next : lesson))
   const normalizeLessonOrder = items => items.map((lesson, index) => ({ ...lesson, name: `Lektion ${index + 1}` }))
@@ -1835,11 +1902,11 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
   return <div className="lessons">
     {lessons.map((lesson, i) => ({ lesson, i })).sort((a, b) => editable ? a.i - b.i : (WEEKDAYS.indexOf(a.lesson.day || a.lesson.name) + 5) % 5 - (WEEKDAYS.indexOf(b.lesson.day || b.lesson.name) + 5) % 5).map(({ lesson, i }) => <section className="lesson" key={i}>
       <div className="lesson-heading">
-        {editable ? <div className="lesson-edit-heading" style={{ '--lesson-day-color': DAY_COLORS[Math.max(0, WEEKDAYS.indexOf(entryType === 'dag' ? lesson.name : lesson.day)) % DAY_COLORS.length] }}>
-          <span className="lesson-number-inline">{entryType === 'dag' ? (lesson.name || WEEKDAYS[i]) : (lesson.day || 'Välj dag')} · {entryType === 'dag' ? `Lektion ${i + 1}` : `Lektion ${i + 1}`}{lessonDayDate(week.weekStart, entryType === 'dag' ? lesson.name : lesson.day) ? ` · ${lessonDayDate(week.weekStart, entryType === 'dag' ? lesson.name : lesson.day)}` : ''}</span>
+        {editable ? <div className="lesson-edit-heading" style={{ '--lesson-day-color': DAY_COLORS[Math.max(0, WEEKDAYS.indexOf(dayForLesson(lesson, i))) % DAY_COLORS.length] }}>
+          <span className="lesson-number-inline">{entryType === 'dag' ? (lesson.name || WEEKDAYS[i]) : (dayForLesson(lesson, i) || 'Välj dag')} · {entryType === 'dag' ? `Lektion ${i + 1}` : `Lektion ${i + 1}`}{lessonDayDate(week.weekStart, dayForLesson(lesson, i)) ? ` · ${lessonDayDate(week.weekStart, dayForLesson(lesson, i))}` : ''}</span>
         </div> : <h4>
           {(() => {
-            const day = entryType === 'dag' ? (lesson.name || WEEKDAYS[i]) : lesson.day
+            const day = entryType === 'dag' ? (lesson.name || WEEKDAYS[i]) : dayForLesson(lesson, i)
             const name = lesson.name || (entryType === 'dag' ? (WEEKDAYS[i] || 'Dag ' + (i + 1)) : 'Lektion ' + (i + 1))
             const showDay = lessonDisplay !== 'bara-lektion'
             const showLesson = lessonDisplay !== 'bara-dag'
