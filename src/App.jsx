@@ -1644,6 +1644,8 @@ function AnnualApp() {
   const [password, setPassword] = useState('')
   const [status, setStatus] = useState('')
   const [access, setAccess] = useState(null)
+  const [accountInfo,setAccountInfo] = useState(null)
+  const [extensionNotice,setExtensionNotice] = useState('')
   const [accessLoading, setAccessLoading] = useState(true)
   const [requests, setRequests] = useState([])
   const [adminError, setAdminError] = useState('')
@@ -1657,7 +1659,7 @@ function AnnualApp() {
     if (!session?.user?.id) { setAccess(null); setAccessLoading(false); return }
     let cancelled = false
     setAccessLoading(true)
-    supabase.from('teacher_access').select('status').eq('user_id', session.user.id).maybeSingle()
+    supabase.from('teacher_access').select('status,timer_period,expires_at,extension_requested').eq('user_id', session.user.id).maybeSingle()
       .then(async ({ data, error }) => {
         if (cancelled) return
         if (error) { setAccess('error'); setAccessLoading(false); return }
@@ -1665,14 +1667,14 @@ function AnnualApp() {
           const result = await supabase.from('teacher_access').insert({ user_id: session.user.id })
           if (cancelled) return
           setAccess(result.error ? 'error' : 'pending')
-        } else setAccess(data.status)
+        } else { setAccountInfo(data); setAccess(data.status === 'approved' && data.expires_at && new Date(data.expires_at).getTime() <= Date.now() ? 'expired' : data.status) }
         setAccessLoading(false)
       })
     return () => { cancelled = true }
   }, [session?.user?.id])
 
   async function loadRequests() {
-    const { data, error } = await supabase.rpc('admin_list_teacher_requests')
+    const { data, error } = await supabase.rpc('admin_list_teacher_accounts')
     if (error) setAdminError('Kunde inte läsa ansökningarna.')
     else { setRequests(data || []); setAdminError('') }
   }
@@ -1692,6 +1694,16 @@ function AnnualApp() {
       setAdminNotice(`${applicant?.email || 'Lärarkontot'} har ${approve ? 'godkänts' : 'avslagits'}.`)
       await loadRequests()
     } finally { setReviewingUserId(null) }
+  }
+
+  async function changeTeacher(userId,action,period=null) {
+    if(reviewingUserId) return
+    setReviewingUserId(userId);setAdminError('');setAdminNotice('')
+    try {
+      const {error}=await supabase.rpc('admin_set_teacher_access',{p_user_id:userId,p_action:action,p_period:period})
+      if(error) setAdminError('Ändringen kunde inte sparas: '+error.message)
+      else {setAdminNotice('Kontot har uppdaterats.');await loadRequests()}
+    } finally {setReviewingUserId(null)}
   }
 
   const isPublicDemo = window.location.pathname.replace(/\/$/, '') === '/elev/demo-vecka-42'
@@ -1746,7 +1758,7 @@ function AnnualApp() {
   if (studentSlug) return <><Navigation /><StudentView plan={studentPlan} error={studentError} /></>
   if (!session) return <><Navigation /><Login email={email} password={password} setEmail={setEmail} setPassword={setPassword} onSubmit={login} onSignUp={signUp} status={status} /></>
   if (accessLoading) return <><Navigation /><main className="shell"><section className="card"><h2>Kontrollerar lärarbehörighet…</h2></section></main></>
-  if (access !== 'approved') return <><Navigation /><main className="shell narrow-shell"><section className="card"><h1>Ansökan om lärarkonto</h1><p>{access === 'pending' ? 'Ditt konto väntar på administratörens godkännande.' : access === 'rejected' ? 'Din ansökan har avslagits.' : 'Behörigheten kunde inte kontrolleras. Försök igen senare.'}</p><button type="button" onClick={() => supabase.auth.signOut()}>Logga ut</button></section></main></>
+  if (access !== 'approved') return <><Navigation /><main className="shell narrow-shell"><section className="card"><h1>Ansökan om lärarkonto</h1><p>{access === 'pending' ? 'Ditt konto väntar på administratörens godkännande.' : access === 'rejected' ? 'Din ansökan har avslagits.' : access === 'blocked' ? 'Ditt konto är spärrat. Dina planeringar finns kvar.' : access === 'expired' ? 'Kontots giltighetstid har gått ut. Dina planeringar finns kvar.' : 'Behörigheten kunde inte kontrolleras. Försök igen senare.'}</p><button type="button" onClick={() => supabase.auth.signOut()}>Logga ut</button></section></main></>
   if (isAdmin) {
     const colleagues = requests.filter(item => item.user_id !== session.user.id)
     const pending = colleagues.filter(item => item.status === 'pending')
@@ -1767,12 +1779,22 @@ function AnnualApp() {
       </div>)}
       <h3><button type="button" aria-expanded={showApprovedTeachers} aria-controls="approved-teachers-list" onClick={() => setShowApprovedTeachers(value => !value)}>{showApprovedTeachers ? "▾ Dölj" : "▸ Visa"} godkända lärare ({approved.length})</button></h3>
       {showApprovedTeachers && <div id="approved-teachers-list">{approved.length === 0 && <p>Inga kollegor är godkända ännu.</p>}{approved.map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – ✓ Godkänd</div>)}</div>}
+      <h3>Kontomatris – timer och behörighet</h3>
+      <div style={{overflowX:'auto'}}><table style={{width:'100%',borderCollapse:'collapse'}}><thead><tr><th>Lärare</th><th>Status</th><th>Timer</th><th>Gäller till</th><th>Åtgärder</th></tr></thead><tbody>
+      {colleagues.filter(item=>item.status==='approved'||item.status==='blocked').map(item=><tr key={item.user_id}>
+        <td style={{padding:8}}>{item.email}{item.extension_requested&&<strong> – Begär förlängning</strong>}</td>
+        <td>{item.status==='blocked'?'Spärrad':item.expires_at&&new Date(item.expires_at)<=new Date()?'Utgången':'Aktiv'}</td>
+        <td><select aria-label={'Timer för '+item.email} value={item.timer_period||'none'} disabled={Boolean(reviewingUserId)} onChange={e=>changeTeacher(item.user_id,'timer',e.target.value)}><option value="none">Ingen</option><option value="month">1 månad</option><option value="year">1 år</option></select></td>
+        <td>{item.expires_at?new Date(item.expires_at).toLocaleDateString('sv-SE'):'Ingen gräns'}</td>
+        <td><button type="button" disabled={Boolean(reviewingUserId)} onClick={()=>changeTeacher(item.user_id,item.status==='blocked'?'activate':'block')}>{item.status==='blocked'?'Aktivera':'Spärra'}</button>{' '}<button type="button" disabled={Boolean(reviewingUserId)||item.timer_period==='none'} onClick={()=>changeTeacher(item.user_id,'extend')}>Förläng</button></td>
+      </tr>)}</tbody></table></div>
       {rejected.length > 0 && <><h3>Avslagna ansökningar ({rejected.length})</h3>{rejected.map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – Avslagen</div>)}</>}
       <button type="button" onClick={loadRequests}>Uppdatera listorna</button>
       </section>
     </>} />
   }
-  return <TeacherApp key={session.user.id} session={session} />
+  const daysLeft=accountInfo?.expires_at?Math.max(0,Math.ceil((new Date(accountInfo.expires_at).getTime()-Date.now())/86400000)):null
+  return <><TeacherApp key={session.user.id} session={session} />{daysLeft!==null&&daysLeft<=30&&<aside style={{position:'fixed',bottom:12,right:12,zIndex:9999,background:'#fff4db',border:'2px solid #a66a00',borderRadius:12,padding:16,maxWidth:340,boxShadow:'0 4px 20px #0003'}} role="status"><strong>Ditt konto löper ut om {daysLeft} dagar</strong><p>Vill du behålla kontot? Begär förlängning hos administratören.</p><button type="button" disabled={accountInfo.extension_requested} onClick={async()=>{const {error}=await supabase.rpc('request_teacher_extension');if(error)setExtensionNotice('Kunde inte skicka begäran.');else{setAccountInfo(p=>({...p,extension_requested:true}));setExtensionNotice('Begäran skickad till administratören.')}}}>{accountInfo.extension_requested?'Begäran skickad':'Begär förlängning'}</button>{extensionNotice&&<p>{extensionNotice}</p>}</aside>}</>
 }
 
 export default function App() { return <AnnualApp /> }
