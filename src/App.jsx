@@ -1371,6 +1371,15 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           </div>)}
           <button type="button" onClick={() => setPlan(p => ({ ...p, classSchedules: [...(p.classSchedules || []), { name: '', lessonDays: [...(p.lessonDays || [])] }] }))}>+ Lägg till klass</button>
         </div>
+        {(plan.classSchedules || []).length > 0 && <div className="card" style={{ marginTop: 14 }}>
+          <h3>Klassernas lektionsdagar – gemensam veckoplanering</h3>
+          <p className="muted">Varje rad visar när klassen genomför samma lektioner under veckan. Ändra lektionsinnehållet en gång i årsplaneringen.</p>
+          <div style={{ overflowX: 'auto' }}>
+            <table><thead><tr><th>Klass</th>{Array.from({ length: plan.lessonsPerWeek }, (_, i) => <th key={i}>Lektion {i + 1}</th>)}</tr></thead>
+              <tbody>{normalizeClassSchedules(plan.classSchedules, plan.lessonsPerWeek).map(group => <tr key={group.name}><th scope="row">{group.name}</th>{group.lessonDays.map((day, i) => <td key={i}>{day || 'Ej vald'}</td>)}</tr>)}</tbody>
+            </table>
+          </div>
+        </div>}
         {simpleMore && <div className="simple-extra-fields"><h3>Fler uppgifter</h3><div className="form-grid"><label>Skolform<input value={plan.schoolForm || ""} onChange={e => setPlan(p => ({ ...p, schoolForm: e.target.value }))} placeholder="Grundskola" /></label><label>Årskurs<input value={plan.grade || ""} onChange={e => setPlan(p => ({ ...p, grade: e.target.value }))} placeholder="6" /></label><label>Lektioner per vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 1)) }))} /></label><label>Kommun<input value={plan.municipality || ""} onChange={e => setPlan(p => ({ ...p, municipality: e.target.value }))} /></label></div>
         </div>}
         <section className="simple-import-section" aria-label="Importera underlag">
