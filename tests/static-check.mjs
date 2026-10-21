@@ -371,3 +371,26 @@ assert.match(approvalSql, /approved teachers delete/)
 assert.match(app, /access !== 'approved'/)
 assert.match(app, /admin_review_teacher_request/)
 assert.match(app, /admin_list_teacher_requests/)
+
+
+// Gemensam årsplanering: obegränsat antal klasser, egna dagar och samma lektionsinnehåll.
+const { normalizeClassSchedules, classScheduleForWeek } = await import('../src/classSchedules.js')
+const manyClasses = Array.from({ length: 125 }, (_, i) => ({
+  name: `Klass ${i + 1}`,
+  lessonDays: i % 2 ? ['Tisdag', 'Torsdag'] : ['Måndag', 'Onsdag'],
+}))
+assert.equal(normalizeClassSchedules(manyClasses, 2).length, 125)
+assert.equal(normalizeClassSchedules([...manyClasses, { name: 'klass 1' }], 2).length, 125)
+const sharedPlan = {
+  lessonsPerWeek: 2,
+  classSchedules: manyClasses,
+  weeksData: [{ lessons: [{ name: 'Algebra' }, { name: 'Funktioner' }] }],
+}
+const restored = JSON.parse(JSON.stringify(sharedPlan))
+assert.deepEqual(classScheduleForWeek(restored, 'Klass 1', 0).map(x => [x.day, x.lesson.name]),
+  [['Måndag', 'Algebra'], ['Onsdag', 'Funktioner']])
+assert.deepEqual(classScheduleForWeek(restored, 'Klass 2', 0).map(x => [x.day, x.lesson.name]),
+  [['Tisdag', 'Algebra'], ['Torsdag', 'Funktioner']])
+assert.match(app, /classSchedules: \[\]/)
+assert.match(app, /normalizeClassSchedules\(plan\.classSchedules, plan\.lessonsPerWeek\)/)
+console.log('Shared class schedule regression checks: OK')
