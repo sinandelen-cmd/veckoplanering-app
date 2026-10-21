@@ -1,4 +1,5 @@
 import { groupStudentWeeksForPrint } from './printGroups.js'
+import { normalizeClassSchedules } from './classSchedules.js'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import * as XLSX from 'xlsx'
@@ -180,7 +181,7 @@ function planThemeStyle(plan, fallback = '') {
 }
 function emptyPlan() {
   return {
-    title: '', subject: '', schoolYear: '', className: '', county: '', municipality: '', schoolForm: '', grade: '', course: '', schoolClosures: [],
+    title: '', subject: '', schoolYear: '', className: '', classSchedules: [], county: '', municipality: '', schoolForm: '', grade: '', course: '', schoolClosures: [],
     startDate: mondayOf(), startWeek: 1, entryType: 'lektion', lessonDisplay: 'bara-lektion', studentLayout: 'grid', studentColumns: 3, studentRows: 2, lessonsPerWeek: 3, lessonDays: ['Måndag', 'Onsdag', 'Fredag'], weeks: DEFAULT_WEEKS, weeksData: [],
     published: false, publicSlug: '', autoReleaseWeeks: false, visibleWeekCount: 2,
   }
@@ -893,6 +894,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     if (busy) return
     if (!String(plan.title || '').trim()) return setStatus('Skriv ett namn på årsplaneringen.')
     if (!String(plan.subject || '').trim()) return setStatus('Skriv ämne.')
+    if ((plan.classSchedules || []).some(item => !String(item.name || '').trim())) return setStatus('Ange namn för varje klass eller ta bort den tomma raden.')
+    if (normalizeClassSchedules(plan.classSchedules, plan.lessonsPerWeek).length !== (plan.classSchedules || []).length) return setStatus('Varje klass måste ha ett unikt namn.')
     if ((plan.schoolClosures || []).some(item => !validSchoolClosure(item))) return setStatus('Rätta namn och datum för lov/studiedagar innan du sparar eller publicerar.')
     if (publish && !automatic && !weeks.some(week => week && !week.hidden && (
       String(week.content || '').trim() || String(week.chapter || '').trim() ||
@@ -1350,6 +1353,24 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           <p className="muted">Planeringen börjar med en vecka. Lägg till fler veckor efter sista veckan när du behöver. Importerade underlag kan innehålla flera veckor.</p>
         </div>
         <div className="card" style={{ marginTop: 14 }}><h3>Mitt veckoschema</h3><label>Antal lektioner per vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 1)) }))} /></label><div className="form-grid">{Array.from({ length: plan.lessonsPerWeek }, (_, i) => <label key={i}>Lektion {i + 1} – dag<select value={plan.lessonDays?.[i] || ''} onChange={e => setPlan(p => ({ ...p, lessonDays: Array.from({ length: Math.max(1, Number(p.lessonsPerWeek) || 3) }, (_, j) => j === i ? e.target.value : (p.lessonDays?.[j] || '')) }))}><option value="">Välj dag</option>{WEEKDAYS.map(day => <option key={day} value={day}>{day}</option>)}</select></label>)}</div><p className="muted">Samma dagar och lektionsnummer läggs automatiskt in i varje ny vecka. Du kan ändra dem senare.</p></div>
+        <div className="card" style={{ marginTop: 14 }}>
+          <h3>Gemensam planering för flera klasser</h3>
+          <p className="muted">Alla klasser använder samma lektionsinnehåll och veckotakt. Ange separata lektionsdagar för varje klass. Lämna tomt för en vanlig planering.</p>
+          {(plan.classSchedules || []).map((group, groupIndex) => <div className="card" key={groupIndex} style={{ marginTop: 10 }}>
+            <div className="form-grid">
+              <label>Klassens namn<input value={group.name} placeholder="Exempel: EK26A" onChange={e => setPlan(p => ({ ...p, classSchedules: p.classSchedules.map((item, i) => i === groupIndex ? { ...item, name: e.target.value } : item) }))} /></label>
+              <div><button type="button" onClick={() => setPlan(p => ({ ...p, classSchedules: p.classSchedules.filter((_, i) => i !== groupIndex) }))}>Ta bort klass</button></div>
+            </div>
+            <div className="form-grid">
+              {Array.from({ length: plan.lessonsPerWeek }, (_, lessonIndex) => <label key={lessonIndex}>Lektion {lessonIndex + 1} – dag
+                <select value={group.lessonDays?.[lessonIndex] || ''} onChange={e => setPlan(p => ({ ...p, classSchedules: p.classSchedules.map((item, i) => i === groupIndex ? { ...item, lessonDays: Array.from({ length: p.lessonsPerWeek }, (_, j) => j === lessonIndex ? e.target.value : (item.lessonDays?.[j] || '')) } : item) }))}>
+                  <option value="">Välj dag</option>{WEEKDAYS.map(day => <option key={day} value={day}>{day}</option>)}
+                </select>
+              </label>)}
+            </div>
+          </div>)}
+          <button type="button" onClick={() => setPlan(p => ({ ...p, classSchedules: [...(p.classSchedules || []), { name: '', lessonDays: [...(p.lessonDays || [])] }] }))}>+ Lägg till klass</button>
+        </div>
         {simpleMore && <div className="simple-extra-fields"><h3>Fler uppgifter</h3><div className="form-grid"><label>Skolform<input value={plan.schoolForm || ""} onChange={e => setPlan(p => ({ ...p, schoolForm: e.target.value }))} placeholder="Grundskola" /></label><label>Årskurs<input value={plan.grade || ""} onChange={e => setPlan(p => ({ ...p, grade: e.target.value }))} placeholder="6" /></label><label>Lektioner per vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 1)) }))} /></label><label>Kommun<input value={plan.municipality || ""} onChange={e => setPlan(p => ({ ...p, municipality: e.target.value }))} /></label></div>
         </div>}
         <section className="simple-import-section" aria-label="Importera underlag">
