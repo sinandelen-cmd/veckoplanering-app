@@ -8,6 +8,7 @@ import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url'
 import { supabase } from './supabase'
 import './App.css'
 import Navigation from './Navigation.jsx'
+import ClassSchedules from './ClassSchedules.jsx'
 import { MUNICIPALITIES_BY_COUNTY } from './swedishMunicipalities.js'
 import { NATIONAL_EXAMS_2026_27, NATIONAL_EXAM_PERIODS_2026_27 } from './nationalExams.js'
 
@@ -1262,6 +1263,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     </div>}
 
     
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && <ClassSchedules plan={{...plan,weeksData:weeks}} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} />}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline">
     <div className="calendar-bulk-visibility" style={{ margin: '8px 0 18px' }}><button type="button" className="secondary" disabled={busy} onClick={() => setAllWeeksVisibility(!weeks.every(week => !week.hidden))} style={{ padding: '13px 20px', fontSize: '1.05rem', fontWeight: 800, background: '#e4f6e9', border: '2px solid #80b69a', borderRadius: 12 }}>{weeks.every(week => !week.hidden) ? '☑ Dölj alla veckor i Elevvy' : '☐ Visa alla veckor i Elevvy'}</button></div>
 <section className="card">
