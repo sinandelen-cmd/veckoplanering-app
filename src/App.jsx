@@ -1269,9 +1269,17 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
 
     
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline">
+    {classOptions.length > 0 && <div className="card" style={{ marginBottom: 16, border: '2px solid #80b69a' }}>
+      <h3>Välj klass – gemensam planering</h3>
+      <p className="muted">Välj vilken klass du vill se. Alla klasser har samma lektionsinnehåll, men olika lektionsdagar.</p>
+      <div className="button-row" role="group" aria-label="Välj klass">
+        {classOptions.map(item => <button key={item.name} type="button" className={activeClass?.name === item.name ? 'primary' : 'secondary'} aria-pressed={activeClass?.name === item.name} onClick={() => setSelectedClassName(item.name)}>{item.name}</button>)}
+      </div>
+      <p><strong>Visar klass: {activeClass?.name}</strong></p>
+    </div>}
     <div className="calendar-bulk-visibility" style={{ margin: '8px 0 18px' }}><button type="button" className="secondary" disabled={busy} onClick={() => setAllWeeksVisibility(!weeks.every(week => !week.hidden))} style={{ padding: '13px 20px', fontSize: '1.05rem', fontWeight: 800, background: '#e4f6e9', border: '2px solid #80b69a', borderRadius: 12 }}>{weeks.every(week => !week.hidden) ? '☑ Dölj alla veckor i Elevvy' : '☐ Visa alla veckor i Elevvy'}</button></div>
 <section className="card">
-      <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
+      <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering{activeClass ? ` – Klass ${activeClass.name}` : ""}</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
       <div className="teacher-months">
         {Object.values(weeks.map((week, index) => ({ week, index })).sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((months, item) => {
           const monthKey = (item.week.weekStart || '').slice(0, 7)
@@ -1284,7 +1292,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           {group.items.map(({ week, index }, displayIndex, ordered) => <div className="chapter-week-group" key={`${week.weekNumber}-${index}`}>
           {week.chapter?.trim() && (displayIndex === 0 || week.chapter !== ordered[displayIndex - 1]?.week.chapter) && <h3 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h3>}
           <article className="week-card" id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
-          <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><label className="student-visibility-toggle week-heading-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever`} /><span>{week.hidden ? "Visa inte i elevvyn" : "Visa i elevvyn"}</span></label><strong style={{ fontSize: "1.45rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 5 }}>Vecka <input type="number" aria-label="Ändra veckonummer" style={{ width: "3.3ch", minWidth: 66, fontSize: "1.45rem", fontWeight: 800, padding: "4px 6px" }} min="1" max="53" value={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Ändra veckonumret för att flytta veckan och dess datum" onChange={e => {
+          <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><label className="student-visibility-toggle week-heading-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever`} /><span>{week.hidden ? "Visa inte i elevvyn" : "Visa i elevvyn"}</span></label>{activeClass && <strong style={{ fontSize: "1.05rem", color: "#175d48" }}>Klass {activeClass.name}</strong>}<strong style={{ fontSize: "1.45rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 5 }}>Vecka <input type="number" aria-label="Ändra veckonummer" style={{ width: "3.3ch", minWidth: 66, fontSize: "1.45rem", fontWeight: 800, padding: "4px 6px" }} min="1" max="53" value={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Ändra veckonumret för att flytta veckan och dess datum" onChange={e => {
             const target = Number(e.target.value)
             const current = calendarWeekNumber(week.weekStart)
             if (!Number.isInteger(target) || target < 1 || target > 53 || current === null) return
@@ -1582,12 +1590,12 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       }}>Visa årskalender och zooma</button></div>
     <details className="legacy-week-editor"><summary>Detaljerad veckoredigering (vid behov)</summary>
     <section className="card">
-      <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
+      <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering{activeClass ? ` – Klass ${activeClass.name}` : ""}</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
       <div className="year-grid">
         {weeks.map((week, index) => ({ week, index })).sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).map(({ week, index }, displayIndex, ordered) => <div className="chapter-week-group" key={`${week.weekNumber}-${index}`}>
           {week.chapter?.trim() && (displayIndex === 0 || week.chapter !== ordered[displayIndex - 1]?.week.chapter) && <h3 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h3>}
           <article className="week-card" id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
-          <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><label className="student-visibility-toggle week-heading-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever`} /><span>{week.hidden ? "Visa inte i elevvyn" : "Visa i elevvyn"}</span></label><strong style={{ fontSize: "1.45rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 5 }}>Vecka <input type="number" aria-label="Ändra veckonummer" style={{ width: "3.3ch", minWidth: 66, fontSize: "1.45rem", fontWeight: 800, padding: "4px 6px" }} min="1" max="53" value={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Ändra veckonumret för att flytta veckan och dess datum" onChange={e => {
+          <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><label className="student-visibility-toggle week-heading-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever`} /><span>{week.hidden ? "Visa inte i elevvyn" : "Visa i elevvyn"}</span></label>{activeClass && <strong style={{ fontSize: "1.05rem", color: "#175d48" }}>Klass {activeClass.name}</strong>}<strong style={{ fontSize: "1.45rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 5 }}>Vecka <input type="number" aria-label="Ändra veckonummer" style={{ width: "3.3ch", minWidth: 66, fontSize: "1.45rem", fontWeight: 800, padding: "4px 6px" }} min="1" max="53" value={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Ändra veckonumret för att flytta veckan och dess datum" onChange={e => {
             const target = Number(e.target.value)
             const current = calendarWeekNumber(week.weekStart)
             if (!Number.isInteger(target) || target < 1 || target > 53 || current === null) return
