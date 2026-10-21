@@ -1303,6 +1303,14 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           {!/^Vecka\s+\d+$/i.test(week.title || '') && <input className="week-title" aria-label="Egen veckorubrik" value={week.title || ''} onChange={e => updateWeek(index, { title: e.target.value })} />}
           <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />
           <LessonDetails week={week} entryType={plan.entryType || 'lektion'} onChange={changes => updateWeek(index, changes)} />
+          {(plan.classSchedules || []).length > 0 && <details className="card" style={{ marginTop: 10 }}>
+            <summary>Klassernas lektionsdagar – vecka {week.weekNumber}</summary>
+            <p className="muted">Samma lektionsinnehåll används för alla klasser. Dagarna är klasspecifika.</p>
+            <div style={{ overflowX: 'auto' }}><table><thead><tr><th>Klass</th>{Array.from({ length: plan.lessonsPerWeek }, (_, i) => <th key={i}>Lektion {i + 1}</th>)}</tr></thead>
+              <tbody>{normalizeClassSchedules(plan.classSchedules, plan.lessonsPerWeek).map(group => <tr key={group.name}><th scope="row">{group.name}</th>{group.lessonDays.map((day, i) => <td key={i}>{day || 'Ej vald'}</td>)}</tr>)}</tbody>
+            </table></div>
+          </details>}
+
           <details className="legacy-week-details" defaultOpen={Boolean(week.pages?.length || week.assignments?.length || week.links?.length)}>
             <summary>Extra veckomaterial (sidor, uppgifter och länkar)</summary>
             <p className="muted">Använd i första hand momenten under varje lektion. Här kan du även lägga material för hela veckan.</p>
