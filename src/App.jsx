@@ -1216,6 +1216,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   {adminOpen ? adminContent : <>
     {teacherTab !== "elevvy" && <header className="topbar">
       <div><h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Mina planeringar" : (plan.title?.trim() || "Ny planering")}</h1><p className="muted">{session.user.email}</p></div>
+      {selectedId && teacherTab === "arsplan" && <button type="button" className="primary" onClick={() => {setCalendarOpen(false);setTimeout(()=>document.getElementById("kopplade-klasser")?.scrollIntoView({behavior:"smooth",block:"start"}),0)}}>+ Lägg till klass</button>}
       {selectedId && teacherTab === "arsplan" && <div className="archive-plan-actions" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <button type="button" className="secondary" disabled={busy || !plans.some(row => row.id === selectedId)} style={{ fontSize: '1rem', fontWeight: 850, padding: '13px 18px', borderRadius: 12, background: '#f9e5ed', border: '2px solid #c87e9b', color: '#73394f' }} onClick={() => { const row = plans.find(item => item.id === selectedId); if (row) void setArchived(row, true) }}>🗂 Arkivera planeringen</button>
         <button type="button" className="secondary" style={{ fontSize: '1rem', fontWeight: 800, padding: '13px 18px', borderRadius: 12, background: '#f3e6fc', border: '2px solid #bba1d5' }} onClick={() => { setCalendarOpen(false); setShowArchive(true); setTeacherTab('mina') }}>Öppna arkivet · återanvänd</button>
@@ -1263,7 +1264,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     </div>}
 
     
-    {selectedId && !calendarOpen && teacherTab === "arsplan" && <ClassSchedules plan={{...plan,weeksData:weeks}} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} />}
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && <div id="kopplade-klasser"><ClassSchedules plan={{...plan,weeksData:weeks}} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} /></div>}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline">
     <div className="calendar-bulk-visibility" style={{ margin: '8px 0 18px' }}><button type="button" className="secondary" disabled={busy} onClick={() => setAllWeeksVisibility(!weeks.every(week => !week.hidden))} style={{ padding: '13px 20px', fontSize: '1.05rem', fontWeight: 800, background: '#e4f6e9', border: '2px solid #80b69a', borderRadius: 12 }}>{weeks.every(week => !week.hidden) ? '☑ Dölj alla veckor i Elevvy' : '☐ Visa alla veckor i Elevvy'}</button></div>
 <section className="card">
