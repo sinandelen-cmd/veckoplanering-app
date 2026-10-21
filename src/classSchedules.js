@@ -1,4 +1,4 @@
-// Gemensamt veckoinnehåll med individuella lektionsdagar för upp till sex klasser.
+// Gemensamt veckoinnehåll med individuella lektionsdagar för valfritt antal klasser.
 // Ren datamodell: inga ändringar i befintliga planeringar krävs.
 export const WEEKDAYS = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag']
 
@@ -6,7 +6,7 @@ export function normalizeClassSchedules(classes, lessonsPerWeek = 3) {
   const count = Math.max(1, Math.min(8, Number(lessonsPerWeek) || 3))
   if (!Array.isArray(classes)) return []
   const names = new Set()
-  return classes.slice(0, 6).flatMap((item) => {
+  return classes.flatMap((item) => {
     const name = String(item?.name || '').trim()
     if (!name || names.has(name.toLocaleLowerCase('sv-SE'))) return []
     names.add(name.toLocaleLowerCase('sv-SE'))
