@@ -394,3 +394,31 @@ assert.deepEqual(classScheduleForWeek(restored, 'Klass 2', 0).map(x => [x.day, x
 assert.match(app, /classSchedules: \[\]/)
 assert.match(app, /normalizeClassSchedules\(plan\.classSchedules, plan\.lessonsPerWeek\)/)
 console.log('Shared class schedule regression checks: OK')
+
+
+// Fyra testklasser vecka 43 (2026), utan att skapa riktiga konton eller planeringar.
+const exampleWeek43 = {
+  lessonsPerWeek: 3,
+  classSchedules: [
+    { name: '8A', lessonDays: ['Måndag', 'Onsdag', 'Fredag'] },
+    { name: '8B', lessonDays: ['Tisdag', 'Torsdag', 'Fredag'] },
+    { name: '8C', lessonDays: ['Måndag', 'Tisdag', 'Torsdag'] },
+    { name: '8D', lessonDays: ['Tisdag', 'Onsdag', 'Fredag'] },
+  ],
+  weeksData: [{
+    weekNumber: 43,
+    weekStart: '2026-10-19',
+    lessons: [
+      { name: 'Lektion 1', topics: [{ name: 'Algebra' }] },
+      { name: 'Lektion 2', topics: [{ name: 'Ekvationer' }] },
+      { name: 'Lektion 3', topics: [{ name: 'Problemlösning' }] },
+    ],
+  }],
+}
+for (const group of exampleWeek43.classSchedules) {
+  const schedule = classScheduleForWeek(exampleWeek43, group.name, 0)
+  assert.deepEqual(schedule.map(item => item.day), group.lessonDays)
+  assert.deepEqual(schedule.map(item => item.lesson.topics[0].name),
+    ['Algebra', 'Ekvationer', 'Problemlösning'])
+}
+console.log('Week 43 test classes 8A–8D: OK')
