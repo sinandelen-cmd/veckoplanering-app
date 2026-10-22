@@ -1947,3 +1947,53 @@ body { background: #fffaf2; color: var(--ink); }
   margin-right: 10px;
   font-size: 1.25rem;
 }
+
+/* En lugn, enhetlig navigering: Startsida är en vanlig menyflik. */
+.planning-layout { --navigation-surface: #fff3ce; }
+.planning-layout > .planning-sidebar,
+.planning-layout > .planning-top-navigation {
+  background: var(--navigation-surface) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+.planning-layout > .planning-sidebar .sidebar-home-link {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 11px;
+  width: calc(100% - 20px);
+  margin: 4px 10px 18px;
+  padding: 11px 14px;
+  min-height: 48px;
+  background: transparent !important;
+  color: #793f4a !important;
+  border: 1px solid transparent !important;
+  border-radius: 10px;
+  box-shadow: none !important;
+  font-size: 1.05rem !important;
+  font-weight: 750 !important;
+}
+.planning-layout > .planning-sidebar .sidebar-home-link svg { width: 21px; height: 21px; flex-shrink: 0; }
+.planning-layout > .planning-sidebar .sidebar-home-link[aria-current="page"] {
+  background: #fffaed !important;
+  border-color: #e5cc9e !important;
+  box-shadow: inset 4px 0 0 #a46d49 !important;
+}
+.planning-layout > .planning-sidebar .sidebar-home-link:hover,
+.planning-layout > .planning-sidebar .sidebar-archive-link:hover,
+.planning-layout > .planning-top-navigation .top-navigation-link:hover {
+  background: #ffedc0 !important;
+}
+.planning-layout > .planning-top-navigation .top-navigation-link {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 1px solid transparent !important;
+  border-radius: 10px;
+  color: #793f4a !important;
+}
+.planning-layout > .planning-top-navigation .top-navigation-link.active {
+  background: #fffaed !important;
+  border: 1px solid #e5cc9e !important;
+  box-shadow: inset 0 -3px 0 #a46d49 !important;
+}
