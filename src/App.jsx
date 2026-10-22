@@ -783,9 +783,18 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
       </div>
       <div className="calendar-months">
         {Object.values(orderedWeeks.reduce((months, week, index) => {
-          const monthKey = week.weekStart.slice(0, 7)
-          if (!months[monthKey]) months[monthKey] = { date: new Date(week.weekStart + 'T12:00:00'), weeks: [] }
-          months[monthKey].weeks.push({ week, index })
+          // Visa gränsveckan i båda månaderna, precis som en svensk månadskalender.
+          // Båda korten pekar på samma vecka och samma sparade lektionsinnehåll.
+          const monday = new Date(week.weekStart + 'T12:00:00')
+          if (Number.isNaN(monday.getTime())) return months
+          const sunday = new Date(monday)
+          sunday.setDate(sunday.getDate() + 6)
+          const monthDates = [monday, sunday]
+          for (const date of monthDates) {
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+            if (!months[monthKey]) months[monthKey] = { date: new Date(date.getFullYear(), date.getMonth(), 1, 12), weeks: [] }
+            if (!months[monthKey].weeks.some(item => item.index === index)) months[monthKey].weeks.push({ week, index })
+          }
           return months
         }, {})).map(group => <section className="calendar-month-section" key={group.date.toISOString()} style={{ backgroundColor: MONTH_PASTELS[group.date.getMonth()], "--month-accent": ["#5089b8","#b96597","#8068b2","#568b69","#b68a32","#b9735a","#548e9b","#a26e9e","#72914d","#b47a43","#7d6ab0","#b76977"][group.date.getMonth()] }}>
           <h3>{new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeric' }).format(group.date)} · Veckor {calendarWeekNumber(group.weeks[0].week.weekStart)}–{calendarWeekNumber(group.weeks[group.weeks.length - 1].week.weekStart)}</h3>
