@@ -55,7 +55,7 @@ export default function ClassSchedules({ plan, onChange }) {
   const schedule = React.useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
   const updateGroup = changes => onChange({ ...plan, classGroups: groups.map((g, i) => i === selected ? { ...g, ...changes } : g) })
   const addClass = () => {
-    if (!name.trim() || !days.length || groups.some(g => g.name.toLocaleLowerCase('sv') === name.trim().toLocaleLowerCase('sv'))) return
+    if (!name.trim() || groups.some(g => g.name.toLocaleLowerCase('sv') === name.trim().toLocaleLowerCase('sv'))) return
     onChange({ ...plan, classGroups: [...groups, { name: name.trim(), days: [...days], startDate: plan.startDate, cancelledDates: [], overrides: {} }] })
     setSelected(groups.length); setName('')
   }
@@ -73,16 +73,20 @@ export default function ClassSchedules({ plan, onChange }) {
     <h2>Planera en gång – fördela till dina klasser</h2>
     <p><strong>En grundplanering – flera klasser.</strong> Skriv lektionsinnehållet en gång. Varje klass får sedan samma lektioner i rätt ordning, på sina egna veckodagar och i sin egen takt.</p>
     <p className="muted">Exempel: 8A kan ha 3 lektioner på måndag, onsdag och fredag, medan 8B har 2 på tisdag och torsdag. Båda följer samma innehåll, men blir klara olika veckor.</p>
-    <div className="form-grid">
-      <label>Ny klass <input value={name} onChange={e => setName(e.target.value)} placeholder="Exempel: 8B" /></label>
+    <div style={{display:"flex",gap:10,alignItems:"end",flexWrap:"wrap",margin:"16px 0"}}>
+      <label style={{flex:"1 1 180px"}}>Klassens namn<input value={name} onChange={e=>setName(e.target.value)} placeholder="Exempel: 8A" /></label>
+      <button type="button" disabled={!name.trim()||groups.some(g=>g.name.toLocaleLowerCase('sv')===name.trim().toLocaleLowerCase('sv'))} onClick={addClass}>+ Lägg till klass</button>
     </div>
-    <fieldset><legend>Vilka dagar har klassen lektion?</legend>
-      {DAYS.map(day => <label key={day} style={{display:'inline-flex',alignItems:'center',gap:5,marginRight:12}}>
-        <input type="checkbox" checked={days.includes(day)} onChange={e => setDays(e.target.checked ? [...days,day] : days.filter(d => d !== day))} />{day}
-      </label>)}
-    </fieldset>
-    <p className="muted">Har klassen två lektioner samma dag? Lägg först till klassen och välj sedan antal lektioner per dag.</p>
-    <button type="button" disabled={!name.trim() || !days.length || groups.some(g => g.name.toLocaleLowerCase('sv') === name.trim().toLocaleLowerCase('sv'))} onClick={addClass}>+ Lägg till klass</button>
+    {groups.length>0 && <div style={{overflowX:"auto",margin:"14px 0 20px"}}>
+      <h3>Klassernas veckoschema</h3>
+      <p className="muted">Kryssa i de dagar varje klass har lektion. En bock betyder en lektion den dagen. För flera lektioner samma dag kan du välja klassen och ändra antalet längre ned.</p>
+      <table style={{width:"100%",borderCollapse:"separate",borderSpacing:"4px",minWidth:460}}>
+        <thead><tr><th style={{textAlign:"left",padding:8}}>Klass</th>{DAY_SHORT.map(d=><th key={d} style={{textAlign:"center",padding:8,background:"#f5ebce",borderRadius:6}}>{d}</th>)}<th style={{textAlign:"center",padding:8}}>Totalt</th></tr></thead>
+        <tbody>{groups.map((g,i)=><tr key={i}><th style={{textAlign:"left",padding:8,background:"#f7f6f0",borderRadius:6}}>{g.name}</th>{DAYS.map(day=><td key={day} style={{textAlign:"center",background:(g.days||[]).includes(day)?"#e2f3e5":"#f7f6f0",borderRadius:6,padding:8}}>
+          <input aria-label={g.name+" "+day} type="checkbox" checked={(g.days||[]).includes(day)} onChange={e=>onChange({...plan,classGroups:groups.map((row,idx)=>idx===i?{...row,days:e.target.checked?[...(row.days||[]),day].sort((x,y)=>DAYS.indexOf(x)-DAYS.indexOf(y)):(row.days||[]).filter(d=>d!==day)}:row)})} />
+        </td>)}<td style={{textAlign:"center",fontWeight:700}}>{(g.days||[]).length}</td></tr>)}</tbody>
+      </table>
+    </div>}
     {groups.length > 0 && <>
       <h3>Klasser kopplade till samma planering</h3>
       <div style={{display:'flex',flexWrap:'wrap',gap:10,marginBottom:12}}>{groups.map((g,i) => <button key={i} type="button" className={selected===i?'primary':'secondary'} onClick={()=>{setSelected(i);setEditing(null);setShowAll(false)}} style={{textAlign:'left',minWidth:150}}><strong>{g.name}</strong><span style={{display:'block',fontSize:'.85em',marginTop:4}}>{lessonsPerWeek(g)} lektioner/vecka · {(g.days||[]).length ? [...new Set(g.days)].map(d=>DAY_SHORT[DAYS.indexOf(d)]).join(', ') : 'Inga dagar'}</span></button>)}</div>
