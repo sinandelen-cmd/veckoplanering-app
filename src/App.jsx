@@ -898,9 +898,9 @@ function TeacherResults({ userId }) {
     if (!selected) return
     const name = window.prompt('Namn på prov eller kapitel:')
     if (!name?.trim()) return
-    editSelected(previous => ({ ...previous, results: (previous.results || []).map(row => ({ ...row, [name.trim()]: row[name.trim()] ?? '' })), assessmentColumns: [...new Set([...(previous.assessmentColumns || []), name.trim()])] }))
+    editSelected(previous => ({ ...previous, results: (previous.results?.length ? previous.results : [{ student: '', assessment: '', score: '', comment: '' }]).map(row => ({ ...row, [name.trim()]: row[name.trim()] ?? '' })) }))
   }
-  const assessmentColumns = selected?.assessmentColumns || []
+  const assessmentColumns = [...new Set((selected?.results || []).flatMap(row => Object.keys(row).filter(key => !['student','assessment','score','comment'].includes(key))))]
   const exportResults = () => {
     if (!selected) return
     const quote = value => '"' + String(value ?? '').replaceAll('"', '""') + '"'
