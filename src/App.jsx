@@ -860,6 +860,28 @@ function applyElevkompassenTheme(event) {
       }
     `
     doc.head.appendChild(style)
+    // Hide the standalone Elevkompassen landing header and backup reminder.
+    // Keep the Resultatregistrering and Mentorskap overview cards untouched.
+    const hideStandaloneHeader = () => {
+      const candidates = Array.from(doc.querySelectorAll('h1,h2,h3,header,[class*="backup"],[class*="brand"],[class*="hero"],[class*="welcome"],[class*="topbar"],[class*="titlebar"]'))
+      for (const el of candidates) {
+        const content = (el.textContent || '').trim()
+        if (/^(Startsida|Sinan Delen)$/i.test(content) || (/Elevkompassen/i.test(content) && /Sinan Delen/i.test(content))) {
+          const block = el.closest('header,.home-header,.hero,.welcome,.brand,.topbar,.titlebar') || el
+          block.style.setProperty('display','none','important')
+        }
+      }
+      for (const el of doc.querySelectorAll('button,[role="alert"],[class*="backup"],[class*="warning"]')) {
+        const content = (el.textContent || '').trim()
+        if (/säkerhetskopia/i.test(content) && (/inte sparat|Spara säkerhetskopia/i.test(content))) {
+          const block = el.closest('[role="alert"],.backup-warning,.backup-banner,.warning-banner,.alert,.notice') || el
+          block.style.setProperty('display','none','important')
+        }
+      }
+    }
+    hideStandaloneHeader()
+    const hideObserver = new MutationObserver(hideStandaloneHeader)
+    hideObserver.observe(doc.body,{childList:true,subtree:true})
     const frame = event.currentTarget
     frame.setAttribute('scrolling', 'no')
     frame.style.overflow = 'hidden'
