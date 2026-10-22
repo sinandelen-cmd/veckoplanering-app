@@ -890,6 +890,8 @@ function applyElevkompassenTheme(event) {
       #classView > .class-summary { padding: 9px 12px !important; }
       #classView > .sheet-wrap { margin-top: 8px !important; }
       .titlebar { display: none !important; }
+      #classView, #classView > .toolbar, #classView > .sheet-wrap { max-width: none !important; width: 100% !important; box-sizing: border-box !important; }
+      #classView { min-width: 0 !important; }
       /* Remove empty space left behind by the portal's duplicate header. */
       body > .shell, body > main, body > .app, .shell > main, .shell > .content { padding-top: 0 !important; margin-top: 0 !important; }
       .page-head, .page-header, .portal-header, .home-header, .pr-home-header { margin: 0 !important; padding: 0 !important; }
@@ -2169,7 +2171,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     {previewStudents && <section className="student-preview-clean" id="elevvy"><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
 
     </div>
-    <div className="teacher-tab-panel" hidden={teacherTab !== "resultat"} style={{padding:0,background:"transparent",border:0,boxShadow:"none"}}><iframe title="Resultatregistrering och mentorskap" src="/Provresultat_tom_mall_50.html#sida-prov" onLoad={applyElevkompassenTheme} style={{display:"block",width:"100%",height:"1200px",border:0,overflow:"hidden",background:"transparent",borderRadius:0}} /></div>
+    <div className="teacher-tab-panel" hidden={teacherTab !== "resultat"} style={{padding:0,background:"transparent",border:0,boxShadow:"none"}}><iframe title="Resultatregistrering och mentorskap" src="/Provresultat_tom_mall_50.html#sida-prov" onLoad={applyElevkompassenTheme} style={{display:"block",width:"100%",minWidth:0,height:"1200px",border:0,overflow:"hidden",background:"transparent",borderRadius:0}} /></div>
     <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
     <section className="card" id="mina-arsplaneringar">
       <div className="section-heading"><div><p className="eyebrow">MIN STARTSIDA</p><h2>Alla mina planeringar</h2><p className="muted">Öppna en planering nedan eller välj en funktion.</p></div></div>
