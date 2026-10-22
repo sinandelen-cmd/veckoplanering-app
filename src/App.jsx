@@ -1384,14 +1384,14 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     <div className={`teacher-tab-panel ${simpleSetup ? "simple-setup-active" : ""}`} id="panel-lararvy" role="tabpanel" aria-labelledby="tab-lararvy" hidden={teacherTab !== "arsplan" && teacherTab !== "new"}>
     {simpleSetup && <section className="card" style={{marginBottom:16,border:'2px solid #c8d9c9'}} aria-label="Testa flera klasser">
       <h2>Testa samma planering i flera klasser</h2>
-      <p>Fyll i en färdig testplanering med 12 matematiklektioner och fyra klasser med olika dagar och antal lektioner. Inga befintliga planeringar påverkas.</p>
+      <p>Fyll i en färdig testplanering med 25 matematiklektioner och fyra klasser med olika dagar och antal lektioner. Inga befintliga planeringar påverkas.</p>
       <button type="button" className="secondary" onClick={() => {
-        const base = {...emptyPlan(), title:'TEST – Matematik, flera klasser', subject:'Matematik', className:'Årskurs 8', schoolYear:'2026–2027', startDate:mondayOf(), weeks:4, lessonsPerWeek:3, lessonDays:['Måndag','Onsdag','Fredag']}
-        const topics = ['Tal och talsystem','Positionssystemet','Negativa tal','Addition med negativa tal','Subtraktion med negativa tal','Multiplikation','Division','Prioriteringsregler','Bråk och decimalform','Procent','Problemlösning','Repetition och diagnos']
-        const weeks = makeWeeks(base,4).map((week, wi) => ({...week, lessons:week.lessons.map((lesson, li) => ({...lesson,topics:[{name:topics[wi*3+li]}]}))}))
+        const base = {...emptyPlan(), title:'TEST – Matematik, flera klasser', subject:'Matematik', className:'Årskurs 8', schoolYear:'2026–2027', startDate:mondayOf(), weeks:5, lessonsPerWeek:5, lessonDays:['Måndag','Tisdag','Onsdag','Torsdag','Fredag']}
+        const topics = Array.from({length:25},(_,i)=>`Gemensam matematiklektion ${i+1}`)
+        const weeks = makeWeeks(base,5).map((week, wi) => ({...week, lessons:week.lessons.map((lesson, li) => ({...lesson,topics:[{name:topics[wi*5+li]}]}))}))
         setPlan({...base, weeksData:weeks, classGroups:[
-          {name:'8A',days:['Måndag','Onsdag','Fredag'],startDate:base.startDate,cancelledDates:[],overrides:{}},
-          {name:'8B',days:['Tisdag','Torsdag'],startDate:base.startDate,cancelledDates:[],overrides:{}},
+          {name:'8A',days:['Måndag','Tisdag','Onsdag','Torsdag','Fredag'],startDate:base.startDate,cancelledDates:[],overrides:{}},
+          {name:'8B',days:['Tisdag'],startDate:base.startDate,cancelledDates:[],overrides:{}},
           {name:'8C',days:['Måndag','Torsdag','Fredag'],startDate:base.startDate,cancelledDates:[],overrides:{}},
           {name:'8D',days:['Måndag','Tisdag','Onsdag','Torsdag'],startDate:base.startDate,cancelledDates:[],overrides:{}}
         ]})
