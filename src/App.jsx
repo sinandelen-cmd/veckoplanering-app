@@ -1748,6 +1748,19 @@ function AnnualApp() {
     } finally {setReviewingUserId(null)}
   }
 
+  async function setTeacherExpiry(userId,email) {
+    const date=window.prompt('Ange slutdatum för '+email+' (ÅÅÅÅ-MM-DD):')
+    if(date===null) return
+    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||Number.isNaN(Date.parse(date))) {setAdminError('Ange ett giltigt datum i formatet ÅÅÅÅ-MM-DD.');return}
+    if(!window.confirm('Ändra slutdatum för '+email+' till '+date+'?')) return
+    setReviewingUserId(userId);setAdminError('');setAdminNotice('')
+    try {
+      const {error}=await supabase.rpc('admin_set_teacher_expiry',{p_user_id:userId,p_date:date})
+      if(error) setAdminError('Slutdatum kunde inte sparas: '+error.message)
+      else {setAdminNotice('Slutdatum har uppdaterats för '+email+'.');await loadRequests()}
+    } finally {setReviewingUserId(null)}
+  }
+
   const isPublicDemo = window.location.pathname.replace(/\/$/, '') === '/elev/demo-vecka-42'
 
   const studentSlug = useMemo(() => {
@@ -1827,7 +1840,7 @@ function AnnualApp() {
         <td style={{padding:8}}>{item.email}{item.extension_requested&&<strong> – Begär förlängning</strong>}</td>
         <td>{item.status==='blocked'?'Spärrad':item.expires_at&&new Date(item.expires_at)<=new Date()?'Utgången':'Aktiv'}</td>
         <td><select aria-label={'Timer för '+item.email} value={item.timer_period||'none'} disabled={Boolean(reviewingUserId)} onChange={e=>changeTeacher(item.user_id,'timer',e.target.value)}><option value="none">Ingen</option><option value="month">1 månad</option><option value="year">1 år</option></select></td>
-        <td>{item.expires_at?new Date(item.expires_at).toLocaleDateString('sv-SE'):'Ingen gräns'}</td>
+        <td>{item.expires_at?new Date(item.expires_at).toLocaleDateString('sv-SE'):'Ingen gräns'}{' '}{item.timer_period!=='none'&&<button type="button" disabled={Boolean(reviewingUserId)||item.status!=='approved'} onClick={()=>setTeacherExpiry(item.user_id,item.email)}>Ändra datum</button>}</td>
         <td><button type="button" disabled={Boolean(reviewingUserId)} onClick={()=>changeTeacher(item.user_id,item.status==='blocked'?'activate':'block')}>{item.status==='blocked'?'Aktivera':'Spärra'}</button>{' '}<button type="button" disabled={Boolean(reviewingUserId)||item.timer_period==='none'} onClick={()=>changeTeacher(item.user_id,'extend')}>Förläng</button></td>
       </tr>)}</tbody></table></div>
       {rejected.length > 0 && <><h3>Avslagna ansökningar ({rejected.length})</h3>{rejected.map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – Avslagen</div>)}</>}
