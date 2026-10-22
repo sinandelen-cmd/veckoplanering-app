@@ -870,6 +870,18 @@ function TeacherResults({ userId }) {
     setSelected(prev => ({ ...prev, results: [...(Array.isArray(prev.results) ? prev.results : []), ...names.map(student => ({ student, assessment: '', score: '', comment: '' }))] }))
     setNotice(names.length + ' elever tillagda. Spara resultat för att behålla ändringarna.')
   }
+  const exportResults = () => {
+    if (!selected) return
+    const quote = value => '"' + String(value ?? '').replaceAll('"', '""') + '"'
+    const rows = [['Elev', 'Prov / bedömning', 'Resultat', 'Kommentar'], ...(Array.isArray(selected.results) ? selected.results : []).map(row => [row.student, row.assessment, row.score, row.comment])]
+    const csv = '\uFEFF' + rows.map(row => row.map(quote).join(';')).join(String.fromCharCode(13, 10))
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = (selected.title || 'resultat').replace(/[\\/:*?"<>|]/g, '-') + '.csv'
+    link.click()
+    URL.revokeObjectURL(url)
+  }
   const filtered = lists.filter(item => mode === 'mentor' ? item.subject === 'Mentorskap' : item.subject !== 'Mentorskap')
   return <section aria-label="Resultat och mentorskap">
     <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(290px,1fr))',gap:14,marginBottom:18}}>
@@ -888,7 +900,7 @@ function TeacherResults({ userId }) {
     </div>
     <div className="card">
       <h2>{mode === 'mentor' ? '🧭 Mentorskap' : '📊 Resultatregistrering'}</h2>
-      <div className="button-row"><button type="button" className="secondary" onClick={() => {setMode('resultat');setSelected(null)}}>Resultatregistrering</button><button type="button" className="secondary" onClick={() => {setMode('mentor');setSelected(null)}}>Mentorskap</button><button id="resultat-skapa-klass" type="button" onClick={create}>+ Skapa {mode === 'mentor' ? 'mentorskklass' : 'klass'}</button><button type="button" className="secondary" disabled={!selected} onClick={pasteStudents}>Klistra in elevlista</button><button type="button" className="secondary" onClick={() => window.print()}>Skriv ut</button><button type="button" className="secondary" onClick={refresh}>↻ Uppdatera</button></div>
+      <div className="button-row"><button type="button" className="secondary" onClick={() => {setMode('resultat');setSelected(null)}}>Resultatregistrering</button><button type="button" className="secondary" onClick={() => {setMode('mentor');setSelected(null)}}>Mentorskap</button><button id="resultat-skapa-klass" type="button" onClick={create}>+ Skapa {mode === 'mentor' ? 'mentorskklass' : 'klass'}</button><button type="button" className="secondary" disabled={!selected} onClick={pasteStudents}>Klistra in elevlista</button><button type="button" className="secondary" onClick={() => window.print()}>Skriv ut</button><button type="button" className="secondary" disabled={!selected} onClick={exportResults}>Exportera CSV</button><button type="button" className="secondary" onClick={refresh}>↻ Uppdatera</button></div>
       {notice && <p role="status" className="status">{notice}</p>}
       {loading ? <p>Laddar…</p> : <div role="tablist" aria-label="Klasser" style={{display:'flex',flexWrap:'wrap',gap:4,margin:'15px 0',borderBottom:'2px solid #98365e'}}>{filtered.length === 0 && <p>Inga klasser ännu.</p>}{filtered.map(item => <button key={item.id} type="button" role="tab" aria-selected={selected?.id === item.id} style={{borderRadius:"8px 8px 0 0",padding:"10px 16px",fontWeight:700,background:selected?.id === item.id ? "#98365e" : "#fff",color:selected?.id === item.id ? "#fff" : "#66334a",border:"1px solid #d9bdc7"}} onClick={() => {setSelected(item);setNotice('')}}>{item.title}</button>)}</div>}
     {selected && <div style={{ borderTop: '1px solid #e7d6b5', paddingTop: 18 }}>
@@ -907,7 +919,7 @@ function TeacherResults({ userId }) {
         <button type="button" className="primary" onClick={save}>💾 Spara resultat</button>
         <button type="button" className="secondary" onClick={remove}>Radera resultatlista</button>
       </div>
-      <p className="muted">Spara när du har ändrat något. Detta är första versionen av resultatdelen; den fullständiga HTML-mallen integreras separat.</p>
+      <p className="muted">Spara efter ändringar. Du kan även exportera den valda klassens resultat till CSV. Originalmallens övriga funktioner integreras separat.</p>
     </div>}
     </div>
   </section>
