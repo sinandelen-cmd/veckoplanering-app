@@ -2382,3 +2382,13 @@ body { background: #fffaf2; color: var(--ink); }
   .library-actions button { min-height:40px; }
   .planning-sidebar .sidebar-plan { white-space:normal; overflow-wrap:anywhere; }
 }
+
+/* Årsöversikt: kompakt rubrik och tydlig informationshierarki. */
+.calendar-page .calendar-top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px; }
+.calendar-page .calendar-top > div:first-child { min-width:0; flex:1; }
+.calendar-page .calendar-week-heading-row h2 { font-size:clamp(24px,2.5vw,34px) !important; line-height:1.2 !important; letter-spacing:-.015em !important; margin:0 0 5px !important; }
+.calendar-page .calendar-top p { font-size:14px; line-height:1.5; max-width:65ch; color:#645b54; }
+.calendar-page .calendar-overview-count { margin:8px 0 12px; font-size:13px; font-weight:650; color:#615850; }
+.calendar-page .calendar-months { margin-top:12px; }
+.calendar-page .calendar-month-section { padding:14px; border-radius:14px; }
+@media(max-width:640px) { .calendar-page .calendar-top { flex-direction:column; } .calendar-page .calendar-week-heading-row h2 { font-size:25px !important; } .calendar-page .calendar-month-section { padding:10px; } }
