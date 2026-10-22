@@ -1092,6 +1092,29 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     return () => window.clearTimeout(timer)
   }, [plan, selectedId, simpleSetup, busy, isDirty, teacherTab])
 
+  async function publishFromList(row) {
+    if (busy) return
+    const source = planFromRow(row)
+    if (!window.confirm(`Publicera "${row.title}" för elever? Den sparade planeringen blir tillgänglig via elevlänken.`)) return
+    setBusy(true)
+    try {
+      const slug = row.public_slug || buildSlug(source)
+      const payload = { ...source, published: true, publicSlug: slug }
+      const { error } = await supabase.from('veckoplanering').update({
+        ...publicationFields(true, false, slug, sanitizeForStudents(payload)),
+        updated_at: new Date().toISOString(),
+      }).eq('id', row.id).eq('user_id', session.user.id).select('id').single()
+      if (error) throw error
+      if (selectedId === row.id) setPlan(p => ({ ...p, published: true, publicSlug: slug }))
+      await loadPlans()
+      setStatus('Planeringen är publicerad för elever.')
+    } catch (error) {
+      setStatus(`Kunde inte publicera: ${error.message || 'Okänt fel'}`)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function unpublish(row) {
     if (busy) return
     setBusy(true)
@@ -1740,7 +1763,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             <button type="button" className="secondary library-action-open" disabled={busy} onClick={() => loadPlan(row)} title="Öppna och redigera denna planering">📖 Öppna</button>
             <button type="button" className="secondary library-action-copy" disabled={busy} onClick={() => clonePlan(row)} title="Skapa en separat kopia. Originalet finns kvar">📋 Skapa kopia</button>
             <button type="button" className="secondary library-action-archive" disabled={busy} onClick={() => setArchived(row, !showArchive)} title={showArchive ? "Flytta tillbaka planeringen till aktiva planeringar" : "Flytta planeringen till arkivet utan att radera den"}>{showArchive ? '↩ Flytta till aktiva' : '🗂 Arkivera'}</button>
-            {row.published && <button type="button" className="secondary library-action-unpublish" disabled={busy} onClick={() => unpublish(row)} title="Stäng av elevlänken utan att radera planeringen">🔒 Avpublicera</button>}
+            {row.published ? <button type="button" className="secondary library-action-unpublish" disabled={busy} onClick={() => unpublish(row)} title="Stäng av elevlänken utan att radera planeringen">🔒 Avpublicera</button> : <button type="button" className="secondary library-action-publish" disabled={busy} onClick={() => publishFromList(row)} title="Publicera den sparade planeringen i elevvyn">🌐 Publicera</button>}
             <button type="button" className="danger library-action-delete" disabled={busy} onClick={() => deletePlan(row)} title="Radera planeringen permanent">🗑 Radera</button>
           </div>
         </article>)}
