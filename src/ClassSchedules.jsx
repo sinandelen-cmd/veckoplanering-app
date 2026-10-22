@@ -101,18 +101,18 @@ export default function ClassSchedules({ plan, onChange }) {
         <button type="button" className="secondary" disabled={selectedComparisonWeek>=comparisonWeeks.length-1} onClick={()=>setComparisonWeek(n=>Math.min(comparisonWeeks.length-1,n+1))}>Nästa vecka →</button>
         <select aria-label="Välj vecka att jämföra" value={selectedComparisonWeek} onChange={e=>setComparisonWeek(Number(e.target.value))}>{comparisonWeeks.map((key,i)=><option key={key} value={i}>{key}</option>)}</select>
       </div>}
-      {comparisonWeeks[selectedComparisonWeek] && <div style={{overflowX:"auto",width:"100%",paddingBottom:10}}><div style={{display:"grid",gridTemplateColumns:`repeat(${comparison.length}, minmax(205px, 1fr))`,gap:12,minWidth:comparison.length*205}}>
-        {comparison.map((g,i)=>{const items=g.weeks[comparisonWeeks[selectedComparisonWeek]]||[];const group=groups[i];return <article key={g.name} style={{border:"1px solid #c9d9d0",borderRadius:14,background:["#eaf3ff","#fff1db","#e8f6eb","#f2ebfa"][i%4],padding:14}}>
+      {comparisonWeeks[selectedComparisonWeek] && <div style={{width:"100%",paddingBottom:10}}><div style={{display:"grid",gridTemplateColumns:`repeat(${comparison.length}, minmax(0, 1fr))`,gap:8,width:"100%"}}>
+        {comparison.map((g,i)=>{const items=g.weeks[comparisonWeeks[selectedComparisonWeek]]||[];const group=groups[i];return <article key={g.name} style={{border:"1px solid #c9d9d0",borderRadius:12,background:["#eaf3ff","#fff1db","#e8f6eb","#f2ebfa"][i%4],padding:8,minWidth:0}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap",marginBottom:12}}>
-            <strong style={{fontSize:"1.2rem",color:"#273e34"}}>{g.name}</strong>
-            <span style={{fontSize:".82rem",borderRadius:30,padding:"5px 9px",background:"#fff"}}>{lessonsPerWeek(group)} lek/vecka</span>
+            <strong style={{fontSize:"1rem",color:"#273e34"}}>{g.name}</strong>
+            <span style={{fontSize:".72rem",borderRadius:30,padding:"3px 6px",background:"#fff"}}>{lessonsPerWeek(group)} lek/vecka</span>
           </div>
-          <div style={{display:"grid",gap:9}}>
-            {items.length?items.map((item,j)=><div key={item.lessonNumber} style={{background:"#fff",border:"1px solid #e0e7e2",borderRadius:10,padding:"11px 12px"}}>
-              <div style={{fontSize:".83rem",color:"#52635c",marginBottom:4}}>{item.day} · {item.date}</div>
+          <div style={{display:"grid",gap:6}}>
+            {items.length?items.map((item,j)=><div key={item.lessonNumber} style={{background:"#fff",border:"1px solid #e0e7e2",borderRadius:8,padding:"8px 7px",overflowWrap:"anywhere"}}>
+              <div style={{fontSize:".75rem",color:"#52635c",marginBottom:4}}>{item.day} · {item.date}</div>
               <strong>Lektion {j+1}</strong>
-              <div style={{fontSize:".9rem",marginTop:5,whiteSpace:"pre-wrap"}}>{item.override?.text ?? describe(item.lesson)}</div>
-              <div style={{fontSize:".78rem",color:"#63756a",marginTop:5}}>Gemensam lektion {item.lessonNumber}</div>
+              <div style={{fontSize:".8rem",marginTop:5,whiteSpace:"pre-wrap"}}>{item.override?.text ?? describe(item.lesson)}</div>
+              <div style={{fontSize:".7rem",color:"#63756a",marginTop:5}}>Gemensam lektion {item.lessonNumber}</div>
             </div>):<div style={{background:"#fff",padding:14,borderRadius:10,color:"#65756b"}}>Ingen lektion denna vecka</div>}
           </div>
         </article>})}
