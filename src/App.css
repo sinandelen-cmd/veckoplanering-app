@@ -2263,3 +2263,34 @@ body { background: #fffaf2; color: var(--ink); }
   .planning-layout > .planning-sidebar .sidebar-plan-entry { width:max-content; max-width:100%; }
   .planning-layout > .planning-sidebar .sidebar-plan-entry .sidebar-plan { overflow-wrap:anywhere; white-space:normal; }
 }
+
+/* Kompakt åtgärdsrad på stora skärmar. */
+@media (min-width: 900px) {
+  .topbar:has(.archive-plan-actions) {
+    display:flex !important;
+    flex-wrap:wrap !important;
+    align-items:center !important;
+    gap:8px 12px !important;
+  }
+  .topbar:has(.archive-plan-actions) > div:first-child {
+    flex:1 1 220px !important;
+    min-width:180px !important;
+  }
+  .topbar:has(.archive-plan-actions) .archive-plan-actions,
+  .topbar:has(.archive-plan-actions) .student-plan-link {
+    display:contents !important;
+  }
+  .topbar:has(.archive-plan-actions) > button,
+  .topbar:has(.archive-plan-actions) .archive-plan-actions button,
+  .topbar:has(.archive-plan-actions) .student-plan-link button {
+    grid-column:auto !important;
+    grid-row:auto !important;
+    margin:0 !important;
+    padding:7px 10px !important;
+    min-height:34px !important;
+    font-size:12px !important;
+    font-weight:700 !important;
+    white-space:nowrap !important;
+    flex:0 0 auto !important;
+  }
+}
