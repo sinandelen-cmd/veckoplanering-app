@@ -1276,7 +1276,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           const url = window.location.origin + '/elev/' + encodeURIComponent(slug)
           try { await navigator.clipboard.writeText(url); setStatus('Elevlänken för just denna planering har kopierats.') } catch { window.prompt('Kopiera elevlänken:', url) }
         }}>🔗 Kopiera elevlänk</button>
-        {plans.find(row => row.id === selectedId)?.published && plans.find(row => row.id === selectedId)?.public_slug ? <a href={`/elev/${encodeURIComponent(plans.find(row => row.id === selectedId).public_slug)}`} target="_blank" rel="noopener noreferrer">Öppna elevlänk ↗</a> : <span className="muted" style={{ fontSize: 12 }}>Elevlänk blir aktiv när planeringen publicerats.</span>}
+
       </div>}
       {teacherTab === "new" && <div className="topbar-share-actions">
         <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
