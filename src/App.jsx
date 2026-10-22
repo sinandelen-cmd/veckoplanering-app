@@ -407,6 +407,7 @@ function sanitizeForStudents(plan) {
         weekNumber: Number.isInteger(week.weekNumber) ? week.weekNumber : index + 1,
         weekStart: typeof week.weekStart === 'string' ? week.weekStart : '',
         autoVisibility: week.autoVisibility === true,
+        keepVisibleExtra: week.keepVisibleExtra === true,
         publishDate: /^\d{4}-\d{2}-\d{2}$/.test(week.publishDate || '') ? week.publishDate : '',
         hideDate: /^\d{4}-\d{2}-\d{2}$/.test(week.hideDate || '') ? week.hideDate : '',
         title: typeof week.title === 'string' ? week.title : '',
@@ -622,7 +623,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
       if (plan?.autoReleaseWeeks !== true) return true
       const today = toIsoDate(new Date())
       const released = all.filter(item => (item.publishDate || item.weekStart || '') <= today)
-      return released.slice(-Math.max(1, Math.min(12, Number(plan?.visibleWeekCount) || 2))).some(item => item.weekStart === week.weekStart)
+      return week.keepVisibleExtra === true || released.slice(-Math.max(1, Math.min(12, Number(plan?.visibleWeekCount) || 2))).some(item => item.weekStart === week.weekStart)
     }) : []
   const currentStudentWeekStart = mondayOf(new Date())
   const currentStudentWeek = studentWeeks.find(week => week.weekStart === currentStudentWeekStart)
@@ -1333,7 +1334,11 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             <label style={{display:"flex",alignItems:"center",gap:7}}>Publicera enligt datum
               <input type="date" aria-label={"Publiceringsdatum för vecka "+week.weekNumber} value={week.publishDate || ""} onChange={e=>updateWeek(index,{publishDate:e.target.value})} />
             </label>
-            <span className="muted" style={{fontSize:12}}>När automatisk veckopublicering är aktiverad visas högst de två senaste veckorna (eller valt antal).</span>
+            <label style={{display:"flex",alignItems:"center",gap:6,fontSize:13,fontWeight:700}}>
+              <input type="checkbox" checked={week.keepVisibleExtra===true} onChange={e=>updateWeek(index,{keepVisibleExtra:e.target.checked})} />
+              Visa denna vecka extra
+            </label>
+            <span className="muted" style={{fontSize:12}}>En extra vecka ligger kvar utöver de {plan.visibleWeekCount || 2} senaste, från sitt publiceringsdatum tills du avmarkerar den.</span>
           </div>
           <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><label className="student-visibility-toggle week-heading-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever`} /><span>{week.hidden ? "Visa inte i elevvyn" : "Visa i elevvyn"}</span></label><strong style={{ fontSize: "1.45rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 5 }}>Vecka <input type="number" aria-label="Ändra veckonummer" style={{ width: "3.3ch", minWidth: 66, fontSize: "1.45rem", fontWeight: 800, padding: "4px 6px" }} min="1" max="53" value={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Ändra veckonumret för att flytta veckan och dess datum" onChange={e => {
             const target = Number(e.target.value)
