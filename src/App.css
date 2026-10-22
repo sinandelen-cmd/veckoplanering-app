@@ -2360,3 +2360,25 @@ body { background: #fffaf2; color: var(--ink); }
 .planning-sidebar button:focus-visible, .shell button:focus-visible, .shell input:focus-visible { outline:3px solid #347db5 !important; outline-offset:2px !important; }
 @media(max-width:650px) { .library-search { align-items:stretch; } .library-search input { flex-basis:100%; } }
 @media print { .library-search { display:none !important; } }
+
+/* Gemensam navigationsstruktur: orientering först, verktyg därefter. */
+.teacher-header-identity { min-width:0; }
+.teacher-breadcrumb { display:flex; align-items:center; flex-wrap:wrap; gap:7px; margin:0 0 8px; color:#715d55; font-size:12px; }
+.teacher-breadcrumb button { background:transparent; border:0; color:#24618c; padding:3px 0; text-decoration:underline; cursor:pointer; font:inherit; }
+.teacher-breadcrumb [aria-current="page"] { color:#69413c; font-weight:800; overflow-wrap:anywhere; }
+.teacher-header-identity h1 { overflow-wrap:anywhere; line-height:1.2; }
+.topbar:has(.edit-history-actions) { align-content:start; }
+.topbar:has(.edit-history-actions) .edit-history-actions { gap:7px !important; }
+.library-search input:focus-visible { border-color:#347db5; }
+.library-item .library-title { overflow-wrap:anywhere; }
+@media(min-width:900px) {
+  .topbar:has(.edit-history-actions) .edit-history-actions { order:0 !important; }
+  .topbar:has(.edit-history-actions) > button,
+  .topbar:has(.edit-history-actions) .archive-plan-actions,
+  .topbar:has(.edit-history-actions) .student-plan-link { order:1 !important; }
+}
+@media(max-width:760px) {
+  .teacher-header-identity h1 { font-size:clamp(1.35rem,5vw,2rem); }
+  .library-actions button { min-height:40px; }
+  .planning-sidebar .sidebar-plan { white-space:normal; overflow-wrap:anywhere; }
+}
