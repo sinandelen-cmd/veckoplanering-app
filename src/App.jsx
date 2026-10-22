@@ -615,10 +615,10 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
         + (topic.pages?.length || 0) * 8 + (topic.assignments?.length || 0) * 10
         + (topic.links?.length || 0) * 10, 0), 0))
   const studentWeeks = Array.isArray(plan?.weeksData) ? [...plan.weeksData]
-    .filter(week => week && !week.hidden && /^\\d{4}-\\d{2}-\\d{2}$/.test(week.publishDate || '') && week.publishDate <= toIsoDate(new Date()) && (!week.hideDate || week.hideDate > toIsoDate(new Date())))
+    .filter(week => week && !week.hidden && (week.weekStart || '') <= toIsoDate(new Date()) && (!week.hideDate || week.hideDate > toIsoDate(new Date())))
     .sort((a, b) => weekContentScore(b) - weekContentScore(a))
     .filter((week, index, weeks) => weeks.findIndex(other => (other.weekStart || `number-${other.weekNumber}`) === (week.weekStart || `number-${week.weekNumber}`)) === index)
-    .sort((a, b) => (a.publishDate || '').localeCompare(b.publishDate || '') || (a.weekStart || '').localeCompare(b.weekStart || ''))
+    .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || ''))
     .filter((week, index, all) => plan?.autoReleaseWeeks !== true || week.keepVisibleExtra === true || index >= all.length - Math.max(1, Math.min(12, Number(plan?.visibleWeekCount) || 2)))
     .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || '')) : []
   const currentStudentWeekStart = mondayOf(new Date())
@@ -1327,9 +1327,6 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           {week.chapter?.trim() && (displayIndex === 0 || week.chapter !== ordered[displayIndex - 1]?.week.chapter) && <h3 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h3>}
           <article className="week-card" id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
           <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",marginBottom:10,padding:"8px 10px",background:"#fff9e9",borderRadius:9}}>
-            <label style={{display:"flex",alignItems:"center",gap:7}}>Publicera enligt datum
-              <input type="date" aria-label={"Publiceringsdatum för vecka "+week.weekNumber} value={week.publishDate || ""} onChange={e=>updateWeek(index,{publishDate:e.target.value})} />
-            </label>
             <label>Elevvisning
               <select aria-label={"Elevvisning vecka "+week.weekNumber} value={week.hidden?"hidden":week.keepVisibleExtra?"extra":"normal"} onChange={e=>updateWeek(index,e.target.value==="hidden"?{hidden:true,keepVisibleExtra:false}:e.target.value==="extra"?{hidden:false,keepVisibleExtra:true}:{hidden:false,keepVisibleExtra:false})}>
                 <option value="normal">Automatisk</option>
