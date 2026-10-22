@@ -617,7 +617,13 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     .filter(week => { if (!week || week.hidden) return false; const today = toIsoDate(new Date()); if (week.autoVisibility === true) return today >= week.weekStart && today < addWeeks(week.weekStart, 2); if (week.publishDate && today < week.publishDate) return false; if (week.hideDate && today >= week.hideDate) return false; return true })
     .sort((a, b) => weekContentScore(b) - weekContentScore(a))
     .filter((week, index, weeks) => weeks.findIndex(other => (other.weekStart || `number-${other.weekNumber}`) === (week.weekStart || `number-${week.weekNumber}`)) === index)
-    .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || '')) : []
+    .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || '')) 
+    .filter((week, index, all) => {
+      if (plan?.autoReleaseWeeks !== true) return true
+      const today = toIsoDate(new Date())
+      const released = all.filter(item => (item.publishDate || item.weekStart || '') <= today)
+      return released.slice(-Math.max(1, Math.min(12, Number(plan?.visibleWeekCount) || 2))).some(item => item.weekStart === week.weekStart)
+    }) : []
   const currentStudentWeekStart = mondayOf(new Date())
   const currentStudentWeek = studentWeeks.find(week => week.weekStart === currentStudentWeekStart)
   const upcomingStudentWeek = [...studentWeeks].reverse().find(week => week.weekStart >= currentStudentWeekStart)
@@ -1323,6 +1329,12 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           {group.items.map(({ week, index }, displayIndex, ordered) => <div className="chapter-week-group" key={`${week.weekNumber}-${index}`}>
           {week.chapter?.trim() && (displayIndex === 0 || week.chapter !== ordered[displayIndex - 1]?.week.chapter) && <h3 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h3>}
           <article className="week-card" id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
+          <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",marginBottom:10,padding:"8px 10px",background:"#fff9e9",borderRadius:9}}>
+            <label style={{display:"flex",alignItems:"center",gap:7}}>Publicera enligt datum
+              <input type="date" aria-label={"Publiceringsdatum för vecka "+week.weekNumber} value={week.publishDate || ""} onChange={e=>updateWeek(index,{publishDate:e.target.value})} />
+            </label>
+            <span className="muted" style={{fontSize:12}}>När automatisk veckopublicering är aktiverad visas högst de två senaste veckorna (eller valt antal).</span>
+          </div>
           <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><label className="student-visibility-toggle week-heading-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever`} /><span>{week.hidden ? "Visa inte i elevvyn" : "Visa i elevvyn"}</span></label><strong style={{ fontSize: "1.45rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 5 }}>Vecka <input type="number" aria-label="Ändra veckonummer" style={{ width: "3.3ch", minWidth: 66, fontSize: "1.45rem", fontWeight: 800, padding: "4px 6px" }} min="1" max="53" value={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Ändra veckonumret för att flytta veckan och dess datum" onChange={e => {
             const target = Number(e.target.value)
             const current = calendarWeekNumber(week.weekStart)
