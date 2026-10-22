@@ -125,19 +125,9 @@ export default function ClassSchedules({ plan, onChange }) {
       <button type="button" className="secondary" onClick={() => setShowClassDetails(v => !v)} aria-expanded={showClassDetails} style={{margin:'12px 0'}}>{showClassDetails ? '▾ Dölj klassens detaljer' : '▸ Visa och ändra klassens detaljer'}</button>
       {showClassDetails && <>
       <h3>{group.name} – eget lektionsschema</h3>
-      <p><strong>{lessonsPerWeek(group)} lektioner per vecka.</strong> Ändra antalet för varje dag nedan. En klass kan ha fler eller färre lektioner än de andra.</p>
+      <p><strong>{lessonsPerWeek(group)} lektioner per vecka.</strong> Lektionsdagarna visas i matrisen ovan. En klass kan ha fler eller färre lektioner än de andra.</p>
       <label>Startdatum <input type="date" value={group.startDate || plan.startDate || ''} onChange={e => updateGroup({startDate:e.target.value})} /></label>
-      <fieldset><legend>Lektioner per veckodag</legend>
-        <div className="form-grid">{DAYS.map((day,i) => {
-          const count = (group.days || []).filter(d => d === day).length
-          return <label key={day}>{day}
-            <select value={count} onChange={e => {
-              const other = (group.days || []).filter(d => d !== day)
-              updateGroup({days:[...other,...Array(Number(e.target.value)).fill(day)].sort((a,b)=>DAYS.indexOf(a)-DAYS.indexOf(b))})
-            }}>{[0,1,2,3,4].map(n => <option value={n} key={n}>{n} {n===1?'lektion':'lektioner'}</option>)}</select>
-          </label>
-        })}</div>
-      </fieldset>
+      <p className="muted">Lektionsdagar och antal lektioner ändras i klassmatrisen ovan. Här hanterar du endast särskilda ändringar för den valda klassen.</p>
       <p><strong>{schedule.length} planerade lektioner</strong> från grundplaneringen. Lektionsnumren börjar om på 1 varje kalendervecka. Det gemensamma innehållet fortsätter i rätt ordning. Ändringar i en klass påverkar inte andra klasser.</p>
       {!(group.days || []).length && <p role="alert">Välj minst en lektion per vecka för att se planeringen.</p>}
       {weeksShown.map(week => <div key={week.weekStart} style={{border:'1px solid #cbd5e1',borderRadius:10,padding:12,margin:'12px 0'}}>
