@@ -1133,15 +1133,15 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     const source = planFromRow(row)
     const now = new Date()
     const year = now.getFullYear()
-    const startYear = now.getMonth() >= 6 ? year : year - 1
+    const startYear = now.getMonth() >= 7 ? year : year - 1
     const schoolYear = `${startYear}–${startYear + 1}`
     const subject = source.subject || row.subject || ''
     const className = source.className || row.class_name || ''
     const title = source.title
-    const oldStartYear = Number((source.schoolYear || '').match(/\\d{4}/)?.[0])
+    const oldStartYear = Number((source.schoolYear || '').match(/\d{4}/)?.[0])
     const yearShift = Number.isFinite(oldStartYear) ? startYear - oldStartYear : 0
     const shiftDate = date => {
-      if (!date || !/^\\d{4}-\\d{2}-\\d{2}$/.test(date) || !yearShift) return date
+      if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !yearShift) return date
       const shifted = new Date(date + 'T12:00:00')
       shifted.setFullYear(shifted.getFullYear() + yearShift)
       return shifted.toISOString().slice(0, 10)
