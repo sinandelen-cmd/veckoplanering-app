@@ -1131,17 +1131,24 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   async function clonePlan(row) {
     if (busy) return
     const source = planFromRow(row)
-    const title = window.prompt('Namn på den nya planeringen:', `${source.title} – nytt läsår`)
-    if (!title) return
-    const subject = window.prompt('Ämne för kopian:', source.subject || '')
-    if (subject === null) return
-    const className = window.prompt('Klass/grupp för kopian:', source.className || '')
-    if (className === null) return
-    const schoolYear = window.prompt('Läsår för kopian:', source.schoolYear || '')
-    if (schoolYear === null) return
+    const now = new Date()
+    const year = now.getFullYear()
+    const startYear = now.getMonth() >= 6 ? year : year - 1
+    const schoolYear = `${startYear}–${startYear + 1}`
+    const subject = source.subject || row.subject || ''
+    const className = source.className || row.class_name || ''
+    const title = source.title
+    const oldStartYear = Number((source.schoolYear || '').match(/\\d{4}/)?.[0])
+    const yearShift = Number.isFinite(oldStartYear) ? startYear - oldStartYear : 0
+    const shiftDate = date => {
+      if (!date || !/^\\d{4}-\\d{2}-\\d{2}$/.test(date) || !yearShift) return date
+      const shifted = new Date(date + 'T12:00:00')
+      shifted.setFullYear(shifted.getFullYear() + yearShift)
+      return shifted.toISOString().slice(0, 10)
+    }
     setBusy(true)
     try {
-      const clone = { ...source, themeId: PLAN_THEMES[(PLAN_THEMES.findIndex(theme => theme.id === planTheme(source, row.id).id) + 1) % PLAN_THEMES.length].id, title, subject, className, schoolYear, archived: false, published: false, publicSlug: '', receivedCopy: Boolean(source.receivedCopy) }
+      const clone = { ...source, startDate: shiftDate(source.startDate), weeksData: Array.isArray(source.weeksData) ? source.weeksData.map(week => ({ ...week, weekStart: shiftDate(week.weekStart), publishDate: '', hideDate: '' })) : source.weeksData, themeId: PLAN_THEMES[(PLAN_THEMES.findIndex(theme => theme.id === planTheme(source, row.id).id) + 1) % PLAN_THEMES.length].id, title, subject, className, schoolYear, archived: false, published: false, publicSlug: '', receivedCopy: Boolean(source.receivedCopy) }
       const { error } = await supabase.from('veckoplanering').insert({
         user_id: session.user.id, title, week_start: clone.startDate, content: JSON.stringify(clone), subject, class_name: className, school_year: schoolYear,
         start_date: clone.startDate, weeks: clone.weeks, published: false, public_slug: null, updated_at: new Date().toISOString(),
