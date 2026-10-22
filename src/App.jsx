@@ -811,6 +811,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [plan, setPlan] = useState(emptyPlan())
   const [plans, setPlans] = useState([])
   const [showArchive, setShowArchive] = useState(false)
+  const [planSearch, setPlanSearch] = useState("")
   const [shareOpen, setShareOpen] = useState(false)
   const [shareRecipient, setShareRecipient] = useState("")
   const [sharePassword, setSharePassword] = useState("")
@@ -1786,7 +1787,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     </div>
     <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
     <section className="card" id="mina-arsplaneringar">
-      <div className="section-heading"><div><p className="eyebrow">MIN STARTSIDA</p><h2>Alla mina planeringar</h2></div><button type="button" className="primary" onClick={createPlan}>+ Ny planering</button></div>
+      <div className="section-heading"><div><p className="eyebrow">MIN STARTSIDA</p><h2>Alla mina planeringar</h2><p className="muted">Öppna en planering nedan eller välj en funktion.</p></div></div>
       <div className="home-tiles"><button type="button" className="home-tile home-tile-new" onClick={createPlan}><span className="home-tile-icon">＋</span><strong>Ny planering</strong><span>Skapa en ny årsplanering</span></button><button type="button" className="home-tile home-tile-archive" onClick={() => setShowArchive(true)}><span className="home-tile-icon">▤</span><strong>Planeringsarkiv</strong><span>Visa sparade arkiverade planeringar</span></button></div><div className="button-row" role="group" aria-label="Planeringsbibliotek">
         <button type="button" className={!showArchive ? 'primary' : 'secondary'} aria-pressed={!showArchive} onClick={() => setShowArchive(false)}>Aktiva ({plans.filter(row => !parseContent(row.content)?.archived).length})</button>
         <button type="button" className={showArchive ? 'primary' : 'secondary'} aria-pressed={showArchive} onClick={() => setShowArchive(true)}>Arkiv ({plans.filter(row => parseContent(row.content)?.archived).length})</button>
@@ -1796,8 +1797,10 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           <button type="button" className="secondary" disabled={busy} onClick={() => { if (isDirty && !window.confirm('Du har osparade ändringar. Vill du uppdatera listan ändå?')) return; loadPlans() }} title="Hämta senaste planeringslistan">⟳ Uppdatera</button>
         </div>
       </div>
+      <div className="library-search"><label htmlFor="library-plan-search">🔎 Sök bland ${showArchive ? 'arkiverade' : 'aktiva'} planeringar</label><input id="library-plan-search" type="search" placeholder="Sök namn, ämne, klass eller läsår…" value={planSearch} onChange={event => setPlanSearch(event.target.value)} />{planSearch && <button type="button" className="secondary" onClick={() => setPlanSearch('')}>Rensa</button>}</div>
+      {planSearch && plans.some(row => Boolean(parseContent(row.content)?.archived) === showArchive) && !plans.some(row => Boolean(parseContent(row.content)?.archived) === showArchive && [row.title, row.subject, row.class_name, row.school_year].some(value => String(value || "").toLocaleLowerCase("sv").includes(planSearch.trim().toLocaleLowerCase("sv")))) && <p className="muted">Inga planeringar matchar sökningen. Prova ett annat ord eller rensa sökningen.</p>}
       {!plans.some(row => Boolean(parseContent(row.content)?.archived) === showArchive) ? <p className="muted">{showArchive ? 'Arkivet är tomt.' : 'Du har inga aktiva årsplaneringar ännu.'}</p> : <div className="library-list home-plan-grid">
-        {plans.filter(row => Boolean(parseContent(row.content)?.archived) === showArchive).map(row => <article className="library-item" key={row.id} style={{ '--item-accent': planTheme(parseContent(row.content), row.id).accent, '--item-light': planTheme(parseContent(row.content), row.id).light, '--item-ink': planTheme(parseContent(row.content), row.id).ink }}>
+        {plans.filter(row => Boolean(parseContent(row.content)?.archived) === showArchive && [row.title, row.subject, row.class_name, row.school_year].some(value => String(value || "").toLocaleLowerCase("sv").includes(planSearch.trim().toLocaleLowerCase("sv")))).map(row => <article className="library-item" key={row.id} style={{ '--item-accent': planTheme(parseContent(row.content), row.id).accent, '--item-light': planTheme(parseContent(row.content), row.id).light, '--item-ink': planTheme(parseContent(row.content), row.id).ink }}>
           <div><strong className="library-title">{row.title}</strong><p className="muted">{[row.subject, row.class_name, row.school_year].filter(Boolean).join(' · ')}</p></div>
           <div className="button-row library-actions" aria-label={"Åtgärder för "+row.title}>
             <span className={`status-badge ${row.published ? 'published' : 'draft'}`}>{row.published ? '● Publicerad' : '○ Utkast'}</span>
