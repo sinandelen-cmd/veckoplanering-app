@@ -2073,3 +2073,40 @@ body { background: #fffaf2; color: var(--ink); }
     font-size: .91rem !important;
   }
 }
+
+/* Håll planeringsmenyn läsbar även när många planeringar har långa namn. */
+@media (min-width: 761px) {
+  .planning-layout {
+    grid-template-columns: 260px minmax(0, 1fr) !important;
+  }
+}
+.planning-layout > .planning-sidebar {
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  overflow-x: hidden;
+}
+.planning-layout > .planning-sidebar .sidebar-plan-list {
+  min-width: 0;
+  width: 100%;
+  overflow-x: hidden;
+}
+.planning-layout > .planning-sidebar .sidebar-plan-entry {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+.planning-layout > .planning-sidebar .sidebar-plan-entry > div:first-child {
+  min-width: 0;
+  width: 100%;
+}
+.planning-layout > .planning-sidebar .sidebar-plan {
+  display: block;
+  min-width: 0 !important;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
