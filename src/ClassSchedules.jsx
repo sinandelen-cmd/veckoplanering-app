@@ -91,7 +91,28 @@ export default function ClassSchedules({ plan, onChange }) {
         {groups.map((g,i) => <button className={selected===i?'primary':'secondary'} type="button" key={i} onClick={() => {setSelected(i);setEditing(null);setShowAll(false)}} aria-pressed={selected===i}>{g.name}</button>)}
       </div>}
     </>}
-    {compare && <div style={{overflowX:"auto",marginTop:16}}><h3>Jämför klassernas veckor</h3><p>Varje klass följer samma innehåll i egen takt. Lektionerna numreras från 1 varje vecka.</p><table style={{width:"100%",borderCollapse:"collapse",minWidth:540}}><thead><tr><th style={{textAlign:"left",padding:10}}>Vecka</th>{comparison.map(g=><th key={g.name} style={{textAlign:"left",padding:10}}>{g.name}</th>)}</tr></thead><tbody>{visibleComparisonWeeks.map(key=><tr key={key} style={{borderTop:"1px solid #cbd5e1"}}><th style={{padding:10,textAlign:"left",verticalAlign:"top"}}>{key}</th>{comparison.map(g=>{const items=g.weeks[key]||[];return <td key={g.name} style={{padding:10,verticalAlign:"top"}}>{items.length?<><strong>{items.length} {items.length===1?"lektion":"lektioner"}</strong><div style={{fontSize:".9em",marginTop:5}}>{items.map((item,i)=><div key={i}>{DAY_SHORT[DAYS.indexOf(item.day)]}: Lektion {i+1} <span style={{opacity:.75}}>(gemensam {item.lessonNumber})</span></div>)}</div></>:<span style={{opacity:.6}}>Ingen lektion</span>}</td>})}</tr>)}</tbody></table>{comparisonWeeks.length>8&&<button type="button" className="secondary" onClick={()=>setShowAll(!showAll)}>{showAll?"Visa färre veckor":"Visa alla veckor"}</button>}</div>}
+    {compare && <div style={{marginTop:18}}>
+      <h3>Jämför klassernas veckor</h3>
+      <p className="muted">Varje klass har en egen ruta. Lektionerna börjar på 1 varje vecka, medan det gemensamma innehållet fortsätter i rätt ordning.</p>
+      {visibleComparisonWeeks.map(key => <section key={key} style={{margin:"18px 0 24px"}}>
+        <h4 style={{fontSize:"1.1rem",margin:"0 0 12px",paddingBottom:8,borderBottom:"2px solid #d8e5dc"}}>Vecka {(() => {const d=new Date(key+"T12:00:00");d.setDate(d.getDate()+3);const y=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-y)/86400000-3+(y.getDay()+6)%7)/7)})()} · {key}</h4>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,240px),1fr))",gap:14}}>
+          {comparison.map((g,i)=>{const items=g.weeks[key]||[];const group=groups[i];return <article key={g.name} style={{border:"1px solid #c9d9d0",borderRadius:14,background:["#f0f7ff","#fff8eb","#f0faf4","#f7f2ff"][i%4],padding:14,boxShadow:"0 2px 7px rgba(30,55,40,.06)"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap",marginBottom:12}}>
+              <strong style={{fontSize:"1.15rem",color:"#273e34"}}>{g.name}</strong>
+              <span style={{fontSize:".82rem",borderRadius:30,padding:"5px 9px",background:"#fff",border:"1px solid #d8e0dc"}}>{lessonsPerWeek(group)} lektioner/vecka</span>
+            </div>
+            {items.length ? <div style={{display:"grid",gap:9}}>{items.map((item,j)=><div key={item.lessonNumber} style={{background:"#fff",border:"1px solid #e0e7e2",borderRadius:10,padding:"11px 12px"}}>
+              <div style={{fontSize:".82rem",color:"#52635c",marginBottom:4}}>{item.day} · {item.date}</div>
+              <strong style={{fontSize:"1rem"}}>Lektion {j+1}</strong>
+              <div style={{fontSize:".88rem",marginTop:5,whiteSpace:"pre-wrap"}}>{item.override?.text ?? describe(item.lesson)}</div>
+              <div style={{fontSize:".77rem",color:"#63756a",marginTop:5}}>Gemensam lektion {item.lessonNumber}</div>
+            </div>)}</div>:<div style={{padding:"16px 8px",color:"#65756b"}}>Ingen lektion denna vecka</div>}
+          </article>})}
+        </div>
+      </section>)}
+      {comparisonWeeks.length>8 && <button type="button" className="secondary" onClick={()=>setShowAll(!showAll)}>{showAll?"Visa färre veckor":"Visa alla veckor"}</button>}
+    </div>}
     {group && !compare && <>
       <h3>{group.name} – eget lektionsschema</h3>
       <p><strong>{lessonsPerWeek(group)} lektioner per vecka.</strong> Ändra antalet för varje dag nedan. En klass kan ha fler eller färre lektioner än de andra.</p>
