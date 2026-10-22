@@ -855,6 +855,7 @@ function applyElevkompassenTheme(event) {
       html, body { background: #faf8f3 !important; overflow-y: visible !important; height: auto !important; min-height: 0 !important; }\n      body.ars-compact-overview .toolbar-meta, body.ars-compact-overview #classSummary { display: none !important; }\n      #classSummary { border-radius: 12px !important; }\n      .toolbar-meta { padding: 8px 10px !important; gap: 8px !important; }
       body > .titlebar, .brand-signature, #classView > .toolbar > .toolbar-group { display: none !important; }
       header, .topbar, .titlebar { display: none !important; }
+      #prBackupReminder, .pr-reminder, .pr-head, .pr-topbar { display: none !important; }
       button, input, select, textarea { font-family: inherit; }
       button { transition: background-color .15s ease, box-shadow .15s ease; }
       button:focus-visible, a:focus-visible, input:focus-visible {
