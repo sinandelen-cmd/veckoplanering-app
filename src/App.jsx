@@ -1782,7 +1782,7 @@ function AnnualApp() {
   async function login(event) {
     event.preventDefault(); setStatus('Loggar in...')
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) setStatus(error.code === 'email_not_confirmed' || /email not confirmed/i.test(error.message || '') ? 'E-postadressen är inte bekräftad. Öppna bekräftelsemejlet från Supabase och klicka på länken innan du loggar in.' : 'Inloggningen misslyckades. Kontrollera e-post och lösenord.')
+    if (error) setStatus(error.code === 'email_not_confirmed' || /email not confirmed/i.test(error.message || '') ? 'E-postadressen är inte bekräftad. Öppna bekräftelsemejlet från Supabase och klicka på länken innan du loggar in.' : `Inloggningen misslyckades: ${error.message || 'Okänt fel'} (${error.code || 'ingen felkod'}).`)
     else { setPassword(''); setStatus('') }
   }
 
@@ -1790,7 +1790,7 @@ function AnnualApp() {
     event.preventDefault()
     if (password.length < 6) { setStatus('Lösenordet måste ha minst 6 tecken.'); return }
     setStatus('Skapar konto...')
-    const { data, error } = await supabase.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: 'https://min-arsplanering.netlify.app/' } })
+    const { data, error } = await supabase.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: window.location.origin + '/' } })
     if (error) { setStatus('Kunde inte skapa konto. ' + error.message); return }
     setPassword('')
     setStatus(data.session ? 'Kontot är skapat. Vänta på administratörens godkännande.' : 'Kontot är registrerat. Bekräfta din e-postadress och vänta på administratörens godkännande.')
