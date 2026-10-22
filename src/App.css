@@ -2328,3 +2328,9 @@ body { background: #fffaf2; color: var(--ink); }
 .topbar:has(.edit-history-actions) .archive-plan-actions,
 .topbar:has(.edit-history-actions) .student-plan-link { order:2 !important; display:flex !important; grid-column:auto !important; grid-row:auto !important; margin:0 !important; }
 @media print { .topbar:has(.edit-history-actions) { display:none !important; } }
+
+.school-year-picker { display:flex; align-items:center; flex-wrap:wrap; gap:7px; margin-top:6px; }
+.school-year-picker input[type=number] { width:88px; min-width:0; text-align:center; padding:9px 5px; }
+.school-year-picker > span { white-space:nowrap; font-weight:700; }
+.school-year-picker button { padding:8px 11px; border-radius:9px; font-weight:700; }
+.school-year-picker button:last-child { background:#e5f3e9; color:#275c42; }
