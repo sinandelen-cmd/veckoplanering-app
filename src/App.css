@@ -2412,3 +2412,10 @@ body { background: #fffaf2; color: var(--ink); }
     margin-right:auto !important;
   }
 }
+
+/* Flytta årsöversikten 3 cm åt vänster på större skärmar. */
+@media (min-width: 1100px) {
+  .planning-layout #lararvy:has(.calendar-page) {
+    transform:translateX(-3cm) !important;
+  }
+}
