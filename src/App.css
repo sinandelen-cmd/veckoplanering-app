@@ -2531,3 +2531,35 @@ body { background: #fffaf2; color: var(--ink); }
   .planning-layout > .shell { width:100% !important; margin:0 !important; }
   .planning-sidebar .sidebar-class-links { margin-left:4px; }
 }
+
+/* Sammanhängande navigeringsyta, utan vit lucka mellan menyerna. */
+@media screen and (min-width:751px) {
+  .planning-layout {
+    display:grid !important;
+    grid-template-columns:245px minmax(0,1fr) !important;
+    column-gap:0 !important;
+  }
+  .planning-layout > .planning-sidebar {
+    grid-column:1 !important;
+    width:100% !important;
+    min-width:0 !important;
+    box-sizing:border-box !important;
+  }
+  .planning-layout > .planning-top-navigation {
+    grid-column:2 !important;
+    justify-self:stretch !important;
+    margin:0 !important;
+    padding-left:14px !important;
+    width:100% !important;
+    position:relative;
+    background:#fff3ce !important;
+  }
+  .planning-layout > .planning-top-navigation::before {
+    content:"";
+    position:absolute;
+    top:0;bottom:0;left:-2cm;width:2cm;
+    background:#fff3ce;
+    z-index:-1;
+    pointer-events:none;
+  }
+}
