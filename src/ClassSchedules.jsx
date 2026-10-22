@@ -101,7 +101,7 @@ export default function ClassSchedules({ plan, onChange }) {
         <button type="button" className="secondary" disabled={selectedComparisonWeek>=comparisonWeeks.length-1} onClick={()=>setComparisonWeek(n=>Math.min(comparisonWeeks.length-1,n+1))}>Nästa vecka →</button>
         <select aria-label="Välj vecka att jämföra" value={selectedComparisonWeek} onChange={e=>setComparisonWeek(Number(e.target.value))}>{comparisonWeeks.map((key,i)=><option key={key} value={i}>{key}</option>)}</select>
       </div>}
-      {comparisonWeeks[selectedComparisonWeek] && <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,230px),1fr))",gap:14}}>
+      {comparisonWeeks[selectedComparisonWeek] && <div style={{overflowX:"auto",width:"100%",paddingBottom:10}}><div style={{display:"grid",gridTemplateColumns:`repeat(${comparison.length}, minmax(205px, 1fr))`,gap:12,minWidth:comparison.length*205}}>
         {comparison.map((g,i)=>{const items=g.weeks[comparisonWeeks[selectedComparisonWeek]]||[];const group=groups[i];return <article key={g.name} style={{border:"1px solid #c9d9d0",borderRadius:14,background:["#eaf3ff","#fff1db","#e8f6eb","#f2ebfa"][i%4],padding:14}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap",marginBottom:12}}>
             <strong style={{fontSize:"1.2rem",color:"#273e34"}}>{g.name}</strong>
@@ -116,7 +116,7 @@ export default function ClassSchedules({ plan, onChange }) {
             </div>):<div style={{background:"#fff",padding:14,borderRadius:10,color:"#65756b"}}>Ingen lektion denna vecka</div>}
           </div>
         </article>})}
-      </div>}
+      </div></div>}
     </div>}
     {group && !compare && <>
       <h3>{group.name} – eget lektionsschema</h3>
