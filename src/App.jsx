@@ -862,6 +862,29 @@ function applyElevkompassenTheme(event) {
       }
     `
     doc.head.appendChild(style)
+    const unifiedStyle = doc.createElement('style')
+    unifiedStyle.textContent = `
+      body { margin: 0 !important; padding: 0 !important; background: transparent !important; }
+      .titlebar, .brand-signature { display: none !important; }
+      #classView { margin: 0 !important; padding-top: 0 !important; background: transparent !important; }
+      #classView > .toolbar { border-radius: 10px !important; margin: 0 0 8px !important; box-shadow: none !important; }
+      .class-summary, .sheet-wrap { box-shadow: none !important; }
+      .ars-overview-toggle { background: #fff !important; border: 1px solid #e5c9d2 !important; border-radius: 7px !important; color: #813750 !important; font-weight: 700 !important; padding: 6px 10px !important; cursor: pointer !important; }
+    `
+    doc.head.appendChild(unifiedStyle)
+    const toolbar = doc.querySelector('#classView > .toolbar')
+    if (toolbar && !doc.getElementById('ars-overview-toggle')) {
+      const toggle = doc.createElement('button')
+      toggle.id = 'ars-overview-toggle'
+      toggle.className = 'ars-overview-toggle'
+      toggle.type = 'button'
+      toggle.textContent = 'Dölj översikt ▴'
+      toggle.addEventListener('click', () => {
+        const collapsed = doc.body.classList.toggle('ars-compact-overview')
+        toggle.textContent = collapsed ? 'Visa översikt ▾' : 'Dölj översikt ▴'
+      })
+      toolbar.appendChild(toggle)
+    }
     // Hide the standalone Elevkompassen landing header and backup reminder.
     // Keep the Resultatregistrering and Mentorskap overview cards untouched.
     const hideStandaloneHeader = () => {
@@ -2092,7 +2115,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     {previewStudents && <section className="student-preview-clean" id="elevvy"><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
 
     </div>
-    <div className="teacher-tab-panel" hidden={teacherTab !== "resultat"}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,padding:"8px 12px",marginBottom:6,background:"#fffaf7",border:"1px solid #e8d9df",borderRadius:10}}><span style={{fontWeight:700,color:"#74384d",fontSize:14}}>Resultatregistrering</span><button type="button" style={{border:"1px solid #d9bdc8",borderRadius:8,padding:"7px 12px",background:"#fff",color:"#74384d",fontWeight:700,cursor:"pointer"}} onClick={event => {const frame=event.currentTarget.closest('.teacher-tab-panel')?.querySelector('iframe');const doc=frame?.contentDocument;if(!doc)return;const collapsed=doc.body.classList.toggle('ars-compact-overview');event.currentTarget.textContent=collapsed?'Visa översikt ▾':'Dölj översikt ▴';}}>Dölj översikt ▴</button></div><iframe title="Elevkompassen – originalets resultatmatris" src="/Provresultat_tom_mall_50.html#sida-prov" onLoad={applyElevkompassenTheme} style={{display:"block",width:"100%",height:"1200px",border:0,overflow:"hidden",background:"#fff",borderRadius:"12px"}} /></div>
+    <div className="teacher-tab-panel" hidden={teacherTab !== "resultat"} style={{padding:0,background:"transparent",border:0,boxShadow:"none"}}><iframe title="Resultatregistrering och mentorskap" src="/Provresultat_tom_mall_50.html#sida-prov" onLoad={applyElevkompassenTheme} style={{display:"block",width:"100%",height:"1200px",border:0,overflow:"hidden",background:"transparent",borderRadius:0}} /></div>
     <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
     <section className="card" id="mina-arsplaneringar">
       <div className="section-heading"><div><p className="eyebrow">MIN STARTSIDA</p><h2>Alla mina planeringar</h2><p className="muted">Öppna en planering nedan eller välj en funktion.</p></div></div>
