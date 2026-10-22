@@ -46,6 +46,7 @@ export default function ClassSchedules({ plan, onChange }) {
   const [days, setDays] = React.useState([])
   const [selected, setSelected] = React.useState(0)
   const [showAll, setShowAll] = React.useState(false)
+  const [showMatrix, setShowMatrix] = React.useState(true)
   const [compare, setCompare] = React.useState(false)
   const [showClassDetails, setShowClassDetails] = React.useState(false)
   const [selectedComparisonWeek, setComparisonWeek] = React.useState(0)
@@ -80,7 +81,9 @@ export default function ClassSchedules({ plan, onChange }) {
       <button type="button" disabled={!name.trim()||groups.some(g=>g.name.toLocaleLowerCase('sv')===name.trim().toLocaleLowerCase('sv'))} onClick={addClass}>+ Lägg till klass</button>
     </div>}
     {unscheduledGroups.length>0 && <p role="alert" style={{background:"#fff0d7",padding:12,borderRadius:8,border:"1px solid #e2b66d"}}><strong>Schema saknas:</strong> {unscheduledGroups.map(g=>g.name).join(", ")}. Kryssa i minst en lektionsdag för varje klass så att inga lektioner missas.</p>}
-    {groups.length>0 && <div style={{overflowX:"auto",margin:"14px 0 20px"}}>
+    {groups.length>0 && <div style={{margin:"14px 0 20px"}}>
+      <button type="button" className="secondary" aria-expanded={showMatrix} onClick={()=>setShowMatrix(v=>!v)} style={{marginBottom:10}}>{showMatrix?"▾ Dölj klassernas veckoschema":"▸ Visa klassernas veckoschema"}</button>
+      {showMatrix && <div style={{overflowX:"auto"}}>
       <h3>Klassernas veckoschema</h3>
       <p className="muted">Kryssa i lektionsdagarna. Lektionsnumren ordnas automatiskt från måndag till fredag. Klicka på klassnamnet för särskilda ändringar.</p>
       <table style={{width:"100%",borderCollapse:"separate",borderSpacing:"4px",minWidth:460}}>
@@ -90,6 +93,7 @@ export default function ClassSchedules({ plan, onChange }) {
         </td>})}<td style={{textAlign:"center",fontWeight:700}}>{sortedDays.length}</td></tr>})}</tbody>
         <tfoot><tr><td colSpan={7} style={{padding:"14px 6px 4px",borderTop:"2px solid #d8e5dc"}}><div style={{display:"flex",gap:10,alignItems:"end",flexWrap:"wrap"}}><label style={{flex:"1 1 180px"}}>Ny klass<input value={name} onChange={e=>setName(e.target.value)} placeholder="Exempel: 8D" /></label><button type="button" disabled={!name.trim()||groups.some(g=>g.name.toLocaleLowerCase('sv')===name.trim().toLocaleLowerCase('sv'))} onClick={addClass}>+ Lägg till klassrad</button></div></td></tr></tfoot>
       </table>
+      </div>}
     </div>}
     {groups.length > 0 && <div style={{display:"flex",gap:10,flexWrap:"wrap",margin:"12px 0"}}>
       <button type="button" className="secondary" aria-expanded={compare} onClick={()=>{setCompare(v=>!v);setShowAll(false)}}>{compare?"▾ Dölj klassernas veckor":"▸ Visa klassernas veckor"}</button>
