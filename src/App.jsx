@@ -1382,7 +1382,9 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     })} onDeleteWeek={weekStart => { if (busy || weeks.length <= 1) return; const week = weeks.find(item => item.weekStart === weekStart); if (!week) return; if (!window.confirm(`Vill du radera vecka ${calendarWeekNumber(weekStart) ?? week.weekNumber} och allt innehåll i den? Ändringen sparas först när du väljer Spara ändringar.`)) return; setPlan(p => { const remaining = displayWeeks(p).filter(item => item.weekStart !== weekStart); return remaining.length ? { ...p, weeks: remaining.length, weeksData: remaining } : p }) }} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} /></div>}
 
     <div className={`teacher-tab-panel ${simpleSetup ? "simple-setup-active" : ""}`} id="panel-lararvy" role="tabpanel" aria-labelledby="tab-lararvy" hidden={teacherTab !== "arsplan" && teacherTab !== "new"}>
-    {simpleSetup && <section className="card" style={{marginBottom:16,border:'2px solid #c8d9c9'}} aria-label="Testa flera klasser">
+    {simpleSetup && <section className="card simple-setup-card" aria-label="Skapa ny planering">
+      <h2>Skapa en ny planering</h2>
+      <div style={{margin:"12px 0 20px",padding:16,border:"2px solid #8bb6a2",borderRadius:12,background:"#effaf3"}} aria-label="Testa flera klasser">
       <h2>Testa samma planering i flera klasser</h2>
       <p>Fyll i en färdig testplanering med 25 matematiklektioner och fyra klasser med olika dagar och antal lektioner. Inga befintliga planeringar påverkas.</p>
       <button type="button" className="secondary" onClick={() => {
@@ -1397,9 +1399,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         ]})
         setStatus('Testplaneringen är ifylld. Klicka på Skapa planering nedan för att spara den på ditt konto.')
       }}>Fyll i testplanering med 8A, 8B, 8C och 8D</button>
-    </section>}
-    {simpleSetup && <section className="card simple-setup-card" aria-label="Skapa ny planering">
-      <h2>Skapa en ny planering</h2>
+      </div>
+
       <p className="muted">Fyll i uppgifterna och tryck på Skapa planering. Du kan lägga till lektioner och material efteråt.</p>
       <form onSubmit={event => { event.preventDefault(); save(true, true) }}>
         <div className="form-grid">
