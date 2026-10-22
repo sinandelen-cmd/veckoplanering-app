@@ -216,7 +216,15 @@ function makeWeeks(plan, count = plan.weeks) {
 
 // Bevara befintlig veckotext när startdatum eller antal veckor ändras.
 function displayWeeks(plan) {
-  const source = Array.isArray(plan.weeksData) && plan.weeksData.length ? plan.weeksData : makeWeeks(plan)
+  const raw = Array.isArray(plan.weeksData) && plan.weeksData.length ? plan.weeksData : makeWeeks(plan)
+  // Svenska ISO-veckor: datumet bestämmer alltid veckonumret, även för äldre sparade planer.
+  // Ändra inte lärarens eget lektionsinnehåll eller egna veckorubriker.
+  const source = raw.map(week => {
+    const number = calendarWeekNumber(week.weekStart)
+    if (number == null) return week
+    const automaticTitle = !week.title || /^Vecka\\s+\\d+$/i.test(week.title)
+    return { ...week, weekNumber: number, title: automaticTitle ? `Vecka ${number}` : week.title }
+  })
   if (plan.entryType !== 'dag') return source
   return source.map(week => {
     if (week.daysCustomized) return week
@@ -952,7 +960,20 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   useEffect(() => { loadPlans() }, [])
 
   function updateWeek(index, changes) {
-    setPlan(p => ({ ...p, weeksData: displayWeeks(p).map((week, i) => i === index ? { ...week, ...changes } : week) }))
+    setPlan(p => ({ ...p, weeksData: displayWeeks(p).map((week, i) => {
+      if (i !== index) return week
+      const next = { ...week, ...changes }
+      if (changes.weekStart) {
+        const monday = mondayOf(changes.weekStart + 'T12:00:00')
+        const number = calendarWeekNumber(monday)
+        next.weekStart = monday
+        if (number != null) {
+          next.weekNumber = number
+          if (!week.title || /^Vecka\\s+\\d+$/i.test(week.title)) next.title = `Vecka ${number}`
+        }
+      }
+      return next
+    }) }))
   }
 
   function setAllWeeksVisibility(visible) {
