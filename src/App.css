@@ -1831,3 +1831,40 @@ body { background: #fffaf2; color: var(--ink); }
   border-color: #e4a8ad !important;
   box-shadow: 0 2px 0 rgba(132,62,74,.10);
 }
+
+/* En enda sammanhängande navigationsyta utan skarv mellan sidomeny och toppmeny. */
+.planning-layout { --navigation-surface: #fff3ce; }
+.planning-layout > .planning-sidebar,
+.planning-layout > .planning-top-navigation {
+  background-color: var(--navigation-surface) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+.planning-layout > .planning-sidebar {
+  padding-top: 12px;
+  border-right: 0 !important;
+}
+.planning-layout > .planning-top-navigation {
+  min-height: 76px;
+  padding: 12px 14px;
+  align-content: center;
+  gap: 8px;
+  border-bottom: 0 !important;
+}
+.planning-layout > .planning-sidebar .sidebar-link,
+.planning-layout > .planning-top-navigation .top-navigation-link {
+  min-height: 44px;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  box-shadow: none;
+  font-weight: 700;
+}
+.planning-layout > .planning-sidebar .sidebar-link.active,
+.planning-layout > .planning-top-navigation .top-navigation-link.active {
+  background: #fffaf0 !important;
+  border: 1px solid #d99aa3 !important;
+  box-shadow: 0 2px 0 #eac2c5 !important;
+}
