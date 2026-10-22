@@ -46,7 +46,7 @@ export default function ClassSchedules({ plan, onChange }) {
   const [days, setDays] = React.useState([])
   const [selected, setSelected] = React.useState(0)
   const [showAll, setShowAll] = React.useState(false)
-  const [compare, setCompare] = React.useState(true)
+  const [compare, setCompare] = React.useState(false)
   const [showClassDetails, setShowClassDetails] = React.useState(false)
   const [selectedComparisonWeek, setComparisonWeek] = React.useState(0)
   const [editing, setEditing] = React.useState(null)
@@ -92,8 +92,8 @@ export default function ClassSchedules({ plan, onChange }) {
       </table>
     </div>}
     {groups.length > 0 && <div style={{display:"flex",gap:10,flexWrap:"wrap",margin:"12px 0"}}>
-      <button type="button" className={compare?"primary":"secondary"} onClick={()=>{setCompare(true);setShowAll(false)}}>▦ Visa klassernas veckor</button>
-      <button type="button" className={!compare?"primary":"secondary"} onClick={()=>{setCompare(false);setShowClassDetails(false);setShowAll(false)}}>⚙ Ändra enskild lektion</button>
+      <button type="button" className="secondary" aria-expanded={compare} onClick={()=>{setCompare(v=>!v);setShowAll(false)}}>{compare?"▾ Dölj klassernas veckor":"▸ Visa klassernas veckor"}</button>
+      <button type="button" className="secondary" aria-expanded={!compare&&showClassDetails} onClick={()=>{setCompare(false);setShowClassDetails(v=>!v);setShowAll(false)}}>{!compare&&showClassDetails?"▾ Dölj enskilda ändringar":"⚙ Visa enskilda ändringar"}</button>
     </div>}
     {compare && <div style={{marginTop:18}}>
       <h3>Jämför klasser – veckomatris</h3>
@@ -121,9 +121,7 @@ export default function ClassSchedules({ plan, onChange }) {
         </article>})}
       </div></div>}
     </div>}
-    {group && !compare && <>
-      <button type="button" className="secondary" onClick={() => setShowClassDetails(v => !v)} aria-expanded={showClassDetails} style={{margin:'12px 0'}}>{showClassDetails ? '▾ Dölj klassens detaljer' : '▸ Visa och ändra klassens detaljer'}</button>
-      {showClassDetails && <>
+    {group && !compare && showClassDetails && <>
       <h3>{group.name} – eget lektionsschema</h3>
       <p><strong>{lessonsPerWeek(group)} lektioner per vecka.</strong> Lektionsdagarna visas i matrisen ovan. En klass kan ha fler eller färre lektioner än de andra.</p>
       <label>Startdatum <input type="date" value={group.startDate || plan.startDate || ''} onChange={e => updateGroup({startDate:e.target.value})} /></label>
@@ -154,7 +152,6 @@ export default function ClassSchedules({ plan, onChange }) {
       {group.overrides && Object.keys(group.overrides).length>0 && <p className="muted">Egna ändringar är sparade separat för {group.name}. Grundplaneringen och övriga klasser påverkas inte.</p>}
       {grouped.length>8 && <button type="button" className="secondary" onClick={()=>setShowAll(!showAll)}>{showAll?'Visa färre veckor':'Visa alla '+grouped.length+' veckor'}</button>}
       <p className="muted">Ändringarna sparas tillsammans med grundplaneringen när du använder appens vanliga Spara-knapp. Inställda lektioner hoppas inte över.</p>
-      </>}
     </>}
   </section>
 }
