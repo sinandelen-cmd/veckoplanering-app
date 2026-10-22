@@ -879,6 +879,19 @@ function applyElevkompassenTheme(event) {
       .ars-overview-toggle { background: #fff !important; border: 1px solid #e5c9d2 !important; border-radius: 7px !important; color: #813750 !important; font-weight: 700 !important; padding: 6px 10px !important; cursor: pointer !important; }
     `
     doc.head.appendChild(unifiedStyle)
+    // The original document has a top-level .titlebar, not a React header.
+    const originalTitle = doc.body.querySelector(':scope > .titlebar')
+    if (originalTitle) originalTitle.style.setProperty('display', 'none', 'important')
+    const compactStyle = doc.createElement('style')
+    compactStyle.textContent = `
+      #classView > .toolbar { padding: 9px 12px !important; gap: 7px !important; background: #fffdfa !important; border: 1px solid #eadfe2 !important; }
+      #classView > .toolbar button { border-radius: 7px !important; }
+      #classView > .pr-ctabs { margin-top: 4px !important; }
+      #classView > .class-summary { padding: 9px 12px !important; }
+      #classView > .sheet-wrap { margin-top: 8px !important; }
+      .titlebar { display: none !important; }
+    `
+    doc.head.appendChild(compactStyle)
     const toolbar = doc.querySelector('#classView > .toolbar')
     if (toolbar && !doc.getElementById('ars-overview-toggle')) {
       const toggle = doc.createElement('button')
