@@ -901,6 +901,40 @@ function TeacherResults({ userId }) {
     editSelected(previous => ({ ...previous, results: (previous.results?.length ? previous.results : [{ student: '', assessment: '', score: '', comment: '' }]).map(row => ({ ...row, [name.trim()]: row[name.trim()] ?? '' })) }))
   }
   const assessmentColumns = [...new Set((selected?.results || []).flatMap(row => Object.keys(row).filter(key => !['student','assessment','score','comment'].includes(key))))]
+  const [showGradeLimits, setShowGradeLimits] = useState(false)
+  const [chartType, setChartType] = useState('circle')
+  const [gradeLimits, setGradeLimits] = useState({ E: 40, D: 45, C: 50, B: 80, A: 90 })
+  const numeric = value => Math.max(0, Number(value) || 0)
+  const rowsForMatrix = (selected?.results || []).filter(row => !row.__settings)
+  const chapterKeys = [...new Set(rowsForMatrix.flatMap(row => Object.keys(row).filter(key => /^chapter_[0-9]+_E$/.test(key)).map(key => key.split('_')[1])))]
+  const chapters = chapterKeys.length ? chapterKeys : ['1']
+  const chapterMax = (chapter, level) => numeric(rowsForMatrix.find(row => row['chapter_' + chapter + '_max_' + level] !== undefined)?.['chapter_' + chapter + '_max_' + level] ?? ({ E: 20, C: 3, A: 7 })[level])
+  const matrixTotals = row => chapters.reduce((acc, chapter) => {
+    for (const level of ['E', 'C', 'A']) acc[level] += numeric(row['chapter_' + chapter + '_' + level])
+    return acc
+  }, { E: 0, C: 0, A: 0 })
+  const totalMax = chapters.reduce((sum, chapter) => sum + ['E', 'C', 'A'].reduce((n, level) => n + chapterMax(chapter, level), 0), 0)
+  const getGrade = row => {
+    const scores = matrixTotals(row)
+    const sum = scores.E + scores.C + scores.A
+    const percentage = totalMax ? sum / totalMax * 100 : 0
+    const cAvailable = chapters.reduce((n, chapter) => n + chapterMax(chapter, 'C'), 0)
+    const aAvailable = chapters.reduce((n, chapter) => n + chapterMax(chapter, 'A'), 0)
+    if (percentage >= gradeLimits.A && scores.A >= aAvailable * 2 / 3) return 'A'
+    if (percentage >= gradeLimits.B && scores.A >= aAvailable / 3) return 'B'
+    if (percentage >= gradeLimits.C && scores.C + scores.A >= cAvailable * 2 / 3) return 'C'
+    if (percentage >= gradeLimits.D && scores.C + scores.A >= cAvailable / 3) return 'D'
+    return percentage >= gradeLimits.E ? 'E' : 'F'
+  }
+  const gradeCounts = Object.fromEntries(['A','B','C','D','E','F'].map(grade => [grade, rowsForMatrix.filter(row => getGrade(row) === grade).length]))
+  const scoredRows = rowsForMatrix.filter(row => chapters.some(chapter => ['E','C','A'].some(level => row['chapter_' + chapter + '_' + level] !== undefined && row['chapter_' + chapter + '_' + level] !== '')))
+  const meanPercentage = scoredRows.length && totalMax ? Math.round(scoredRows.reduce((sum, row) => { const t = matrixTotals(row); return sum + (t.E + t.C + t.A) / totalMax * 100 }, 0) / scoredRows.length) : 0
+  const updateMatrix = (index, key, value) => editSelected(prev => ({ ...prev, results: (prev.results || []).map((row, i) => i === index ? { ...row, [key]: value } : row) }))
+  const addChapter = () => {
+    if (!selected) return
+    const next = String(Math.max(0, ...chapters.map(Number)) + 1)
+    editSelected(prev => ({ ...prev, results: (prev.results?.length ? prev.results : [{student:'',assessment:'',score:'',comment:''}]).map(row => ({ ...row, ['chapter_' + next + '_E']: '', ['chapter_' + next + '_C']: '', ['chapter_' + next + '_A']: '' })) }))
+  }
   const exportResults = () => {
     if (!selected) return
     const quote = value => '"' + String(value ?? '').replaceAll('"', '""') + '"'
@@ -940,21 +974,35 @@ function TeacherResults({ userId }) {
         <label>Ämne<input aria-label="Ämne" value={selected.subject || ''} onChange={e => editSelected(p => ({ ...p, subject: e.target.value }))} /></label>
         <label>Klass<input aria-label="Klass" value={selected.class_name || ''} onChange={e => editSelected(p => ({ ...p, class_name: e.target.value }))} /></label>
       </div>
-      <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap',marginTop:18,marginBottom:10}}>
-        <h3 style={{margin:0}}>Resultatmatris – {selected.title}</h3>
-        <button type="button" className="secondary" onClick={addAssessment}>+ Skapa kapitel / prov</button>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(105px,1fr)) minmax(240px,3fr)',gap:10,marginTop:20,marginBottom:10}}>
+        {[['ELEVER',rowsForMatrix.length],['KAPITEL',chapters.length],['MEDELRESULTAT',meanPercentage+' %']].map(([label,value]) => <div key={label} style={{background:'#fff',border:'1px solid #dfe3e9',borderRadius:9,padding:12,minHeight:90}}><div style={{fontSize:10,color:'#64748b',fontWeight:800,letterSpacing:'.06em'}}>{label}</div><strong style={{fontSize:22,color:'#17243a'}}>{value}</strong>{label==='MEDELRESULTAT' && <div style={{fontSize:10,color:'#64748b'}}>{scoredRows.length} av {rowsForMatrix.length} elever har poäng</div>}</div>)}
+        <div style={{background:'#fff',border:'1px solid #dfe3e9',borderRadius:9,padding:12}}>
+          <div style={{display:'flex',justifyContent:'space-between',gap:5,flexWrap:'wrap'}}><strong style={{fontSize:10,color:'#64748b'}}>BETYGSFÖRDELNING</strong><div>{[['circle','◉ Cirkel'],['bar','▥ Stapel'],['horizontal','▰ Liggande']].map(([type,label]) => <button type="button" key={type} onClick={() => setChartType(type)} style={{fontSize:10,padding:'3px 6px',border:0,background:chartType===type?'#e8e8ef':'transparent'}}>{label}</button>)}</div></div>
+          {chartType==='circle' ? <div style={{height:75,width:75,borderRadius:'50%',margin:'8px auto',background:rowsForMatrix.length ? 'conic-gradient('+['#2e9860','#91bd65','#ebd584','#f2a65e','#f18a6d','#c94242'].map((color,i) => { const grades=['A','B','C','D','E','F'];const begin=grades.slice(0,i).reduce((sum,g)=>sum+gradeCounts[g],0)/rowsForMatrix.length*100;const finish=begin+gradeCounts[grades[i]]/rowsForMatrix.length*100;return color+' '+begin+'% '+finish+'%' }).join(',')+')' : '#e6e9ed'}}/> : <div style={{display:'flex',flexDirection:chartType==='bar'?'row':'column',gap:4,alignItems:'end',height:75,justifyContent:'center'}}>{['A','B','C','D','E','F'].map((grade,i) => <div key={grade} title={grade+': '+gradeCounts[grade]} style={{background:['#2e9860','#91bd65','#ebd584','#f2a65e','#f18a6d','#c94242'][i],height:chartType==='bar'?Math.max(5,gradeCounts[grade]/Math.max(1,rowsForMatrix.length)*70):10,width:chartType==='bar'?20:Math.max(10,gradeCounts[grade]/Math.max(1,rowsForMatrix.length)*150)}}/>)}</div>}
+          <div style={{display:'flex',gap:5,flexWrap:'wrap',fontSize:10}}>{['A','B','C','D','E','F'].map(grade => <span key={grade}>{grade} {gradeCounts[grade]}</span>)}</div>
+        </div>
       </div>
-      <div style={{overflowX:'auto',border:'1px solid #e6d6db',borderRadius:9}}>
-        <table style={{width:'100%',borderCollapse:'collapse',minWidth:680}}>
-          <thead><tr style={{background:'#f6e9ed'}}><th style={{padding:12,textAlign:'left'}}>Elev</th>{assessmentColumns.map(name => <th key={name} style={{padding:12,textAlign:'center'}}>{name}</th>)}<th style={{padding:12}}>Prov / bedömning</th><th style={{padding:12}}>Resultat</th><th style={{padding:12}}>Kommentar</th><th></th></tr></thead>
-          <tbody>
-            {(Array.isArray(selected.results) ? selected.results : []).map((row,i) => <tr key={i} style={{borderTop:'1px solid #eadfe3'}}>
-              <td style={{padding:6}}><input aria-label={'Elev rad '+(i+1)} style={{minWidth:145,width:'100%'}} value={row.student || ''} onChange={e => changeRow(i,'student',e.target.value)}/></td>
-              {assessmentColumns.map(name => <td key={name} style={{padding:6}}><input aria-label={name+' för '+(row.student || 'elev '+(i+1))} style={{minWidth:85,width:'100%'}} value={row[name] || ''} onChange={e => changeRow(i,name,e.target.value)}/></td>)}
-              {['assessment','score','comment'].map(field => <td key={field} style={{padding:6}}><input aria-label={field+' rad '+(i+1)} style={{minWidth:field==='comment'?160:105,width:'100%'}} value={row[field] || ''} onChange={e => changeRow(i,field,e.target.value)}/></td>)}
-              <td><button type="button" className="secondary" aria-label={'Ta bort elev rad '+(i+1)} onClick={() => editSelected(prev => ({...prev,results:(prev.results || []).filter((_,n)=>n!==i)}))}>×</button></td>
-            </tr>)}
-            {(!selected.results || selected.results.length===0) && <tr><td colSpan={assessmentColumns.length+5} style={{padding:24,textAlign:'center',color:'#745563'}}>Matrisen är tom. Klicka på ”+ Lägg till elevresultat” eller ”Klistra in elevlista” för att börja.</td></tr>}
+      <div style={{border:'1px solid #dfe3e9',borderRadius:9,marginBottom:14,background:'#fff'}}>
+        <div style={{padding:10,display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:8}}>
+          <strong style={{fontSize:12}}>Betygsgränser　{['E','D','C','B','A'].map(grade => <span key={grade} style={{marginRight:8,background:'#f7ece7',padding:'3px 6px',borderRadius:12}}>{grade} {gradeLimits[grade]} %</span>)}</strong>
+          <button type="button" className="secondary" onClick={() => setShowGradeLimits(value => !value)}>{showGradeLimits?'Dölj':'Ändra'} ▾</button>
+        </div>
+        {showGradeLimits && <div style={{padding:14,borderTop:'1px solid #e5e7eb'}}><p>Välj procentgräns för varje betyg:</p><div style={{display:'flex',flexWrap:'wrap',gap:15}}>{['E','D','C','B','A'].map(grade => <label key={grade} style={{display:'flex',gap:6,alignItems:'center'}}>{grade}<select value={gradeLimits[grade]} onChange={event => setGradeLimits(prev => ({...prev,[grade]:Number(event.target.value)}))}>{Array.from({length:21},(_,i)=>i*5).map(n=><option key={n} value={n}>{n}%</option>)}</select></label>)}</div><p style={{fontSize:12}}>D kräver minst 1/3 av C-poängen, C minst 2/3 av C-poängen, B minst 1/3 av A-poängen och A minst 2/3 av A-poängen.</p></div>}
+      </div>
+      <div style={{overflowX:'auto',border:'1px solid #dfe3e9',borderRadius:9}}>
+        <table style={{borderCollapse:'collapse',width:'100%',minWidth:950,fontSize:12}}>
+          <thead><tr style={{background:'#f1f2f5'}}>
+            <th rowSpan={2} style={{padding:9}}>#</th><th rowSpan={2} style={{padding:9}}>Förnamn</th><th rowSpan={2} style={{padding:9}}>Efternamn</th><th rowSpan={2} style={{padding:9,background:'#f7efe6'}}>● F-varning</th>
+            {chapters.map(chapter => <th colSpan={5} key={chapter} style={{padding:8,background:'#dceaf9',borderLeft:'1px solid #cdd6df'}}>Kapitel {chapter}<div style={{fontWeight:400,marginTop:4}}>Provbrev　 ·　 Skapa meddelande</div></th>)}
+            <th rowSpan={2} style={{padding:9}}><button type="button" className="secondary" onClick={addChapter}>+ Skapa kapitel</button></th><th rowSpan={2}>Graf</th><th rowSpan={2}>Elevprofil</th><th rowSpan={2}>Anpassningar</th>
+          </tr><tr style={{background:'#e7f0fa'}}>{chapters.map(chapter => <React.Fragment key={chapter}>{['E','C','A'].map(level => <th key={level} style={{padding:6}}>{level}<div><input type="number" min="0" aria-label={'Maxpoäng '+level+' kapitel '+chapter} defaultValue={chapterMax(chapter,level)} style={{width:48,fontSize:11}} onBlur={event => editSelected(prev => ({...prev,results:(prev.results || []).map(row => ({...row,['chapter_'+chapter+'_max_'+level]:event.target.value}))}))}/></div></th>)}<th>Σ</th><th>Betyg</th></React.Fragment>)}</tr></thead>
+          <tbody>{rowsForMatrix.map((row,i) => {const totals=matrixTotals(row);const sum=totals.E+totals.C+totals.A;const grade=getGrade(row);const index=(selected.results || []).indexOf(row);const nameParts=(row.student || '').trim().split(/\s+/);return <tr key={i} style={{borderTop:'1px solid #dfe3e9',background:i%2?'#f8fafc':'#fff'}}>
+            <td style={{padding:5}}>{i+1}</td><td style={{padding:4}}><input aria-label={'Förnamn '+(i+1)} value={nameParts[0] || ''} onChange={event => updateMatrix(index,'student',[event.target.value,...nameParts.slice(1)].join(' '))} style={{width:95}}/></td><td style={{padding:4}}><input aria-label={'Efternamn '+(i+1)} value={nameParts.slice(1).join(' ')} onChange={event => updateMatrix(index,'student',[nameParts[0] || '',event.target.value].join(' ').trim())} style={{width:110}}/></td>
+            <td style={{textAlign:'center',background:'#fbf6f0'}}>{grade==='F'?<span style={{color:'#c94242',fontWeight:700}}>F-varning</span>:'–'}</td>
+            {chapters.map(chapter => <React.Fragment key={chapter}>{['E','C','A'].map(level => <td key={level} style={{padding:4,background:'#eef5fc'}}><input type="number" min="0" aria-label={level+'-poäng kapitel '+chapter+' elev '+(i+1)} value={row['chapter_'+chapter+'_'+level] ?? ''} onChange={event => updateMatrix(index,'chapter_'+chapter+'_'+level,event.target.value)} style={{width:52,textAlign:'center'}}/></td>)}<td style={{textAlign:'center',fontWeight:700}}>{sum}</td><td style={{textAlign:'center'}}><strong style={{background:grade==='F'?'#f8c5c5':'#e4f2e8',borderRadius:12,padding:'3px 8px'}}>{grade}</strong></td></React.Fragment>)}
+            <td></td><td><button type="button" className="secondary" onClick={() => window.alert('Graf för '+(row.student||'eleven')+': '+sum+' av '+totalMax+' poäng')}>▤</button></td><td><button type="button" className="secondary" onClick={() => window.alert('Elev: '+(row.student||'Ej namngiven')+'\\nBetyg: '+grade)}>Elevprofil</button></td><td><input aria-label={'Anpassningar för elev '+(i+1)} value={row.comment || ''} onChange={event => updateMatrix(index,'comment',event.target.value)} style={{width:110}}/></td>
+          </tr>})}
+          {!rowsForMatrix.length && <tr><td colSpan={chapters.length*5+8} style={{padding:20,textAlign:'center'}}>Inga elever ännu. Använd ”Klistra in elevlista” eller ”Lägg till elevresultat”.</td></tr>}
           </tbody>
         </table>
       </div>
