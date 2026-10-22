@@ -827,6 +827,67 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
   </section>
 }
 
+
+function TeacherResults({ userId }) {
+  const [lists, setLists] = useState([])
+  const [selected, setSelected] = useState(null)
+  const [notice, setNotice] = useState('')
+  const [loading, setLoading] = useState(true)
+  const refresh = async () => {
+    setLoading(true)
+    const { data, error } = await supabase.from('teacher_results').select('*').eq('user_id', userId).order('updated_at', { ascending: false })
+    if (error) setNotice('Kunde inte läsa resultaten: ' + error.message)
+    else setLists(data || [])
+    setLoading(false)
+  }
+  useEffect(() => { refresh() }, [userId])
+  const create = async () => {
+    const title = window.prompt('Namn på resultatlistan', 'Ny resultatlista')
+    if (!title?.trim()) return
+    const { data, error } = await supabase.from('teacher_results').insert({ user_id: userId, title: title.trim() }).select().single()
+    if (error) return setNotice('Kunde inte skapa: ' + error.message)
+    setSelected(data); setLists(prev => [data, ...prev]); setNotice('Resultatlistan skapades.')
+  }
+  const save = async () => {
+    if (!selected) return
+    const { data, error } = await supabase.from('teacher_results').update({ title: selected.title, subject: selected.subject, class_name: selected.class_name, results: selected.results, updated_at: new Date().toISOString() }).eq('id', selected.id).eq('user_id', userId).select().single()
+    if (error) return setNotice('Kunde inte spara: ' + error.message)
+    setSelected(data); setLists(prev => prev.map(item => item.id === data.id ? data : item)); setNotice('✓ Resultaten har sparats i Supabase.')
+  }
+  const remove = async () => {
+    if (!selected || !window.confirm('Radera resultatlistan permanent?')) return
+    const { error } = await supabase.from('teacher_results').delete().eq('id', selected.id).eq('user_id', userId)
+    if (error) return setNotice('Kunde inte radera: ' + error.message)
+    setLists(prev => prev.filter(item => item.id !== selected.id)); setSelected(null); setNotice('Resultatlistan raderades.')
+  }
+  const changeRow = (index, field, value) => setSelected(prev => ({ ...prev, results: (prev.results || []).map((row, i) => i === index ? { ...row, [field]: value } : row) }))
+  return <section className="card" aria-label="Resultat" style={{ maxWidth: 1120 }}>
+    <h2>📊 RESULTAT – Elevkompassen</h2>
+    <p>Skapa resultatlistor för dina klasser. Endast ditt lärarkonto har åtkomst till dessa uppgifter.</p>
+    <div className="button-row"><button type="button" className="primary" onClick={create}>+ Ny resultatlista</button><button type="button" className="secondary" onClick={refresh}>↻ Uppdatera listan</button></div>
+    {notice && <p role="status" className="status">{notice}</p>}
+    {loading ? <p>Laddar resultat…</p> : <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '15px 0' }}>{lists.length === 0 && <p>Inga resultatlistor ännu. Skapa din första ovan.</p>}{lists.map(item => <button key={item.id} type="button" className={selected?.id === item.id ? 'primary' : 'secondary'} onClick={() => { setSelected(item); setNotice('') }}>{item.title} {item.class_name ? '– ' + item.class_name : ''}</button>)}</div>}
+    {selected && <div style={{ borderTop: '1px solid #e7d6b5', paddingTop: 18 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+        <label>Resultatlista<input aria-label="Resultatlistans namn" value={selected.title} onChange={e => setSelected(p => ({ ...p, title: e.target.value }))} /></label>
+        <label>Ämne<input aria-label="Ämne" value={selected.subject || ''} onChange={e => setSelected(p => ({ ...p, subject: e.target.value }))} /></label>
+        <label>Klass<input aria-label="Klass" value={selected.class_name || ''} onChange={e => setSelected(p => ({ ...p, class_name: e.target.value }))} /></label>
+      </div>
+      <div style={{ overflowX: 'auto', marginTop: 18 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}><thead><tr><th>Elev</th><th>Prov / bedömning</th><th>Resultat</th><th>Kommentar</th><th></th></tr></thead><tbody>
+        {(Array.isArray(selected.results) ? selected.results : []).map((row, i) => <tr key={i}>{['student', 'assessment', 'score', 'comment'].map(field => <td key={field} style={{ padding: 5 }}><input style={{ width: '100%', minWidth: field === 'comment' ? 180 : 110 }} aria-label={field + ' rad ' + (i + 1)} value={row[field] || ''} onChange={e => changeRow(i, field, e.target.value)} /></td>)}<td><button type="button" className="secondary" aria-label={'Ta bort rad ' + (i + 1)} onClick={() => setSelected(p => ({ ...p, results: p.results.filter((_, n) => n !== i) }))}>×</button></td></tr>)}
+        </tbody></table>
+      </div>
+      <div className="button-row" style={{ marginTop: 15 }}>
+        <button type="button" className="secondary" onClick={() => setSelected(p => ({ ...p, results: [...(Array.isArray(p.results) ? p.results : []), { student: '', assessment: '', score: '', comment: '' }] }))}>+ Lägg till elevresultat</button>
+        <button type="button" className="primary" onClick={save}>💾 Spara resultat</button>
+        <button type="button" className="secondary" onClick={remove}>Radera resultatlista</button>
+      </div>
+      <p className="muted">Spara när du har ändrat något. Detta är första versionen av resultatdelen; den fullständiga HTML-mallen integreras separat.</p>
+    </div>}
+  </section>
+}
+
 function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin, adminContent, pendingCount = 0 }) {
   const [plan, setPlan] = useState(emptyPlan())
   const [plans, setPlans] = useState([])
@@ -1826,14 +1887,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     {previewStudents && <section className="student-preview-clean" id="elevvy"><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
 
     </div>
-    <div className="teacher-tab-panel" hidden={teacherTab !== "resultat"}>
-      <section className="card" aria-label="Resultat">
-        <h2>📊 RESULTAT</h2>
-        <p>Här kommer Elevkompassen med provresultat och bedömningar att finnas.</p>
-        <p className="muted">Resultatdelen är ännu inte inkopplad. Inga elevuppgifter sparas här förrän den är färdig och säker för varje lärarkonto.</p>
-        <button type="button" className="secondary" onClick={() => setTeacherTab("mina")}>← Tillbaka till startsidan</button>
-      </section>
-    </div>
+    <div className="teacher-tab-panel" hidden={teacherTab !== "resultat"}><TeacherResults userId={session.user.id} /></div>
     <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
     <section className="card" id="mina-arsplaneringar">
       <div className="section-heading"><div><p className="eyebrow">MIN STARTSIDA</p><h2>Alla mina planeringar</h2><p className="muted">Öppna en planering nedan eller välj en funktion.</p></div></div>
