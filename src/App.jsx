@@ -890,6 +890,10 @@ function applyElevkompassenTheme(event) {
       #classView > .class-summary { padding: 9px 12px !important; }
       #classView > .sheet-wrap { margin-top: 8px !important; }
       .titlebar { display: none !important; }
+      /* Remove empty space left behind by the portal's duplicate header. */
+      body > .shell, body > main, body > .app, .shell > main, .shell > .content { padding-top: 0 !important; margin-top: 0 !important; }
+      .page-head, .page-header, .portal-header, .home-header, .pr-home-header { margin: 0 !important; padding: 0 !important; }
+      #sida-prov, #page-prov, [data-page="prov"] { margin-top: 0 !important; padding-top: 0 !important; }
     `
     doc.head.appendChild(compactStyle)
     const toolbar = doc.querySelector('#classView > .toolbar')
