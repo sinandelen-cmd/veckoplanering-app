@@ -1382,6 +1382,22 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     })} onDeleteWeek={weekStart => { if (busy || weeks.length <= 1) return; const week = weeks.find(item => item.weekStart === weekStart); if (!week) return; if (!window.confirm(`Vill du radera vecka ${calendarWeekNumber(weekStart) ?? week.weekNumber} och allt innehåll i den? Ändringen sparas först när du väljer Spara ändringar.`)) return; setPlan(p => { const remaining = displayWeeks(p).filter(item => item.weekStart !== weekStart); return remaining.length ? { ...p, weeks: remaining.length, weeksData: remaining } : p }) }} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} /></div>}
 
     <div className={`teacher-tab-panel ${simpleSetup ? "simple-setup-active" : ""}`} id="panel-lararvy" role="tabpanel" aria-labelledby="tab-lararvy" hidden={teacherTab !== "arsplan" && teacherTab !== "new"}>
+    {simpleSetup && <section className="card" style={{marginBottom:16,border:'2px solid #c8d9c9'}} aria-label="Testa flera klasser">
+      <h2>Testa samma planering i flera klasser</h2>
+      <p>Fyll i en färdig testplanering med 12 matematiklektioner och fyra klasser med olika dagar och antal lektioner. Inga befintliga planeringar påverkas.</p>
+      <button type="button" className="secondary" onClick={() => {
+        const base = {...emptyPlan(), title:'TEST – Matematik, flera klasser', subject:'Matematik', className:'Årskurs 8', schoolYear:'2026–2027', startDate:mondayOf(), weeks:4, lessonsPerWeek:3, lessonDays:['Måndag','Onsdag','Fredag']}
+        const topics = ['Tal och talsystem','Positionssystemet','Negativa tal','Addition med negativa tal','Subtraktion med negativa tal','Multiplikation','Division','Prioriteringsregler','Bråk och decimalform','Procent','Problemlösning','Repetition och diagnos']
+        const weeks = makeWeeks(base,4).map((week, wi) => ({...week, lessons:week.lessons.map((lesson, li) => ({...lesson,topics:[{name:topics[wi*3+li]}]}))}))
+        setPlan({...base, weeksData:weeks, classGroups:[
+          {name:'8A',days:['Måndag','Onsdag','Fredag'],startDate:base.startDate,cancelledDates:[],overrides:{}},
+          {name:'8B',days:['Tisdag','Torsdag'],startDate:base.startDate,cancelledDates:[],overrides:{}},
+          {name:'8C',days:['Måndag','Torsdag','Fredag'],startDate:base.startDate,cancelledDates:[],overrides:{}},
+          {name:'8D',days:['Måndag','Tisdag','Onsdag','Torsdag'],startDate:base.startDate,cancelledDates:[],overrides:{}}
+        ]})
+        setStatus('Testplaneringen är ifylld. Klicka på Skapa planering nedan för att spara den på ditt konto.')
+      }}>Fyll i testplanering med 8A, 8B, 8C och 8D</button>
+    </section>}
     {simpleSetup && <section className="card simple-setup-card" aria-label="Skapa ny planering">
       <h2>Skapa en ny planering</h2>
       <p className="muted">Fyll i uppgifterna och tryck på Skapa planering. Du kan lägga till lektioner och material efteråt.</p>
