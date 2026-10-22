@@ -47,6 +47,7 @@ export default function ClassSchedules({ plan, onChange }) {
   const [selected, setSelected] = React.useState(0)
   const [showAll, setShowAll] = React.useState(false)
   const [compare, setCompare] = React.useState(false)
+  const [selectedComparisonWeek, setComparisonWeek] = React.useState(0)
   const [editing, setEditing] = React.useState(null)
   const [editText, setEditText] = React.useState('')
   const group = groups[selected]
@@ -92,26 +93,30 @@ export default function ClassSchedules({ plan, onChange }) {
       </div>}
     </>}
     {compare && <div style={{marginTop:18}}>
-      <h3>Jämför klassernas veckor</h3>
-      <p className="muted">Varje klass har en egen ruta. Lektionerna börjar på 1 varje vecka, medan det gemensamma innehållet fortsätter i rätt ordning.</p>
-      {visibleComparisonWeeks.map(key => <section key={key} style={{margin:"18px 0 24px"}}>
-        <h4 style={{fontSize:"1.1rem",margin:"0 0 12px",paddingBottom:8,borderBottom:"2px solid #d8e5dc"}}>Vecka {(() => {const d=new Date(key+"T12:00:00");d.setDate(d.getDate()+3);const y=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-y)/86400000-3+(y.getDay()+6)%7)/7)})()} · {key}</h4>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,240px),1fr))",gap:14}}>
-          {comparison.map((g,i)=>{const items=g.weeks[key]||[];const group=groups[i];return <article key={g.name} style={{border:"1px solid #c9d9d0",borderRadius:14,background:["#f0f7ff","#fff8eb","#f0faf4","#f7f2ff"][i%4],padding:14,boxShadow:"0 2px 7px rgba(30,55,40,.06)"}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap",marginBottom:12}}>
-              <strong style={{fontSize:"1.15rem",color:"#273e34"}}>{g.name}</strong>
-              <span style={{fontSize:".82rem",borderRadius:30,padding:"5px 9px",background:"#fff",border:"1px solid #d8e0dc"}}>{lessonsPerWeek(group)} lektioner/vecka</span>
-            </div>
-            {items.length ? <div style={{display:"grid",gap:9}}>{items.map((item,j)=><div key={item.lessonNumber} style={{background:"#fff",border:"1px solid #e0e7e2",borderRadius:10,padding:"11px 12px"}}>
-              <div style={{fontSize:".82rem",color:"#52635c",marginBottom:4}}>{item.day} · {item.date}</div>
-              <strong style={{fontSize:"1rem"}}>Lektion {j+1}</strong>
-              <div style={{fontSize:".88rem",marginTop:5,whiteSpace:"pre-wrap"}}>{item.override?.text ?? describe(item.lesson)}</div>
-              <div style={{fontSize:".77rem",color:"#63756a",marginTop:5}}>Gemensam lektion {item.lessonNumber}</div>
-            </div>)}</div>:<div style={{padding:"16px 8px",color:"#65756b"}}>Ingen lektion denna vecka</div>}
-          </article>})}
-        </div>
-      </section>)}
-      {comparisonWeeks.length>8 && <button type="button" className="secondary" onClick={()=>setShowAll(!showAll)}>{showAll?"Visa färre veckor":"Visa alla veckor"}</button>}
+      <h3>Jämför klasser – veckomatris</h3>
+      <p className="muted">Varje klass har sin egen ruta. Lektionsnumren börjar på 1 varje vecka, men innehållet fortsätter i rätt ordning.</p>
+      {comparisonWeeks.length>0 && <div style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:10,margin:"14px 0 18px"}}>
+        <button type="button" className="secondary" disabled={selectedComparisonWeek<=0} onClick={()=>setComparisonWeek(n=>Math.max(0,n-1))}>← Föregående vecka</button>
+        <strong style={{fontSize:"1.12rem"}}>Vecka {(() => {const d=new Date(comparisonWeeks[selectedComparisonWeek]+"T12:00:00");d.setDate(d.getDate()+3);const y=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-y)/86400000-3+(y.getDay()+6)%7)/7)})()}</strong>
+        <button type="button" className="secondary" disabled={selectedComparisonWeek>=comparisonWeeks.length-1} onClick={()=>setComparisonWeek(n=>Math.min(comparisonWeeks.length-1,n+1))}>Nästa vecka →</button>
+        <select aria-label="Välj vecka att jämföra" value={selectedComparisonWeek} onChange={e=>setComparisonWeek(Number(e.target.value))}>{comparisonWeeks.map((key,i)=><option key={key} value={i}>{key}</option>)}</select>
+      </div>}
+      {comparisonWeeks[selectedComparisonWeek] && <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,230px),1fr))",gap:14}}>
+        {comparison.map((g,i)=>{const items=g.weeks[comparisonWeeks[selectedComparisonWeek]]||[];const group=groups[i];return <article key={g.name} style={{border:"1px solid #c9d9d0",borderRadius:14,background:["#eaf3ff","#fff1db","#e8f6eb","#f2ebfa"][i%4],padding:14}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap",marginBottom:12}}>
+            <strong style={{fontSize:"1.2rem",color:"#273e34"}}>{g.name}</strong>
+            <span style={{fontSize:".82rem",borderRadius:30,padding:"5px 9px",background:"#fff"}}>{lessonsPerWeek(group)} lek/vecka</span>
+          </div>
+          <div style={{display:"grid",gap:9}}>
+            {items.length?items.map((item,j)=><div key={item.lessonNumber} style={{background:"#fff",border:"1px solid #e0e7e2",borderRadius:10,padding:"11px 12px"}}>
+              <div style={{fontSize:".83rem",color:"#52635c",marginBottom:4}}>{item.day} · {item.date}</div>
+              <strong>Lektion {j+1}</strong>
+              <div style={{fontSize:".9rem",marginTop:5,whiteSpace:"pre-wrap"}}>{item.override?.text ?? describe(item.lesson)}</div>
+              <div style={{fontSize:".78rem",color:"#63756a",marginTop:5}}>Gemensam lektion {item.lessonNumber}</div>
+            </div>):<div style={{background:"#fff",padding:14,borderRadius:10,color:"#65756b"}}>Ingen lektion denna vecka</div>}
+          </div>
+        </article>})}
+      </div>}
     </div>}
     {group && !compare && <>
       <h3>{group.name} – eget lektionsschema</h3>
