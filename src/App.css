@@ -2475,3 +2475,26 @@ body { background: #fffaf2; color: var(--ink); }
 @media screen and (max-width: 750px) {
   .planning-layout { column-gap:0 !important; }
 }
+
+/* Gemensamt avstånd: 2 cm mellan vänstermeny och arbetsyta på alla lärarsidor. */
+@media screen and (min-width: 751px) {
+  .planning-layout {
+    column-gap:2cm !important;
+    grid-template-columns:245px minmax(0,1fr) !important;
+  }
+  .planning-layout > .shell,
+  .planning-layout > .planning-top-navigation {
+    min-width:0;
+  }
+  /* Årsöversikten följer samma arbetsyta och får ingen extra sidoförskjutning. */
+  .planning-layout #lararvy:has(.calendar-page) {
+    transform:none !important;
+    margin-left:0 !important;
+    margin-right:auto !important;
+    width:100% !important;
+    max-width:1180px !important;
+  }
+}
+@media screen and (max-width:750px) {
+  .planning-layout { column-gap:0 !important; }
+}
