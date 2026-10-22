@@ -91,15 +91,10 @@ export default function ClassSchedules({ plan, onChange }) {
         <tfoot><tr><td colSpan={7} style={{padding:"14px 6px 4px",borderTop:"2px solid #d8e5dc"}}><div style={{display:"flex",gap:10,alignItems:"end",flexWrap:"wrap"}}><label style={{flex:"1 1 180px"}}>Ny klass<input value={name} onChange={e=>setName(e.target.value)} placeholder="Exempel: 8D" /></label><button type="button" disabled={!name.trim()||groups.some(g=>g.name.toLocaleLowerCase('sv')===name.trim().toLocaleLowerCase('sv'))} onClick={addClass}>+ Lägg till klassrad</button></div></td></tr></tfoot>
       </table>
     </div>}
-    {groups.length > 0 && <>
-      <h3>Klasser kopplade till samma planering</h3>
-      <div style={{display:'flex',flexWrap:'wrap',gap:10,marginBottom:12}}>{groups.map((g,i) => <button key={i} type="button" className={selected===i?'primary':'secondary'} onClick={()=>{setSelected(i);setEditing(null);setShowAll(false)}} style={{textAlign:'left',minWidth:150}}><strong>{g.name}</strong><span style={{display:'block',fontSize:'.85em',marginTop:4}}>{lessonsPerWeek(g)} lektioner/vecka · {(g.days||[]).length ? [...new Set(g.days)].map(d=>DAY_SHORT[DAYS.indexOf(d)]).join(', ') : 'Inga dagar'}</span></button>)}</div>
-      <div className="button-row" style={{display:'flex',gap:10,flexWrap:'wrap',margin:'16px 0'}}><button type="button" className={!compare?'primary':'secondary'} onClick={()=>{setCompare(false);setShowAll(false)}}>▦ Klasskalender</button><button type="button" className={compare?'primary':'secondary'} onClick={()=>{setCompare(true);setShowAll(false)}}>⇄ Jämför klasser</button></div>
-      {!compare && <h3>Välj klass</h3>}
-      {!compare && <div className="button-row" style={{display:'flex',flexWrap:'wrap',gap:8}}>
-        {groups.map((g,i) => <button className={selected===i?'primary':'secondary'} type="button" key={i} onClick={() => {setSelected(i);setEditing(null);setShowAll(false)}} aria-pressed={selected===i}>{g.name}</button>)}
-      </div>}
-    </>}
+    {groups.length > 0 && <div style={{display:"flex",gap:10,flexWrap:"wrap",margin:"12px 0"}}>
+      <button type="button" className={compare?"primary":"secondary"} onClick={()=>{setCompare(true);setShowAll(false)}}>▦ Visa klassernas veckor</button>
+      <button type="button" className={!compare?"primary":"secondary"} onClick={()=>{setCompare(false);setShowClassDetails(false);setShowAll(false)}}>⚙ Ändra enskild lektion</button>
+    </div>}
     {compare && <div style={{marginTop:18}}>
       <h3>Jämför klasser – veckomatris</h3>
       <p className="muted">Varje klass har sin egen ruta. Lektionsnumren börjar på 1 varje vecka, men innehållet fortsätter i rätt ordning.</p>
@@ -126,7 +121,7 @@ export default function ClassSchedules({ plan, onChange }) {
         </article>})}
       </div></div>}
     </div>}
-    {group && !compare && <>
+    {group && !compare && <><div style={{display:"flex",flexWrap:"wrap",gap:8,alignItems:"center",margin:"12px 0"}}><strong>Välj klass:</strong>{groups.map((g,i)=><button type="button" key={i} className={selected===i?"primary":"secondary"} onClick={()=>{setSelected(i);setEditing(null);setShowAll(false)}}>{g.name}</button>)}</div>
       <button type="button" className="secondary" onClick={() => setShowClassDetails(v => !v)} aria-expanded={showClassDetails} style={{margin:'12px 0'}}>{showClassDetails ? '▾ Dölj klassens detaljer' : '▸ Visa och ändra klassens detaljer'}</button>
       {showClassDetails && <>
       <h3>{group.name} – eget lektionsschema</h3>
