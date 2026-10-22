@@ -1403,10 +1403,12 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
 
       <p className="muted">Fyll i uppgifterna och tryck på Skapa planering. Du kan lägga till lektioner och material efteråt.</p>
       <form onSubmit={event => { event.preventDefault(); save(true, true) }}>
+        <div style={{display:"grid",gap:14,marginBottom:14}}>
+          <label style={{display:"grid",gap:5}}><strong>1. Ämne</strong><span className="muted">Vilket ämne undervisar du i? Exempel: Matematik.</span><input required value={plan.subject} onChange={event => setPlan(p => ({ ...p, subject: event.target.value }))} placeholder="Exempel: Matematik" /></label>
+          <label style={{display:"grid",gap:5}}><strong>2. Planeringens namn</strong><span className="muted">Vad handlar planeringen om? Exempel: Algebra – höstterminen.</span><input required value={plan.title} onChange={event => setPlan(p => ({ ...p, title: event.target.value }))} placeholder="Exempel: Algebra – höstterminen" /></label>
+        </div>
         <div className="form-grid">
-          <label>Planeringens namn<input required value={plan.title} onChange={event => setPlan(p => ({ ...p, title: event.target.value }))} placeholder="Matematik höstterminen" /></label>
-          <label>Ämne<input required value={plan.subject} onChange={event => setPlan(p => ({ ...p, subject: event.target.value }))} placeholder="Matematik" /></label>
-          <label>Klass / årskurs<input value={plan.className} onChange={event => setPlan(p => ({ ...p, className: event.target.value, grade: (event.target.value.match(/^\s*(3|6|9)\s*[A-Za-z]?\s*$/)?.[1] || p.grade), schoolForm: p.schoolForm || 'grundskola' }))} placeholder="6A" /></label>
+          <label>Årskurs (valfritt)<input value={plan.className} onChange={event => setPlan(p => ({ ...p, className: event.target.value, grade: (event.target.value.match(/^\s*(3|6|9)\s*[A-Za-z]?\s*$/)?.[1] || p.grade), schoolForm: p.schoolForm || 'grundskola' }))} placeholder="Exempel: 8 – lägg till 8A och 8B senare" /></label>
           <label>Läsår<input value={plan.schoolYear} onChange={event => setPlan(p => ({ ...p, schoolYear: event.target.value }))} placeholder="2026–2027" /></label>
           <label>Startdatum<input type="date" required value={plan.startDate} onChange={event => { if (event.target.value) setPlan(p => ({ ...p, startDate: mondayOf(`${event.target.value}T12:00:00`), weeksData: [] })) }} /></label>
           <p className="muted">Planeringen börjar med en vecka. Lägg till fler veckor efter sista veckan när du behöver. Importerade underlag kan innehålla flera veckor.</p>
