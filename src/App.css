@@ -2498,3 +2498,36 @@ body { background: #fffaf2; color: var(--ink); }
 @media screen and (max-width:750px) {
   .planning-layout { column-gap:0 !important; }
 }
+
+/* Sammanhängande vänstermeny och övre meny. Arbetsytan har eget luftigt avstånd. */
+@media screen and (min-width:751px) {
+  .planning-layout { column-gap:0 !important; grid-template-columns:245px minmax(0,1fr) !important; }
+  .planning-layout > .planning-top-navigation {
+    margin-left:0 !important; margin-right:0 !important;
+    width:100% !important; box-sizing:border-box !important;
+  }
+  .planning-layout > .shell {
+    width:calc(100% - 2cm) !important;
+    max-width:calc(1400px - 2cm) !important;
+    margin-left:2cm !important; margin-right:0 !important;
+    box-sizing:border-box !important;
+  }
+}
+.planning-sidebar .sidebar-class-links {
+  display:flex; flex-direction:column; gap:3px;
+  margin:4px 0 10px 10px; padding:4px 0 4px 10px;
+  border-left:2px solid #dfc7a2;
+}
+.planning-sidebar .sidebar-class-link {
+  display:block; width:100%; text-align:left; padding:8px 9px;
+  border:0; border-radius:8px; background:transparent;
+  color:inherit; font-size:13px; font-weight:600;
+  white-space:normal; overflow-wrap:anywhere; cursor:pointer;
+}
+.planning-sidebar .sidebar-class-link:hover,
+.planning-sidebar .sidebar-class-link:focus-visible { background:#fff2ce; color:#653d39; }
+.planning-sidebar .sidebar-class-base { font-weight:750; }
+@media screen and (max-width:750px) {
+  .planning-layout > .shell { width:100% !important; margin:0 !important; }
+  .planning-sidebar .sidebar-class-links { margin-left:4px; }
+}
