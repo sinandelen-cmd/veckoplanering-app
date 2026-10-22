@@ -802,7 +802,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [simpleSetup, setSimpleSetup] = useState(true)
   const [simpleMore, setSimpleMore] = useState(false)
-  const [teacherTab, setTeacherTab] = useState("new")
+  const [teacherTab, setTeacherTab] = useState("mina")
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
