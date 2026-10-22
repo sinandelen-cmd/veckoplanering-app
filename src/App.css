@@ -2397,3 +2397,18 @@ body { background: #fffaf2; color: var(--ink); }
 .calendar-page .calendar-top:not(:has(.calendar-return-overview)) .calendar-zoom-controls-left { display:none !important; width:0 !important; }
 .calendar-page .calendar-top:not(:has(.calendar-return-overview)) > div:first-child { flex:1 1 100% !important; width:100% !important; min-width:0 !important; }
 .calendar-page .calendar-top:not(:has(.calendar-return-overview)) p { max-width:100% !important; width:auto !important; overflow-wrap:normal !important; }
+
+/* Placera årsöversikten till vänster i arbetsytan i stället för centrerat. */
+@media (min-width:761px) {
+  .planning-layout #lararvy:has(.calendar-page) {
+    margin:16px 0 24px 0 !important;
+    width:min(1180px,100%) !important;
+    max-width:100% !important;
+    margin-left:0 !important;
+    margin-right:auto !important;
+  }
+  .planning-layout #lararvy #teacher-year-calendar {
+    margin-left:0 !important;
+    margin-right:auto !important;
+  }
+}
