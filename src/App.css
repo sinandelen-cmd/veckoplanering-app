@@ -2193,3 +2193,24 @@ body { background: #fffaf2; color: var(--ink); }
   body.teacher-plan-print .week-card { break-inside:avoid-page; page-break-inside:avoid; }
   body.teacher-plan-print input, body.teacher-plan-print textarea { border:0 !important; background:transparent !important; }
 }
+
+/* Varje sparad planering använder samma individuella temafärg som sidomenyn. */
+.library-item {
+  background: var(--item-light, #fff9ed) !important;
+  border: 1px solid var(--item-accent, #a96b40) !important;
+  border-left: 6px solid var(--item-accent, #a96b40) !important;
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+.library-item .library-title { color: var(--item-ink, #573c32); }
+.library-item .button-row { justify-content: flex-end; }
+.library-item .button-row button { white-space: nowrap; }
+.topbar { display:flex; flex-wrap:wrap; align-items:center; gap:12px 18px; }
+.topbar > div:first-child { flex:1 1 260px; min-width:0; }
+.topbar .archive-plan-actions, .topbar .student-plan-link { gap:8px !important; }
+.topbar .archive-plan-actions button, .topbar .student-plan-link button, .topbar > button { padding:10px 13px !important; font-size:0.88rem !important; border-radius:10px !important; }
+.student-print-action { display:flex; justify-content:flex-end; margin:0 0 12px; }
+.student-print-action button { font-weight:750; }
+@media print {
+  .student-print-action { display:none !important; }
+}
