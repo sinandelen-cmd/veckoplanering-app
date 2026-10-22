@@ -862,7 +862,7 @@ function TeacherResults({ userId }) {
     setLoading(true)
     const { data, error } = await supabase.from('teacher_results').select('*').eq('user_id', userId).order('updated_at', { ascending: false })
     if (error) setNotice('Kunde inte läsa resultaten: ' + error.message)
-    else setLists(data || [])
+    else { setLists(data || []); setSelected(previous => previous ? (data || []).find(item => item.id === previous.id) || null : (data || []).find(item => item.subject !== 'Mentorskap') || null) }
     setLoading(false)
   }
   useEffect(() => { refresh() }, [userId])
@@ -894,6 +894,13 @@ function TeacherResults({ userId }) {
     editSelected(prev => ({ ...prev, results: [...(Array.isArray(prev.results) ? prev.results : []), ...names.map(student => ({ student, assessment: '', score: '', comment: '' }))] }))
     setNotice(names.length + ' elever tillagda. Spara resultat för att behålla ändringarna.')
   }
+  const addAssessment = () => {
+    if (!selected) return
+    const name = window.prompt('Namn på prov eller kapitel:')
+    if (!name?.trim()) return
+    editSelected(previous => ({ ...previous, results: (previous.results || []).map(row => ({ ...row, [name.trim()]: row[name.trim()] ?? '' })), assessmentColumns: [...new Set([...(previous.assessmentColumns || []), name.trim()])] }))
+  }
+  const assessmentColumns = selected?.assessmentColumns || []
   const exportResults = () => {
     if (!selected) return
     const quote = value => '"' + String(value ?? '').replaceAll('"', '""') + '"'
@@ -933,10 +940,23 @@ function TeacherResults({ userId }) {
         <label>Ämne<input aria-label="Ämne" value={selected.subject || ''} onChange={e => editSelected(p => ({ ...p, subject: e.target.value }))} /></label>
         <label>Klass<input aria-label="Klass" value={selected.class_name || ''} onChange={e => editSelected(p => ({ ...p, class_name: e.target.value }))} /></label>
       </div>
-      <div style={{ overflowX: 'auto', marginTop: 18 }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}><thead><tr><th>Elev</th><th>Prov / bedömning</th><th>Resultat</th><th>Kommentar</th><th></th></tr></thead><tbody>
-        {(Array.isArray(selected.results) ? selected.results : []).map((row, i) => <tr key={i}>{['student', 'assessment', 'score', 'comment'].map(field => <td key={field} style={{ padding: 5 }}><input style={{ width: '100%', minWidth: field === 'comment' ? 180 : 110 }} aria-label={field + ' rad ' + (i + 1)} value={row[field] || ''} onChange={e => changeRow(i, field, e.target.value)} /></td>)}<td><button type="button" className="secondary" aria-label={'Ta bort rad ' + (i + 1)} onClick={() => editSelected(p => ({ ...p, results: p.results.filter((_, n) => n !== i) }))}>×</button></td></tr>)}
-        </tbody></table>
+      <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap',marginTop:18,marginBottom:10}}>
+        <h3 style={{margin:0}}>Resultatmatris – {selected.title}</h3>
+        <button type="button" className="secondary" onClick={addAssessment}>+ Skapa kapitel / prov</button>
+      </div>
+      <div style={{overflowX:'auto',border:'1px solid #e6d6db',borderRadius:9}}>
+        <table style={{width:'100%',borderCollapse:'collapse',minWidth:680}}>
+          <thead><tr style={{background:'#f6e9ed'}}><th style={{padding:12,textAlign:'left'}}>Elev</th>{assessmentColumns.map(name => <th key={name} style={{padding:12,textAlign:'center'}}>{name}</th>)}<th style={{padding:12}}>Prov / bedömning</th><th style={{padding:12}}>Resultat</th><th style={{padding:12}}>Kommentar</th><th></th></tr></thead>
+          <tbody>
+            {(Array.isArray(selected.results) ? selected.results : []).map((row,i) => <tr key={i} style={{borderTop:'1px solid #eadfe3'}}>
+              <td style={{padding:6}}><input aria-label={'Elev rad '+(i+1)} style={{minWidth:145,width:'100%'}} value={row.student || ''} onChange={e => changeRow(i,'student',e.target.value)}/></td>
+              {assessmentColumns.map(name => <td key={name} style={{padding:6}}><input aria-label={name+' för '+(row.student || 'elev '+(i+1))} style={{minWidth:85,width:'100%'}} value={row[name] || ''} onChange={e => changeRow(i,name,e.target.value)}/></td>)}
+              {['assessment','score','comment'].map(field => <td key={field} style={{padding:6}}><input aria-label={field+' rad '+(i+1)} style={{minWidth:field==='comment'?160:105,width:'100%'}} value={row[field] || ''} onChange={e => changeRow(i,field,e.target.value)}/></td>)}
+              <td><button type="button" className="secondary" aria-label={'Ta bort elev rad '+(i+1)} onClick={() => editSelected(prev => ({...prev,results:(prev.results || []).filter((_,n)=>n!==i)}))}>×</button></td>
+            </tr>)}
+            {(!selected.results || selected.results.length===0) && <tr><td colSpan={assessmentColumns.length+5} style={{padding:24,textAlign:'center',color:'#745563'}}>Matrisen är tom. Klicka på ”+ Lägg till elevresultat” eller ”Klistra in elevlista” för att börja.</td></tr>}
+          </tbody>
+        </table>
       </div>
       <div className="button-row" style={{ marginTop: 15 }}>
         <button type="button" className="secondary" onClick={() => editSelected(p => ({ ...p, results: [...(Array.isArray(p.results) ? p.results : []), { student: '', assessment: '', score: '', comment: '' }] }))}>+ Lägg till elevresultat</button>
