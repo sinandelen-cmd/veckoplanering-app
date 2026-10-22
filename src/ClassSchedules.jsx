@@ -1,28 +1,126 @@
 import React from 'react'
-const DAYS=['Måndag','Tisdag','Onsdag','Torsdag','Fredag']
-export default function ClassSchedules({plan,onChange}) {
- const groups=plan.classGroups||[]
- const [name,setName]=React.useState('')
- const [days,setDays]=React.useState(['Måndag'])
- const [selected,setSelected]=React.useState(0)
- const group=groups[selected]
- const lessons=(plan.weeksData||[]).flatMap(w=>(w.lessons||[]).map(l=>({lesson:l,week:w})))
- const start=new Date((group?.startDate||plan.startDate)+'T12:00:00')
- const schedule=[]
- if(group&&Number.isFinite(start.getTime())) for(let i=0;i<730&&schedule.length<lessons.length;i++){
-  const date=new Date(start);date.setDate(date.getDate()+i)
-  if(!group.days.includes(DAYS[(date.getDay()+6)%7]))continue
-  const item=lessons[schedule.length]
-  schedule.push({date:date.toLocaleDateString('sv-SE'),...item})
- }
- return <section className="card"><h2>Gemensam grundplanering – kopplade klasser</h2>
- <p>Innehållet hämtas från denna grundplanering. Varje klass följer sina egna lektionsdagar.</p>
- <label>Klassnamn <input value={name} onChange={e=>setName(e.target.value)}/></label>
- <fieldset><legend>Lektionsdagar</legend>{DAYS.map(day=><label key={day}><input type="checkbox" checked={days.includes(day)} onChange={e=>setDays(e.target.checked?[...days,day]:days.filter(x=>x!==day))}/>{day}</label>)}</fieldset>
- <button type="button" disabled={!name.trim()||!days.length} onClick={()=>{onChange({...plan,classGroups:[...groups,{name:name.trim(),days:[...days],startDate:plan.startDate}]});setSelected(groups.length);setName('')}}>Koppla klass</button>
- <div>{groups.map((g,i)=><button type="button" key={i} onClick={()=>setSelected(i)} aria-pressed={selected===i}>{g.name}</button>)}</div>
- {group&&<><label>Startdatum för {group.name}<input type="date" value={group.startDate||plan.startDate} onChange={e=>onChange({...plan,classGroups:groups.map((g,i)=>i===selected?{...g,startDate:e.target.value}:g)})}/></label>
- <p>{group.days.join(', ')} – {schedule.length} lektioner</p>
- <ol>{schedule.map((item,i)=><li key={i}>{item.date}: Lektion {i+1} – {(item.lesson.topics||[]).map(t=>t.name).filter(Boolean).join(', ')||item.week.content||'Ej ifylld'}</li>)}</ol></>}
- </section>
+
+const DAYS = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag']
+const DAY_SHORT = ['Mån', 'Tis', 'Ons', 'Tors', 'Fre']
+const iso = date => [date.getFullYear(), String(date.getMonth()+1).padStart(2,'0'), String(date.getDate()).padStart(2,'0')].join('-')
+const monday = value => {
+  const date = new Date((value || iso(new Date())) + 'T12:00:00')
+  if (Number.isNaN(date.getTime())) return new Date()
+  date.setDate(date.getDate() - ((date.getDay()+6)%7))
+  return date
+}
+const nextDate = (start, offset) => { const d = new Date(start); d.setDate(d.getDate()+offset); return d }
+const describe = lesson => (lesson?.topics || []).map(topic => {
+  const parts = [topic.name, topic.pagesLabel, topic.assignmentsLabel, ...(topic.pages || []), ...(topic.assignments || [])]
+  return parts.filter(Boolean).join(' · ')
+}).filter(Boolean).join('; ') || lesson?.name || 'Lektion utan innehåll'
+
+export function buildClassSchedule(plan, group) {
+  const lessons = (plan.weeksData || []).flatMap(week => (week.lessons || []).map((lesson, index) => ({
+    lesson, weekNumber: week.weekNumber, weekTitle: week.title, weekStart: week.weekStart, index
+  })))
+  const start = monday(group.startDate || plan.startDate)
+  const days = Array.isArray(group.days) ? group.days : []
+  const extraSlots = Array.isArray(group.extraSlots) ? group.extraSlots : []
+  const cancelled = Array.isArray(group.cancelledDates) ? group.cancelledDates : []
+  const slots = []
+  // Varje veckodag kan ha flera lektioner, t.ex. två på måndag.
+  for (let offset = 0; offset < 3650 && slots.length < lessons.length + cancelled.length; offset++) {
+    const date = nextDate(start, offset)
+    const dateKey = iso(date)
+    const day = DAYS[(date.getDay()+6)%7]
+    const count = days.filter(d => d === day).length + extraSlots.filter(s => s.date === dateKey).length
+    if (cancelled.includes(dateKey)) continue
+    for (let slot = 0; slot < count; slot++) slots.push({ date: dateKey, day, slot: slot+1 })
+  }
+  return slots.slice(0, lessons.length).map((slot, i) => ({
+    ...slot, ...lessons[i], lessonNumber: i+1,
+    override: group.overrides?.[String(i)] || null
+  }))
+}
+
+export default function ClassSchedules({ plan, onChange }) {
+  const groups = Array.isArray(plan.classGroups) ? plan.classGroups : []
+  const [name, setName] = React.useState('')
+  const [days, setDays] = React.useState(['Måndag'])
+  const [selected, setSelected] = React.useState(0)
+  const [showAll, setShowAll] = React.useState(false)
+  const [editing, setEditing] = React.useState(null)
+  const [editText, setEditText] = React.useState('')
+  const group = groups[selected]
+  const schedule = React.useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
+  const updateGroup = changes => onChange({ ...plan, classGroups: groups.map((g, i) => i === selected ? { ...g, ...changes } : g) })
+  const addClass = () => {
+    if (!name.trim() || !days.length || groups.some(g => g.name.toLocaleLowerCase('sv') === name.trim().toLocaleLowerCase('sv'))) return
+    onChange({ ...plan, classGroups: [...groups, { name: name.trim(), days: [...days], startDate: plan.startDate, cancelledDates: [], overrides: {} }] })
+    setSelected(groups.length); setName('')
+  }
+  const grouped = schedule.reduce((result, item) => {
+    const weekStart = iso(monday(item.date))
+    if (!result.length || result[result.length-1].weekStart !== weekStart) result.push({ weekStart, items: [] })
+    result[result.length-1].items.push(item)
+    return result
+  }, [])
+  const weeksShown = showAll ? grouped : grouped.slice(0, 8)
+  return <section className="card" aria-label="Kopplade klasser">
+    <h2>Planera en gång – fördela till dina klasser</h2>
+    <p>Skapa innehållet vecka för vecka i grundplaneringen ovan. Här väljer du när varje klass har lektion. Alla lektioner fördelas automatiskt i rätt ordning, även över flera kalenderveckor.</p>
+    <div className="form-grid">
+      <label>Ny klass <input value={name} onChange={e => setName(e.target.value)} placeholder="Exempel: 8B" /></label>
+    </div>
+    <fieldset><legend>Vilka dagar har klassen lektion?</legend>
+      {DAYS.map(day => <label key={day} style={{display:'inline-flex',alignItems:'center',gap:5,marginRight:12}}>
+        <input type="checkbox" checked={days.includes(day)} onChange={e => setDays(e.target.checked ? [...days,day] : days.filter(d => d !== day))} />{day}
+      </label>)}
+    </fieldset>
+    <p className="muted">Har klassen två lektioner samma dag? Lägg först till klassen och välj sedan antal lektioner per dag.</p>
+    <button type="button" disabled={!name.trim() || !days.length || groups.some(g => g.name.toLocaleLowerCase('sv') === name.trim().toLocaleLowerCase('sv'))} onClick={addClass}>+ Lägg till klass</button>
+    {groups.length > 0 && <>
+      <h3>Välj klass</h3>
+      <div className="button-row" style={{display:'flex',flexWrap:'wrap',gap:8}}>
+        {groups.map((g,i) => <button className={selected===i?'primary':'secondary'} type="button" key={i} onClick={() => {setSelected(i);setEditing(null);setShowAll(false)}} aria-pressed={selected===i}>{g.name}</button>)}
+      </div>
+    </>}
+    {group && <>
+      <h3>{group.name} – eget lektionsschema</h3>
+      <label>Startdatum <input type="date" value={group.startDate || plan.startDate || ''} onChange={e => updateGroup({startDate:e.target.value})} /></label>
+      <fieldset><legend>Lektioner per veckodag</legend>
+        <div className="form-grid">{DAYS.map((day,i) => {
+          const count = (group.days || []).filter(d => d === day).length
+          return <label key={day}>{day}
+            <select value={count} onChange={e => {
+              const other = (group.days || []).filter(d => d !== day)
+              updateGroup({days:[...other,...Array(Number(e.target.value)).fill(day)].sort((a,b)=>DAYS.indexOf(a)-DAYS.indexOf(b))})
+            }}>{[0,1,2,3,4].map(n => <option value={n} key={n}>{n} {n===1?'lektion':'lektioner'}</option>)}</select>
+          </label>
+        })}</div>
+      </fieldset>
+      <p><strong>{schedule.length} planerade lektioner</strong> från grundplaneringen. Varje klass följer samma innehåll i sin egen takt. Ändringar i en klass påverkar inte andra klasser.</p>
+      {!(group.days || []).length && <p role="alert">Välj minst en lektion per vecka för att se planeringen.</p>}
+      {weeksShown.map(week => <div key={week.weekStart} style={{border:'1px solid #cbd5e1',borderRadius:10,padding:12,margin:'12px 0'}}>
+        <h4 style={{margin:'0 0 10px'}}>Vecka {(() => {const d=new Date(week.weekStart+'T12:00:00');d.setDate(d.getDate()+3);const y=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-y)/86400000-3+(y.getDay()+6)%7)/7)})()} · {week.weekStart}</h4>
+        {week.items.map(item => <div key={item.lessonNumber} style={{padding:'8px 0',borderTop:'1px solid #e2e8f0'}}>
+          <strong>{DAY_SHORT[DAYS.indexOf(item.day)]} {item.date} – Lektion {item.lessonNumber}</strong>
+          <div className="muted">Från grundplaneringens vecka {item.weekNumber || '?'}{item.weekTitle ? ' · '+item.weekTitle : ''}</div>
+          <div style={{whiteSpace:'pre-wrap'}}>{item.override?.text ?? describe(item.lesson)}</div>
+          {editing===item.lessonNumber ? <div>
+            <label>Eget innehåll för {group.name}<textarea value={editText} onChange={e=>setEditText(e.target.value)} /></label>
+            <button type="button" onClick={() => {updateGroup({overrides:{...group.overrides,[String(item.lessonNumber-1)]:{text:editText}}});setEditing(null)}}>Spara klassens ändring</button>
+            <button type="button" className="secondary" onClick={()=>setEditing(null)}>Avbryt</button>
+          </div> : <div className="button-row">
+            <button type="button" className="secondary" onClick={()=>{setEditing(item.lessonNumber);setEditText(item.override?.text ?? describe(item.lesson))}}>Ändra bara för {group.name}</button>
+            {item.override && <button type="button" className="secondary" onClick={()=>{const overrides={...group.overrides};delete overrides[String(item.lessonNumber-1)];updateGroup({overrides})}}>Återställ grundinnehåll</button>}
+            <button type="button" className="secondary" onClick={()=>{
+              if (!window.confirm('Ställa in alla lektioner '+item.date+' för '+group.name+'? Innehållet flyttas till nästa tillgängliga lektionstillfälle.')) return
+              updateGroup({cancelledDates:[...new Set([...(group.cancelledDates||[]),item.date])]})
+            }}>Ställ in datum</button>
+          </div>}
+        </div>)}
+      </div>)}
+      {group.cancelledDates?.length > 0 && <div><h4>Inställda datum</h4>{group.cancelledDates.map(date=><div key={date}>{date} <button type="button" className="secondary" onClick={()=>updateGroup({cancelledDates:group.cancelledDates.filter(d=>d!==date)})}>Återställ</button></div>)}</div>}
+      {group.overrides && Object.keys(group.overrides).length>0 && <p className="muted">Egna ändringar är sparade separat för {group.name}. Grundplaneringen och övriga klasser påverkas inte.</p>}
+      {grouped.length>8 && <button type="button" className="secondary" onClick={()=>setShowAll(!showAll)}>{showAll?'Visa färre veckor':'Visa alla '+grouped.length+' veckor'}</button>}
+      <p className="muted">Ändringarna sparas tillsammans med grundplaneringen när du använder appens vanliga Spara-knapp. Inställda lektioner hoppas inte över.</p>
+    </>}
+  </section>
 }
