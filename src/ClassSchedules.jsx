@@ -19,7 +19,7 @@ export function buildClassSchedule(plan, group) {
   const lessons = (plan.weeksData || []).flatMap(week => (week.lessons || []).map((lesson, index) => ({
     lesson, weekNumber: week.weekNumber, weekTitle: week.title, weekStart: week.weekStart, index
   })))
-  const start = monday(group.startDate || plan.startDate)
+  const start = new Date((group.startDate || plan.startDate || iso(new Date())) + 'T12:00:00')
   const days = Array.isArray(group.days) ? group.days : []
   const extraSlots = Array.isArray(group.extraSlots) ? group.extraSlots : []
   const cancelled = Array.isArray(group.cancelledDates) ? group.cancelledDates : []
