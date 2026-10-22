@@ -43,7 +43,7 @@ export function buildClassSchedule(plan, group) {
 export default function ClassSchedules({ plan, onChange }) {
   const groups = Array.isArray(plan.classGroups) ? plan.classGroups : []
   const [name, setName] = React.useState('')
-  const [days, setDays] = React.useState(['Måndag'])
+  const [days, setDays] = React.useState([])
   const [selected, setSelected] = React.useState(0)
   const [showAll, setShowAll] = React.useState(false)
   const [compare, setCompare] = React.useState(false)
@@ -69,6 +69,7 @@ export default function ClassSchedules({ plan, onChange }) {
   const comparison = groups.map(g => ({name:g.name, weeks:buildClassSchedule(plan,g).reduce((acc,item)=>{const key=iso(monday(item.date));(acc[key] ||= []).push(item);return acc},{})}))
   const comparisonWeeks = [...new Set(comparison.flatMap(g=>Object.keys(g.weeks)))].sort()
   const visibleComparisonWeeks = showAll ? comparisonWeeks : comparisonWeeks.slice(0,8)
+  const unscheduledGroups = groups.filter(g => !(g.days || []).length)
   return <section className="card" aria-label="Kopplade klasser">
     <h2>Planera en gång – fördela till dina klasser</h2>
     <p><strong>En grundplanering – flera klasser.</strong> Skriv lektionsinnehållet en gång. Varje klass får sedan samma lektioner i rätt ordning, på sina egna veckodagar och i sin egen takt.</p>
@@ -77,6 +78,7 @@ export default function ClassSchedules({ plan, onChange }) {
       <label style={{flex:"1 1 180px"}}>Klassens namn<input value={name} onChange={e=>setName(e.target.value)} placeholder="Exempel: 8A" /></label>
       <button type="button" disabled={!name.trim()||groups.some(g=>g.name.toLocaleLowerCase('sv')===name.trim().toLocaleLowerCase('sv'))} onClick={addClass}>+ Lägg till klass</button>
     </div>}
+    {unscheduledGroups.length>0 && <p role="alert" style={{background:"#fff0d7",padding:12,borderRadius:8,border:"1px solid #e2b66d"}}><strong>Schema saknas:</strong> {unscheduledGroups.map(g=>g.name).join(", ")}. Kryssa i minst en lektionsdag för varje klass så att inga lektioner missas.</p>}
     {groups.length>0 && <div style={{overflowX:"auto",margin:"14px 0 20px"}}>
       <h3>Klassernas veckoschema</h3>
       <p className="muted">Kryssa i de dagar varje klass har lektion. En bock betyder en lektion den dagen. För flera lektioner samma dag kan du välja klassen och ändra antalet längre ned.</p>
