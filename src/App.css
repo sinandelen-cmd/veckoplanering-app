@@ -2214,3 +2214,25 @@ body { background: #fffaf2; color: var(--ink); }
 @media print {
   .student-print-action { display:none !important; }
 }
+
+/* Samlad och lättöverskådlig åtgärdsrad för den öppna planeringen. */
+.topbar:has(.archive-plan-actions) {
+  display:grid !important;
+  grid-template-columns:minmax(230px,1fr) auto auto;
+  align-items:center;
+  column-gap:14px;
+  row-gap:8px;
+}
+.topbar:has(.archive-plan-actions) > div:first-child { grid-column:1; grid-row:1 / span 2; }
+.topbar:has(.archive-plan-actions) > button { grid-column:2; grid-row:1 / span 2; }
+.topbar:has(.archive-plan-actions) .archive-plan-actions { grid-column:3; grid-row:1; justify-content:flex-end; }
+.topbar:has(.archive-plan-actions) .student-plan-link { grid-column:3; grid-row:2; justify-content:flex-end; }
+.topbar:has(.archive-plan-actions) .student-plan-link a { font-size:13px; }
+@media(max-width:1050px) {
+ .topbar:has(.archive-plan-actions) { grid-template-columns:1fr auto; }
+ .topbar:has(.archive-plan-actions) > div:first-child { grid-column:1 / -1; grid-row:auto; }
+ .topbar:has(.archive-plan-actions) > button,
+ .topbar:has(.archive-plan-actions) .archive-plan-actions,
+ .topbar:has(.archive-plan-actions) .student-plan-link { grid-column:auto; grid-row:auto; justify-content:flex-start; }
+}
+.sidebar-signout-link { color:#8b3547 !important; }
