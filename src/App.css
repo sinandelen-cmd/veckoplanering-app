@@ -2179,3 +2179,17 @@ body { background: #fffaf2; color: var(--ink); }
   border-color: #b96c83 !important;
   border-left-color: #b96c83 !important;
 }
+
+/* Skriv ut lärarens årsplanering utan navigering och redigeringsknappar. */
+@media print {
+  body.teacher-plan-print .sidebar,
+  body.teacher-plan-print .topbar,
+  body.teacher-plan-print .calendar-bulk-visibility,
+  body.teacher-plan-print button,
+  body.teacher-plan-print .student-print-pages,
+  body.teacher-plan-print .preview-panel { display:none !important; }
+  body.teacher-plan-print #lararvy { display:block !important; width:100% !important; max-width:none !important; margin:0 !important; padding:0 !important; }
+  body.teacher-plan-print #lararvy > :not(.card):not(.year-grid) { break-inside:auto; }
+  body.teacher-plan-print .week-card { break-inside:avoid-page; page-break-inside:avoid; }
+  body.teacher-plan-print input, body.teacher-plan-print textarea { border:0 !important; background:transparent !important; }
+}
