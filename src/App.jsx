@@ -828,6 +828,42 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
 }
 
 
+function applyElevkompassenTheme(event) {
+  try {
+    const doc = event.currentTarget.contentDocument
+    if (!doc || doc.getElementById('arsplanering-theme')) return
+    const style = doc.createElement('style')
+    style.id = 'arsplanering-theme'
+    style.textContent = `
+      :root {
+        --accent: #8c3854 !important;
+        --accent-dark: #672c42 !important;
+        --accent-soft: #f7e9ed !important;
+        --accent-line: #e7cbd4 !important;
+        --paper: #faf8f3 !important;
+        --surface: #fffdfa !important;
+        --line: #e8dfd9 !important;
+        --grid-light: #eee5df !important;
+        --ink: #302e2c !important;
+        --muted: #746d69 !important;
+        --yellow: #faf0e8 !important;
+        --yellow-dark: #e9d6cc !important;
+        --pink: #f7e9ed !important;
+        --excel-green: #8c3854 !important;
+      }
+      html, body { background: #faf8f3 !important; }
+      button, input, select, textarea { font-family: inherit; }
+      button { transition: background-color .15s ease, box-shadow .15s ease; }
+      button:focus-visible, a:focus-visible, input:focus-visible {
+        outline: 2px solid #8c3854 !important; outline-offset: 2px;
+      }
+    `
+    doc.head.appendChild(style)
+  } catch (error) {
+    console.warn('Elevkompassen theme could not be applied', error)
+  }
+}
+
 function TeacherResults({ userId }) {
   const [lists, setLists] = useState([])
   const [selected, setSelected] = useState(null)
@@ -2016,7 +2052,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     {previewStudents && <section className="student-preview-clean" id="elevvy"><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
 
     </div>
-    <div className="teacher-tab-panel" hidden={teacherTab !== "resultat"}><iframe title="Elevkompassen – originalets resultatmatris" src="/Provresultat_tom_mall_50.html#sida-prov" style={{display:"block",width:"100%",height:"calc(100vh - 130px)",minHeight:"780px",border:0,background:"#fff",borderRadius:"12px"}} /></div>
+    <div className="teacher-tab-panel" hidden={teacherTab !== "resultat"}><iframe title="Elevkompassen – originalets resultatmatris" src="/Provresultat_tom_mall_50.html#sida-prov" onLoad={applyElevkompassenTheme} style={{display:"block",width:"100%",height:"calc(100vh - 130px)",minHeight:"780px",border:0,background:"#fff",borderRadius:"12px"}} /></div>
     <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
     <section className="card" id="mina-arsplaneringar">
       <div className="section-heading"><div><p className="eyebrow">MIN STARTSIDA</p><h2>Alla mina planeringar</h2><p className="muted">Öppna en planering nedan eller välj en funktion.</p></div></div>
