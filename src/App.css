@@ -2317,3 +2317,14 @@ body { background: #fffaf2; color: var(--ink); }
 .edit-history-actions button:disabled { opacity:.4; cursor:not-allowed; }
 @media(min-width:900px) { .topbar:has(.edit-history-actions) .edit-history-actions { flex:0 0 auto; } }
 @media print { .edit-history-actions { display:none !important; } }
+
+/* Redigeringsverktygen ska alltid synas direkt under planeringens rubrik. */
+.topbar:has(.edit-history-actions) { display:flex !important; flex-wrap:wrap !important; align-items:center !important; gap:8px 12px !important; }
+.topbar:has(.edit-history-actions) > div:first-child { flex:1 1 100% !important; width:100% !important; grid-column:auto !important; grid-row:auto !important; }
+.topbar:has(.edit-history-actions) .edit-history-actions { display:flex !important; order:1 !important; flex:1 1 100% !important; width:100% !important; padding:8px 0 !important; border-top:1px solid #e5d4bf; }
+.topbar:has(.edit-history-actions) .edit-history-actions button { opacity:1 !important; font-size:14px !important; padding:10px 14px !important; }
+.topbar:has(.edit-history-actions) .edit-history-actions button:disabled { opacity:.55 !important; }
+.topbar:has(.edit-history-actions) > button,
+.topbar:has(.edit-history-actions) .archive-plan-actions,
+.topbar:has(.edit-history-actions) .student-plan-link { order:2 !important; display:flex !important; grid-column:auto !important; grid-row:auto !important; margin:0 !important; }
+@media print { .topbar:has(.edit-history-actions) { display:none !important; } }
