@@ -60,7 +60,7 @@ export default function ClassSchedules({ plan, onChange }) {
   const grouped = schedule.reduce((result, item) => {
     const weekStart = iso(monday(item.date))
     if (!result.length || result[result.length-1].weekStart !== weekStart) result.push({ weekStart, items: [] })
-    result[result.length-1].items.push(item)
+    result[result.length-1].items.push({...item, weekLessonNumber:result[result.length-1].items.length+1})
     return result
   }, [])
   const weeksShown = showAll ? grouped : grouped.slice(0, 8)
@@ -101,13 +101,13 @@ export default function ClassSchedules({ plan, onChange }) {
           </label>
         })}</div>
       </fieldset>
-      <p><strong>{schedule.length} planerade lektioner</strong> från grundplaneringen. Varje klass följer samma innehåll i sin egen takt. Ändringar i en klass påverkar inte andra klasser.</p>
+      <p><strong>{schedule.length} planerade lektioner</strong> från grundplaneringen. Lektionsnumren börjar om på 1 varje kalendervecka. Det gemensamma innehållet fortsätter i rätt ordning. Ändringar i en klass påverkar inte andra klasser.</p>
       {!(group.days || []).length && <p role="alert">Välj minst en lektion per vecka för att se planeringen.</p>}
       {weeksShown.map(week => <div key={week.weekStart} style={{border:'1px solid #cbd5e1',borderRadius:10,padding:12,margin:'12px 0'}}>
         <h4 style={{margin:'0 0 10px'}}>Vecka {(() => {const d=new Date(week.weekStart+'T12:00:00');d.setDate(d.getDate()+3);const y=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-y)/86400000-3+(y.getDay()+6)%7)/7)})()} · {week.weekStart}</h4>
         {week.items.map(item => <div key={item.lessonNumber} style={{padding:'8px 0',borderTop:'1px solid #e2e8f0'}}>
-          <strong>{DAY_SHORT[DAYS.indexOf(item.day)]} {item.date} – Lektion {item.lessonNumber}</strong>
-          <div className="muted">Från grundplaneringens vecka {item.weekNumber || '?'}{item.weekTitle ? ' · '+item.weekTitle : ''}</div>
+          <strong>{DAY_SHORT[DAYS.indexOf(item.day)]} {item.date} – Lektion {item.weekLessonNumber}</strong>
+          <div className="muted">Gemensam lektion {item.lessonNumber} · Från grundplaneringens vecka {item.weekNumber || '?'}{item.weekTitle ? ' · '+item.weekTitle : ''}</div>
           <div style={{whiteSpace:'pre-wrap'}}>{item.override?.text ?? describe(item.lesson)}</div>
           {editing===item.lessonNumber ? <div>
             <label>Eget innehåll för {group.name}<textarea value={editText} onChange={e=>setEditText(e.target.value)} /></label>
