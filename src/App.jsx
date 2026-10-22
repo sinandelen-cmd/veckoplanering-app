@@ -1137,7 +1137,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     const schoolYear = `${startYear}–${startYear + 1}`
     const subject = source.subject || row.subject || ''
     const className = source.className || row.class_name || ''
-    const title = source.title
+    const title = `${source.title.replace(/(?:\\s*[-–—]?\\s*kopia(?:\\s*\\d+)?)$/i, '').trim()} – kopia`
     const oldStartYear = Number((source.schoolYear || '').match(/\d{4}/)?.[0])
     const yearShift = Number.isFinite(oldStartYear) ? startYear - oldStartYear : 0
     const shiftDate = date => {
