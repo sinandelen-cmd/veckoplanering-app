@@ -831,7 +831,8 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
 function applyElevkompassenTheme(event) {
   try {
     const doc = event.currentTarget.contentDocument
-    if (!doc || doc.getElementById('arsplanering-theme')) return
+    if (!doc) return
+    if (doc.getElementById('arsplanering-theme')) return
     const style = doc.createElement('style')
     style.id = 'arsplanering-theme'
     style.textContent = `
@@ -851,7 +852,7 @@ function applyElevkompassenTheme(event) {
         --pink: #f7e9ed !important;
         --excel-green: #8c3854 !important;
       }
-      html, body { background: #faf8f3 !important; }
+      html, body { background: #faf8f3 !important; overflow-y: visible !important; height: auto !important; min-height: 0 !important; }
       button, input, select, textarea { font-family: inherit; }
       button { transition: background-color .15s ease, box-shadow .15s ease; }
       button:focus-visible, a:focus-visible, input:focus-visible {
@@ -859,6 +860,21 @@ function applyElevkompassenTheme(event) {
       }
     `
     doc.head.appendChild(style)
+    const frame = event.currentTarget
+    frame.setAttribute('scrolling', 'no')
+    frame.style.overflow = 'hidden'
+    const resize = () => {
+      const height = Math.max(doc.documentElement.scrollHeight, doc.body?.scrollHeight || 0)
+      if (height > 0) frame.style.height = (height + 16) + 'px'
+    }
+    resize()
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(resize)
+      observer.observe(doc.documentElement)
+      if (doc.body) observer.observe(doc.body)
+      frame._elevkompassenResizeObserver?.disconnect()
+      frame._elevkompassenResizeObserver = observer
+    }
   } catch (error) {
     console.warn('Elevkompassen theme could not be applied', error)
   }
@@ -2052,7 +2068,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     {previewStudents && <section className="student-preview-clean" id="elevvy"><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
 
     </div>
-    <div className="teacher-tab-panel" hidden={teacherTab !== "resultat"}><iframe title="Elevkompassen – originalets resultatmatris" src="/Provresultat_tom_mall_50.html#sida-prov" onLoad={applyElevkompassenTheme} style={{display:"block",width:"100%",height:"calc(100vh - 130px)",minHeight:"780px",border:0,background:"#fff",borderRadius:"12px"}} /></div>
+    <div className="teacher-tab-panel" hidden={teacherTab !== "resultat"}><iframe title="Elevkompassen – originalets resultatmatris" src="/Provresultat_tom_mall_50.html#sida-prov" onLoad={applyElevkompassenTheme} style={{display:"block",width:"100%",height:"1200px",border:0,overflow:"hidden",background:"#fff",borderRadius:"12px"}} /></div>
     <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
     <section className="card" id="mina-arsplaneringar">
       <div className="section-heading"><div><p className="eyebrow">MIN STARTSIDA</p><h2>Alla mina planeringar</h2><p className="muted">Öppna en planering nedan eller välj en funktion.</p></div></div>
