@@ -929,7 +929,37 @@ function applyElevkompassenTheme(event) {
       }
     }
     hideStandaloneHeader()
-    const hideObserver = new MutationObserver(hideStandaloneHeader)
+    // Compact the landing overview: two equal cards, no incident-report card.
+    const compactOverview = () => {
+      const headings = Array.from(doc.querySelectorAll('h2,h3,h4'))
+      const locate = (name) => headings.find(el => el.textContent?.trim() === name)
+      const resultHeading = locate('Resultatregistrering')
+      const mentorHeading = locate('Mentorskap')
+      const incidentHeading = locate('Kränkningsanmälan')
+      const findCard = el => el?.closest('[class*="card"],article') || el?.parentElement?.parentElement
+      const resultCard = findCard(resultHeading)
+      const mentorCard = findCard(mentorHeading)
+      const incidentCard = findCard(incidentHeading)
+      if (incidentCard) incidentCard.style.setProperty('display','none','important')
+      if (resultCard && mentorCard && resultCard !== mentorCard) {
+        resultCard.classList.add('ars-summary-card')
+        mentorCard.classList.add('ars-summary-card')
+        const parent = resultCard.parentElement
+        if (parent && parent === mentorCard.parentElement) parent.classList.add('ars-summary-grid')
+      }
+    }
+    const overviewStyle = doc.createElement('style')
+    overviewStyle.textContent = `
+      .ars-summary-grid { display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:12px !important; align-items:start !important; }
+      .ars-summary-card { min-width:0 !important; min-height:0 !important; height:auto !important; padding:12px !important; border-radius:11px !important; box-shadow:none !important; }
+      .ars-summary-card h2, .ars-summary-card h3 { margin-top:0 !important; }
+      .ars-summary-card table { font-size:11px !important; }
+      .ars-summary-card button { min-height:30px !important; }
+      @media(max-width:720px) { .ars-summary-grid { grid-template-columns:1fr !important; } }
+    `
+    doc.head.appendChild(overviewStyle)
+    compactOverview()
+    const hideObserver = new MutationObserver(() => { hideStandaloneHeader(); compactOverview() })
     hideObserver.observe(doc.body,{childList:true,subtree:true})
     const frame = event.currentTarget
     frame.setAttribute('scrolling', 'no')
