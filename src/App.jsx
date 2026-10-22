@@ -1607,8 +1607,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           {teacherTab === "arsplan" && <><span aria-hidden="true">›</span><span aria-current="page">{plan.title?.trim() || "Ny planering"}</span></>}
           {teacherTab === "new" && <><span aria-hidden="true">›</span><span aria-current="page">Ny planering</span></>}
         </nav>
-        <h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Startsida" : teacherTab === "resultat" ? "Resultat" : (plan.title?.trim() || "Ny planering")}</h1>
-        {teacherTab !== "resultat" && <p className="muted">{session.user.email}</p>}
+        <h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Startsida" : (plan.title?.trim() || "Ny planering")}</h1>
+        <p className="muted">{session.user.email}</p>
       </div>
       
       {teacherTab === "arsplan" && <div className="edit-history-actions" aria-label="Redigeringsverktyg">
@@ -2016,7 +2016,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     {previewStudents && <section className="student-preview-clean" id="elevvy"><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
 
     </div>
-    <div className="teacher-tab-panel" hidden={teacherTab !== "resultat"}><TeacherResults userId={session?.user?.id} /></div>
+    
     <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
     <section className="card" id="mina-arsplaneringar">
       <div className="section-heading"><div><p className="eyebrow">MIN STARTSIDA</p><h2>Alla mina planeringar</h2><p className="muted">Öppna en planering nedan eller välj en funktion.</p></div></div>
