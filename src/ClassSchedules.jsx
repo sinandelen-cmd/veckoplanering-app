@@ -46,6 +46,7 @@ export default function ClassSchedules({ plan, onChange }) {
   const [days, setDays] = React.useState(['Måndag'])
   const [selected, setSelected] = React.useState(0)
   const [showAll, setShowAll] = React.useState(false)
+  const [compare, setCompare] = React.useState(false)
   const [editing, setEditing] = React.useState(null)
   const [editText, setEditText] = React.useState('')
   const group = groups[selected]
@@ -64,6 +65,9 @@ export default function ClassSchedules({ plan, onChange }) {
     return result
   }, [])
   const weeksShown = showAll ? grouped : grouped.slice(0, 8)
+  const comparison = groups.map(g => ({name:g.name, weeks:buildClassSchedule(plan,g).reduce((acc,item)=>{const key=iso(monday(item.date));(acc[key] ||= []).push(item);return acc},{})}))
+  const comparisonWeeks = [...new Set(comparison.flatMap(g=>Object.keys(g.weeks)))].sort()
+  const visibleComparisonWeeks = showAll ? comparisonWeeks : comparisonWeeks.slice(0,8)
   return <section className="card" aria-label="Kopplade klasser">
     <h2>Planera en gång – fördela till dina klasser</h2>
     <p><strong>En grundplanering – flera klasser.</strong> Skriv lektionsinnehållet en gång. Varje klass får sedan samma lektioner i rätt ordning, på sina egna veckodagar och i sin egen takt.</p>
@@ -81,12 +85,14 @@ export default function ClassSchedules({ plan, onChange }) {
     {groups.length > 0 && <>
       <h3>Klasser kopplade till samma planering</h3>
       <div style={{display:'flex',flexWrap:'wrap',gap:10,marginBottom:12}}>{groups.map((g,i) => <button key={i} type="button" className={selected===i?'primary':'secondary'} onClick={()=>{setSelected(i);setEditing(null);setShowAll(false)}} style={{textAlign:'left',minWidth:150}}><strong>{g.name}</strong><span style={{display:'block',fontSize:'.85em',marginTop:4}}>{lessonsPerWeek(g)} lektioner/vecka · {(g.days||[]).length ? [...new Set(g.days)].map(d=>DAY_SHORT[DAYS.indexOf(d)]).join(', ') : 'Inga dagar'}</span></button>)}</div>
-      <h3>Välj klass</h3>
-      <div className="button-row" style={{display:'flex',flexWrap:'wrap',gap:8}}>
+      <div className="button-row" style={{display:'flex',gap:10,flexWrap:'wrap',margin:'16px 0'}}><button type="button" className={!compare?'primary':'secondary'} onClick={()=>{setCompare(false);setShowAll(false)}}>▦ Klasskalender</button><button type="button" className={compare?'primary':'secondary'} onClick={()=>{setCompare(true);setShowAll(false)}}>⇄ Jämför klasser</button></div>
+      {!compare && <h3>Välj klass</h3>}
+      {!compare && <div className="button-row" style={{display:'flex',flexWrap:'wrap',gap:8}}>
         {groups.map((g,i) => <button className={selected===i?'primary':'secondary'} type="button" key={i} onClick={() => {setSelected(i);setEditing(null);setShowAll(false)}} aria-pressed={selected===i}>{g.name}</button>)}
-      </div>
+      </div>}
     </>}
-    {group && <>
+    {compare && <div style={{overflowX:"auto",marginTop:16}}><h3>Jämför klassernas veckor</h3><p>Varje klass följer samma innehåll i egen takt. Lektionerna numreras från 1 varje vecka.</p><table style={{width:"100%",borderCollapse:"collapse",minWidth:540}}><thead><tr><th style={{textAlign:"left",padding:10}}>Vecka</th>{comparison.map(g=><th key={g.name} style={{textAlign:"left",padding:10}}>{g.name}</th>)}</tr></thead><tbody>{visibleComparisonWeeks.map(key=><tr key={key} style={{borderTop:"1px solid #cbd5e1"}}><th style={{padding:10,textAlign:"left",verticalAlign:"top"}}>{key}</th>{comparison.map(g=>{const items=g.weeks[key]||[];return <td key={g.name} style={{padding:10,verticalAlign:"top"}}>{items.length?<><strong>{items.length} {items.length===1?"lektion":"lektioner"}</strong><div style={{fontSize:".9em",marginTop:5}}>{items.map((item,i)=><div key={i}>{DAY_SHORT[DAYS.indexOf(item.day)]}: Lektion {i+1} <span style={{opacity:.75}}>(gemensam {item.lessonNumber})</span></div>)}</div></>:<span style={{opacity:.6}}>Ingen lektion</span>}</td>})}</tr>)}</tbody></table>{comparisonWeeks.length>8&&<button type="button" className="secondary" onClick={()=>setShowAll(!showAll)}>{showAll?"Visa färre veckor":"Visa alla veckor"}</button>}</div>}
+    {group && !compare && <>
       <h3>{group.name} – eget lektionsschema</h3>
       <p><strong>{lessonsPerWeek(group)} lektioner per vecka.</strong> Ändra antalet för varje dag nedan. En klass kan ha fler eller färre lektioner än de andra.</p>
       <label>Startdatum <input type="date" value={group.startDate || plan.startDate || ''} onChange={e => updateGroup({startDate:e.target.value})} /></label>
