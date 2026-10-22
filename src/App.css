@@ -2236,3 +2236,30 @@ body { background: #fffaf2; color: var(--ink); }
  .topbar:has(.archive-plan-actions) .student-plan-link { grid-column:auto; grid-row:auto; justify-content:flex-start; }
 }
 .sidebar-signout-link { color:#8b3547 !important; }
+
+/* En samlad, horisontell verktygsrad i lärarvyn. */
+@media (min-width:1051px) {
+  .topbar:has(.archive-plan-actions) {
+    grid-template-columns:minmax(200px,1fr) auto !important;
+    grid-template-rows:auto auto !important;
+    gap:8px 18px !important;
+  }
+  .topbar:has(.archive-plan-actions) > div:first-child { grid-column:1 !important; grid-row:1 / span 2 !important; }
+  .topbar:has(.archive-plan-actions) > button { grid-column:2 !important; grid-row:2 !important; justify-self:end; }
+  .topbar:has(.archive-plan-actions) .archive-plan-actions { grid-column:2 !important; grid-row:1 !important; display:flex; flex-wrap:wrap; justify-content:flex-end; }
+  .topbar:has(.archive-plan-actions) .student-plan-link { grid-column:2 !important; grid-row:2 !important; justify-content:flex-start; justify-self:start; margin-right:180px; }
+}
+.topbar:has(.archive-plan-actions) .archive-plan-actions button,
+.topbar:has(.archive-plan-actions) .student-plan-link button,
+.topbar:has(.archive-plan-actions) > button { min-height:38px; white-space:nowrap; }
+
+/* Sidomenyn växer efter titlarnas längd, med en gräns så innehållet får plats. */
+@media (min-width:761px) {
+  .planning-layout {
+    grid-template-columns:clamp(260px, max-content, 420px) minmax(0,1fr) !important;
+  }
+  .planning-layout > .planning-sidebar { width:auto !important; }
+  .planning-layout > .planning-sidebar .sidebar-plan-list { width:max-content; max-width:100%; }
+  .planning-layout > .planning-sidebar .sidebar-plan-entry { width:max-content; max-width:100%; }
+  .planning-layout > .planning-sidebar .sidebar-plan-entry .sidebar-plan { overflow-wrap:anywhere; white-space:normal; }
+}
