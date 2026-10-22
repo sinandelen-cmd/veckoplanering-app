@@ -2419,3 +2419,17 @@ body { background: #fffaf2; color: var(--ink); }
     transform:translateX(-3cm) !important;
   }
 }
+
+/* Årsöversikt: vänsterställd utan att innehåll hamnar utanför skärmen. */
+.planning-layout #lararvy:has(.calendar-page) {
+  transform:none !important;
+  margin-left:0 !important;
+  margin-right:auto !important;
+  box-sizing:border-box !important;
+}
+.planning-layout #lararvy #teacher-year-calendar,
+.planning-layout #lararvy #teacher-year-calendar > .calendar-overlay.calendar-page {
+  transform:none !important;
+  margin-left:0 !important;
+  box-sizing:border-box !important;
+}
