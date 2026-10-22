@@ -29,6 +29,7 @@ export function buildClassSchedule(plan, group) {
     const date = nextDate(start, offset)
     const dateKey = iso(date)
     const day = DAYS[(date.getDay()+6)%7]
+    if (!day) continue
     const count = days.filter(d => d === day).length + extraSlots.filter(s => s.date === dateKey).length
     if (cancelled.includes(dateKey)) continue
     for (let slot = 0; slot < count; slot++) slots.push({ date: dateKey, day, slot: slot+1 })
@@ -48,6 +49,7 @@ export default function ClassSchedules({ plan, onChange }) {
   const [editing, setEditing] = React.useState(null)
   const [editText, setEditText] = React.useState('')
   const group = groups[selected]
+  const lessonsPerWeek = group => (group.days || []).length
   const schedule = React.useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
   const updateGroup = changes => onChange({ ...plan, classGroups: groups.map((g, i) => i === selected ? { ...g, ...changes } : g) })
   const addClass = () => {
@@ -64,7 +66,8 @@ export default function ClassSchedules({ plan, onChange }) {
   const weeksShown = showAll ? grouped : grouped.slice(0, 8)
   return <section className="card" aria-label="Kopplade klasser">
     <h2>Planera en gång – fördela till dina klasser</h2>
-    <p>Skapa innehållet vecka för vecka i grundplaneringen ovan. Här väljer du när varje klass har lektion. Alla lektioner fördelas automatiskt i rätt ordning, även över flera kalenderveckor.</p>
+    <p><strong>En grundplanering – flera klasser.</strong> Skriv lektionsinnehållet en gång. Varje klass får sedan samma lektioner i rätt ordning, på sina egna veckodagar och i sin egen takt.</p>
+    <p className="muted">Exempel: 8A kan ha 3 lektioner på måndag, onsdag och fredag, medan 8B har 2 på tisdag och torsdag. Båda följer samma innehåll, men blir klara olika veckor.</p>
     <div className="form-grid">
       <label>Ny klass <input value={name} onChange={e => setName(e.target.value)} placeholder="Exempel: 8B" /></label>
     </div>
@@ -76,6 +79,8 @@ export default function ClassSchedules({ plan, onChange }) {
     <p className="muted">Har klassen två lektioner samma dag? Lägg först till klassen och välj sedan antal lektioner per dag.</p>
     <button type="button" disabled={!name.trim() || !days.length || groups.some(g => g.name.toLocaleLowerCase('sv') === name.trim().toLocaleLowerCase('sv'))} onClick={addClass}>+ Lägg till klass</button>
     {groups.length > 0 && <>
+      <h3>Klasser kopplade till samma planering</h3>
+      <div style={{display:'flex',flexWrap:'wrap',gap:10,marginBottom:12}}>{groups.map((g,i) => <button key={i} type="button" className={selected===i?'primary':'secondary'} onClick={()=>{setSelected(i);setEditing(null);setShowAll(false)}} style={{textAlign:'left',minWidth:150}}><strong>{g.name}</strong><span style={{display:'block',fontSize:'.85em',marginTop:4}}>{lessonsPerWeek(g)} lektioner/vecka · {(g.days||[]).length ? [...new Set(g.days)].map(d=>DAY_SHORT[DAYS.indexOf(d)]).join(', ') : 'Inga dagar'}</span></button>)}</div>
       <h3>Välj klass</h3>
       <div className="button-row" style={{display:'flex',flexWrap:'wrap',gap:8}}>
         {groups.map((g,i) => <button className={selected===i?'primary':'secondary'} type="button" key={i} onClick={() => {setSelected(i);setEditing(null);setShowAll(false)}} aria-pressed={selected===i}>{g.name}</button>)}
@@ -83,6 +88,7 @@ export default function ClassSchedules({ plan, onChange }) {
     </>}
     {group && <>
       <h3>{group.name} – eget lektionsschema</h3>
+      <p><strong>{lessonsPerWeek(group)} lektioner per vecka.</strong> Ändra antalet för varje dag nedan. En klass kan ha fler eller färre lektioner än de andra.</p>
       <label>Startdatum <input type="date" value={group.startDate || plan.startDate || ''} onChange={e => updateGroup({startDate:e.target.value})} /></label>
       <fieldset><legend>Lektioner per veckodag</legend>
         <div className="form-grid">{DAYS.map((day,i) => {
