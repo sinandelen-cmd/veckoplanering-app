@@ -2,6 +2,19 @@ import { useState } from 'react'
 
 export default function Navigation({ active = 'mina', onNavigate, onNew, plans = [], selectedId, getPlanTheme, onOpenPlan, onDeletePlan, onToggleCalendar, calendarOpen = false, onOpenExample, onOpenArchive, isAdmin = false, onOpenAdmin, adminOpen = false, pendingCount = 0, onCloseAdmin }) {
   const [expandedPlans, setExpandedPlans] = useState({})
+  const subjectIcon = title => {
+    const name = String(title || '').toLocaleLowerCase('sv')
+    if (name.includes('matematik') || name.includes('matte')) return '📐'
+    if (/svenska|engelska|tyska|franska|spanska/.test(name)) return '📚'
+    if (/fysik|kemi|biologi|naturkunskap/.test(name)) return '🔬'
+    if (/historia|geografi|religion|samhäll/.test(name)) return '🌍'
+    if (/idrott|hälsa/.test(name)) return '🏃'
+    if (name.includes('musik')) return '🎵'
+    if (name.includes('bild')) return '🎨'
+    if (/teknik|programmering/.test(name)) return '💻'
+    if (name.includes('slöjd')) return '🛠️'
+    return '📘'
+  }
   const planClasses = row => { try { const data = JSON.parse(row.content || '{}'); return Array.isArray(data.classGroups) ? data.classGroups : Array.isArray(data.plan?.classGroups) ? data.plan.classGroups : [] } catch { return [] } }
   const [hiddenExamples, setHiddenExamples] = useState(() => {
     try { return JSON.parse(window.localStorage.getItem('arsplanering-hidden-sidebar-examples') || '[]') } catch { return [] }
@@ -20,7 +33,7 @@ export default function Navigation({ active = 'mina', onNavigate, onNew, plans =
         {plans.length === 0 ? <p className="sidebar-empty">Inga sparade planeringar ännu</p> : plans.map(row => { const classes = planClasses(row); const expanded = expandedPlans[row.id] ?? (selectedId === row.id); return <div key={row.id} className="sidebar-plan-entry" style={getPlanTheme ? { '--item-accent': getPlanTheme(row).accent, '--item-light': getPlanTheme(row).light, '--item-ink': getPlanTheme(row).ink } : undefined}>
           <div style={{display:"flex",alignItems:"center",gap:3}}>
             {classes.length>0 && <button type="button" aria-label={(expanded?"Dölj":"Visa")+" klasser för "+row.title} aria-expanded={expanded} onClick={()=>setExpandedPlans(p=>({...p,[row.id]:!expanded}))} style={{border:0,background:"transparent",cursor:"pointer",padding:"5px 3px",flexShrink:0}}>{expanded?"▾":"▸"}</button>}
-            <button type="button" className={selectedId===row.id?'sidebar-plan selected':'sidebar-plan'} style={{flex:1,minWidth:0,textAlign:"left"}} onClick={()=>{onCloseAdmin?.();onOpenPlan?.(row)}} title={row.title||'Utan namn'}>{row.title||'Utan namn'}</button>
+            <button type="button" className={selectedId===row.id?'sidebar-plan selected':'sidebar-plan'} style={{flex:1,minWidth:0,textAlign:"left"}} onClick={()=>{onCloseAdmin?.();onOpenPlan?.(row)}} title={row.title||'Utan namn'}><span aria-hidden="true" style={{marginRight:7}}>{subjectIcon(row.title)}</span>{row.title||"Utan namn"}</button>
           </div>
           {classes.length>0 && expanded && <div style={{margin:"4px 0 8px 19px",paddingLeft:9,borderLeft:"2px solid #d8c7a1"}}>
             <button type="button" onClick={()=>{onCloseAdmin?.();onOpenPlan?.(row)}} style={{display:"block",border:0,background:"transparent",padding:"6px 4px",cursor:"pointer",textAlign:"left",fontSize:13}}>📖 Grundplanering</button>
