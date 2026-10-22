@@ -1378,7 +1378,15 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}`}><Navigation active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={id => { setTeacherTab(id); if (id === 'mina' || id === 'arsplan') setCalendarOpen(false); if (id === 'elevvy') { setPreviewStudents(true); setCalendarOpen(false) } else { setPreviewStudents(false) } }} onOpenExample={openExample} onOpenArchive={() => { setShowArchive(true); setTeacherTab('mina') }} onNew={createPlan} onToggleCalendar={() => { setTeacherTab('arsplan'); setCalendarOpen(true) }} calendarOpen={calendarOpen} isAdmin={isAdmin} adminOpen={adminOpen} onOpenAdmin={onToggleAdmin} onCloseAdmin={() => { if (adminOpen) onToggleAdmin?.() }} onSignOut={() => supabase.auth.signOut()} pendingCount={pendingCount} /><main className="shell" id="lararvy">
   {adminOpen ? adminContent : <>
     {teacherTab !== "elevvy" && <header className="topbar">
-      <div><h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Startsida" : (plan.title?.trim() || "Ny planering")}</h1><p className="muted">{session.user.email}</p></div>
+      <div className="teacher-header-identity">
+        <nav className="teacher-breadcrumb" aria-label="Du är här">
+          <button type="button" onClick={() => { setTeacherTab("mina"); setCalendarOpen(false) }}>Startsida</button>
+          {teacherTab === "arsplan" && <><span aria-hidden="true">›</span><span aria-current="page">{plan.title?.trim() || "Ny planering"}</span></>}
+          {teacherTab === "new" && <><span aria-hidden="true">›</span><span aria-current="page">Ny planering</span></>}
+        </nav>
+        <h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Startsida" : (plan.title?.trim() || "Ny planering")}</h1>
+        <p className="muted">{session.user.email}</p>
+      </div>
       
       {teacherTab === "arsplan" && <div className="edit-history-actions" aria-label="Redigeringsverktyg">
         <button type="button" className="secondary" disabled={!historyRef.current.past.length} onClick={undoPlan} title="Ångra senaste ändringen">↶ Ångra</button>
