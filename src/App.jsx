@@ -1266,6 +1266,42 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     }
   }
 
+  async function renamePlan(row) {
+    if (busy) return
+    if (selectedId === row.id && isDirty) {
+      setStatus('Spara dina ändringar innan du byter namn på planeringen.')
+      return
+    }
+    const title = window.prompt('Nytt namn på planeringen:', row.title || '')
+    if (title === null) return
+    const newTitle = title.trim()
+    if (!newTitle) { setStatus('Planeringen måste ha ett namn.'); return }
+    if (newTitle === row.title) return
+    setBusy(true)
+    try {
+      const stored = parseContent(row.content)
+      if (!stored || typeof stored !== 'object') throw new Error('Planeringens innehåll kunde inte läsas.')
+      const updated = { ...stored, title: newTitle }
+      const { error } = await supabase.from('veckoplanering').update({
+        title: newTitle,
+        content: JSON.stringify(updated),
+        updated_at: new Date().toISOString(),
+      }).eq('id', row.id).eq('user_id', session.user.id).select('id').single()
+      if (error) throw error
+      if (selectedId === row.id) {
+        setPlan(p => ({ ...p, title: newTitle }))
+        savedPlanRef.current = JSON.stringify({ ...plan, title: newTitle })
+        setSavedRevision(v => v + 1)
+      }
+      await loadPlans()
+      setStatus('Planeringen har fått namnet "' + newTitle + '".')
+    } catch (error) {
+      setStatus('Kunde inte byta namn: ' + (error.message || 'Okänt fel'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function deletePlan(row) {
     if (busy) return
     if (selectedId === row.id && JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar i den här planeringen. Radering tar även bort dem. Vill du fortsätta?')) return
@@ -1760,10 +1796,11 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           <div><strong className="library-title">{row.title}</strong><p className="muted">{[row.subject, row.class_name, row.school_year].filter(Boolean).join(' · ')}</p></div>
           <div className="button-row library-actions" aria-label={"Åtgärder för "+row.title}>
             <span className={`status-badge ${row.published ? 'published' : 'draft'}`}>{row.published ? '● Publicerad' : '○ Utkast'}</span>
-            <button type="button" className="secondary library-action-open" disabled={busy} onClick={() => loadPlan(row)} title="Öppna och redigera denna planering">📖 Öppna</button>
+            <button type="button" className="secondary library-action-open" disabled={busy} onClick={() => loadPlan(row)} title="Öppna och redigera planeringen">📖 Öppna</button>
+            <button type="button" className="secondary library-action-rename" disabled={busy} onClick={() => renamePlan(row)} title="Ändra namnet på denna planering utan att påverka innehållet">✏️ Byt namn</button>
             <button type="button" className="secondary library-action-copy" disabled={busy} onClick={() => clonePlan(row)} title="Skapa en separat kopia. Originalet finns kvar">📋 Skapa kopia</button>
-            <button type="button" className="secondary library-action-archive" disabled={busy} onClick={() => setArchived(row, !showArchive)} title={showArchive ? "Flytta tillbaka planeringen till aktiva planeringar" : "Flytta planeringen till arkivet utan att radera den"}>{showArchive ? '↩ Flytta till aktiva' : '🗂 Arkivera'}</button>
             {row.published ? <button type="button" className="secondary library-action-unpublish" disabled={busy} onClick={() => unpublish(row)} title="Stäng av elevlänken utan att radera planeringen">🔒 Avpublicera</button> : <button type="button" className="secondary library-action-publish" disabled={busy} onClick={() => publishFromList(row)} title="Publicera den sparade planeringen i elevvyn">🌐 Publicera</button>}
+            <button type="button" className="secondary library-action-archive" disabled={busy} onClick={() => setArchived(row, !showArchive)} title={showArchive ? "Flytta tillbaka planeringen till aktiva planeringar" : "Flytta planeringen till arkivet utan att radera den"}>{showArchive ? '↩ Flytta till aktiva' : '🗂 Arkivera'}</button>
             <button type="button" className="danger library-action-delete" disabled={busy} onClick={() => deletePlan(row)} title="Radera planeringen permanent">🗑 Radera</button>
           </div>
         </article>)}
