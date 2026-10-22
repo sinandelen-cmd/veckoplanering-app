@@ -1680,13 +1680,13 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       {!plans.some(row => Boolean(parseContent(row.content)?.archived) === showArchive) ? <p className="muted">{showArchive ? 'Arkivet är tomt.' : 'Du har inga aktiva årsplaneringar ännu.'}</p> : <div className="library-list home-plan-grid">
         {plans.filter(row => Boolean(parseContent(row.content)?.archived) === showArchive).map(row => <article className="library-item" key={row.id} style={{ '--item-accent': planTheme(parseContent(row.content), row.id).accent, '--item-light': planTheme(parseContent(row.content), row.id).light, '--item-ink': planTheme(parseContent(row.content), row.id).ink }}>
           <div><strong className="library-title">{row.title}</strong><p className="muted">{[row.subject, row.class_name, row.school_year].filter(Boolean).join(' · ')}</p></div>
-          <div className="button-row">
-            <span className={`status-badge ${row.published ? 'published' : 'draft'}`}>{row.published ? 'Publicerad' : 'Utkast'}</span>
-            <button className="secondary" disabled={busy} onClick={() => loadPlan(row)}>Öppna</button>
-            <button className="secondary" disabled={busy} onClick={() => clonePlan(row)}>{showArchive ? 'Återanvänd som ny' : 'Klona'}</button>
-            <button className="secondary" disabled={busy} onClick={() => setArchived(row, !showArchive)}>{showArchive ? 'Återställ' : 'Arkivera'}</button>
-            {row.published && <button className="secondary" disabled={busy} onClick={() => unpublish(row)}>Avpublicera</button>}
-            <button className="danger" disabled={busy} onClick={() => deletePlan(row)}>Radera</button>
+          <div className="button-row library-actions" aria-label={"Åtgärder för "+row.title}>
+            <span className={`status-badge ${row.published ? 'published' : 'draft'}`}>{row.published ? '● Publicerad' : '○ Utkast'}</span>
+            <button type="button" className="secondary library-action-open" disabled={busy} onClick={() => loadPlan(row)} title="Öppna och redigera denna planering">📖 Öppna</button>
+            <button type="button" className="secondary library-action-copy" disabled={busy} onClick={() => clonePlan(row)} title="Skapa en separat kopia. Originalet finns kvar">📋 Skapa kopia</button>
+            <button type="button" className="secondary library-action-archive" disabled={busy} onClick={() => setArchived(row, !showArchive)} title={showArchive ? "Flytta tillbaka planeringen till aktiva planeringar" : "Flytta planeringen till arkivet utan att radera den"}>{showArchive ? '↩ Flytta till aktiva' : '🗂 Arkivera'}</button>
+            {row.published && <button type="button" className="secondary library-action-unpublish" disabled={busy} onClick={() => unpublish(row)} title="Stäng av elevlänken utan att radera planeringen">🔒 Avpublicera</button>}
+            <button type="button" className="danger library-action-delete" disabled={busy} onClick={() => deletePlan(row)} title="Radera planeringen permanent">🗑 Radera</button>
           </div>
         </article>)}
       </div>}
