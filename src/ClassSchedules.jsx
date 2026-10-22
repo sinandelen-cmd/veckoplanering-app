@@ -47,6 +47,7 @@ export default function ClassSchedules({ plan, onChange }) {
   const [selected, setSelected] = React.useState(0)
   const [showAll, setShowAll] = React.useState(false)
   const [showMatrix, setShowMatrix] = React.useState(false)
+  const [showClassMenu, setShowClassMenu] = React.useState(false)
   const [compare, setCompare] = React.useState(false)
   const [showClassDetails, setShowClassDetails] = React.useState(false)
   const [selectedComparisonWeek, setComparisonWeek] = React.useState(0)
@@ -81,8 +82,12 @@ export default function ClassSchedules({ plan, onChange }) {
       <button type="button" disabled={!name.trim()||groups.some(g=>g.name.toLocaleLowerCase('sv')===name.trim().toLocaleLowerCase('sv'))} onClick={addClass}>+ Lägg till klass</button>
     </div>}
     {unscheduledGroups.length>0 && <p role="alert" style={{background:"#fff0d7",padding:12,borderRadius:8,border:"1px solid #e2b66d"}}><strong>Schema saknas:</strong> {unscheduledGroups.map(g=>g.name).join(", ")}. Kryssa i minst en lektionsdag för varje klass så att inga lektioner missas.</p>}
+    {groups.length>0 && <div style={{margin:"14px 0 12px"}}>
+      <button type="button" className="secondary" aria-expanded={showClassMenu} onClick={()=>{setShowClassMenu(v=>!v);setShowMatrix(true);setCompare(false);setShowClassDetails(false)}} style={{fontWeight:800,padding:"12px 16px"}}>{showClassMenu?"▾ Dölj klassernas planering":"▸ Visa klassernas planering"}</button>
+    </div>}
+    {showClassMenu && <>
     {groups.length>0 && <div style={{margin:"14px 0 20px"}}>
-      <button type="button" className="secondary" aria-expanded={showMatrix} onClick={()=>setShowMatrix(v=>!v)} style={{marginBottom:10}}>{showMatrix?"▾ Dölj klassernas veckoschema":"▸ Visa klassernas veckoschema"}</button>
+
       {showMatrix && <div style={{overflowX:"auto"}}>
       <h3>Klassernas veckoschema</h3>
       <p className="muted">Kryssa i lektionsdagarna. Lektionsnumren ordnas automatiskt från måndag till fredag. Klicka på klassnamnet för särskilda ändringar.</p>
@@ -95,11 +100,12 @@ export default function ClassSchedules({ plan, onChange }) {
       </table>
       </div>}
     </div>}
-    {groups.length > 0 && <div style={{display:"flex",gap:10,flexWrap:"wrap",margin:"12px 0"}}>
+    </>}
+    {showClassMenu && groups.length > 0 && <div style={{display:"flex",gap:10,flexWrap:"wrap",margin:"12px 0"}}>
       <button type="button" className="secondary" aria-expanded={compare} onClick={()=>{setCompare(v=>!v);setShowAll(false)}}>{compare?"▾ Dölj klassernas veckor":"▸ Visa klassernas veckor"}</button>
       <button type="button" className="secondary" aria-expanded={!compare&&showClassDetails} onClick={()=>{setCompare(false);setShowClassDetails(v=>!v);setShowAll(false)}}>{!compare&&showClassDetails?"▾ Dölj enskilda ändringar":"⚙ Visa enskilda ändringar"}</button>
     </div>}
-    {compare && <div style={{marginTop:18}}>
+    {showClassMenu && compare && <div style={{marginTop:18}}>
       <h3>Jämför klasser – veckomatris</h3>
       <p className="muted">Varje klass har sin egen ruta. Lektionsnumren börjar på 1 varje vecka, men innehållet fortsätter i rätt ordning.</p>
       {comparisonWeeks.length>0 && <div style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:10,margin:"14px 0 18px"}}>
@@ -125,7 +131,7 @@ export default function ClassSchedules({ plan, onChange }) {
         </article>})}
       </div></div>}
     </div>}
-    {group && !compare && showClassDetails && <>
+    {showClassMenu && group && !compare && showClassDetails && <>
       <h3>{group.name} – eget lektionsschema</h3>
       <p><strong>{lessonsPerWeek(group)} lektioner per vecka.</strong> Lektionsdagarna visas i matrisen ovan. En klass kan ha fler eller färre lektioner än de andra.</p>
       <label>Startdatum <input type="date" value={group.startDate || plan.startDate || ''} onChange={e => updateGroup({startDate:e.target.value})} /></label>
