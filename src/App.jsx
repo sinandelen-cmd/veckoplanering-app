@@ -1887,7 +1887,15 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     {previewStudents && <section className="student-preview-clean" id="elevvy"><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
 
     </div>
-    <div className="teacher-tab-panel" hidden={teacherTab !== "resultat"}><TeacherResults userId={session.user.id} /></div>
+    <div className="teacher-tab-panel" hidden={teacherTab !== "resultat"}>
+      <section className="card" aria-label="Elevkompassen" style={{marginBottom:16}}>
+        <h2>📊 Elevkompassen – Provresultat</h2>
+        <p>Din uppladdade resultatmall visas nedan. Den körs avskilt från Årsplaneringen för att skydda andra lärares uppgifter.</p>
+        <p className="muted">Observera: Mallens egen lokala sparning är ännu inte ansluten till Supabase. Använd resultatlistorna längre ner för uppgifter som ska sparas säkert i ditt lärarkonto.</p>
+        <iframe title="Elevkompassen – Provresultat" src="/Provresultat_tom_mall_50.html#sida-prov" sandbox="allow-scripts allow-forms allow-downloads allow-modals" referrerPolicy="no-referrer" style={{display:'block',width:'100%',height:'75vh',minHeight:600,border:'1px solid #e7d6b5',borderRadius:12,background:'#fff'}} />
+      </section>
+      <TeacherResults userId={session.user.id} />
+    </div>
     <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
     <section className="card" id="mina-arsplaneringar">
       <div className="section-heading"><div><p className="eyebrow">MIN STARTSIDA</p><h2>Alla mina planeringar</h2><p className="muted">Öppna en planering nedan eller välj en funktion.</p></div></div>
