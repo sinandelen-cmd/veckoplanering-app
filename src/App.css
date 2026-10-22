@@ -1798,3 +1798,36 @@ body { background: #fffaf2; color: var(--ink); }
 .home-plan-grid .library-title{font-size:1.2rem;color:var(--item-ink,#733e4b)}
 .sidebar-home-link{font-weight:800;background:#fff8e7;margin:10px 14px 8px;width:calc(100% - 28px);text-align:left}
 @media(max-width:640px){.home-tiles,.home-plan-grid{grid-template-columns:1fr}}
+
+/* Sammanhängande färgtema för vänster- och övermeny. */
+.planning-layout .planning-sidebar,
+.planning-layout .planning-top-navigation {
+  background: #fff3ce !important;
+  color: #793f4a !important;
+}
+.planning-layout .planning-sidebar {
+  border-right: 1px solid #ebd8ad;
+}
+.planning-layout .planning-top-navigation {
+  border-bottom: 1px solid #ebd8ad;
+}
+.planning-layout .planning-sidebar button,
+.planning-layout .planning-top-navigation button {
+  color: #793f4a;
+}
+.planning-layout .planning-top-navigation .top-navigation-link,
+.planning-layout .planning-sidebar .sidebar-link {
+  border: 1px solid transparent;
+  border-radius: 11px;
+}
+.planning-layout .planning-top-navigation .top-navigation-link:hover,
+.planning-layout .planning-sidebar .sidebar-link:hover {
+  background: #ffebbc;
+}
+.planning-layout .planning-top-navigation .top-navigation-link.active,
+.planning-layout .planning-sidebar .sidebar-link.active {
+  background: #fffaf0 !important;
+  color: #873e4b !important;
+  border-color: #e4a8ad !important;
+  box-shadow: 0 2px 0 rgba(132,62,74,.10);
+}
