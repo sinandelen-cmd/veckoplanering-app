@@ -2433,3 +2433,22 @@ body { background: #fffaf2; color: var(--ink); }
   margin-left:0 !important;
   box-sizing:border-box !important;
 }
+
+/* Samma vänsterkant som lärarvyn: årsöversikten ska inte ligga klistrad vid skärmkanten. */
+@media (min-width:761px) {
+  .planning-layout #lararvy:has(.calendar-page) {
+    transform:none !important;
+    margin-left:clamp(20px, 6vw, 90px) !important;
+    margin-right:auto !important;
+    width:calc(100% - clamp(20px, 6vw, 90px) - 16px) !important;
+    max-width:1180px !important;
+  }
+}
+@media (max-width:760px) {
+  .planning-layout #lararvy:has(.calendar-page) {
+    transform:none !important;
+    margin-left:12px !important;
+    margin-right:12px !important;
+    width:calc(100% - 24px) !important;
+  }
+}
