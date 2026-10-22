@@ -1334,11 +1334,13 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             <label style={{display:"flex",alignItems:"center",gap:7}}>Publicera enligt datum
               <input type="date" aria-label={"Publiceringsdatum för vecka "+week.weekNumber} value={week.publishDate || ""} onChange={e=>updateWeek(index,{publishDate:e.target.value})} />
             </label>
-            <label style={{display:"flex",alignItems:"center",gap:6,fontSize:13,fontWeight:700}}>
-              <input type="checkbox" checked={week.keepVisibleExtra===true} onChange={e=>updateWeek(index,{keepVisibleExtra:e.target.checked})} />
-              Visa denna vecka extra
+            <label>Elevvisning
+              <select aria-label={"Elevvisning vecka "+week.weekNumber} value={week.hidden?"hidden":week.keepVisibleExtra?"extra":"normal"} onChange={e=>updateWeek(index,e.target.value==="hidden"?{hidden:true,keepVisibleExtra:false}:e.target.value==="extra"?{hidden:false,keepVisibleExtra:true}:{hidden:false,keepVisibleExtra:false})}>
+                <option value="normal">Automatisk</option>
+                <option value="extra">Fäst som extra vecka</option>
+                <option value="hidden">Dölj för elever</option>
+              </select>
             </label>
-            <span className="muted" style={{fontSize:12}}>En extra vecka ligger kvar utöver de {plan.visibleWeekCount || 2} senaste, från sitt publiceringsdatum tills du avmarkerar den.</span>
           </div>
           <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><label className="student-visibility-toggle week-heading-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever`} /><span>{week.hidden ? "Visa inte i elevvyn" : "Visa i elevvyn"}</span></label><strong style={{ fontSize: "1.45rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 5 }}>Vecka <input type="number" aria-label="Ändra veckonummer" style={{ width: "3.3ch", minWidth: 66, fontSize: "1.45rem", fontWeight: 800, padding: "4px 6px" }} min="1" max="53" value={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Ändra veckonumret för att flytta veckan och dess datum" onChange={e => {
             const target = Number(e.target.value)
