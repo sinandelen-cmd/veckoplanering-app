@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function Navigation({ active = 'mina', onNavigate, onNew, plans = [], selectedId, getPlanTheme, onOpenPlan, onDeletePlan, onToggleCalendar, calendarOpen = false, onOpenExample, onOpenArchive, isAdmin = false, onOpenAdmin, adminOpen = false, pendingCount = 0, onCloseAdmin }) {
+export default function Navigation({ active = 'mina', onNavigate, onNew, plans = [], selectedId, getPlanTheme, onOpenPlan, onDeletePlan, onToggleCalendar, calendarOpen = false, onOpenExample, onOpenArchive, isAdmin = false, onOpenAdmin, adminOpen = false, pendingCount = 0, onCloseAdmin, onSignOut }) {
   const [expandedPlans, setExpandedPlans] = useState({})
   const subjectIcon = title => {
     const name = String(title || '').toLocaleLowerCase('sv')
@@ -51,6 +51,7 @@ export default function Navigation({ active = 'mina', onNavigate, onNew, plans =
       </section>}
       <button type="button" className="sidebar-link sidebar-archive-link" onClick={() => { onCloseAdmin?.(); onOpenArchive?.() }}>Arkiv</button>
       {isAdmin && <button type="button" className="sidebar-link sidebar-admin-link" style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, borderTop: "1px solid #ddd", paddingTop: 14 }} onClick={onOpenAdmin} aria-label="Administration" aria-expanded={adminOpen} title="Administration"><span>⚙ Administration</span>{pendingCount > 0 && <span aria-label={`${pendingCount} väntande ansökningar`} style={{ background: "#253c58", color: "white", borderRadius: 999, padding: "2px 8px", fontSize: 12, fontWeight: 700 }}>{pendingCount}</span>}</button>}
+      <button type="button" className="sidebar-link sidebar-signout-link" onClick={onSignOut} style={{marginTop:12,borderTop:"1px solid #e4d7c5",paddingTop:14,fontWeight:750}}>🚪 Logga ut</button>
     </aside>
     <nav className="planning-top-navigation planning-view-switcher" aria-label="Vyer för öppen planering" role="tablist">
       {selectedId && active !== "new" && <button type="button" className={calendarOpen && active !== "elevvy" ? "top-navigation-link active" : "top-navigation-link"} role="tab" aria-selected={calendarOpen && active !== "elevvy"} onClick={() => { onCloseAdmin?.(); onToggleCalendar?.() }}><span aria-hidden="true">▦</span> Kalendervy</button>}
