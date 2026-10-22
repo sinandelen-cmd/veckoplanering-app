@@ -179,6 +179,20 @@ function planThemeStyle(plan, fallback = '') {
   const theme = planTheme(plan, fallback)
   return { '--plan-light': theme.light, '--plan-soft': theme.soft, '--plan-accent': theme.accent, '--plan-ink': theme.ink }
 }
+function SchoolYearPicker({ value, onChange }) {
+  const currentYear = new Date().getFullYear()
+  const currentStart = new Date().getMonth() >= 7 ? currentYear : currentYear - 1
+  const parsed = Number(String(value || '').match(/\\d{4}/)?.[0])
+  const start = Number.isFinite(parsed) && parsed >= 1 ? parsed : currentStart
+  const choose = year => onChange(`${year}–${year + 1}`)
+  return <div className="school-year-picker">
+    <button type="button" className="secondary" onClick={() => choose(start - 1)} aria-label="Föregående läsår">‹</button>
+    <input type="number" min="1" step="1" aria-label="Läsårets startår" value={start} onChange={e => { const year = Number(e.target.value); if (Number.isInteger(year) && year > 0) choose(year) }} />
+    <span>– {start + 1}</span>
+    <button type="button" className="secondary" onClick={() => choose(start + 1)} aria-label="Nästa läsår">›</button>
+    <button type="button" className="secondary" onClick={() => choose(currentStart)}>Aktuellt läsår</button>
+  </div>
+}
 function emptyPlan() {
   return {
     title: '', subject: '', schoolYear: '', className: '', county: '', municipality: '', schoolForm: '', grade: '', course: '', schoolClosures: [],
@@ -1471,7 +1485,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         <details style={{margin:"10px 0 14px",padding:"10px 12px",border:"1px solid #e1d7c8",borderRadius:10}}>
           <summary style={{cursor:"pointer",fontWeight:600}}>Läsår och startdatum</summary>
           <div className="form-grid" style={{marginTop:12}}>
-            <label>Läsår<input value={plan.schoolYear} onChange={event=>setPlan(p=>({...p,schoolYear:event.target.value}))} placeholder="2026–2027" /></label>
+            <label>Läsår<SchoolYearPicker value={plan.schoolYear} onChange={schoolYear => setPlan(p => ({...p, schoolYear}))} /></label>
             <label>Startdatum<input type="date" required value={plan.startDate} onChange={event=>{if(event.target.value)setPlan(p=>({...p,startDate:mondayOf(`${event.target.value}T12:00:00`),weeksData:[]}))}} /></label>
           </div>
         </details>
@@ -1514,7 +1528,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         </label>
         <label>Ämne<input value={plan.subject} onChange={e => setPlan({ ...plan, subject: e.target.value })} placeholder="Exempelvis matematik" /></label>
         {['gymnasieskola', 'anpassad-gymnasieskola', 'komvux'].includes(plan.schoolForm) && <label>Kurs/nivå<input value={plan.course || ''} onChange={e => setPlan({ ...plan, course: e.target.value })} placeholder="Exempelvis Matematik nivå 1b" /></label>}
-        <label>Läsår<input value={plan.schoolYear} onChange={e => setPlan({ ...plan, schoolYear: e.target.value })} placeholder="2026–2027" /></label>
+        <label>Läsår<SchoolYearPicker value={plan.schoolYear} onChange={schoolYear => setPlan(p => ({...p, schoolYear}))} /></label>
         <label>Klass/grupp<input value={plan.className} onChange={e => setPlan({ ...plan, className: e.target.value })} placeholder="8A" /></label>
         <label>Län/region<select value={plan.county || ''} onChange={e => setPlan(p => ({ ...p, county: e.target.value, municipality: '' }))}>
           <option value="">Välj län/region</option>
