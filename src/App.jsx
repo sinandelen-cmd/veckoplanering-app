@@ -615,16 +615,12 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
         + (topic.pages?.length || 0) * 8 + (topic.assignments?.length || 0) * 10
         + (topic.links?.length || 0) * 10, 0), 0))
   const studentWeeks = Array.isArray(plan?.weeksData) ? [...plan.weeksData]
-    .filter(week => { if (!week || week.hidden) return false; const today = toIsoDate(new Date()); if (week.autoVisibility === true) return today >= week.weekStart && today < addWeeks(week.weekStart, 2); if (week.publishDate && today < week.publishDate) return false; if (week.hideDate && today >= week.hideDate) return false; return true })
+    .filter(week => week && !week.hidden && /^\\d{4}-\\d{2}-\\d{2}$/.test(week.publishDate || '') && week.publishDate <= toIsoDate(new Date()) && (!week.hideDate || week.hideDate > toIsoDate(new Date())))
     .sort((a, b) => weekContentScore(b) - weekContentScore(a))
     .filter((week, index, weeks) => weeks.findIndex(other => (other.weekStart || `number-${other.weekNumber}`) === (week.weekStart || `number-${week.weekNumber}`)) === index)
-    .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || '')) 
-    .filter((week, index, all) => {
-      if (plan?.autoReleaseWeeks !== true) return true
-      const today = toIsoDate(new Date())
-      const released = all.filter(item => (item.publishDate || item.weekStart || '') <= today)
-      return week.keepVisibleExtra === true || released.slice(-Math.max(1, Math.min(12, Number(plan?.visibleWeekCount) || 2))).some(item => item.weekStart === week.weekStart)
-    }) : []
+    .sort((a, b) => (a.publishDate || '').localeCompare(b.publishDate || '') || (a.weekStart || '').localeCompare(b.weekStart || ''))
+    .filter((week, index, all) => plan?.autoReleaseWeeks !== true || week.keepVisibleExtra === true || index >= all.length - Math.max(1, Math.min(12, Number(plan?.visibleWeekCount) || 2)))
+    .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || '')) : []
   const currentStudentWeekStart = mondayOf(new Date())
   const currentStudentWeek = studentWeeks.find(week => week.weekStart === currentStudentWeekStart)
   const upcomingStudentWeek = [...studentWeeks].reverse().find(week => week.weekStart >= currentStudentWeekStart)
