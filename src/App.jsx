@@ -833,6 +833,7 @@ function TeacherResults({ userId }) {
   const [selected, setSelected] = useState(null)
   const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(true)
+  const [mode, setMode] = useState('resultat')
   const refresh = async () => {
     setLoading(true)
     const { data, error } = await supabase.from('teacher_results').select('*').eq('user_id', userId).order('updated_at', { ascending: false })
@@ -842,9 +843,9 @@ function TeacherResults({ userId }) {
   }
   useEffect(() => { refresh() }, [userId])
   const create = async () => {
-    const title = window.prompt('Namn på resultatlistan', 'Ny resultatlista')
+    const title = window.prompt(mode === 'mentor' ? 'Namn på mentorskklass' : 'Namn på klass', mode === 'mentor' ? 'Min mentorskklass' : 'Ny klass')
     if (!title?.trim()) return
-    const { data, error } = await supabase.from('teacher_results').insert({ user_id: userId, title: title.trim() }).select().single()
+    const { data, error } = await supabase.from('teacher_results').insert({ user_id: userId, title: title.trim(), subject: mode === 'mentor' ? 'Mentorskap' : '' }).select().single()
     if (error) return setNotice('Kunde inte skapa: ' + error.message)
     setSelected(data); setLists(prev => [data, ...prev]); setNotice('Resultatlistan skapades.')
   }
@@ -861,12 +862,27 @@ function TeacherResults({ userId }) {
     setLists(prev => prev.filter(item => item.id !== selected.id)); setSelected(null); setNotice('Resultatlistan raderades.')
   }
   const changeRow = (index, field, value) => setSelected(prev => ({ ...prev, results: (prev.results || []).map((row, i) => i === index ? { ...row, [field]: value } : row) }))
-  return <section className="card" aria-label="Resultat" style={{ maxWidth: 1120 }}>
-    <h2>📊 RESULTAT – Elevkompassen</h2>
-    <p>Skapa resultatlistor för dina klasser. Endast ditt lärarkonto har åtkomst till dessa uppgifter.</p>
-    <div className="button-row"><button type="button" className="primary" onClick={create}>+ Ny resultatlista</button><button type="button" className="secondary" onClick={refresh}>↻ Uppdatera listan</button></div>
-    {notice && <p role="status" className="status">{notice}</p>}
-    {loading ? <p>Laddar resultat…</p> : <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '15px 0' }}>{lists.length === 0 && <p>Inga resultatlistor ännu. Skapa din första ovan.</p>}{lists.map(item => <button key={item.id} type="button" className={selected?.id === item.id ? 'primary' : 'secondary'} onClick={() => { setSelected(item); setNotice('') }}>{item.title} {item.class_name ? '– ' + item.class_name : ''}</button>)}</div>}
+  const filtered = lists.filter(item => mode === 'mentor' ? item.subject === 'Mentorskap' : item.subject !== 'Mentorskap')
+  return <section aria-label="Resultat och mentorskap">
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(290px,1fr))',gap:14,marginBottom:18}}>
+      <article style={{background:'#fff',border:'1px solid #e9e1df',borderTop:'3px solid #a23864',borderRadius:12,padding:18,boxShadow:'0 2px 8px #0000000b'}}>
+        <h2 style={{fontSize:19,margin:'0 0 5px'}}>📊 Resultatregistrering</h2>
+        <p style={{fontSize:13,margin:'0 0 12px'}}>Alla klasser och ämnen du undervisar i – en flik per klass.</p>
+        <p style={{fontSize:13}}>{lists.filter(item => item.subject !== 'Mentorskap').length === 0 ? 'Inga klasser ännu. Skapa din första klass – sedan läggs alla dina klasser här som flikar.' : lists.filter(item => item.subject !== 'Mentorskap').length + ' klasser registrerade.'}</p>
+        <button type="button" onClick={() => {setMode('resultat');setSelected(null);setTimeout(() => document.getElementById('resultat-skapa-klass')?.click(),0)}} style={{background:'#98365e',color:'#fff',border:0,borderRadius:7,padding:'10px 16px',fontWeight:700}}>+ Skapa klass</button>
+      </article>
+      <article style={{background:'#fff',border:'1px solid #e9e1df',borderTop:'3px solid #316396',borderRadius:12,padding:18,boxShadow:'0 2px 8px #0000000b'}}>
+        <h2 style={{fontSize:19,margin:'0 0 5px'}}>🧭 Mentorskap</h2>
+        <p style={{fontSize:13,margin:'0 0 12px'}}>Översikt, läget i alla ämnen, närvaro, samtalslogg, incidenter, händelser och utvecklingssamtal.</p>
+        <p style={{fontSize:13}}>{lists.filter(item => item.subject === 'Mentorskap').length === 0 ? 'Ingen mentorskklass ännu. Skapa en klass och kryssa i Jag är mentor.' : lists.filter(item => item.subject === 'Mentorskap').length + ' mentorskklasser registrerade.'}</p>
+        <button type="button" onClick={() => {setMode('mentor');setSelected(null);setTimeout(() => document.getElementById('resultat-skapa-klass')?.click(),0)}} style={{background:'#316396',color:'#fff',border:0,borderRadius:7,padding:'10px 16px',fontWeight:700}}>+ Skapa mentorskklass</button>
+      </article>
+    </div>
+    <div className="card">
+      <h2>{mode === 'mentor' ? '🧭 Mentorskap' : '📊 Resultatregistrering'}</h2>
+      <div className="button-row"><button type="button" className="secondary" onClick={() => {setMode('resultat');setSelected(null)}}>Resultatregistrering</button><button type="button" className="secondary" onClick={() => {setMode('mentor');setSelected(null)}}>Mentorskap</button><button id="resultat-skapa-klass" type="button" onClick={create}>+ Skapa {mode === 'mentor' ? 'mentorskklass' : 'klass'}</button><button type="button" className="secondary" onClick={refresh}>↻ Uppdatera</button></div>
+      {notice && <p role="status" className="status">{notice}</p>}
+      {loading ? <p>Laddar…</p> : <div style={{display:'flex',flexWrap:'wrap',gap:8,margin:'15px 0'}}>{filtered.length === 0 && <p>Inga klasser ännu.</p>}{filtered.map(item => <button key={item.id} type="button" className={selected?.id === item.id ? 'primary' : 'secondary'} onClick={() => {setSelected(item);setNotice('')}}>{item.title}</button>)}</div>}
     {selected && <div style={{ borderTop: '1px solid #e7d6b5', paddingTop: 18 }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
         <label>Resultatlista<input aria-label="Resultatlistans namn" value={selected.title} onChange={e => setSelected(p => ({ ...p, title: e.target.value }))} /></label>
@@ -885,6 +901,7 @@ function TeacherResults({ userId }) {
       </div>
       <p className="muted">Spara när du har ändrat något. Detta är första versionen av resultatdelen; den fullständiga HTML-mallen integreras separat.</p>
     </div>}
+    </div>
   </section>
 }
 
@@ -1887,15 +1904,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     {previewStudents && <section className="student-preview-clean" id="elevvy"><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
 
     </div>
-    <div className="teacher-tab-panel" hidden={teacherTab !== "resultat"}>
-      <section className="card" aria-label="Elevkompassen" style={{marginBottom:16}}>
-        <h2>📊 Elevkompassen – Provresultat</h2>
-        <p>Din uppladdade resultatmall visas nedan. Den körs avskilt från Årsplaneringen för att skydda andra lärares uppgifter.</p>
-        <p className="muted">Observera: Mallens egen lokala sparning är ännu inte ansluten till Supabase. Använd resultatlistorna längre ner för uppgifter som ska sparas säkert i ditt lärarkonto.</p>
-        <iframe title="Elevkompassen – Provresultat" src="/Provresultat_tom_mall_50.html#sida-prov" sandbox="allow-scripts allow-forms allow-downloads allow-modals" referrerPolicy="no-referrer" style={{display:'block',width:'100%',height:'75vh',minHeight:600,border:'1px solid #e7d6b5',borderRadius:12,background:'#fff'}} />
-      </section>
-      <TeacherResults userId={session.user.id} />
-    </div>
+    <div className="teacher-tab-panel" hidden={teacherTab !== "resultat"}><TeacherResults userId={session.user.id} /></div>
     <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
     <section className="card" id="mina-arsplaneringar">
       <div className="section-heading"><div><p className="eyebrow">MIN STARTSIDA</p><h2>Alla mina planeringar</h2><p className="muted">Öppna en planering nedan eller välj en funktion.</p></div></div>
