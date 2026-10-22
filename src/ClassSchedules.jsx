@@ -46,7 +46,8 @@ export default function ClassSchedules({ plan, onChange }) {
   const [days, setDays] = React.useState([])
   const [selected, setSelected] = React.useState(0)
   const [showAll, setShowAll] = React.useState(false)
-  const [compare, setCompare] = React.useState(false)
+  const [compare, setCompare] = React.useState(true)
+  const [showClassDetails, setShowClassDetails] = React.useState(false)
   const [selectedComparisonWeek, setComparisonWeek] = React.useState(0)
   const [editing, setEditing] = React.useState(null)
   const [editText, setEditText] = React.useState('')
@@ -126,6 +127,8 @@ export default function ClassSchedules({ plan, onChange }) {
       </div></div>}
     </div>}
     {group && !compare && <>
+      <button type="button" className="secondary" onClick={() => setShowClassDetails(v => !v)} aria-expanded={showClassDetails} style={{margin:'12px 0'}}>{showClassDetails ? '▾ Dölj klassens detaljer' : '▸ Visa och ändra klassens detaljer'}</button>
+      {showClassDetails && <>
       <h3>{group.name} – eget lektionsschema</h3>
       <p><strong>{lessonsPerWeek(group)} lektioner per vecka.</strong> Ändra antalet för varje dag nedan. En klass kan ha fler eller färre lektioner än de andra.</p>
       <label>Startdatum <input type="date" value={group.startDate || plan.startDate || ''} onChange={e => updateGroup({startDate:e.target.value})} /></label>
@@ -166,6 +169,7 @@ export default function ClassSchedules({ plan, onChange }) {
       {group.overrides && Object.keys(group.overrides).length>0 && <p className="muted">Egna ändringar är sparade separat för {group.name}. Grundplaneringen och övriga klasser påverkas inte.</p>}
       {grouped.length>8 && <button type="button" className="secondary" onClick={()=>setShowAll(!showAll)}>{showAll?'Visa färre veckor':'Visa alla '+grouped.length+' veckor'}</button>}
       <p className="muted">Ändringarna sparas tillsammans med grundplaneringen när du använder appens vanliga Spara-knapp. Inställda lektioner hoppas inte över.</p>
+      </>
     </>}
   </section>
 }
