@@ -263,12 +263,54 @@ function normalizeLines(text) {
 
 function distributeText(plan, text) {
   const lines = normalizeLines(text)
-  const weeks = makeWeeks(plan)
-  if (!lines.length) return weeks
-  const perWeek = Math.max(1, Math.ceil(lines.length / weeks.length))
-  return weeks.map((week, index) => {
-    const chunk = lines.slice(index * perWeek, (index + 1) * perWeek)
-    return { ...week, content: chunk.join('\n'), items: chunk.map(text => ({ text })) }
+  if (!lines.length) return makeWeeks(plan)
+  const baseWeeks = displayWeeks(plan)
+  const weeklyCapacity = Math.max(1, Math.min(8, Number(plan.lessonsPerWeek) || 5))
+  const weekHeading = /^(?:vecka|v\\.)\\s*(\\d{1,2})(?:\\s*[-–:]\\s*(.*))?$/i
+  const lessonHeading = /^(?:lektion|pass)\\s*(\\d+)(?:\\s*[-–:.]\\s*(.*))?$/i
+  const explicitWeeks = lines.some(line => weekHeading.test(line))
+  const sections = []
+  let current = null
+  let lesson = null
+  for (const line of lines) {
+    const weekMatch = line.match(weekHeading)
+    if (weekMatch) {
+      current = { number: Number(weekMatch[1]), heading: weekMatch[2] || '', lessons: [], notes: [] }
+      sections.push(current); lesson = null
+      continue
+    }
+    if (!current) { current = { number: null, heading: '', lessons: [], notes: [] }; sections.push(current) }
+    const lessonMatch = line.match(lessonHeading)
+    if (lessonMatch) {
+      lesson = { heading: lessonMatch[2] || '', lines: [] }
+      current.lessons.push(lesson)
+    } else if (lesson) lesson.lines.push(line)
+    else if (explicitWeeks) current.notes.push(line)
+    else current.lessons.push({ heading: line, lines: [] })
+  }
+  const units = sections.flatMap(section => {
+    if (section.lessons.length) return section.lessons.map(l => ({...l, section}))
+    return section.notes.map(line => ({heading:line, lines:[], section}))
+  })
+  const grouped = []
+  if (explicitWeeks) {
+    for (const section of sections) {
+      const unitsInSection = units.filter(unit => unit.section === section)
+      if (!unitsInSection.length) continue
+      for (let i=0; i<unitsInSection.length; i+=weeklyCapacity)
+        grouped.push({number:i===0?section.number:null, heading:section.heading, units:unitsInSection.slice(i,i+weeklyCapacity)})
+    }
+  } else {
+    for (let i=0; i<units.length; i+=weeklyCapacity) grouped.push({number:null,heading:'',units:units.slice(i,i+weeklyCapacity)})
+  }
+  return grouped.map((group, index) => {
+    const template = baseWeeks[index] || makeWeeks({...plan,startDate:addWeeks(baseWeeks[0]?.weekStart || plan.startDate,index),startWeek:(Number(plan.startWeek)||1)+index,weeks:1},1)[0]
+    const lessons = group.units.map((unit,i) => ({
+      name: 'Lektion ' + (i+1),
+      day: plan.lessonDays?.[i] || '',
+      topics: [{name:unit.heading || unit.lines[0] || 'Moment',pagesLabel:'',assignmentsLabel:'',pages:[],assignments:[],links:[],description:unit.lines.join('\\n')}]
+    }))
+    return {...template, weekNumber:group.number || template.weekNumber, chapter:group.heading || template.chapter || '', content:group.units.map(u=>[u.heading,...u.lines].filter(Boolean).join('\\n')).join('\\n'), items:group.units.map(u=>({text:[u.heading,...u.lines].filter(Boolean).join(' — ')})), lessons}
   })
 }
 
