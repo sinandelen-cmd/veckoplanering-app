@@ -862,6 +862,14 @@ function TeacherResults({ userId }) {
     setLists(prev => prev.filter(item => item.id !== selected.id)); setSelected(null); setNotice('Resultatlistan raderades.')
   }
   const changeRow = (index, field, value) => setSelected(prev => ({ ...prev, results: (prev.results || []).map((row, i) => i === index ? { ...row, [field]: value } : row) }))
+  const pasteStudents = () => {
+    if (!selected) return
+    const pasted = window.prompt('Klistra in elevnamn – ett namn per rad:')
+    if (!pasted?.trim()) return
+    const names = pasted.split(String.fromCharCode(10)).map(name => name.trim()).filter(Boolean)
+    setSelected(prev => ({ ...prev, results: [...(Array.isArray(prev.results) ? prev.results : []), ...names.map(student => ({ student, assessment: '', score: '', comment: '' }))] }))
+    setNotice(names.length + ' elever tillagda. Spara resultat för att behålla ändringarna.')
+  }
   const filtered = lists.filter(item => mode === 'mentor' ? item.subject === 'Mentorskap' : item.subject !== 'Mentorskap')
   return <section aria-label="Resultat och mentorskap">
     <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(290px,1fr))',gap:14,marginBottom:18}}>
@@ -880,9 +888,9 @@ function TeacherResults({ userId }) {
     </div>
     <div className="card">
       <h2>{mode === 'mentor' ? '🧭 Mentorskap' : '📊 Resultatregistrering'}</h2>
-      <div className="button-row"><button type="button" className="secondary" onClick={() => {setMode('resultat');setSelected(null)}}>Resultatregistrering</button><button type="button" className="secondary" onClick={() => {setMode('mentor');setSelected(null)}}>Mentorskap</button><button id="resultat-skapa-klass" type="button" onClick={create}>+ Skapa {mode === 'mentor' ? 'mentorskklass' : 'klass'}</button><button type="button" className="secondary" onClick={refresh}>↻ Uppdatera</button></div>
+      <div className="button-row"><button type="button" className="secondary" onClick={() => {setMode('resultat');setSelected(null)}}>Resultatregistrering</button><button type="button" className="secondary" onClick={() => {setMode('mentor');setSelected(null)}}>Mentorskap</button><button id="resultat-skapa-klass" type="button" onClick={create}>+ Skapa {mode === 'mentor' ? 'mentorskklass' : 'klass'}</button><button type="button" className="secondary" disabled={!selected} onClick={pasteStudents}>Klistra in elevlista</button><button type="button" className="secondary" onClick={() => window.print()}>Skriv ut</button><button type="button" className="secondary" onClick={refresh}>↻ Uppdatera</button></div>
       {notice && <p role="status" className="status">{notice}</p>}
-      {loading ? <p>Laddar…</p> : <div style={{display:'flex',flexWrap:'wrap',gap:8,margin:'15px 0'}}>{filtered.length === 0 && <p>Inga klasser ännu.</p>}{filtered.map(item => <button key={item.id} type="button" className={selected?.id === item.id ? 'primary' : 'secondary'} onClick={() => {setSelected(item);setNotice('')}}>{item.title}</button>)}</div>}
+      {loading ? <p>Laddar…</p> : <div role="tablist" aria-label="Klasser" style={{display:'flex',flexWrap:'wrap',gap:4,margin:'15px 0',borderBottom:'2px solid #98365e'}}>{filtered.length === 0 && <p>Inga klasser ännu.</p>}{filtered.map(item => <button key={item.id} type="button" role="tab" aria-selected={selected?.id === item.id} style={{borderRadius:"8px 8px 0 0",padding:"10px 16px",fontWeight:700,background:selected?.id === item.id ? "#98365e" : "#fff",color:selected?.id === item.id ? "#fff" : "#66334a",border:"1px solid #d9bdc7"}} onClick={() => {setSelected(item);setNotice('')}}>{item.title}</button>)}</div>}
     {selected && <div style={{ borderTop: '1px solid #e7d6b5', paddingTop: 18 }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
         <label>Resultatlista<input aria-label="Resultatlistans namn" value={selected.title} onChange={e => setSelected(p => ({ ...p, title: e.target.value }))} /></label>
