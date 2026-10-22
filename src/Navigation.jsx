@@ -34,7 +34,6 @@ export default function Navigation({ active = 'mina', onNavigate, onNew, plans =
           <button type="button" className={selectedId===row.id?'sidebar-plan selected':'sidebar-plan'} style={{display:"block",width:"100%",minWidth:0,textAlign:"left"}} onClick={()=>{onCloseAdmin?.();onOpenPlan?.(row)}} title={"Öppna "+(row.title||"planering")}><span aria-hidden="true" style={{marginRight:7}}>{subjectIcon(row.title)}</span>{row.title||"Utan namn"}</button>
         </div>)}
       </div>
-      <button type="button" className="sidebar-link sidebar-results-link" aria-current={active === "resultat" ? "page" : undefined} onClick={() => { onCloseAdmin?.(); onNavigate?.("resultat") }} style={{display:"flex",alignItems:"center",gap:8,marginTop:14,marginBottom:8,fontWeight:750}}>📊 RESULTAT</button>
       {examples.some(example => !hiddenExamples.includes(example.id)) && <section aria-label="Exempelplaneringar" style={{marginTop:18,marginBottom:14}}>
         <div className="sidebar-brand" style={{marginBottom:8}}>Exempelplaneringar</div>
         <p style={{fontSize:12,opacity:.75,margin:"0 8px 10px"}}>Testexempel – påverkar inte dina sparade planeringar.</p>
