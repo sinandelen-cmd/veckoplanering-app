@@ -2344,3 +2344,9 @@ body { background: #fffaf2; color: var(--ink); }
 .library-item .library-actions button { min-height:36px; padding:8px 10px !important; font-size:12px !important; line-height:1.15; }
 .library-actions .library-action-rename { background:#fff5d9 !important; color:#76551d !important; border-color:#dfc27e !important; }
 @media (max-width:1050px) { .library-item .library-actions { justify-content:flex-start; } }
+
+.library-history-toolbar { display:inline-flex; align-items:center; flex-wrap:wrap; gap:7px; margin-left:auto; }
+.library-history-toolbar button { padding:8px 12px !important; border:1px solid #b9c9dd !important; border-radius:9px !important; background:#eaf2ff !important; color:#24496e !important; font-size:13px !important; font-weight:750 !important; }
+.library-history-toolbar button:disabled { opacity:.45; cursor:not-allowed; }
+@media(max-width:650px) { .library-history-toolbar { margin-left:0; width:100%; } }
+@media print { .library-history-toolbar { display:none !important; } }
