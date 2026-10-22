@@ -73,10 +73,10 @@ export default function ClassSchedules({ plan, onChange }) {
     <h2>Planera en gång – fördela till dina klasser</h2>
     <p><strong>En grundplanering – flera klasser.</strong> Skriv lektionsinnehållet en gång. Varje klass får sedan samma lektioner i rätt ordning, på sina egna veckodagar och i sin egen takt.</p>
     <p className="muted">Exempel: 8A kan ha 3 lektioner på måndag, onsdag och fredag, medan 8B har 2 på tisdag och torsdag. Båda följer samma innehåll, men blir klara olika veckor.</p>
-    <div style={{display:"flex",gap:10,alignItems:"end",flexWrap:"wrap",margin:"16px 0"}}>
+    {groups.length===0 && <div style={{display:"flex",gap:10,alignItems:"end",flexWrap:"wrap",margin:"16px 0"}}>
       <label style={{flex:"1 1 180px"}}>Klassens namn<input value={name} onChange={e=>setName(e.target.value)} placeholder="Exempel: 8A" /></label>
       <button type="button" disabled={!name.trim()||groups.some(g=>g.name.toLocaleLowerCase('sv')===name.trim().toLocaleLowerCase('sv'))} onClick={addClass}>+ Lägg till klass</button>
-    </div>
+    </div>}
     {groups.length>0 && <div style={{overflowX:"auto",margin:"14px 0 20px"}}>
       <h3>Klassernas veckoschema</h3>
       <p className="muted">Kryssa i de dagar varje klass har lektion. En bock betyder en lektion den dagen. För flera lektioner samma dag kan du välja klassen och ändra antalet längre ned.</p>
@@ -85,6 +85,7 @@ export default function ClassSchedules({ plan, onChange }) {
         <tbody>{groups.map((g,i)=><tr key={i}><th style={{textAlign:"left",padding:8,background:"#f7f6f0",borderRadius:6}}>{g.name}</th>{DAYS.map(day=><td key={day} style={{textAlign:"center",background:(g.days||[]).includes(day)?"#e2f3e5":"#f7f6f0",borderRadius:6,padding:8}}>
           <input aria-label={g.name+" "+day} type="checkbox" checked={(g.days||[]).includes(day)} onChange={e=>onChange({...plan,classGroups:groups.map((row,idx)=>idx===i?{...row,days:e.target.checked?[...(row.days||[]),day].sort((x,y)=>DAYS.indexOf(x)-DAYS.indexOf(y)):(row.days||[]).filter(d=>d!==day)}:row)})} />
         </td>)}<td style={{textAlign:"center",fontWeight:700}}>{(g.days||[]).length}</td></tr>)}</tbody>
+        <tfoot><tr><td colSpan={7} style={{padding:"14px 6px 4px",borderTop:"2px solid #d8e5dc"}}><div style={{display:"flex",gap:10,alignItems:"end",flexWrap:"wrap"}}><label style={{flex:"1 1 180px"}}>Ny klass<input value={name} onChange={e=>setName(e.target.value)} placeholder="Exempel: 8D" /></label><button type="button" disabled={!name.trim()||groups.some(g=>g.name.toLocaleLowerCase('sv')===name.trim().toLocaleLowerCase('sv'))} onClick={addClass}>+ Lägg till klassrad</button></div></td></tr></tfoot>
       </table>
     </div>}
     {groups.length > 0 && <>
