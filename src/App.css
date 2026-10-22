@@ -1912,3 +1912,38 @@ body { background: #fffaf2; color: var(--ink); }
     justify-content: flex-start;
   }
 }
+
+/* Tydligare, större navigering i samma stil på båda sidor. */
+.planning-layout > .planning-sidebar .sidebar-home-link,
+.planning-layout > .planning-sidebar .sidebar-archive-link,
+.planning-layout > .planning-sidebar .sidebar-admin-link,
+.planning-layout > .planning-top-navigation .top-navigation-link {
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+  line-height: 1.35 !important;
+  letter-spacing: .01em;
+  min-height: 54px;
+}
+.planning-layout > .planning-sidebar .sidebar-brand {
+  font-size: 1.1rem !important;
+  font-weight: 850 !important;
+}
+.planning-layout > .planning-sidebar .sidebar-plan {
+  font-size: 1rem !important;
+  font-weight: 750 !important;
+}
+.planning-layout > .planning-top-navigation .top-navigation-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 18px !important;
+}
+.planning-layout > .planning-top-navigation .top-navigation-link > span[aria-hidden] {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+.planning-layout > .planning-sidebar .sidebar-archive-link::before {
+  content: "🗂️";
+  margin-right: 10px;
+  font-size: 1.25rem;
+}
