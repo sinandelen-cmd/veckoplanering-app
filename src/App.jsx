@@ -2016,7 +2016,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     {previewStudents && <section className="student-preview-clean" id="elevvy"><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
 
     </div>
-    <div className="teacher-tab-panel" hidden={teacherTab !== "resultat"}><TeacherResults userId={session.user.id} /></div>
+    <div className="teacher-tab-panel" hidden={teacherTab !== "resultat"}><div style={{display:"flex",justifyContent:"flex-end",padding:"8px 16px"}}><a href="/Provresultat_tom_mall_50.html#sida-prov" target="_blank" rel="noopener noreferrer" style={{color:"#73344c",fontWeight:700,textDecoration:"underline"}}>Öppna Elevkompassens originalresultat ↗</a></div><TeacherResults userId={session.user.id} /></div>
     <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
     <section className="card" id="mina-arsplaneringar">
       <div className="section-heading"><div><p className="eyebrow">MIN STARTSIDA</p><h2>Alla mina planeringar</h2><p className="muted">Öppna en planering nedan eller välj en funktion.</p></div></div>
