@@ -2454,3 +2454,53 @@ body { background: #fffaf2; color: var(--ink); }
     box-sizing:border-box !important;
   }
 }
+
+/* Diskret sparstatus – ingen bred gul informationsremsa. */
+.planning-layout #lararvy .planning-context {
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  width:fit-content !important;
+  max-width:100% !important;
+  min-height:0 !important;
+  margin:8px 0 14px !important;
+  padding:0 !important;
+  border:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+.planning-layout #lararvy .planning-save-state {
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:7px !important;
+  width:auto !important;
+  max-width:100% !important;
+  padding:7px 12px !important;
+  border-radius:999px !important;
+  border:1px solid transparent !important;
+  font-size:12px !important;
+  font-weight:750 !important;
+  line-height:1.4 !important;
+  white-space:normal;
+}
+.planning-layout #lararvy .planning-save-state.saved {
+  background:#e8f5ee !important;
+  border-color:#b7ddc8 !important;
+  color:#215b40 !important;
+}
+.planning-layout #lararvy .planning-save-state.unsaved {
+  background:#fff0d2 !important;
+  border-color:#e8c783 !important;
+  color:#80501e !important;
+}
+.planning-layout #lararvy .planning-save-state.saving {
+  background:#f0eafa !important;
+  border-color:#d5c4ef !important;
+  color:#604783 !important;
+}
+.planning-layout #lararvy .planning-save-state.new {
+  background:#fff4e9 !important;
+  border-color:#eacdb3 !important;
+  color:#825348 !important;
+}
+@media print { .planning-layout #lararvy .planning-context { display:none !important; } }
