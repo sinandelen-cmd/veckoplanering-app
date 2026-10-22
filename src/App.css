@@ -2334,3 +2334,5 @@ body { background: #fffaf2; color: var(--ink); }
 .school-year-picker > span { white-space:nowrap; font-weight:700; }
 .school-year-picker button { padding:8px 11px; border-radius:9px; font-weight:700; }
 .school-year-picker button:last-child { background:#e5f3e9; color:#275c42; }
+
+.library-actions .library-action-publish { background:#dff5e8 !important; color:#176446 !important; border-color:#90c9aa !important; }
