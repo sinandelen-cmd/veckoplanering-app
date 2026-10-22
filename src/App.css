@@ -2398,141 +2398,8 @@ body { background: #fffaf2; color: var(--ink); }
 .calendar-page .calendar-top:not(:has(.calendar-return-overview)) > div:first-child { flex:1 1 100% !important; width:100% !important; min-width:0 !important; }
 .calendar-page .calendar-top:not(:has(.calendar-return-overview)) p { max-width:100% !important; width:auto !important; overflow-wrap:normal !important; }
 
-/* Placera årsöversikten till vänster i arbetsytan i stället för centrerat. */
-@media (min-width:761px) {
-  .planning-layout #lararvy:has(.calendar-page) {
-    margin:16px 0 24px 0 !important;
-    width:min(1180px,100%) !important;
-    max-width:100% !important;
-    margin-left:0 !important;
-    margin-right:auto !important;
-  }
-  .planning-layout #lararvy #teacher-year-calendar {
-    margin-left:0 !important;
-    margin-right:auto !important;
-  }
-}
-
-/* Flytta årsöversikten 3 cm åt vänster på större skärmar. */
-@media (min-width: 1100px) {
-  .planning-layout #lararvy:has(.calendar-page) {
-    transform:translateX(-3cm) !important;
-  }
-}
-
-/* Årsöversikt: vänsterställd utan att innehåll hamnar utanför skärmen. */
-.planning-layout #lararvy:has(.calendar-page) {
-  transform:none !important;
-  margin-left:0 !important;
-  margin-right:auto !important;
-  box-sizing:border-box !important;
-}
-.planning-layout #lararvy #teacher-year-calendar,
-.planning-layout #lararvy #teacher-year-calendar > .calendar-overlay.calendar-page {
-  transform:none !important;
-  margin-left:0 !important;
-  box-sizing:border-box !important;
-}
-
-/* Samma vänsterkant som lärarvyn: årsöversikten ska inte ligga klistrad vid skärmkanten. */
-@media (min-width:761px) {
-  .planning-layout #lararvy:has(.calendar-page) {
-    transform:none !important;
-    margin-left:clamp(20px, 6vw, 90px) !important;
-    margin-right:auto !important;
-    width:calc(100% - clamp(20px, 6vw, 90px) - 16px) !important;
-    max-width:1180px !important;
-  }
-}
-@media (max-width:760px) {
-  .planning-layout #lararvy:has(.calendar-page) {
-    transform:none !important;
-    margin-left:12px !important;
-    margin-right:12px !important;
-    width:calc(100% - 24px) !important;
-  }
-}
-
-/* Gemensamt avstånd mellan vänstermeny och samtliga arbetsvyer. */
-@media screen and (min-width: 751px) {
-  .planning-layout {
-    column-gap: 2cm !important;
-  }
-  .planning-layout > .shell,
-  .planning-layout > .planning-top-navigation {
-    min-width:0;
-    box-sizing:border-box;
-  }
-  /* Årsöversikten använder samma startkant som övriga lärarsidor. */
-  .planning-layout #lararvy:has(.calendar-page) {
-    transform:none !important;
-    margin-left:0 !important;
-    margin-right:auto !important;
-    width:100% !important;
-    max-width:1180px !important;
-  }
-}
-@media screen and (max-width: 750px) {
-  .planning-layout { column-gap:0 !important; }
-}
-
-/* Gemensamt avstånd: 2 cm mellan vänstermeny och arbetsyta på alla lärarsidor. */
-@media screen and (min-width: 751px) {
-  .planning-layout {
-    column-gap:2cm !important;
-    grid-template-columns:245px minmax(0,1fr) !important;
-  }
-  .planning-layout > .shell,
-  .planning-layout > .planning-top-navigation {
-    min-width:0;
-  }
-  /* Årsöversikten följer samma arbetsyta och får ingen extra sidoförskjutning. */
-  .planning-layout #lararvy:has(.calendar-page) {
-    transform:none !important;
-    margin-left:0 !important;
-    margin-right:auto !important;
-    width:100% !important;
-    max-width:1180px !important;
-  }
-}
-@media screen and (max-width:750px) {
-  .planning-layout { column-gap:0 !important; }
-}
-
-/* Sammanhängande vänstermeny och övre meny. Arbetsytan har eget luftigt avstånd. */
-@media screen and (min-width:751px) {
-  .planning-layout { column-gap:0 !important; grid-template-columns:245px minmax(0,1fr) !important; }
-  .planning-layout > .planning-top-navigation {
-    margin-left:0 !important; margin-right:0 !important;
-    width:100% !important; box-sizing:border-box !important;
-  }
-  .planning-layout > .shell {
-    width:calc(100% - 2cm) !important;
-    max-width:calc(1400px - 2cm) !important;
-    margin-left:2cm !important; margin-right:0 !important;
-    box-sizing:border-box !important;
-  }
-}
-.planning-sidebar .sidebar-class-links {
-  display:flex; flex-direction:column; gap:3px;
-  margin:4px 0 10px 10px; padding:4px 0 4px 10px;
-  border-left:2px solid #dfc7a2;
-}
-.planning-sidebar .sidebar-class-link {
-  display:block; width:100%; text-align:left; padding:8px 9px;
-  border:0; border-radius:8px; background:transparent;
-  color:inherit; font-size:13px; font-weight:600;
-  white-space:normal; overflow-wrap:anywhere; cursor:pointer;
-}
-.planning-sidebar .sidebar-class-link:hover,
-.planning-sidebar .sidebar-class-link:focus-visible { background:#fff2ce; color:#653d39; }
-.planning-sidebar .sidebar-class-base { font-weight:750; }
-@media screen and (max-width:750px) {
-  .planning-layout > .shell { width:100% !important; margin:0 !important; }
-  .planning-sidebar .sidebar-class-links { margin-left:4px; }
-}
-
-/* Sammanhängande navigeringsyta, utan vit lucka mellan menyerna. */
+/* ENHETLIG LAYOUT – en regeluppsättning för alla lärarsidor.
+   Menyerna möts utan lucka; arbetsytan börjar alltid 2 cm efter vänstermenyn. */
 @media screen and (min-width:751px) {
   .planning-layout {
     display:grid !important;
@@ -2541,49 +2408,49 @@ body { background: #fffaf2; color: var(--ink); }
   }
   .planning-layout > .planning-sidebar {
     grid-column:1 !important;
-    width:100% !important;
-    min-width:0 !important;
-    box-sizing:border-box !important;
-  }
-  .planning-layout > .planning-top-navigation {
-    grid-column:2 !important;
-    justify-self:stretch !important;
-    margin:0 !important;
-    padding-left:14px !important;
-    width:100% !important;
-    position:relative;
-    background:#fff3ce !important;
-  }
-  .planning-layout > .planning-top-navigation::before {
-    content:"";
-    position:absolute;
-    top:0;bottom:0;left:-2cm;width:2cm;
-    background:#fff3ce;
-    z-index:-1;
-    pointer-events:none;
-  }
-}
-
-/* Menyerna möts kant mot kant; inget tomt mellanrum eller överlapp. */
-@media screen and (min-width:751px) {
-  .planning-layout {
-    grid-template-columns:245px minmax(0,1fr) !important;
-    column-gap:0 !important;
-  }
-  .planning-layout > .planning-sidebar {
     width:245px !important;
     max-width:245px !important;
     margin:0 !important;
-    justify-self:stretch !important;
+    box-sizing:border-box !important;
     background:#fff3ce !important;
   }
   .planning-layout > .planning-top-navigation {
+    grid-column:2 !important;
+    width:100% !important;
     margin:0 !important;
+    padding-left:14px !important;
     left:auto !important;
     transform:none !important;
-    padding-left:14px !important;
-    border-left:0 !important;
+    box-sizing:border-box !important;
     background:#fff3ce !important;
   }
   .planning-layout > .planning-top-navigation::before { display:none !important; }
+  .planning-layout > .shell,
+  .planning-layout #lararvy:has(.calendar-page) {
+    grid-column:2 !important;
+    width:calc(100% - 2cm) !important;
+    max-width:calc(1400px - 2cm) !important;
+    margin:20px 0 24px 2cm !important;
+    padding-left:0 !important;
+    box-sizing:border-box !important;
+    transform:none !important;
+    min-width:0 !important;
+  }
+  .planning-layout #lararvy #teacher-year-calendar {
+    margin-left:0 !important;
+    width:100% !important;
+    max-width:100% !important;
+    transform:none !important;
+  }
+}
+@media screen and (max-width:750px) {
+  .planning-layout { column-gap:0 !important; }
+  .planning-layout > .shell,
+  .planning-layout #lararvy:has(.calendar-page) {
+    width:calc(100% - 24px) !important;
+    max-width:100% !important;
+    margin:12px !important;
+    transform:none !important;
+    box-sizing:border-box !important;
+  }
 }
