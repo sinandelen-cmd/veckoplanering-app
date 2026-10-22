@@ -46,7 +46,7 @@ export default function ClassSchedules({ plan, onChange }) {
   const [days, setDays] = React.useState([])
   const [selected, setSelected] = React.useState(0)
   const [showAll, setShowAll] = React.useState(false)
-  const [showMatrix, setShowMatrix] = React.useState(true)
+  const [showMatrix, setShowMatrix] = React.useState(false)
   const [compare, setCompare] = React.useState(false)
   const [showClassDetails, setShowClassDetails] = React.useState(false)
   const [selectedComparisonWeek, setComparisonWeek] = React.useState(0)
