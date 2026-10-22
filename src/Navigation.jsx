@@ -35,9 +35,9 @@ export default function Navigation({ active = 'mina', onNavigate, onNew, plans =
             {classes.length>0 && <button type="button" aria-label={(expanded?"Dölj":"Visa")+" klasser för "+row.title} aria-expanded={expanded} onClick={()=>setExpandedPlans(p=>({...p,[row.id]:!expanded}))} style={{border:0,background:"transparent",cursor:"pointer",padding:"5px 3px",flexShrink:0}}>{expanded?"▾":"▸"}</button>}
             <button type="button" className={selectedId===row.id?'sidebar-plan selected':'sidebar-plan'} style={{flex:1,minWidth:0,textAlign:"left"}} onClick={()=>{onCloseAdmin?.();if(classes.length>0)setExpandedPlans(p=>({...p,[row.id]:!expanded}));else onOpenPlan?.(row)}} aria-expanded={classes.length>0?expanded:undefined} title={classes.length>0 ? (expanded ? "Dölj klasser" : "Visa klasser") : (row.title||"Utan namn")}><span aria-hidden="true" style={{marginRight:7}}>{subjectIcon(row.title)}</span>{row.title||"Utan namn"}</button>
           </div>
-          {classes.length>0 && expanded && <div style={{margin:"4px 0 8px 19px",paddingLeft:9,borderLeft:"2px solid #d8c7a1"}}>
-            <button type="button" onClick={()=>{onCloseAdmin?.();onOpenPlan?.(row)}} style={{display:"block",border:0,background:"transparent",padding:"6px 4px",cursor:"pointer",textAlign:"left",fontSize:13}}>📖 Grundplanering</button>
-            {classes.map((g,i)=><button key={i} type="button" onClick={()=>{onCloseAdmin?.();onOpenPlan?.(row,g.name)}} style={{display:"block",width:"100%",border:0,background:"transparent",padding:"6px 4px",cursor:"pointer",textAlign:"left",fontSize:13}}>↳ {g.name}</button>)}
+          {classes.length>0 && expanded && <div className="sidebar-class-links" aria-label={"Klasser i " + (row.title || "planeringen")}>
+            <button type="button" className="sidebar-class-link sidebar-class-base" onClick={()=>{onCloseAdmin?.();onOpenPlan?.(row)}}>📖 Grundplanering</button>
+            {classes.map((g,i)=><button key={i} type="button" className="sidebar-class-link" onClick={()=>{onCloseAdmin?.();onOpenPlan?.(row,g.name)}}>👥 {g.name}</button>)}
           </div>}
         </div>})}
       </div>
