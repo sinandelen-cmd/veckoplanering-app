@@ -2504,3 +2504,8 @@ body { background: #fffaf2; color: var(--ink); }
   color:#825348 !important;
 }
 @media print { .planning-layout #lararvy .planning-context { display:none !important; } }
+
+.calendar-overview-history { display:flex; align-items:center; justify-content:flex-start; margin:10px 0 0; }
+.calendar-overview-history button { display:inline-flex; align-items:center; gap:6px; padding:8px 14px !important; border:1px solid #d1c0e2 !important; border-radius:9px !important; background:#f2ecfa !important; color:#694583 !important; font-size:13px !important; font-weight:750 !important; }
+.calendar-overview-history button:disabled { opacity:.48; cursor:not-allowed; }
+@media print { .calendar-overview-history { display:none !important; } }
