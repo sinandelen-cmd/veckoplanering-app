@@ -2336,3 +2336,11 @@ body { background: #fffaf2; color: var(--ink); }
 .school-year-picker button:last-child { background:#e5f3e9; color:#275c42; }
 
 .library-actions .library-action-publish { background:#dff5e8 !important; color:#176446 !important; border-color:#90c9aa !important; }
+
+/* Sparade planeringar: tydlig ordning, konsekventa storlekar och plats för namnet. */
+.library-item { gap:16px !important; }
+.library-item > div:first-child { flex:1 1 220px; min-width:0; }
+.library-item .library-actions { display:flex !important; align-items:center; justify-content:flex-end; flex:0 1 auto; gap:6px !important; flex-wrap:wrap; }
+.library-item .library-actions button { min-height:36px; padding:8px 10px !important; font-size:12px !important; line-height:1.15; }
+.library-actions .library-action-rename { background:#fff5d9 !important; color:#76551d !important; border-color:#dfc27e !important; }
+@media (max-width:1050px) { .library-item .library-actions { justify-content:flex-start; } }
