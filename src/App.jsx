@@ -834,6 +834,30 @@ function TeacherResults({ userId }) {
   const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState('resultat')
+  const [resultHistory, setResultHistory] = useState({ past: [], future: [] })
+  const editSelected = updater => {
+    setSelected(previous => {
+      if (!previous) return previous
+      const next = updater(previous)
+      if (JSON.stringify(next) !== JSON.stringify(previous)) {
+        setResultHistory(history => ({ past: [...history.past.slice(-49), previous], future: [] }))
+      }
+      return next
+    })
+  }
+  const undoResult = () => {
+    if (!resultHistory.past.length) return
+    const previous = resultHistory.past[resultHistory.past.length - 1]
+    setResultHistory(history => ({ past: history.past.slice(0, -1), future: selected ? [selected, ...history.future] : history.future }))
+    setSelected(previous)
+  }
+  const redoResult = () => {
+    if (!resultHistory.future.length) return
+    const next = resultHistory.future[0]
+    setResultHistory(history => ({ past: selected ? [...history.past, selected] : history.past, future: history.future.slice(1) }))
+    setSelected(next)
+  }
+
   const refresh = async () => {
     setLoading(true)
     const { data, error } = await supabase.from('teacher_results').select('*').eq('user_id', userId).order('updated_at', { ascending: false })
@@ -847,7 +871,7 @@ function TeacherResults({ userId }) {
     if (!title?.trim()) return
     const { data, error } = await supabase.from('teacher_results').insert({ user_id: userId, title: title.trim(), subject: mode === 'mentor' ? 'Mentorskap' : '' }).select().single()
     if (error) return setNotice('Kunde inte skapa: ' + error.message)
-    setSelected(data); setLists(prev => [data, ...prev]); setNotice('Resultatlistan skapades.')
+    setSelected(data); setResultHistory({past:[],future:[]}); setLists(prev => [data, ...prev]); setNotice('Resultatlistan skapades.')
   }
   const save = async () => {
     if (!selected) return
@@ -861,13 +885,13 @@ function TeacherResults({ userId }) {
     if (error) return setNotice('Kunde inte radera: ' + error.message)
     setLists(prev => prev.filter(item => item.id !== selected.id)); setSelected(null); setNotice('Resultatlistan raderades.')
   }
-  const changeRow = (index, field, value) => setSelected(prev => ({ ...prev, results: (prev.results || []).map((row, i) => i === index ? { ...row, [field]: value } : row) }))
+  const changeRow = (index, field, value) => editSelected(prev => ({ ...prev, results: (prev.results || []).map((row, i) => i === index ? { ...row, [field]: value } : row) }))
   const pasteStudents = () => {
     if (!selected) return
     const pasted = window.prompt('Klistra in elevnamn – ett namn per rad:')
     if (!pasted?.trim()) return
     const names = pasted.split(String.fromCharCode(10)).map(name => name.trim()).filter(Boolean)
-    setSelected(prev => ({ ...prev, results: [...(Array.isArray(prev.results) ? prev.results : []), ...names.map(student => ({ student, assessment: '', score: '', comment: '' }))] }))
+    editSelected(prev => ({ ...prev, results: [...(Array.isArray(prev.results) ? prev.results : []), ...names.map(student => ({ student, assessment: '', score: '', comment: '' }))] }))
     setNotice(names.length + ' elever tillagda. Spara resultat för att behålla ändringarna.')
   }
   const exportResults = () => {
@@ -900,22 +924,22 @@ function TeacherResults({ userId }) {
     </div>
     <div className="card">
       <h2>{mode === 'mentor' ? '🧭 Mentorskap' : '📊 Resultatregistrering'}</h2>
-      <div className="button-row"><button type="button" className="secondary" onClick={() => {setMode('resultat');setSelected(null)}}>Resultatregistrering</button><button type="button" className="secondary" onClick={() => {setMode('mentor');setSelected(null)}}>Mentorskap</button><button id="resultat-skapa-klass" type="button" onClick={create}>+ Skapa {mode === 'mentor' ? 'mentorskklass' : 'klass'}</button><button type="button" className="secondary" disabled={!selected} onClick={pasteStudents}>Klistra in elevlista</button><button type="button" className="secondary" onClick={() => window.print()}>Skriv ut</button><button type="button" className="secondary" disabled={!selected} onClick={exportResults}>Exportera CSV</button><button type="button" className="secondary" onClick={refresh}>↻ Uppdatera</button></div>
+      <div className="button-row"><button type="button" className="secondary" onClick={() => {setMode('resultat');setSelected(null)}}>Resultatregistrering</button><button type="button" className="secondary" onClick={() => {setMode('mentor');setSelected(null)}}>Mentorskap</button><button id="resultat-skapa-klass" type="button" onClick={create}>+ Skapa {mode === 'mentor' ? 'mentorskklass' : 'klass'}</button><button type="button" className="secondary" disabled={!resultHistory.past.length} onClick={undoResult}>↶ Ångra</button><button type="button" className="secondary" disabled={!resultHistory.future.length} onClick={redoResult}>↷ Gör om</button><button type="button" className="secondary" disabled={!selected} onClick={pasteStudents}>Klistra in elevlista</button><button type="button" className="secondary" onClick={() => window.print()}>Skriv ut</button><button type="button" className="secondary" disabled={!selected} onClick={exportResults}>Exportera CSV</button><button type="button" className="secondary" onClick={refresh}>↻ Uppdatera</button></div>
       {notice && <p role="status" className="status">{notice}</p>}
-      {loading ? <p>Laddar…</p> : <div role="tablist" aria-label="Klasser" style={{display:'flex',flexWrap:'wrap',gap:4,margin:'15px 0',borderBottom:'2px solid #98365e'}}>{filtered.length === 0 && <p>Inga klasser ännu.</p>}{filtered.map(item => <button key={item.id} type="button" role="tab" aria-selected={selected?.id === item.id} style={{borderRadius:"8px 8px 0 0",padding:"10px 16px",fontWeight:700,background:selected?.id === item.id ? "#98365e" : "#fff",color:selected?.id === item.id ? "#fff" : "#66334a",border:"1px solid #d9bdc7"}} onClick={() => {setSelected(item);setNotice('')}}>{item.title}</button>)}</div>}
+      {loading ? <p>Laddar…</p> : <div role="tablist" aria-label="Klasser" style={{display:'flex',flexWrap:'wrap',gap:4,margin:'15px 0',borderBottom:'2px solid #98365e'}}>{filtered.length === 0 && <p>Inga klasser ännu.</p>}{filtered.map(item => <button key={item.id} type="button" role="tab" aria-selected={selected?.id === item.id} style={{borderRadius:"8px 8px 0 0",padding:"10px 16px",fontWeight:700,background:selected?.id === item.id ? "#98365e" : "#fff",color:selected?.id === item.id ? "#fff" : "#66334a",border:"1px solid #d9bdc7"}} onClick={() => {setSelected(item);setResultHistory({past:[],future:[]});setNotice('')}}>{item.title}</button>)}</div>}
     {selected && <div style={{ borderTop: '1px solid #e7d6b5', paddingTop: 18 }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-        <label>Resultatlista<input aria-label="Resultatlistans namn" value={selected.title} onChange={e => setSelected(p => ({ ...p, title: e.target.value }))} /></label>
-        <label>Ämne<input aria-label="Ämne" value={selected.subject || ''} onChange={e => setSelected(p => ({ ...p, subject: e.target.value }))} /></label>
-        <label>Klass<input aria-label="Klass" value={selected.class_name || ''} onChange={e => setSelected(p => ({ ...p, class_name: e.target.value }))} /></label>
+        <label>Resultatlista<input aria-label="Resultatlistans namn" value={selected.title} onChange={e => editSelected(p => ({ ...p, title: e.target.value }))} /></label>
+        <label>Ämne<input aria-label="Ämne" value={selected.subject || ''} onChange={e => editSelected(p => ({ ...p, subject: e.target.value }))} /></label>
+        <label>Klass<input aria-label="Klass" value={selected.class_name || ''} onChange={e => editSelected(p => ({ ...p, class_name: e.target.value }))} /></label>
       </div>
       <div style={{ overflowX: 'auto', marginTop: 18 }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}><thead><tr><th>Elev</th><th>Prov / bedömning</th><th>Resultat</th><th>Kommentar</th><th></th></tr></thead><tbody>
-        {(Array.isArray(selected.results) ? selected.results : []).map((row, i) => <tr key={i}>{['student', 'assessment', 'score', 'comment'].map(field => <td key={field} style={{ padding: 5 }}><input style={{ width: '100%', minWidth: field === 'comment' ? 180 : 110 }} aria-label={field + ' rad ' + (i + 1)} value={row[field] || ''} onChange={e => changeRow(i, field, e.target.value)} /></td>)}<td><button type="button" className="secondary" aria-label={'Ta bort rad ' + (i + 1)} onClick={() => setSelected(p => ({ ...p, results: p.results.filter((_, n) => n !== i) }))}>×</button></td></tr>)}
+        {(Array.isArray(selected.results) ? selected.results : []).map((row, i) => <tr key={i}>{['student', 'assessment', 'score', 'comment'].map(field => <td key={field} style={{ padding: 5 }}><input style={{ width: '100%', minWidth: field === 'comment' ? 180 : 110 }} aria-label={field + ' rad ' + (i + 1)} value={row[field] || ''} onChange={e => changeRow(i, field, e.target.value)} /></td>)}<td><button type="button" className="secondary" aria-label={'Ta bort rad ' + (i + 1)} onClick={() => editSelected(p => ({ ...p, results: p.results.filter((_, n) => n !== i) }))}>×</button></td></tr>)}
         </tbody></table>
       </div>
       <div className="button-row" style={{ marginTop: 15 }}>
-        <button type="button" className="secondary" onClick={() => setSelected(p => ({ ...p, results: [...(Array.isArray(p.results) ? p.results : []), { student: '', assessment: '', score: '', comment: '' }] }))}>+ Lägg till elevresultat</button>
+        <button type="button" className="secondary" onClick={() => editSelected(p => ({ ...p, results: [...(Array.isArray(p.results) ? p.results : []), { student: '', assessment: '', score: '', comment: '' }] }))}>+ Lägg till elevresultat</button>
         <button type="button" className="primary" onClick={save}>💾 Spara resultat</button>
         <button type="button" className="secondary" onClick={remove}>Radera resultatlista</button>
       </div>
