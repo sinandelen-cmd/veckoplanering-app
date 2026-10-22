@@ -833,6 +833,42 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const initialPlansLoadedRef = useRef(false)
   const latestPlanRef = useRef(plan)
   useEffect(() => { latestPlanRef.current = plan }, [plan])
+  const historyRef = useRef({ past: [], current: JSON.stringify(plan), future: [] })
+  const historySkipRef = useRef(false)
+  const [historyVersion, setHistoryVersion] = useState(0)
+  useEffect(() => {
+    const next = JSON.stringify(plan)
+    const history = historyRef.current
+    if (next === history.current) return
+    if (historySkipRef.current) {
+      historySkipRef.current = false
+      history.current = next
+      return
+    }
+    history.past.push(history.current)
+    if (history.past.length > 60) history.past.shift()
+    history.current = next
+    history.future = []
+    setHistoryVersion(v => v + 1)
+  }, [plan])
+  const undoPlan = () => {
+    const h = historyRef.current
+    if (!h.past.length) return
+    h.future.unshift(h.current)
+    h.current = h.past.pop()
+    historySkipRef.current = true
+    setPlan(JSON.parse(h.current))
+    setHistoryVersion(v => v + 1)
+  }
+  const redoPlan = () => {
+    const h = historyRef.current
+    if (!h.future.length) return
+    h.past.push(h.current)
+    h.current = h.future.shift()
+    historySkipRef.current = true
+    setPlan(JSON.parse(h.current))
+    setHistoryVersion(v => v + 1)
+  }
   const savedPlanRef = useRef(JSON.stringify(plan))
   const [, setSavedRevision] = useState(0)
   const isDirty = JSON.stringify(plan) !== savedPlanRef.current
@@ -1270,6 +1306,11 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     {teacherTab !== "elevvy" && <header className="topbar">
       <div><h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Startsida" : (plan.title?.trim() || "Ny planering")}</h1><p className="muted">{session.user.email}</p></div>
       
+      {teacherTab === "arsplan" && <div className="edit-history-actions" aria-label="Redigeringsverktyg">
+        <button type="button" className="secondary" disabled={!historyRef.current.past.length} onClick={undoPlan} title="Ångra senaste ändringen">↶ Ångra</button>
+        <button type="button" className="secondary" disabled={!historyRef.current.future.length} onClick={redoPlan} title="Gör om ändringen">↷ Gör om</button>
+        <button type="button" className="secondary" onClick={() => { if (isDirty && !window.confirm("Du har osparade ändringar. Vill du ändå uppdatera sidan?")) return; window.location.reload() }} title="Ladda om sidan">⟳ Uppdatera</button>
+      </div>}
       {selectedId && teacherTab === "arsplan" && <button type="button" className="secondary" onClick={() => { document.body.classList.add("teacher-plan-print"); const cleanup = () => document.body.classList.remove("teacher-plan-print"); window.addEventListener("afterprint", cleanup, { once: true }); window.print(); setTimeout(cleanup, 1500) }}>🖨️ Skriv ut planeringen</button>}
       {selectedId && teacherTab === "arsplan" && <div className="archive-plan-actions" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <button type="button" className="secondary" disabled={busy || !plans.some(row => row.id === selectedId)} style={{ fontSize: '1rem', fontWeight: 850, padding: '13px 18px', borderRadius: 12, background: '#f9e5ed', border: '2px solid #c87e9b', color: '#73394f' }} onClick={() => { const row = plans.find(item => item.id === selectedId); if (row) void setArchived(row, true) }}>🗂 Arkivera planeringen</button>
