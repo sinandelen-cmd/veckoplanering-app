@@ -1868,3 +1868,47 @@ body { background: #fffaf2; color: var(--ink); }
   border: 1px solid #d99aa3 !important;
   box-shadow: 0 2px 0 #eac2c5 !important;
 }
+
+/* Breda rektangulära planeringskort: information och åtgärder på samma rad. */
+.planning-layout .home-plan-grid {
+  display: flex !important;
+  flex-direction: column;
+  gap: 12px;
+}
+.planning-layout .home-plan-grid > .library-item {
+  width: 100%;
+  min-width: 0;
+  min-height: 96px;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 20px;
+  border-radius: 14px;
+}
+.planning-layout .home-plan-grid > .library-item > div:first-child {
+  flex: 1 1 210px;
+  min-width: 150px;
+}
+.planning-layout .home-plan-grid > .library-item > .button-row {
+  display: flex !important;
+  flex: 0 1 auto;
+  width: auto !important;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.planning-layout .home-plan-grid > .library-item > .button-row button {
+  flex: 0 0 auto !important;
+  white-space: nowrap;
+}
+@media (max-width: 850px) {
+  .planning-layout .home-plan-grid > .library-item {
+    flex-wrap: wrap;
+  }
+  .planning-layout .home-plan-grid > .library-item > .button-row {
+    justify-content: flex-start;
+  }
+}
