@@ -792,7 +792,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
           <button type="button" className="calendar-week-tile" onClick={() => { if (embedded) { onOpen?.() } else { setSelectedWeekIndex(index); setSelectedLessonIndex(null) } }} aria-label={`Zooma in vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`}>
           
           <strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>
-          <span className="calendar-tile-date">{formatDate(week.weekStart)}</span>
+          <span className="calendar-tile-date">{new Intl.DateTimeFormat('sv-SE', { day: 'numeric', month: 'short' }).format(new Date(week.weekStart + 'T12:00:00'))}–{new Intl.DateTimeFormat('sv-SE', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(new Date(week.weekStart + 'T12:00:00').getTime() + 6 * 86400000))}</span>
           {schoolClosures.filter(item => validSchoolClosure(item) && item.startDate < addWeeks(week.weekStart, 1) && item.endDate >= week.weekStart).map(item => <span key={item.id} className="calendar-holiday">📅 {item.name}{item.verified ? "" : " · ej verifierat"}</span>)}
           {nationalExams.filter(exam => exam.date >= week.weekStart && exam.date < addWeeks(week.weekStart, 1)).map(exam => <span key={exam.date + exam.subject + exam.part} className="calendar-holiday">🔒 NP {exam.subject} · {formatDate(exam.date)}</span>)}
           
