@@ -2350,3 +2350,13 @@ body { background: #fffaf2; color: var(--ink); }
 .library-history-toolbar button:disabled { opacity:.45; cursor:not-allowed; }
 @media(max-width:650px) { .library-history-toolbar { margin-left:0; width:100%; } }
 @media print { .library-history-toolbar { display:none !important; } }
+
+/* Orientering: tydlig sökning, synliga val och enhetligt fokus. */
+.library-search { display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; margin:15px 0 18px; padding:12px 14px; background:#f7f5f0; border:1px solid #e5dfd4; border-radius:12px; }
+.library-search label { font-weight:750; font-size:13px; color:#65483d; }
+.library-search input { flex:1 1 250px; min-width:170px; max-width:560px; padding:10px 12px; border:1px solid #c8b8a6; border-radius:9px; background:white; }
+.library-search button { padding:9px 12px; }
+.planning-sidebar .sidebar-plan.selected { outline:2px solid var(--item-accent,#a96b40); outline-offset:1px; box-shadow:0 2px 8px #00000012; }
+.planning-sidebar button:focus-visible, .shell button:focus-visible, .shell input:focus-visible { outline:3px solid #347db5 !important; outline-offset:2px !important; }
+@media(max-width:650px) { .library-search { align-items:stretch; } .library-search input { flex-basis:100%; } }
+@media print { .library-search { display:none !important; } }
