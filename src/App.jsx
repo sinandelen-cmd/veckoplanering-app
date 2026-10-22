@@ -1417,7 +1417,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           {teacherTab === "arsplan" && <><span aria-hidden="true">›</span><span aria-current="page">{plan.title?.trim() || "Ny planering"}</span></>}
           {teacherTab === "new" && <><span aria-hidden="true">›</span><span aria-current="page">Ny planering</span></>}
         </nav>
-        <h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Startsida" : (plan.title?.trim() || "Ny planering")}</h1>
+        <h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Startsida" : teacherTab === "resultat" ? "Resultat" : (plan.title?.trim() || "Ny planering")}</h1>
         <p className="muted">{session.user.email}</p>
       </div>
       
@@ -1825,6 +1825,14 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     <div className="teacher-tab-panel" id="panel-elevvy" role="tabpanel" aria-labelledby="tab-elevvy" hidden={teacherTab !== "elevvy"}>
     {previewStudents && <section className="student-preview-clean" id="elevvy"><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
 
+    </div>
+    <div className="teacher-tab-panel" hidden={teacherTab !== "resultat"}>
+      <section className="card" aria-label="Resultat">
+        <h2>📊 RESULTAT</h2>
+        <p>Här kommer Elevkompassen med provresultat och bedömningar att finnas.</p>
+        <p className="muted">Resultatdelen är ännu inte inkopplad. Inga elevuppgifter sparas här förrän den är färdig och säker för varje lärarkonto.</p>
+        <button type="button" className="secondary" onClick={() => setTeacherTab("mina")}>← Tillbaka till startsidan</button>
+      </section>
     </div>
     <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
     <section className="card" id="mina-arsplaneringar">
