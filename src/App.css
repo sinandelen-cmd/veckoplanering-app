@@ -2110,3 +2110,32 @@ body { background: #fffaf2; color: var(--ink); }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Sparade planeringar ska vara en synlig vertikal lista, aldrig en rullgardin. */
+.planning-layout > .planning-sidebar .sidebar-plan-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 7px !important;
+  max-height: none !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+.planning-layout > .planning-sidebar .sidebar-plan-entry {
+  display: block !important;
+  flex: 0 0 auto !important;
+}
+.planning-layout > .planning-sidebar .sidebar-plan-entry > div:first-child {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+.planning-layout > .planning-sidebar .sidebar-plan-entry .sidebar-plan {
+  flex: 1 1 0 !important;
+  min-height: 39px;
+  padding: 9px 8px !important;
+  text-align: left !important;
+}
+.planning-layout > .planning-sidebar {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
