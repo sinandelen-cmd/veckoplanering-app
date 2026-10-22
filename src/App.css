@@ -2563,3 +2563,27 @@ body { background: #fffaf2; color: var(--ink); }
     pointer-events:none;
   }
 }
+
+/* Menyerna möts kant mot kant; inget tomt mellanrum eller överlapp. */
+@media screen and (min-width:751px) {
+  .planning-layout {
+    grid-template-columns:245px minmax(0,1fr) !important;
+    column-gap:0 !important;
+  }
+  .planning-layout > .planning-sidebar {
+    width:245px !important;
+    max-width:245px !important;
+    margin:0 !important;
+    justify-self:stretch !important;
+    background:#fff3ce !important;
+  }
+  .planning-layout > .planning-top-navigation {
+    margin:0 !important;
+    left:auto !important;
+    transform:none !important;
+    padding-left:14px !important;
+    border-left:0 !important;
+    background:#fff3ce !important;
+  }
+  .planning-layout > .planning-top-navigation::before { display:none !important; }
+}
