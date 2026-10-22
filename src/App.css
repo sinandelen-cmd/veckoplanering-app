@@ -2392,3 +2392,8 @@ body { background: #fffaf2; color: var(--ink); }
 .calendar-page .calendar-months { margin-top:12px; }
 .calendar-page .calendar-month-section { padding:14px; border-radius:14px; }
 @media(max-width:640px) { .calendar-page .calendar-top { flex-direction:column; } .calendar-page .calendar-week-heading-row h2 { font-size:25px !important; } .calendar-page .calendar-month-section { padding:10px; } }
+
+/* Rätta årsöversiktens hoptryckta text: tomt zoomfält tog 100 % bredd. */
+.calendar-page .calendar-top:not(:has(.calendar-return-overview)) .calendar-zoom-controls-left { display:none !important; width:0 !important; }
+.calendar-page .calendar-top:not(:has(.calendar-return-overview)) > div:first-child { flex:1 1 100% !important; width:100% !important; min-width:0 !important; }
+.calendar-page .calendar-top:not(:has(.calendar-return-overview)) p { max-width:100% !important; width:auto !important; overflow-wrap:normal !important; }
