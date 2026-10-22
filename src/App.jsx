@@ -852,7 +852,7 @@ function applyElevkompassenTheme(event) {
         --pink: #f7e9ed !important;
         --excel-green: #8c3854 !important;
       }
-      html, body { background: #faf8f3 !important; overflow-y: visible !important; height: auto !important; min-height: 0 !important; }
+      html, body { background: #faf8f3 !important; overflow-y: visible !important; height: auto !important; min-height: 0 !important; }\n      body.ars-compact-overview .toolbar-meta, body.ars-compact-overview #classSummary { display: none !important; }\n      #classSummary { border-radius: 12px !important; }\n      .toolbar-meta { padding: 8px 10px !important; gap: 8px !important; }
       button, input, select, textarea { font-family: inherit; }
       button { transition: background-color .15s ease, box-shadow .15s ease; }
       button:focus-visible, a:focus-visible, input:focus-visible {
@@ -2068,7 +2068,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     {previewStudents && <section className="student-preview-clean" id="elevvy"><StudentView plan={sanitizeForStudents({ ...plan, weeksData: weeks })} preview /></section>}
 
     </div>
-    <div className="teacher-tab-panel" hidden={teacherTab !== "resultat"}><iframe title="Elevkompassen – originalets resultatmatris" src="/Provresultat_tom_mall_50.html#sida-prov" onLoad={applyElevkompassenTheme} style={{display:"block",width:"100%",height:"1200px",border:0,overflow:"hidden",background:"#fff",borderRadius:"12px"}} /></div>
+    <div className="teacher-tab-panel" hidden={teacherTab !== "resultat"}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,padding:"8px 12px",marginBottom:6,background:"#fffaf7",border:"1px solid #e8d9df",borderRadius:10}}><span style={{fontWeight:700,color:"#74384d",fontSize:14}}>Resultatregistrering</span><button type="button" style={{border:"1px solid #d9bdc8",borderRadius:8,padding:"7px 12px",background:"#fff",color:"#74384d",fontWeight:700,cursor:"pointer"}} onClick={event => {const frame=event.currentTarget.closest('.teacher-tab-panel')?.querySelector('iframe');const doc=frame?.contentDocument;if(!doc)return;const collapsed=doc.body.classList.toggle('ars-compact-overview');event.currentTarget.textContent=collapsed?'Visa översikt ▾':'Dölj översikt ▴';}}>Dölj översikt ▴</button></div><iframe title="Elevkompassen – originalets resultatmatris" src="/Provresultat_tom_mall_50.html#sida-prov" onLoad={applyElevkompassenTheme} style={{display:"block",width:"100%",height:"1200px",border:0,overflow:"hidden",background:"#fff",borderRadius:"12px"}} /></div>
     <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
     <section className="card" id="mina-arsplaneringar">
       <div className="section-heading"><div><p className="eyebrow">MIN STARTSIDA</p><h2>Alla mina planeringar</h2><p className="muted">Öppna en planering nedan eller välj en funktion.</p></div></div>
