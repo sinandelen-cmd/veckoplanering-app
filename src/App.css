@@ -2537,3 +2537,36 @@ body { background: #fffaf2; color: var(--ink); }
 .class-lesson-slots{display:flex;flex-direction:column;gap:5px;margin-top:5px}
 .class-lesson-slot{display:flex;align-items:center;justify-content:center;gap:5px;font-size:.78rem;font-weight:700}
 .class-lesson-slot input[type=time]{width:105px;max-width:100%;min-height:34px;padding:4px;border:1px solid #a7b7b0;border-radius:7px;background:#fff;font:inherit}
+
+/* Administratörens startsida: centrerad och lättläst utan att påverka planeringsvyerna. */
+.planning-layout #lararvy.admin-workspace {
+  width: min(1120px, calc(100% - 48px)) !important;
+  max-width: 1120px !important;
+  margin: 28px auto 48px !important;
+  padding: 0 !important;
+  min-width: 0 !important;
+}
+#lararvy.admin-workspace > .card,
+#lararvy.admin-workspace > .app-update-notices {
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+}
+#lararvy.admin-workspace .app-update-notices,
+#lararvy.admin-workspace #admin-teacher-panel {
+  padding: clamp(18px, 2.5vw, 30px);
+  font-size: 15px;
+  line-height: 1.5;
+}
+#lararvy.admin-workspace .app-update-notices label,
+#lararvy.admin-workspace #admin-teacher-panel label { font-size: 14px; }
+#lararvy.admin-workspace .app-update-notices input,
+#lararvy.admin-workspace .app-update-notices textarea,
+#lararvy.admin-workspace .app-update-notices select { min-height: 42px; }
+#lararvy.admin-workspace #admin-teacher-panel { overflow-x: auto; }
+@media (max-width: 750px) {
+  .planning-layout #lararvy.admin-workspace {
+    width: calc(100% - 24px) !important;
+    margin: 12px auto 30px !important;
+  }
+}
