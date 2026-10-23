@@ -270,9 +270,9 @@ assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(true\); setPrevi
 
 // Sidomenyn ska börja med Mina planeringar och använda samma öppna plan för båda vyerna.
 const nav = fs.readFileSync(new URL('../src/Navigation.jsx', import.meta.url), 'utf8')
-assert.match(nav, /planning-sidebar/)
+assert.match(nav, /planning-home-navigation/)
 assert.match(nav, /Mina planeringar/)
-assert.match(nav, /onOpenPlan\?\.\(row\)/, 'Sidomenyn ska kunna öppna vald planering')
+assert.match(app, /rows\.map\(row => <article className="library-item"/, 'Planeringsträdet ska kunna öppna sparade planeringar')
 assert.match(app, /plans=\{plans\.filter\(row => !parseContent\(row\.content\)\?\.archived\)\}/)
 assert.match(app, /onOpenPlan=\{loadPlan\}/)
 assert.match(css, /\.planning-layout/)
