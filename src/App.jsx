@@ -786,7 +786,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
         if(existingTopics.length < requestedMoments) lesson.topics=[...existingTopics,...Array.from({length:requestedMoments-existingTopics.length},()=>({name:'',pages:[],assignments:[],links:[],classMomentPlaceholder:true}))]
         return lesson
       })
-      return {...week,content:'',lessons}
+      return {...week,content:'',items:[],pages:[],assignments:[],links:[],lessons}
     }) : []
 
   useEffect(() => {
