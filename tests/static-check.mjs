@@ -269,10 +269,10 @@ assert.doesNotMatch(app, /className="teacher-tabs"/, 'Dubbla lärarflikar får i
 assert.doesNotMatch(app, /<strong>Sparstatus:<\/strong>/, 'Sparstatus ska inte upprepas')
 assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(true\); setPreviewStudents\(false\); setA4Demo\(false\); setStatus\(className \?/, 'Sparad planering ska öppnas i kalendervyn och A4-demot nollställas')
 
-// Sidomenyn ska börja med Mina planeringar och använda samma öppna plan för båda vyerna.
+// Huvudmenyn ska undvika dubblering av Mina planeringar på startsidan.
 const nav = fs.readFileSync(new URL('../src/Navigation.jsx', import.meta.url), 'utf8')
 assert.match(nav, /planning-home-navigation/)
-assert.match(nav, /Mina planeringar/)
+assert.doesNotMatch(nav, /<button[^\n]*Mina planeringar/, "Mina planeringar ska öppnas via startsidans mapp, inte dubbleras i huvudmenyn")
 assert.match(app, /rows\.map\(row => <article className="library-item"/, 'Planeringsträdet ska kunna öppna sparade planeringar')
 assert.match(app, /plans=\{plans\.filter\(row => !parseContent\(row\.content\)\?\.archived\)\}/)
 assert.match(app, /onOpenPlan=\{loadPlan\}/)
