@@ -3569,3 +3569,23 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  #mina-arsplaneringar .visual-tree-course:before {left:-15px!important;width:15px!important}
  #mina-arsplaneringar .subject-folder-heading>.subject-folder-add {padding:6px 8px!important}
 }
+
+
+/* Tydliga, individuella färger för årskurser och gymnasiekurser. */
+#mina-arsplaneringar .visual-tree-grade-folder>.visual-tree-node,
+#mina-arsplaneringar .course-folder-link {
+ background:hsl(var(--folder-hue,40) 85% 94%)!important;
+ border:1px solid hsl(var(--folder-hue,40) 65% 68%)!important;
+ color:hsl(var(--folder-hue,40) 55% 24%)!important;
+ box-shadow:0 2px 5px #172c3b0b!important;
+ transition:background .15s ease,box-shadow .15s ease,transform .15s ease;
+}
+#mina-arsplaneringar .visual-tree-grade-folder>.visual-tree-node:hover,
+#mina-arsplaneringar .course-folder-link:hover {
+ background:hsl(var(--folder-hue,40) 85% 89%)!important;
+ box-shadow:0 3px 10px #172c3b18!important;
+ transform:translateY(-1px);
+}
+#mina-arsplaneringar .visual-tree-school:has(.school-folder-heading) .course-folder-link {
+ font-weight:650;min-height:42px;
+}
