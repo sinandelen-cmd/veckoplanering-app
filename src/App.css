@@ -3002,3 +3002,40 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #mina-arsplaneringar .planning-board-tools{
   gap:10px;
 }
+
+
+/* Stabil symmetrisk trädkoppling: rotmappen är över båda skolformerna. */
+#mina-arsplaneringar .planning-board>.visual-tree-schools{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  grid-template-rows:auto auto!important;
+  column-gap:22px!important;
+  row-gap:34px!important;
+  position:relative!important;
+}
+#mina-arsplaneringar .planning-board>.visual-tree-schools>.planning-tree-root-row{
+  grid-column:1 / 3!important;
+  grid-row:1!important;
+  justify-self:stretch!important;
+  display:flex!important;
+  justify-content:center!important;
+  align-items:center!important;
+}
+#mina-arsplaneringar .planning-board>.visual-tree-schools>.school-grundskola{
+  grid-column:1!important;grid-row:2!important;
+}
+#mina-arsplaneringar .planning-board>.visual-tree-schools>.school-gymnasiet{
+  grid-column:2!important;grid-row:2!important;
+}
+#mina-arsplaneringar .planning-board>.visual-tree-schools:before{
+  top:calc(46px + 17px)!important;
+  left:25%!important;right:25%!important;
+  height:2px!important;
+  z-index:0!important;
+}
+#mina-arsplaneringar .planning-tree-root-row>.visual-tree-root:after{
+  top:100%!important;height:17px!important;
+}
+#mina-arsplaneringar .planning-board>.visual-tree-schools>.visual-tree-school:before{
+  bottom:100%!important;height:17px!important;
+}
