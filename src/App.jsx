@@ -2139,7 +2139,7 @@ function AnnualApp() {
   async function changeTeacher(userId, action, period = null) {
     if (reviewingUserId) return
     const email = requests.find(item => item.user_id === userId)?.email || 'lärarkontot'
-    if ((action === 'block' || action === 'activate') && !window.confirm(`${action === 'block' ? 'Spärra' : 'Återaktivera'} ${email}?`)) return
+    if ((action === 'block' || action === 'activate') && !window.confirm(`${action === 'block' ? 'Ta bort åtkomsten för' : 'Återge åtkomst till'} ${email}? ${action === 'block' ? 'Lärarens planeringar sparas och kontot kan återaktiveras.' : ''}`)) return
     setReviewingUserId(userId)
     setAdminError('')
     setAdminNotice('')
@@ -2247,13 +2247,14 @@ function AnnualApp() {
       <h3><button type="button" aria-expanded={showApprovedTeachers} aria-controls="approved-teachers-list" onClick={() => setShowApprovedTeachers(value => !value)}>{showApprovedTeachers ? "▾ Dölj" : "▸ Visa"} godkända lärare ({approved.length})</button></h3>
       {showApprovedTeachers && <div id="approved-teachers-list">{approved.length === 0 && <p>Inga kollegor är godkända ännu.</p>}{approved.map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – ✓ Godkänd</div>)}</div>}
       <h3>Kontomatris – timer och behörighet</h3>
+      <p>Ta bort åtkomst spärrar lärarens inloggning till planeringen utan att radera kontot eller sparade planeringar. Du kan återge åtkomsten senare.</p>
       <div style={{overflowX:'auto'}}><table style={{width:'100%',borderCollapse:'collapse'}}><thead><tr><th>Lärare</th><th>Status</th><th>Timer</th><th>Gäller till</th><th>Åtgärder</th></tr></thead><tbody>
       {colleagues.filter(item=>item.status==='approved'||item.status==='blocked').map(item=><tr key={item.user_id}>
         <td style={{padding:8}}>{item.email}{item.extension_requested&&<strong> – Begär förlängning</strong>}</td>
         <td>{item.status==='blocked'?'Spärrad':item.expires_at&&new Date(item.expires_at)<=new Date()?'Utgången':'Aktiv'}</td>
         <td><select aria-label={'Timer för '+item.email} value={item.timer_period||'none'} disabled={Boolean(reviewingUserId)} onChange={e=>changeTeacher(item.user_id,'timer',e.target.value)}><option value="none">Ingen</option><option value="month">1 månad</option><option value="year">1 år</option></select></td>
         <td>{item.expires_at?new Date(item.expires_at).toLocaleDateString('sv-SE'):'Ingen gräns'}{' '}{item.timer_period!=='none'&&<button type="button" disabled={Boolean(reviewingUserId)||item.status!=='approved'} onClick={()=>setTeacherExpiry(item.user_id,item.email)}>Ändra datum</button>}</td>
-        <td><button type="button" disabled={Boolean(reviewingUserId)} onClick={()=>changeTeacher(item.user_id,item.status==='blocked'?'activate':'block')}>{item.status==='blocked'?'Aktivera':'Spärra'}</button>{' '}<button type="button" disabled={Boolean(reviewingUserId)||item.timer_period==='none'} onClick={()=>changeTeacher(item.user_id,'extend')}>Förläng</button></td>
+        <td><button type="button" disabled={Boolean(reviewingUserId)} onClick={()=>changeTeacher(item.user_id,item.status==='blocked'?'activate':'block')}>{item.status==='blocked'?'Återge åtkomst':'Ta bort åtkomst'}</button>{' '}<button type="button" disabled={Boolean(reviewingUserId)||item.timer_period==='none'} onClick={()=>changeTeacher(item.user_id,'extend')}>Förläng</button></td>
       </tr>)}</tbody></table></div>
       {rejected.length > 0 && <><h3>Avslagna ansökningar ({rejected.length})</h3>{rejected.map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – Avslagen</div>)}</>}
       <button type="button" onClick={loadRequests}>Uppdatera listorna</button>
