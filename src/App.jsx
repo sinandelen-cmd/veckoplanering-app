@@ -673,14 +673,20 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   const requestedClass = new URLSearchParams(window.location.search).get('klass')
   const selectedClass = (preview ? previewClass : requestedClass) && plan?.classGroups?.find(g => g.name === (preview ? previewClass : requestedClass))
   const classLessons = selectedClass ? buildClassSchedule(plan,selectedClass) : []
-  const classWeeks = selectedClass ? Object.values(classLessons.reduce((acc,item)=>{
-    const weekStart=mondayOf(item.date)
-    if(!acc[weekStart]) acc[weekStart]={weekStart,weekNumber:calendarWeekNumber(weekStart),title:'',chapter:'',content:'',lessons:[],pages:[],assignments:[],links:[]}
-    const lesson={...item.lesson,day:item.day,date:item.date,name:item.override?.text || item.lesson?.name || 'Lektion '+item.lessonNumber}
-    if(item.override?.text) lesson.topics=[{name:item.override.text}]
-    acc[weekStart].lessons.push(lesson)
-    return acc
-  },{})).sort((a,b)=>a.weekStart.localeCompare(b.weekStart)) : []
+  // Grundplaneringens veckor är den enda källan för klassernas veckokort.
+  // Klassens schema får bara placera lektioner i redan skapade veckor.
+  const classWeeks = selectedClass ? (Array.isArray(plan?.weeksData) ? plan.weeksData : [])
+    .filter(week => week && !week.hidden && week.weekStart)
+    .map(week => ({
+      ...week,
+      lessons: classLessons
+        .filter(item => mondayOf(item.date) === week.weekStart)
+        .map(item => {
+          const lesson = {...item.lesson,day:item.day,date:item.date,name:item.override?.text || item.lesson?.name || 'Lektion '+item.lessonNumber}
+          if(item.override?.text) lesson.topics=[{name:item.override.text}]
+          return lesson
+        })
+    })) : []
 
   useEffect(() => {
     if (printPage !== null) return undefined
