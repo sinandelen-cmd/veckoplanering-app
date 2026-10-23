@@ -3623,3 +3623,8 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 
 #mina-arsplaneringar .visual-tree-grade-folder>summary.grade-folder-heading{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;width:100%!important;box-sizing:border-box!important;text-align:left!important;gap:12px!important}
 #mina-arsplaneringar .visual-tree-grade-folder>summary.grade-folder-heading>.grade-folder-booknames{display:block!important;margin-left:auto!important;flex:0 1 auto!important;text-align:right!important;font-size:11px!important;font-weight:400!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;min-width:0!important;max-width:55%!important}
+
+#mina-arsplaneringar .course-folder-with-delete{display:flex;align-items:stretch;gap:7px;min-width:0}
+#mina-arsplaneringar .course-folder-with-delete>.course-folder-link{flex:1;min-width:0}
+#mina-arsplaneringar .course-folder-delete{flex:0 0 38px;border:1px solid #f2c7c7;background:#fff5f5;border-radius:9px;color:#a43b3b;cursor:pointer;font-size:16px}
+#mina-arsplaneringar .course-folder-delete:hover{background:#ffe4e4}
