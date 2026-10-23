@@ -1387,6 +1387,23 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     setStatus('Alla veckor och datum har anpassats. Spara planeringen för att behålla ändringen.')
   }
 
+  function insertBlankWeekAfter(index) {
+    setPlan(previous => {
+      const existing=displayWeeks(previous)
+      if(index<0||index>=existing.length-1||existing.length>=52)return previous
+      const nextDate=addWeeks(existing[index].weekStart,1)
+      const blank=makeWeeks({...previous,startDate:nextDate,startWeek:calendarWeekNumber(nextDate),weeks:1},1)[0]
+      const following=existing.slice(index+1).map(week=>{
+        const weekStart=addWeeks(week.weekStart,1)
+        const weekNumber=calendarWeekNumber(weekStart)
+        return {...week,weekStart,weekNumber,title:!week.title||/^Vecka\s+\d+$/i.test(week.title)?'Vecka '+weekNumber:week.title}
+      })
+      const weeksData=[...existing.slice(0,index+1),blank,...following]
+      return {...previous,weeks:weeksData.length,weeksData}
+    })
+    setStatus('Tom vecka infogad. Efterföljande veckor har flyttats framåt.')
+  }
+
   function updateWeek(index, changes) {
     setPlan(p => ({ ...p, weeksData: displayWeeks(p).map((week, i) => {
       if (i !== index) return week
@@ -2281,7 +2298,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             <p className="muted">Använd i första hand momenten under varje lektion. Här kan du även lägga material för hela veckan.</p>
             <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
           </details>
-        </article></div>)}
+        </article>{displayIndex<ordered.length-1&&<div style={{display:'flex',justifyContent:'center',padding:'12px 0'}}><button type="button" className="secondary" disabled={weeks.length>=52} onClick={()=>insertBlankWeekAfter(index)}>＋ Infoga tom vecka här</button></div>}</div>)}
       </div>
       <div className="button-row week-add-actions">
         <button type="button" className="secondary" disabled={weeks.length >= 52} onClick={() => setPlan(p => {
