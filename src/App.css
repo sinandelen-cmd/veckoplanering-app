@@ -3492,3 +3492,13 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
     font-size:12px!important; padding:6px 8px!important;
   }
 }
+
+
+/* Dölj webbläsarens överflödiga standardrad "Detaljer" i mappträdet. */
+#mina-arsplaneringar .visual-tree-school > details:not(.visual-tree-course),
+#mina-arsplaneringar .visual-tree-school > details:not(.visual-tree-course) > summary {
+  display:none!important;
+}
+#mina-arsplaneringar .visual-tree-school details > summary:empty {
+  display:none!important;
+}
