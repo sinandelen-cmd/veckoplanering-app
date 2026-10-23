@@ -43,6 +43,7 @@ export function buildClassSchedule(plan, group) {
 export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
   const groups = Array.isArray(plan.classGroups) ? plan.classGroups : []
   const [name, setName] = React.useState('')
+  const [addingClass, setAddingClass] = React.useState(false)
   const [days, setDays] = React.useState([])
   const [selected, setSelected] = React.useState(0)
   const [showAll, setShowAll] = React.useState(false)
@@ -87,26 +88,21 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
   const unscheduledGroups = groups.filter(g => !(g.days || []).length)
   return <section className="card" aria-label="Kopplade klasser">
     <div className="class-schedule-intro"><div><h2>Klasser och schema</h2><p className="muted">Samma planering för flera klasser – varje klass följer sitt eget schema.</p></div><details className="class-schedule-help"><summary>ⓘ Så fungerar det</summary><p>Skriv lektionsinnehållet en gång. Lägg sedan till dina klasser och välj deras lektionsdagar. Alla klasser följer samma innehåll i rätt ordning, men i sin egen takt.</p><p>Exempel: 8A har lektioner måndag, onsdag och fredag medan 8B har tisdag och torsdag.</p></details></div>
-    <div className="class-compact-toolbar"><label className="class-compact-input"><span>Lägg till klass</span><input value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addClass()}}} placeholder="T.ex. 8A" /></label><button type="button" disabled={!name.trim()||groups.some(g=>g.name.toLocaleLowerCase('sv')===name.trim().toLocaleLowerCase('sv'))} onClick={addClass}>+ Lägg till</button></div>
-    {groups.length>0 && <div className="class-compact-list"><strong>{groups.length} {groups.length===1?'klass':'klasser'}</strong>{groups.map((g,i)=><button type="button" key={i} className="class-compact-chip" onClick={()=>{setSelected(i);setShowClassMenu(true);setShowClassDetails(true);setCompare(false)}}>{g.name} · Visa schema</button>)}</div>}
-    {unscheduledGroups.length>0 && <p role="alert" style={{background:"#fff0d7",padding:12,borderRadius:8,border:"1px solid #e2b66d"}}><strong>Schema saknas:</strong> {unscheduledGroups.map(g=>g.name).join(", ")}. Kryssa i minst en lektionsdag för varje klass så att inga lektioner missas.</p>}
-    {groups.length>0 && <div className="class-schedule-toggle"><button type="button" className="secondary" aria-expanded={showClassMenu} onClick={()=>{setShowClassMenu(v=>!v);setShowMatrix(true);setCompare(false);setShowClassDetails(false)}}>{showClassMenu?'▾ Dölj schemainställningar':'▸ Visa och ändra klassernas scheman'}</button></div>}
-    {showClassMenu && <>
-    {groups.length>0 && <div style={{margin:"14px 0 20px"}}>
-
-      {showMatrix && <div style={{overflowX:"auto"}}>
-      <h3>Klassernas veckoschema</h3>
-      <p className="muted">Kryssa i vilka dagar klassen har lektioner. Inga klockslag behövs.</p>
-      <table style={{width:"100%",borderCollapse:"separate",borderSpacing:"4px",minWidth:460}}>
-        <thead><tr><th style={{textAlign:"left",padding:8}}>Klass</th>{DAY_SHORT.map(d=><th key={d} style={{textAlign:"center",padding:8,background:"#f5ebce",borderRadius:6}}>{d}</th>)}<th style={{textAlign:"center",padding:8}}>Totalt</th></tr></thead>
-        <tbody>{groups.map((g,i)=>{const sortedDays=DAYS.flatMap(day=>(g.days||[]).filter(d=>d===day));return <tr key={i}><th style={{textAlign:"left",padding:8,background:"#f7f6f0",borderRadius:6}}><button type="button" title={"Öppna särskilda ändringar för "+g.name} onClick={()=>{setSelected(i);setCompare(false);setShowClassDetails(true);setEditing(null)}} style={{border:0,background:"transparent",fontWeight:700,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:3}}>{g.name}</button></th>{DAYS.map(day=>{const count=(g.days||[]).filter(d=>d===day).length;const before=sortedDays.filter(d=>DAYS.indexOf(d)<DAYS.indexOf(day)).length;return <td key={day} style={{textAlign:"center",background:count?"#e2f3e5":"#f7f6f0",borderRadius:6,padding:8}}>
-          <label style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,flexWrap:"wrap",cursor:"pointer"}}><input aria-label={g.name+" "+day} type="checkbox" checked={count>0} onChange={e=>onChange({...plan,classGroups:groups.map((row,idx)=>idx===i?{...row,days:e.target.checked?[...(row.days||[]),day].sort((x,y)=>DAYS.indexOf(x)-DAYS.indexOf(y)):(row.days||[]).filter(d=>d!==day)}:row)})} />{count>0&&<span className="class-matrix-lesson-count">{count>1?count+' lektioner':'Lektion '+(before+1)}</span>}</label>
-        </td>})}<td style={{textAlign:"center",fontWeight:700}}>{sortedDays.length}</td></tr>})}</tbody>
-
-      </table>
-      </div>}
+    <div className="class-mini-row">
+      <strong className="class-mini-label">Klasser</strong>
+      <div className="class-mini-chips">{groups.map((g,i)=><button type="button" key={i} className={'class-mini-chip'+(selected===i?' active':'')} aria-pressed={selected===i} onClick={()=>{setSelected(i);setCompare(false);setShowClassDetails(false)}}>{g.name}</button>)}
+        <button type="button" className="class-mini-add" onClick={()=>setAddingClass(v=>!v)} aria-expanded={addingClass}>+ Klass</button>
+      </div>
+      <button type="button" className="class-mini-schema" disabled={!groups.length} aria-expanded={showClassMenu} onClick={()=>{setShowClassMenu(v=>!v);setCompare(false);setShowClassDetails(false)}}>▦ Schema</button>
+    </div>
+    {addingClass && <div className="class-mini-new"><label>Ny klass <input value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addClass();if(name.trim())setAddingClass(false)}}} placeholder="T.ex. EK26A" /></label><button type="button" disabled={!name.trim()||groups.some(g=>g.name.toLocaleLowerCase('sv')===name.trim().toLocaleLowerCase('sv'))} onClick={()=>{addClass();setAddingClass(false);setShowClassMenu(true)}}>Lägg till</button></div>}
+    {unscheduledGroups.length>0 && <p role="alert" className="class-mini-warning">Välj lektionsdagar för {unscheduledGroups.map(g=>g.name).join(', ')} via Schema.</p>}
+    {showClassMenu && group && <div className="class-mini-panel">
+      <div className="class-mini-panel-title"><strong>{group.name} · Lektionsdagar</strong><button type="button" className="secondary" onClick={()=>setShowClassMenu(false)} aria-label="Stäng schema">✕</button></div>
+      <div className="class-mini-days">{DAYS.map((day,i)=><label key={day} className={'class-mini-day'+((group.days||[]).includes(day)?' checked':'')}><span>{DAY_SHORT[i]}</span><input type="checkbox" aria-label={group.name+' '+day} checked={(group.days||[]).includes(day)} onChange={e=>updateGroup({days:e.target.checked?[...(group.days||[]),day].sort((x,y)=>DAYS.indexOf(x)-DAYS.indexOf(y)):(group.days||[]).filter(d=>d!==day)})}/></label>)}</div>
+      <p className="muted">{(group.days||[]).length} lektioner per vecka. Ändringarna sparas med planeringen.</p>
+      <button type="button" className="secondary" onClick={()=>{setShowClassDetails(v=>!v);setCompare(false)}}>{showClassDetails?'Dölj klassens ändringar':'Visa klassens ändringar'}</button>
     </div>}
-    </>}
     {showClassMenu && groups.length > 0 && <div style={{display:"flex",gap:10,flexWrap:"wrap",margin:"12px 0"}}>
       <button type="button" className="secondary" aria-expanded={compare} onClick={()=>{setCompare(v=>!v);setShowAll(false)}}>{compare?"▾ Dölj klassernas veckor":"▸ Visa klassernas veckor"}</button>
       <button type="button" className="secondary" aria-expanded={!compare&&showClassDetails} onClick={()=>{setCompare(false);setShowClassDetails(v=>!v);setShowAll(false)}}>{!compare&&showClassDetails?"▾ Dölj enskilda ändringar":"⚙ Visa enskilda ändringar"}</button>
