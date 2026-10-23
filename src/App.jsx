@@ -1,7 +1,7 @@
 function capitalizeFirstSwedish(value) { return String(value || '').replace(/^(\s*)([a-zåäö])/i, (_, spaces, letter) => spaces + letter.toLocaleUpperCase('sv-SE')) }
 import UpdateNotices from './UpdateNotices.jsx'
 import { groupStudentWeeksForPrint } from './printGroups.js'
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { Component, Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import * as XLSX from 'xlsx'
 import mammoth from 'mammoth'
@@ -2589,7 +2589,24 @@ function AnnualApp() {
   return <><TeacherApp key={session.user.id} session={session} />{daysLeft!==null&&<aside style={{position:'fixed',bottom:12,right:12,zIndex:9999,background:'#fff4db',border:'2px solid #a66a00',borderRadius:12,padding:16,maxWidth:340,boxShadow:'0 4px 20px #0003'}} role="status"><strong>Ditt konto gäller till {new Date(accountInfo.expires_at).toLocaleDateString('sv-SE')} ({daysLeft} dagar kvar)</strong>{daysLeft<=30&&<p>Vill du behålla kontot? Begär förlängning hos administratören.</p>}{daysLeft<=30&&<button type="button" disabled={accountInfo.extension_requested} onClick={async()=>{const {error}=await supabase.rpc('request_teacher_extension');if(error)setExtensionNotice('Kunde inte skicka begäran.');else{setAccountInfo(p=>({...p,extension_requested:true}));setExtensionNotice('Begäran skickad till administratören.')}}}>{accountInfo.extension_requested?'Begäran skickad':'Begär förlängning'}</button>}{extensionNotice&&<p>{extensionNotice}</p>}</aside>}</>
 }
 
-export default function App() { return <AnnualApp /> }
+class AppErrorBoundary extends Component {
+  constructor(props) {super(props);this.state={error:null}}
+  static getDerivedStateFromError(error) {return {error}}
+  componentDidCatch(error,info) {console.error('Årsplanering: visningsfel',error,info)}
+  render() {
+    if(!this.state.error)return this.props.children
+    return <main style={{maxWidth:740,margin:'48px auto',padding:24,fontFamily:'system-ui',color:'#213547'}}>
+      <h1>Årsplanering kunde inte visas</h1>
+      <p>Ett fel inträffade när sidan öppnades. Dina sparade planeringar har inte ändrats.</p>
+      <div style={{padding:14,border:'1px solid #d9a8a8',borderRadius:10,background:'#fff7f7',overflowWrap:'anywhere'}}>
+        <strong>Felmeddelande:</strong> {this.state.error.message||String(this.state.error)}
+      </div>
+      <button type="button" style={{marginTop:18,padding:'10px 18px',cursor:'pointer'}} onClick={()=>window.location.reload()}>Försök igen</button>
+      <p style={{fontSize:13,marginTop:20}}>Skicka gärna en bild av felmeddelandet så kan vi rätta orsaken.</p>
+    </main>
+  }
+}
+export default function App() { return <AppErrorBoundary><AnnualApp /></AppErrorBoundary> }
 
 function WeekDetails({ week, onChange }) {
   const pages = Array.isArray(week.pages) ? week.pages : []
