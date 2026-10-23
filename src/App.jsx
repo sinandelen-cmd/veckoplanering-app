@@ -338,6 +338,40 @@ function distributeText(plan, text) {
   })
 }
 
+// Läromedelsfiler med kolumnerna Kapitel nr / Kapitel / Delmoment.
+function distributeChapterWorkbook(plan, workbook) {
+  const units = []
+  let chapter = ''
+  for (const sheetName of workbook.SheetNames) {
+    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {header:1,defval:''})
+    for (const row of rows) {
+      const cells = row.map(value => String(value ?? '').trim())
+      if (cells.some(value => /^kapitel nr$/i.test(value))) continue
+      if (cells[1] && (cells[0] || !chapter) && cells[2]) chapter = cells[1]
+      const topic = cells[2]
+      if (!topic || !chapter || /^delmoment$/i.test(topic)) continue
+      units.push({chapter,topic})
+    }
+  }
+  if (!units.length) return null
+  const capacity = Math.max(1,Math.min(8,Number(plan.lessonsPerWeek)||5))
+  const base = displayWeeks(plan)
+  const result = []
+  for(let index=0;index<units.length;index+=capacity) {
+    const chunk = units.slice(index,index+capacity)
+    const weekIndex = result.length
+    const template = base[weekIndex] || makeWeeks({...plan,startDate:addWeeks(base[0]?.weekStart||plan.startDate,weekIndex),weeks:1},1)[0]
+    const lessons = Array.from({length:capacity},(_,i)=>({
+      ...(template.lessons?.[i]||{}),
+      name:'Lektion '+(i+1),
+      day:plan.lessonDays?.[i]||'',
+      topics:chunk[i]?[{name:chunk[i].topic,description:'Kapitel: '+chunk[i].chapter,pages:[],assignments:[],links:[]}]:[]
+    }))
+    result.push({...template,chapter:chunk[0].chapter,content:chunk.map(unit=>unit.chapter+' – '+unit.topic).join('\n'),items:chunk.map(unit=>({text:unit.chapter+' – '+unit.topic})),lessons})
+  }
+  return result
+}
+
 async function extractText(file) {
   const name = file.name.toLowerCase()
   if (name.endsWith('.txt') || name.endsWith('.csv')) return file.text()
@@ -1485,12 +1519,13 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     if (!file) return
     setBusy(true); setStatus(`Läser ${file.name}...`)
     try {
-      const text = await extractText(file)
+      const chapterWeeks = /\\.xlsx?$/i.test(file.name) ? distributeChapterWorkbook(plan, XLSX.read(await file.arrayBuffer(),{type:'array'})) : null
+      const text = chapterWeeks ? '' : await extractText(file)
       const lines = normalizeLines(text)
       const parsed = file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')
         ? lines.map(line => line.includes('|') ? line : line).join('\n')
         : text
-      setPendingImport({ source: file.name, weeksData: distributeText(plan, parsed) })
+      setPendingImport({ source: file.name, weeksData: chapterWeeks || distributeText(plan, parsed) })
       setStatus('Importen är klar för förhandsgranskning. Inget har ersatts ännu.')
     } catch (error) { setStatus(error.message || 'Importen misslyckades.') }
     setBusy(false)
