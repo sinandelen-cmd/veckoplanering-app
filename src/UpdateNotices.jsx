@@ -8,7 +8,7 @@ export default function UpdateNotices({ userId, isAdmin, approvedTeachers = [] }
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState('')
   const [sending, setSending] = useState(false)
-  const [testMode, setTestMode] = useState(false)
+  const [testMode, setTestMode] = useState(true)
   const [testRecipient, setTestRecipient] = useState('')
   const selectableTeachers = approvedTeachers.filter(item => item.user_id !== userId)
 
@@ -39,6 +39,7 @@ export default function UpdateNotices({ userId, isAdmin, approvedTeachers = [] }
   async function send(event) {
     event.preventDefault()
     if (!isAdmin || !version.trim() || sending || (testMode && !selectableTeachers.some(item => item.user_id === testRecipient))) return
+    if (!testMode && !window.confirm(`Skicka uppdateringen ${version.trim()} till alla godkända lärare? Deras sparade planeringar påverkas inte.`)) return
     setSending(true)
     setStatus('')
     const { error } = await supabase.from('app_update_notices').insert({
@@ -69,11 +70,14 @@ export default function UpdateNotices({ userId, isAdmin, approvedTeachers = [] }
   if (!isAdmin && unread.length === 0 && !status) return null
   return <section className="card app-update-notices" aria-label="Programuppdateringar">
     {isAdmin && <form onSubmit={send}>
-      <h2>📣 Skicka uppdatering till kopplade lärare</h2>
+      <h2>📣 Programuppdateringar – administratör</h2>
       <p className="muted">Skicka en notis när den nya webbversionen är publicerad. Lärarnas sparade planeringar ändras inte.</p>
       <label>Versionsnamn<input required maxLength={80} value={version} onChange={event => setVersion(event.target.value)} placeholder="Exempel: Version 1.3" /></label>
       <label>Vad är nytt?<textarea rows={2} value={description} onChange={event => setDescription(event.target.value)} placeholder="Förbättrad layout och schemamatris" /></label>
-      <label style={{display:'flex',gap:8,alignItems:'center'}}><input type="checkbox" checked={testMode} onChange={event => setTestMode(event.target.checked)} /> Testläge – endast ett valt lärarkonto</label>
+      <fieldset style={{border:'1px solid #d6b98a',borderRadius:10,padding:12}}><legend>Välj utskick</legend>
+        <label style={{display:'block',marginBottom:8}}><input type="radio" name="update-send-mode" checked={testMode} onChange={() => setTestMode(true)} /> Testuppdatering – endast en vald lärare</label>
+        <label style={{display:'block'}}><input type="radio" name="update-send-mode" checked={!testMode} onChange={() => setTestMode(false)} /> Riktig uppdatering – alla godkända lärare</label>
+      </fieldset>
       {testMode && <div style={{padding:12,border:'2px solid #c08436',borderRadius:10}}>
         <strong>Testläge aktivt – ingen annan kollega får notisen.</strong>
         <label>Välj godkänt testkonto
@@ -83,6 +87,7 @@ export default function UpdateNotices({ userId, isAdmin, approvedTeachers = [] }
           </select>
         </label>
       </div>}
+      {!testMode && <p role="note"><strong>Varning:</strong> Detta skickar en notis till alla godkända lärare. Du får bekräfta utskicket innan det genomförs.</p>}
       <button type="submit" className="primary" disabled={sending || !version.trim() || (testMode && !selectableTeachers.some(item => item.user_id === testRecipient))}>{sending ? 'Skickar…' : testMode ? 'Skicka testnotis endast till valt konto' : 'Skicka uppdatering till godkända lärare'}</button>
     </form>}
     {unread.length > 0 && <div role="region" aria-label="Nya uppdateringar">
