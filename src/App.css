@@ -2817,3 +2817,39 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #mina-arsplaneringar .planning-board>.visual-tree-schools>.school-grundskola{grid-column:1!important}
 #mina-arsplaneringar .planning-board>.visual-tree-schools>.school-gymnasiet{grid-column:2!important}
 #mina-arsplaneringar .planning-board>.visual-tree-schools>.visual-tree-school:only-child{width:100%;min-width:0}
+
+
+/* Huvudmenyn är numera en horisontell rad. Lämna inte kvar
+   den gamla 245px-sidokolumnen vid utzoomning på stora skärmar. */
+@media screen {
+  .planning-layout{
+    display:grid;
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-template-rows:auto auto minmax(0,1fr);
+    align-items:start;
+    width:100%;
+    max-width:100%;
+  }
+  .planning-layout>.planning-sidebar{
+    grid-column:1!important;
+    grid-row:1!important;
+    position:relative;
+    top:auto;
+    height:auto;
+    min-width:0;
+    overflow:visible;
+  }
+  .planning-layout>.planning-top-navigation{
+    grid-column:1!important;
+    grid-row:2!important;
+    min-width:0;
+  }
+  .planning-layout>.shell{
+    grid-column:1!important;
+    grid-row:3!important;
+    width:min(1400px,100%)!important;
+    max-width:1400px;
+    min-width:0;
+    margin:0 auto!important;
+  }
+}
