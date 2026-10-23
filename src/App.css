@@ -3464,3 +3464,31 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
     #mina-arsplaneringar .school-folder-add { font-size:12px!important; padding:7px!important; }
   }
 }
+
+
+/* Ämnesrubrik och ny årskurs i samma kort. */
+#mina-arsplaneringar .subject-folder-heading {
+  display:flex; align-items:center; gap:10px;
+  background:#e9f3fa; border:1px solid #b7cbd9;
+  border-radius:9px; padding:5px 7px;
+}
+#mina-arsplaneringar .subject-folder-heading>.visual-tree-node {
+  flex:1 1 auto; min-width:0; width:auto!important;
+  background:transparent!important; border:0!important;
+  box-shadow:none!important; padding:7px 10px!important;
+  text-align:left; cursor:pointer;
+}
+#mina-arsplaneringar .subject-folder-heading>.secondary {
+  flex:0 0 auto; width:auto!important; min-height:34px!important;
+  padding:7px 11px!important; font-size:13px!important;
+  background:#fff!important; border:1px solid #c6d5e0!important;
+  border-radius:8px!important;
+}
+#mina-arsplaneringar .subject-folder-heading+.visual-tree-example-plans {
+  padding-top:8px!important;
+}
+@media(max-width:520px) {
+  #mina-arsplaneringar .subject-folder-heading>.secondary {
+    font-size:12px!important; padding:6px 8px!important;
+  }
+}
