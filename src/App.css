@@ -2570,3 +2570,26 @@ body { background: #fffaf2; color: var(--ink); }
     margin: 12px auto 30px !important;
   }
 }
+
+
+/* Visuellt, klickbart planeringsträd enligt whiteboard-skissen */
+.visual-planning-tree{margin:18px 0 24px;padding:24px 14px;border:1px solid #dce3eb;border-radius:16px;background:#f8fbff;overflow-x:auto;text-align:center}
+.visual-tree-root,.visual-tree-node{display:inline-flex;justify-content:center;align-items:center;min-height:54px;padding:12px 20px;border:2px solid #8ea7b7;border-radius:12px;background:#fff;color:#16324b;font-weight:750;box-shadow:0 3px 9px #16324b0d}
+.visual-tree-root{min-width:220px;position:relative}
+.visual-tree-schools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;position:relative;margin-top:48px}
+.visual-tree-schools:before{content:"";position:absolute;top:-25px;left:25%;right:25%;height:2px;background:#8ea7b7}
+.visual-tree-root:after{content:"";position:absolute;top:100%;left:50%;height:24px;border-left:2px solid #8ea7b7}
+.visual-tree-school{position:relative;min-width:0}
+.visual-tree-school:before{content:"";position:absolute;bottom:100%;left:50%;height:24px;border-left:2px solid #8ea7b7}
+.visual-tree-school>.visual-tree-node{cursor:pointer;min-width:min(100%,180px);font:inherit;font-weight:750}
+.visual-tree-node:hover,.visual-tree-course[open]>.visual-tree-node{background:#e6f2fa;border-color:#176e9b}
+.visual-tree-courses{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;position:relative;margin-top:40px}
+.visual-tree-courses:before{content:"";position:absolute;top:-20px;left:16.66%;right:16.66%;height:2px;background:#8ea7b7}
+.visual-tree-school>.visual-tree-node:after{content:"";position:absolute;top:54px;left:50%;height:20px;border-left:2px solid #8ea7b7}
+.visual-tree-course{min-width:0;position:relative}
+.visual-tree-course:before{content:"";position:absolute;bottom:100%;left:50%;height:20px;border-left:2px solid #8ea7b7}
+.visual-tree-course>.visual-tree-node{display:flex;min-width:0;cursor:pointer;font-size:.9rem;padding:10px 5px;list-style:none}
+.visual-tree-course>.visual-tree-node::-webkit-details-marker{display:none}
+.visual-tree-example-plans{display:grid;gap:8px;margin-top:14px}
+.visual-tree-plan{background:white;border:1px solid #cbd5e1;border-radius:8px;padding:10px 6px;font-size:.8rem;text-align:left;overflow-wrap:anywhere}
+@media(max-width:700px){.visual-tree-schools{gap:8px}.visual-tree-courses{grid-template-columns:1fr;gap:14px}.visual-tree-courses:before,.visual-tree-course:before{display:none}.visual-tree-school>.visual-tree-node:after{display:none}.visual-tree-node{padding:10px 6px;font-size:.82rem}.visual-tree-root{min-width:170px}}
