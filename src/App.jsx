@@ -1651,13 +1651,13 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     {teacherTab !== "elevvy" && teacherTab !== "mina" && <header className="topbar">
       <div className="teacher-header-identity">
         <nav className="teacher-breadcrumb" aria-label="Du är här">
-          {teacherTab !== "resultat" && teacherTab !== "mina" && <button type="button" onClick={() => { setTeacherTab("mina"); setCalendarOpen(false) }}>Startsida</button>}
-          {teacherTab === "bibliotek" && <><span aria-hidden="true">›</span><span aria-current="page">Mina planeringar</span></>}
-          {teacherTab === "arsplan" && <><span aria-hidden="true">›</span><span aria-current="page">{plan.title?.trim() || "Ny planering"}</span></>}
-          {teacherTab === "new" && <><span aria-hidden="true">›</span><span aria-current="page">Ny planering</span></>}
+          {false && <button type="button" onClick={() => { setTeacherTab("mina"); setCalendarOpen(false) }}>Startsida</button>}
+          {false && teacherTab === "bibliotek" && <><span aria-hidden="true">›</span><span aria-current="page">Mina planeringar</span></>}
+          {false && teacherTab === "arsplan" && <><span aria-hidden="true">›</span><span aria-current="page">{plan.title?.trim() || "Ny planering"}</span></>}
+          {false && teacherTab === "new" && <><span aria-hidden="true">›</span><span aria-current="page">Ny planering</span></>}
         </nav>
         <h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Startsida" : teacherTab === "bibliotek" ? "Mina planeringar" : (plan.title?.trim() || "Ny planering")}</h1>
-        <p className="muted">{session.user.email}</p>
+        {teacherTab !== 'bibliotek' && teacherTab !== 'arsplan' && <p className="muted">{session.user.email}</p>}
       </div>
       
       {teacherTab === "arsplan" && <div className="edit-history-actions" aria-label="Redigeringsverktyg">
@@ -1666,7 +1666,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         <button type="button" className="secondary" onClick={() => { if (isDirty && !window.confirm("Du har osparade ändringar. Vill du ändå uppdatera sidan?")) return; window.location.reload() }} title="Ladda om sidan">⟳ Uppdatera</button>
       </div>}
       {selectedId && teacherTab === "arsplan" && <button type="button" className="secondary" onClick={() => { document.body.classList.add("teacher-plan-print"); const cleanup = () => document.body.classList.remove("teacher-plan-print"); window.addEventListener("afterprint", cleanup, { once: true }); window.print(); setTimeout(cleanup, 1500) }}>🖨️ Skriv ut planeringen</button>}
-      {selectedId && teacherTab === "arsplan" && <div className="archive-plan-actions" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+      {false && selectedId && teacherTab === "arsplan" && <div className="archive-plan-actions" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <button type="button" className="secondary" disabled={busy || !plans.some(row => row.id === selectedId)} style={{ fontSize: '1rem', fontWeight: 850, padding: '13px 18px', borderRadius: 12, background: '#f9e5ed', border: '2px solid #c87e9b', color: '#73394f' }} onClick={() => { const row = plans.find(item => item.id === selectedId); if (row) void setArchived(row, true) }}>🗂 Arkivera planeringen</button>
         
       </div>}
@@ -1680,7 +1680,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         }}>🔗 Kopiera elevlänk</button>
 
       </div>}
-      {teacherTab === "new" && <div className="topbar-share-actions">
+      {false && teacherTab === "new" && <div className="topbar-share-actions">
         <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
       </div>}
     </header>}
