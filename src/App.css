@@ -3396,3 +3396,71 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
     }
   }
 }
+
+
+/* Skolrubrik med skapa-knapp på samma rad, och korta grenar till undernivåerna. */
+@media screen {
+  #mina-arsplaneringar .school-folder-heading {
+    display:flex; align-items:center; gap:10px;
+    border-radius:10px; padding:4px;
+    background:#e4f1ff; border:1px solid #69a9e5;
+  }
+  #mina-arsplaneringar .school-gymnasiet .school-folder-heading {
+    background:#e9f6eb; border-color:#68be84;
+  }
+  #mina-arsplaneringar .school-folder-heading>.visual-tree-node {
+    flex:1 1 auto; min-width:0; width:auto!important;
+    border:0!important; background:transparent!important;
+    text-align:left; box-shadow:none!important; padding:8px 10px!important;
+  }
+  #mina-arsplaneringar .school-folder-add {
+    flex:0 0 auto; margin-left:auto; border-radius:8px!important;
+    padding:8px 12px!important; min-height:36px!important;
+    font-size:13px!important; white-space:nowrap;
+    background:#fff!important; border:1px solid #c8d7e3!important;
+  }
+  #mina-arsplaneringar .visual-tree-school>.visual-tree-courses {
+    position:relative; padding-top:18px; margin-top:8px!important;
+  }
+  #mina-arsplaneringar .visual-tree-school>.visual-tree-courses:before {
+    display:block!important; content:""!important;
+    position:absolute; top:0; left:50%; width:2px; height:18px;
+    background:#91a9bb;
+  }
+  #mina-arsplaneringar .visual-tree-course {
+    position:relative;
+  }
+  #mina-arsplaneringar .visual-tree-course:before {
+    display:block!important; content:""!important;
+    position:absolute; top:-12px; left:50%; height:12px; width:2px;
+    background:#91a9bb; transform:translateX(-50%);
+  }
+  #mina-arsplaneringar .visual-tree-course[open]>.visual-tree-example-plans {
+    position:relative; margin-top:12px; padding-top:14px;
+  }
+  #mina-arsplaneringar .visual-tree-course[open]>.visual-tree-example-plans:before {
+    display:block!important; content:""!important;
+    position:absolute; top:0; left:50%; width:2px; height:14px;
+    background:#91a9bb;
+  }
+  #mina-arsplaneringar .visual-tree-grade-folders {
+    position:relative; padding-top:20px!important;
+  }
+  #mina-arsplaneringar .visual-tree-grade-folders:before {
+    display:block!important; content:""!important;
+    position:absolute; top:0; left:50%; height:20px; width:2px;
+    background:#91a9bb;
+  }
+  #mina-arsplaneringar .visual-tree-grade-folder {
+    position:relative;
+  }
+  #mina-arsplaneringar .visual-tree-grade-folder:before {
+    display:block!important; content:""!important;
+    position:absolute; top:-12px; left:50%; height:12px; width:2px;
+    background:#91a9bb;
+  }
+  @media(max-width:520px) {
+    #mina-arsplaneringar .school-folder-heading { gap:4px; }
+    #mina-arsplaneringar .school-folder-add { font-size:12px!important; padding:7px!important; }
+  }
+}
