@@ -285,92 +285,103 @@ function normalizeLines(text) {
     .filter(Boolean)
 }
 
-function distributeText(plan, text) {
-  const lines = normalizeLines(text)
-  if (!lines.length) return makeWeeks(plan)
-  const baseWeeks = displayWeeks(plan)
-  const weeklyCapacity = Math.max(1, Math.min(8, Number(plan.lessonsPerWeek) || 5))
-  const weekHeading = /^(?:vecka|v\\.)\s*(\d{1,2})(?:\s*[-–:]\s*(.*))?$/i
-  const lessonHeading = /^(?:lektion|pass)\s*(\d+)(?:\s*[-–:.]\s*(.*))?$/i
-  const explicitWeeks = lines.some(line => weekHeading.test(line))
-  const sections = []
+// Alla importer normaliseras till samma veckor och lektionsfält som Grundplanering.
+function distributeUnits(plan, units) {
+  if (!units.length) throw new Error('Filen innehåller inga läsbara planeringsmoment.')
+  const base = displayWeeks(plan)
+  const capacity = Math.max(1,Math.min(8,Number(plan.lessonsPerWeek)||5))
+  const groups = []
   let current = null
-  let lesson = null
-  for (const line of lines) {
-    const weekMatch = line.match(weekHeading)
-    if (weekMatch) {
-      current = { number: Number(weekMatch[1]), heading: weekMatch[2] || '', lessons: [], notes: [] }
-      sections.push(current); lesson = null
-      continue
+  for (const unit of units) {
+    const week = Number(unit.week) || null
+    if (!current || current.units.length >= capacity || (week && current.week !== week)) {
+      current = {week,units:[]}
+      groups.push(current)
     }
-    if (!current) { current = { number: null, heading: '', lessons: [], notes: [] }; sections.push(current) }
-    const lessonMatch = line.match(lessonHeading)
-    if (lessonMatch) {
-      lesson = { heading: lessonMatch[2] || '', lines: [] }
-      current.lessons.push(lesson)
-    } else if (lesson) lesson.lines.push(line)
-    else if (explicitWeeks) current.notes.push(line)
-    else current.lessons.push({ heading: line, lines: [] })
+    current.units.push(unit)
   }
-  const units = sections.flatMap(section => {
-    if (section.lessons.length) return section.lessons.map(l => ({...l, section}))
-    return section.notes.map(line => ({heading:line, lines:[], section}))
-  })
-  const grouped = []
-  if (explicitWeeks) {
-    for (const section of sections) {
-      const unitsInSection = units.filter(unit => unit.section === section)
-      if (!unitsInSection.length) continue
-      for (let i=0; i<unitsInSection.length; i+=weeklyCapacity)
-        grouped.push({number:i===0?section.number:null, heading:section.heading, units:unitsInSection.slice(i,i+weeklyCapacity)})
-    }
-  } else {
-    for (let i=0; i<units.length; i+=weeklyCapacity) grouped.push({number:null,heading:'',units:units.slice(i,i+weeklyCapacity)})
-  }
-  return grouped.map((group, index) => {
-    const template = baseWeeks[index] || makeWeeks({...plan,startDate:addWeeks(baseWeeks[0]?.weekStart || plan.startDate,index),startWeek:(Number(plan.startWeek)||1)+index,weeks:1},1)[0]
-    const lessons = group.units.map((unit,i) => ({
-      name: 'Lektion ' + (i+1),
-      day: plan.lessonDays?.[i] || '',
-      topics: [{name:unit.heading || unit.lines[0] || 'Moment',pagesLabel:'',assignmentsLabel:'',pages:[],assignments:[],links:[],description:unit.lines.join('\\n')}]
-    }))
-    return {...template, weekNumber:group.number || template.weekNumber, chapter:group.heading || template.chapter || '', content:group.units.map(u=>[u.heading,...u.lines].filter(Boolean).join('\\n')).join('\\n'), items:group.units.map(u=>({text:[u.heading,...u.lines].filter(Boolean).join(' — ')})), lessons}
+  return groups.map((group,index)=>{
+    const template = base[index] || makeWeeks({...plan,startDate:addWeeks(base[0]?.weekStart||plan.startDate,index),weeks:1},1)[0]
+    const lessons = Array.from({length:capacity},(_,i)=>{
+      const unit=group.units[i]
+      const previous=template.lessons?.[i]||{}
+      return {...previous,name:previous.name||'Lektion '+(i+1),day:previous.day||plan.lessonDays?.[i]||'',
+        topics:unit?[{name:unit.topic,description:[unit.chapter&&'Kapitel: '+unit.chapter,unit.details].filter(Boolean).join('\n'),pages:[],assignments:[],links:[]}]:[]}
+    })
+    const chapters=[...new Set(group.units.map(u=>u.chapter).filter(Boolean))]
+    return {...template,chapter:chapters.join(' / '),content:group.units.map(u=>[u.chapter,u.topic].filter(Boolean).join(' – ')).join('\n'),
+      items:group.units.map(u=>({text:[u.chapter,u.topic].filter(Boolean).join(' – ')})),lessons}
   })
 }
 
-// Läromedelsfiler med kolumnerna Kapitel nr / Kapitel / Delmoment.
-function distributeChapterWorkbook(plan, workbook) {
-  const units = []
-  let chapter = ''
-  for (const sheetName of workbook.SheetNames) {
-    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {header:1,defval:''})
-    for (const row of rows) {
-      const cells = row.map(value => String(value ?? '').trim())
-      if (cells.some(value => /^kapitel nr$/i.test(value))) continue
-      if (cells[1] && (cells[0] || !chapter) && cells[2]) chapter = cells[1]
-      const topic = cells[2]
-      if (!topic || !chapter || /^delmoment$/i.test(topic)) continue
-      units.push({chapter,topic})
+function unitsFromText(text) {
+  const lines=normalizeLines(text)
+  const units=[]
+  let chapter='',week=null,last=null
+  for (const raw of lines) {
+    const line=raw.replace(/^[-•*]\s*/,'').trim()
+    if (!line || /^(?:innehållsförteckning|contents|delmoment|kapitel nr)$/i.test(line)) continue
+    const weekMatch=line.match(/^(?:vecka|v\.)\s*(\d{1,2})(?:\s*[-–:]\s*(.*))?$/i)
+    if (weekMatch) {week=Number(weekMatch[1]);if(weekMatch[2])chapter=weekMatch[2];last=null;continue}
+    const chapterMatch=line.match(/^(?:kapitel|chapter)\s*\d*\s*[:.\-–]?\s*(.+)$/i)
+    if(chapterMatch){chapter=chapterMatch[1].trim();last=null;continue}
+    const lessonMatch=line.match(/^(?:lektion|pass)\s*\d+\s*[-–:.]?\s*(.*)$/i)
+    if(lessonMatch){if(lessonMatch[1]){last={week,chapter,topic:lessonMatch[1],details:''};units.push(last)}else last=null;continue}
+    if (/^(?:sida|sidor|sid\.|uppgifter|material|länk|mål)\s*[:\-]/i.test(line) && last) {
+      last.details=[last.details,line].filter(Boolean).join('\n')
+      continue
+    }
+    if (/^#{1,3}\s*/.test(line)){chapter=line.replace(/^#+\s*/,'');last=null;continue}
+    last={week,chapter,topic:line,details:''}
+    units.push(last)
+  }
+  return units
+}
+
+function unitsFromWorkbook(workbook) {
+  const units=[]
+  for(const sheetName of workbook.SheetNames) {
+    const rows=XLSX.utils.sheet_to_json(workbook.Sheets[sheetName],{header:1,defval:''})
+    let headers=null,chapter='',week=null
+    for(const row of rows) {
+      const cells=row.map(value=>String(value??'').replace(/\s+/g,' ').trim())
+      if(!cells.some(Boolean))continue
+      const labels=cells.map(v=>v.toLowerCase())
+      if(labels.some(v=>/^(kapitel|kapitel nr|delmoment|lektion|moment|innehåll|vecka|week|topic|chapter|område|rubrik)$/.test(v))) {
+        headers=labels;continue
+      }
+      const find=(pattern)=>headers?.findIndex(v=>pattern.test(v))??-1
+      const chapterCol=find(/^(kapitel|chapter|område)$/)
+      const topicCol=find(/^(delmoment|moment|innehåll|topic|lektion|rubrik)$/)
+      const weekCol=find(/^(vecka|week)$/)
+      if(chapterCol>=0 && cells[chapterCol])chapter=cells[chapterCol]
+      if(weekCol>=0 && /^\d{1,2}$/.test(cells[weekCol]))week=Number(cells[weekCol])
+      if(topicCol>=0){
+        const topic=cells[topicCol]
+        if(topic)units.push({chapter,week,topic,details:cells.filter((v,i)=>v&&i!==chapterCol&&i!==topicCol&&i!==weekCol).join(' · ')})
+        continue
+      }
+      const populated=cells.filter(Boolean)
+      if(populated.length===1){
+        const match=populated[0].match(/^(?:kapitel|chapter)\s*\d*\s*[:.\-–]?\s*(.+)$/i)
+        if(match){chapter=match[1];continue}
+      }
+      // För tabeller utan kända rubriker: använd första kolumnen som område och sista som moment.
+      if(populated.length>=2) {
+        const topic=populated[populated.length-1]
+        if(populated.length>=3 && populated[1])chapter=populated[1]
+        else if(!chapter && populated[0]!==topic)chapter=populated[0]
+        units.push({chapter,week,topic,details:''})
+      }else if(populated.length===1 && !/^(?:titel|namn|ämne|kurs)$/i.test(populated[0])) {
+        units.push({chapter,week,topic:populated[0],details:''})
+      }
     }
   }
-  if (!units.length) return null
-  const capacity = Math.max(1,Math.min(8,Number(plan.lessonsPerWeek)||5))
-  const base = displayWeeks(plan)
-  const result = []
-  for(let index=0;index<units.length;index+=capacity) {
-    const chunk = units.slice(index,index+capacity)
-    const weekIndex = result.length
-    const template = base[weekIndex] || makeWeeks({...plan,startDate:addWeeks(base[0]?.weekStart||plan.startDate,weekIndex),weeks:1},1)[0]
-    const lessons = Array.from({length:capacity},(_,i)=>({
-      ...(template.lessons?.[i]||{}),
-      name:'Lektion '+(i+1),
-      day:plan.lessonDays?.[i]||'',
-      topics:chunk[i]?[{name:chunk[i].topic,description:'Kapitel: '+chunk[i].chapter,pages:[],assignments:[],links:[]}]:[]
-    }))
-    result.push({...template,chapter:chunk[0].chapter,content:chunk.map(unit=>unit.chapter+' – '+unit.topic).join('\n'),items:chunk.map(unit=>({text:unit.chapter+' – '+unit.topic})),lessons})
-  }
-  return result
+  return units
 }
+
+function distributeText(plan,text){return distributeUnits(plan,unitsFromText(text))}
+function distributeChapterWorkbook(plan,workbook){return distributeUnits(plan,unitsFromWorkbook(workbook))}
 
 async function extractText(file) {
   const name = file.name.toLowerCase()
@@ -1522,9 +1533,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     try {
       const chapterWeeks = /[.]xlsx?$/i.test(file.name) ? distributeChapterWorkbook(plan, XLSX.read(await file.arrayBuffer(),{type:'array'})) : null
       const text = chapterWeeks ? '' : await extractText(file)
-      const lines = normalizeLines(text)
-      const parsed = text
-      setPendingImport({ source: file.name, weeksData: chapterWeeks || distributeText(plan, parsed), structured: Boolean(chapterWeeks) })
+      const weeksData = chapterWeeks || distributeText(plan,text)
+      setPendingImport({ source: file.name, weeksData, structured: true })
       setStatus(chapterWeeks ? 'Kapitel och delmoment är fördelade på planeringens lektioner. Granska före import.' : 'Importen är klar för förhandsgranskning. Inget har ersatts ännu.'); setFileImportState({phase:'success',message:`${file.name} är inläst – granska nedan.`})
     } catch (error) { const message=error.message || 'Importen misslyckades.'; setStatus(message); setFileImportState({phase:'error',message}) }
     setBusy(false)
