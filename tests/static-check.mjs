@@ -273,7 +273,7 @@ assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(true\); setPrevi
 const nav = fs.readFileSync(new URL('../src/Navigation.jsx', import.meta.url), 'utf8')
 assert.match(nav, /planning-home-navigation/)
 assert.doesNotMatch(nav, /<button[^\n]*Mina planeringar/, "Mina planeringar ska öppnas via startsidans mapp, inte dubbleras i huvudmenyn")
-assert.match(app, /rows\.map\(row => <article className="library-item"/, 'Planeringsträdet ska kunna öppna sparade planeringar')
+assert.match(app, /rows\.map\(row => <button key=\{row\.id\} type="button" className="course-folder-link"/, 'Planeringsträdet ska kunna öppna sparade kurser')
 assert.match(app, /plans=\{plans\.filter\(row => !parseContent\(row\.content\)\?\.archived\)\}/)
 assert.match(app, /onOpenPlan=\{loadPlan\}/)
 assert.match(css, /\.planning-layout/)
