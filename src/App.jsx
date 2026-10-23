@@ -183,7 +183,7 @@ function planThemeStyle(plan, fallback = '') {
 function SchoolYearPicker({ value, onChange }) {
   const currentYear = new Date().getFullYear()
   const currentStart = new Date().getMonth() >= 7 ? currentYear : currentYear - 1
-  const parsed = Number(String(value || '').match(/\\d{4}/)?.[0])
+  const parsed = Number(String(value || '').match(/\d{4}/)?.[0])
   const start = Number.isFinite(parsed) && parsed >= 1 ? parsed : currentStart
   const choose = year => onChange(`${year}–${year + 1}`)
   return <div className="school-year-picker">
@@ -223,7 +223,7 @@ function displayWeeks(plan) {
   const source = raw.map(week => {
     const number = calendarWeekNumber(week.weekStart)
     if (number == null) return week
-    const automaticTitle = !week.title || /^Vecka\\s+\\d+$/i.test(week.title)
+    const automaticTitle = !week.title || /^Vecka\s+\d+$/i.test(week.title)
     return { ...week, weekNumber: number, title: automaticTitle ? `Vecka ${number}` : week.title }
   })
   if (plan.entryType !== 'dag') return source
@@ -289,8 +289,8 @@ function distributeText(plan, text) {
   if (!lines.length) return makeWeeks(plan)
   const baseWeeks = displayWeeks(plan)
   const weeklyCapacity = Math.max(1, Math.min(8, Number(plan.lessonsPerWeek) || 5))
-  const weekHeading = /^(?:vecka|v\\.)\\s*(\\d{1,2})(?:\\s*[-–:]\\s*(.*))?$/i
-  const lessonHeading = /^(?:lektion|pass)\\s*(\\d+)(?:\\s*[-–:.]\\s*(.*))?$/i
+  const weekHeading = /^(?:vecka|v\\.)\s*(\d{1,2})(?:\s*[-–:]\s*(.*))?$/i
+  const lessonHeading = /^(?:lektion|pass)\s*(\d+)(?:\s*[-–:.]\s*(.*))?$/i
   const explicitWeeks = lines.some(line => weekHeading.test(line))
   const sections = []
   let current = null
@@ -1176,7 +1176,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         next.weekStart = monday
         if (number != null) {
           next.weekNumber = number
-          if (!week.title || /^Vecka\\s+\\d+$/i.test(week.title)) next.title = `Vecka ${number}`
+          if (!week.title || /^Vecka\s+\d+$/i.test(week.title)) next.title = `Vecka ${number}`
         }
       }
       return next
@@ -1442,7 +1442,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     const schoolYear = `${startYear}–${startYear + 1}`
     const subject = source.subject || row.subject || ''
     const className = source.className || row.class_name || ''
-    const title = `${source.title.replace(/(?:\\s*[-–—]?\\s*kopia(?:\\s*\\d+)?)$/i, '').trim()} – kopia`
+    const title = `${source.title.replace(/(?:\s*[-–—]?\s*kopia(?:\s*\d+)?)$/i, '').trim()} – kopia`
     const oldStartYear = Number((source.schoolYear || '').match(/\d{4}/)?.[0])
     const yearShift = Number.isFinite(oldStartYear) ? startYear - oldStartYear : 0
     const shiftDate = date => {
@@ -1880,7 +1880,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           setPlan(p => {
             const currentWeeks = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
             const isSafeToRename = week => !week.daysCustomized && (week.lessons || []).every(lesson =>
-              !lesson.topics?.length && (!lesson.name || /^(Lektion \\d+|Dag \\d+|Måndag|Tisdag|Onsdag|Torsdag|Fredag)$/.test(lesson.name))
+              !lesson.topics?.length && (!lesson.name || /^(Lektion \d+|Dag \d+|Måndag|Tisdag|Onsdag|Torsdag|Fredag)$/.test(lesson.name))
             )
             const preservedCount = currentWeeks.filter(week => !isSafeToRename(week)).length
             const weeksData = currentWeeks.map(week => {
@@ -2094,7 +2094,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           ;(groups[gradeLabel] ||= {})[subject] ||= []
           groups[gradeLabel][subject].push(row)
           return groups
-        }, { Grundskola: {}, Gymnasiet: {} })) .map(([grade, subjects]) => <section key={grade} className="visual-tree-school"><button type="button" className="visual-tree-node" aria-expanded={librarySchool === grade} onClick={() => setLibrarySchool(current => current === grade ? '' : grade)}>📁 {grade} ({Object.values(subjects).reduce((count, rows) => count + rows.length, 0)})</button>{librarySchool === grade && <div className="visual-tree-courses">{!Object.keys(subjects).length && <p className="muted">Inga planeringar i denna kategori ännu.</p>}{Object.entries(subjects).sort(([a],[b]) => a.localeCompare(b, 'sv', { numeric: true })).map(([subject, rows]) => <details key={subject} className="visual-tree-course"><summary className="visual-tree-node" onClick={event => { if (grade === 'Gymnasiet' && rows.length === 1 && !busy) { event.preventDefault(); loadPlan(rows[0]) } }} title={grade === 'Gymnasiet' && rows.length === 1 ? 'Öppna grundplaneringen direkt' : 'Visa sparade planeringar'}>📚 {subject} ({rows.length}){grade === 'Gymnasiet' && rows.length === 1 ? ' ↗' : ''}</summary><div className="planning-tree-plans visual-tree-example-plans">{grade === 'Grundskola' && <div className="visual-tree-grade-folders">{Object.entries(rows.reduce((byGrade, row) => { const data = parseContent(row.content) || {}; const value = [data.grade, row.grade, data.className, row.class_name, row.title].map(item => String(item || '')).join(' '); const match = value.match(/(?:årskurs|åk)\\s*(\\d+)/i) || value.match(/(?:^|\\s)([7-9])(?:[a-z])?(?:\\s|$)/i); const label = match ? 'Årskurs ' + match[1] : 'Övriga årskurser'; (byGrade[label] ||= []).push(row); return byGrade }, {})).sort(([a],[b]) => a.localeCompare(b, 'sv', {numeric:true})).map(([label, gradeRows]) => <details key={label} className="visual-tree-grade-folder"><summary className="visual-tree-node">📁 {label} ({gradeRows.length})</summary><div className="planning-tree-plans">{gradeRows.map(row => <div className="visual-tree-grade-plan" key={row.id}><strong>{row.title}</strong><button type="button" className="secondary" disabled={busy} onClick={() => loadPlan(row)}>📖 Öppna grundplanering</button></div>)}</div></details>)}</div>}{grade !== 'Grundskola' && rows.map(row => <article className="library-item" key={row.id} style={{ '--item-accent': planTheme(parseContent(row.content), row.id).accent, '--item-light': planTheme(parseContent(row.content), row.id).light, '--item-ink': planTheme(parseContent(row.content), row.id).ink }}>
+        }, { Grundskola: {}, Gymnasiet: {} })) .map(([grade, subjects]) => <section key={grade} className="visual-tree-school"><button type="button" className="visual-tree-node" aria-expanded={librarySchool === grade} onClick={() => setLibrarySchool(current => current === grade ? '' : grade)}>📁 {grade} ({Object.values(subjects).reduce((count, rows) => count + rows.length, 0)})</button>{librarySchool === grade && <div className="visual-tree-courses">{!Object.keys(subjects).length && <p className="muted">Inga planeringar i denna kategori ännu.</p>}{Object.entries(subjects).sort(([a],[b]) => a.localeCompare(b, 'sv', { numeric: true })).map(([subject, rows]) => <details key={subject} className="visual-tree-course"><summary className="visual-tree-node" onClick={event => { if (grade === 'Gymnasiet' && rows.length === 1 && !busy) { event.preventDefault(); loadPlan(rows[0]) } }} title={grade === 'Gymnasiet' && rows.length === 1 ? 'Öppna grundplaneringen direkt' : 'Visa sparade planeringar'}>📚 {subject} ({rows.length}){grade === 'Gymnasiet' && rows.length === 1 ? ' ↗' : ''}</summary><div className="planning-tree-plans visual-tree-example-plans">{grade === 'Grundskola' && <div className="visual-tree-grade-folders">{Object.entries(rows.reduce((byGrade, row) => { const data = parseContent(row.content) || {}; const value = [data.grade, row.grade, data.className, row.class_name, row.title].map(item => String(item || '')).join(' '); const match = value.match(/(?:årskurs|åk)\s*(\d+)/i) || value.match(/(?:^|\s)([7-9])(?:[a-z])?(?:\s|$)/i); const label = match ? 'Årskurs ' + match[1] : 'Övriga årskurser'; (byGrade[label] ||= []).push(row); return byGrade }, {})).sort(([a],[b]) => a.localeCompare(b, 'sv', {numeric:true})).map(([label, gradeRows]) => <details key={label} className="visual-tree-grade-folder"><summary className="visual-tree-node">📁 {label} ({gradeRows.length})</summary><div className="planning-tree-plans">{gradeRows.map(row => <div className="visual-tree-grade-plan" key={row.id}><strong>{row.title}</strong><button type="button" className="secondary" disabled={busy} onClick={() => loadPlan(row)}>📖 Öppna grundplanering</button></div>)}</div></details>)}</div>}{grade !== 'Grundskola' && rows.map(row => <article className="library-item" key={row.id} style={{ '--item-accent': planTheme(parseContent(row.content), row.id).accent, '--item-light': planTheme(parseContent(row.content), row.id).light, '--item-ink': planTheme(parseContent(row.content), row.id).ink }}>
           <div>{grade === 'Grundskola' && <span className="muted">{String(parseContent(row.content)?.subject || row.subject || 'Ämne')} · </span>}<strong className="library-title">{row.title}</strong><p className="muted">{[row.subject, row.class_name, row.school_year].filter(Boolean).join(' · ')}</p></div>
           <div className="button-row library-actions" aria-label={"Åtgärder för "+row.title}>
             <span className={`status-badge ${row.published ? 'published' : 'draft'}`}>{row.published ? '● Publicerad' : '○ Utkast'}</span>
