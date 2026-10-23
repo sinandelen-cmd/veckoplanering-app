@@ -3615,3 +3615,8 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .textbook-picker-actions button {padding:10px 14px;border-radius:9px;border:1px solid #b8cbd7;background:#fff;cursor:pointer}
 .textbook-picker-actions button:last-child {background:#fff0c9;border-color:#dfbe72}
 .textbook-picker-actions button:disabled {opacity:.5;cursor:not-allowed}
+
+.grade-folder-heading{display:flex!important;align-items:center;justify-content:space-between;gap:12px}
+.grade-folder-heading>span:first-child{flex-shrink:0}
+.grade-folder-booknames{margin-left:auto;text-align:right;font-size:12px;font-weight:500;opacity:.72;max-width:58%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:480px){.grade-folder-booknames{max-width:48%;font-size:11px}}
