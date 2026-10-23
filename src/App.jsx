@@ -1035,6 +1035,10 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
+  const [navigationHistory, setNavigationHistory] = useState([{ tab: 'mina', planId: null, calendar: false }])
+  const [navigationIndex, setNavigationIndex] = useState(0)
+  const restoringNavigation = useRef(false)
+
   const [pasteText, setPasteText] = useState('')
   const [pendingImport, setPendingImport] = useState(null)
   const [previewStudents, setPreviewStudents] = useState(() => window.location.hash === '#elevvy')
@@ -1587,6 +1591,31 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     setStatus('Påhittad testplanering öppnad. Den är inte sparad i ditt konto.')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
+  useEffect(() => {
+    if (restoringNavigation.current) { restoringNavigation.current = false; return }
+    const next = { tab: teacherTab, planId: selectedId, calendar: calendarOpen }
+    const current = navigationHistory[navigationIndex]
+    if (current?.tab === next.tab && current?.planId === next.planId && current?.calendar === next.calendar) return
+    setNavigationHistory(previous => [...previous.slice(0, navigationIndex + 1), next].slice(-40))
+    setNavigationIndex(previous => Math.min(previous + 1, 39))
+  }, [teacherTab, selectedId, calendarOpen]) // Navigationshistorik per inloggad session.
+
+  const restoreNavigation = direction => {
+    const targetIndex = navigationIndex + direction
+    if (targetIndex < 0 || targetIndex >= navigationHistory.length) return
+    const target = navigationHistory[targetIndex]
+    if (target.planId && target.planId !== selectedId) {
+      const row = plans.find(item => item.id === target.planId)
+      if (row) loadPlan(row)
+      else return
+    }
+    restoringNavigation.current = true
+    setTeacherTab(target.tab)
+    setCalendarOpen(target.calendar)
+    setPreviewStudents(target.tab === 'elevvy')
+    setNavigationIndex(targetIndex)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
   const createPlan = () => {
     if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
     const fresh = {...emptyPlan(), lessonsPerWeek:5, lessonDays:['Måndag','Tisdag','Onsdag','Torsdag','Fredag']}
@@ -1598,7 +1627,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     setTeacherTab('new'); setCalendarOpen(false); setPreviewStudents(false); setA4Demo(false)
     setStatus('Fyll i uppgifterna och välj Skapa planering.')
   }
-  return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}`}><Navigation active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={id => { setTeacherTab(id); if (id === 'mina' || id === 'arsplan') setCalendarOpen(false); if (id === 'elevvy') { setPreviewStudents(true); setCalendarOpen(false) } else { setPreviewStudents(false) } }} onOpenExample={openExample} onOpenArchive={() => { setShowArchive(true); setTeacherTab('mina') }} onNew={createPlan} onToggleCalendar={() => { setTeacherTab('arsplan'); setCalendarOpen(true) }} calendarOpen={calendarOpen} isAdmin={isAdmin} adminOpen={adminOpen} onOpenAdmin={onToggleAdmin} onCloseAdmin={() => { if (adminOpen) onToggleAdmin?.() }} onSignOut={() => supabase.auth.signOut()} pendingCount={pendingCount} /><main className="shell" id="lararvy">
+  return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}`}><Navigation onBack={() => restoreNavigation(-1)} onForward={() => restoreNavigation(1)} canBack={navigationIndex > 0} canForward={navigationIndex < navigationHistory.length - 1} active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={id => { setTeacherTab(id); if (id === 'mina' || id === 'arsplan') setCalendarOpen(false); if (id === 'elevvy') { setPreviewStudents(true); setCalendarOpen(false) } else { setPreviewStudents(false) } }} onOpenExample={openExample} onOpenArchive={() => { setShowArchive(true); setTeacherTab('mina') }} onNew={createPlan} onToggleCalendar={() => { setTeacherTab('arsplan'); setCalendarOpen(true) }} calendarOpen={calendarOpen} isAdmin={isAdmin} adminOpen={adminOpen} onOpenAdmin={onToggleAdmin} onCloseAdmin={() => { if (adminOpen) onToggleAdmin?.() }} onSignOut={() => supabase.auth.signOut()} pendingCount={pendingCount} /><main className="shell" id="lararvy">
   {adminOpen ? adminContent : <>
     {teacherTab !== "elevvy" && <header className="topbar">
       <div className="teacher-header-identity">
