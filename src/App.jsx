@@ -1042,40 +1042,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [simpleMore, setSimpleMore] = useState(false)
   const [teacherTab, setTeacherTab] = useState("mina")
   const [creatingFromBranch, setCreatingFromBranch] = useState(false)
+  // Layouten är responsiv i CSS; ingen automatisk utzoomning av mappträdet.
   const boardTreeRef = useRef(null)
-  useEffect(() => {
-    if (teacherTab !== 'bibliotek') return
-    const tree = boardTreeRef.current
-    const board = tree?.closest('.planning-board')
-    if (!tree || !board) return
-    let frame = 0
-    const fit = () => {
-      cancelAnimationFrame(frame)
-      frame = requestAnimationFrame(() => {
-        tree.style.zoom = '1'
-        const bar = board.querySelector('.planning-board-bar')
-        const availableHeight = Math.max(1, board.clientHeight - (bar?.offsetHeight || 0) - 56)
-        const availableWidth = Math.max(1, board.clientWidth - 28)
-        const naturalHeight = Math.max(1, tree.scrollHeight, tree.offsetHeight)
-        const naturalWidth = Math.max(1, tree.scrollWidth, tree.offsetWidth)
-        const zoom = Math.min(1, availableHeight / naturalHeight, availableWidth / naturalWidth)
-        tree.style.zoom = String(Math.max(0.05, zoom))
-      })
-    }
-    const observer = new ResizeObserver(fit)
-    observer.observe(board)
-    const changes = new MutationObserver(fit)
-    changes.observe(tree, { subtree: true, childList: true, attributes: true, attributeFilter: ['open'] })
-    window.addEventListener('resize', fit)
-    fit()
-    return () => {
-      cancelAnimationFrame(frame)
-      observer.disconnect()
-      changes.disconnect()
-      window.removeEventListener('resize', fit)
-      tree.style.zoom = '1'
-    }
-  }, [teacherTab, librarySchool, librarySubject, libraryYear, showArchive, planSearch, plans])
 
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
