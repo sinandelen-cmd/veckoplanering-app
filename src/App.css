@@ -3658,3 +3658,15 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #mina-arsplaneringar .textbook-plan-row{display:flex;align-items:stretch;gap:7px;min-width:0}
 #mina-arsplaneringar .textbook-plan-row>button:first-child{flex:1;min-width:0}
 @media(max-width:480px){#mina-arsplaneringar .course-folder-delete{min-width:42px!important;padding:7px!important}#mina-arsplaneringar .course-folder-delete span:last-child{display:none}}
+
+/* Lugnare panel för grundplaneringens klasser. */
+.class-schedule-intro{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:14px}
+.class-schedule-intro h2{margin:0 0 5px!important;font-size:21px!important}
+.class-schedule-intro p{margin:0;line-height:1.5}
+.class-schedule-help{max-width:380px;font-size:13px;color:#43596a}
+.class-schedule-help summary{list-style:none;cursor:pointer;color:#226e78;font-weight:650;padding:8px 12px;background:#edf7f8;border:1px solid #cce4e6;border-radius:9px;white-space:nowrap}
+.class-schedule-help summary::-webkit-details-marker{display:none}
+.class-schedule-help[open]{padding:0 12px 12px;background:#f7fbfb;border-radius:9px}
+.class-schedule-help[open] summary{margin:0 -12px 10px}
+.class-schedule-help p{margin:7px 0!important}
+@media(max-width:640px){.class-schedule-intro{display:block}.class-schedule-help{margin-top:12px}}
