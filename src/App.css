@@ -2853,3 +2853,15 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
     margin:0 auto!important;
   }
 }
+
+
+/* Lärarvy och Elevvy ska vara vänsterställda även vid utzoomning.
+   Bibliotekets tavla behåller sin egen layout. */
+@media screen {
+  .planning-layout.view-teacher>.shell,
+  .planning-layout.view-student>.shell{
+    margin-left:0!important;
+    margin-right:auto!important;
+    justify-self:start!important;
+  }
+}
