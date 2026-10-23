@@ -2034,10 +2034,15 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       {!plans.some(row => Boolean(parseContent(row.content)?.archived) === showArchive) ? <p className="muted">{showArchive ? 'Arkivet är tomt.' : 'Du har inga aktiva årsplaneringar ännu.'}</p> : <div className="library-list planning-tree" id="planeringstrad">
         {Object.entries(plans.filter(row => Boolean(parseContent(row.content)?.archived) === showArchive && [row.title, row.subject, row.class_name, row.school_year].some(value => String(value || "").toLocaleLowerCase("sv").includes(planSearch.trim().toLocaleLowerCase("sv")))).reduce((groups, row) => {
           const data = parseContent(row.content) || {}
-          const grade = String(data.grade || row.grade || data.className || row.class_name || '').trim()
-          const match = grade.match(/(?:årskurs|åk)\s*(\d+)/i) || grade.match(/^(\d+)[A-Za-z]?$/)
-          const gradeLabel = match ? 'Årskurs ' + match[1] : (grade || 'Övriga årskurser')
-          const subject = String(data.subject || row.subject || data.course || row.title || 'Övriga ämnen').trim()
+          const grade = String(data.grade || row.grade || '').trim()
+          const className = String(data.className || row.class_name || '').trim()
+          const course = String(data.course || '').trim()
+          const subjectName = String(data.subject || row.subject || '').trim()
+          const title = String(row.title || '').trim()
+          const courseName = course || [subjectName, title].find(value => /(?:matematik|svenska|engelska|fysik|kemi|biologi|historia|samhällskunskap)\s*\d+[a-z]?\b/i.test(value)) || ''
+          const gradeMatch = grade.match(/(?:årskurs|åk)\s*(\d+)/i) || grade.match(/^(\d+)[A-Za-z]?$/) || className.match(/(?:årskurs|åk)\s*(\d+)/i) || className.match(/^(\d+)[A-Za-z]?$/)
+          const gradeLabel = courseName ? 'Gymnasiekurser' : gradeMatch ? 'Årskurs ' + gradeMatch[1] : 'Övriga planeringar'
+          const subject = courseName || subjectName || title || 'Övriga ämnen'
           ;(groups[gradeLabel] ||= {})[subject] ||= []
           groups[gradeLabel][subject].push(row)
           return groups
