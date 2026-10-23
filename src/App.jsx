@@ -1028,6 +1028,33 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [librarySchool, setLibrarySchool] = useState('')
   const [librarySubject, setLibrarySubject] = useState('')
   const [libraryBoardPage, setLibraryBoardPage] = useState(0)
+  const boardTreeRef = useRef(null)
+  useEffect(() => {
+    if (teacherTab !== 'bibliotek') return
+    const tree = boardTreeRef.current
+    if (!tree) return
+    const board = tree.closest('.planning-board')
+    if (!board) return
+    let frame = 0
+    const fit = () => {
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => {
+        tree.style.zoom = '1'
+        const availableHeight = Math.max(120, board.clientHeight - (board.querySelector('.planning-board-bar')?.offsetHeight || 0) - 28)
+        const availableWidth = Math.max(180, board.clientWidth - 28)
+        const contentHeight = Math.max(tree.scrollHeight, tree.offsetHeight)
+        const contentWidth = Math.max(tree.scrollWidth, tree.offsetWidth)
+        const scale = Math.min(1, availableHeight / Math.max(1, contentHeight), availableWidth / Math.max(1, contentWidth))
+        tree.style.zoom = String(Math.max(0.35, Math.min(1, scale)))
+      })
+    }
+    const observer = new ResizeObserver(fit)
+    observer.observe(board)
+    window.addEventListener('resize', fit)
+    fit()
+    return () => { cancelAnimationFrame(frame); observer.disconnect(); window.removeEventListener('resize', fit); tree.style.zoom = '1' }
+  }, [teacherTab, librarySchool, librarySubject, libraryYear, showArchive, planSearch, plans])
+
   const [openedFromLibrary, setOpenedFromLibrary] = useState(false)
   const [showLibraryExamples, setShowLibraryExamples] = useState(false)
   const [exampleFolder, setExampleFolder] = useState('')
@@ -2079,7 +2106,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     <section className="card" id="mina-arsplaneringar">
       <div className="library-search"><label htmlFor="library-plan-search">🔎 Sök bland {showArchive ? "arkiverade" : "aktiva"} planeringar</label><input id="library-plan-search" type="search" placeholder="Sök namn, ämne, klass eller läsår…" value={planSearch} onChange={event => setPlanSearch(event.target.value)} />{planSearch && <button type="button" className="secondary" onClick={() => setPlanSearch('')}>Rensa</button>}</div>
       {planSearch && plans.some(row => Boolean(parseContent(row.content)?.archived) === showArchive) && !plans.some(row => Boolean(parseContent(row.content)?.archived) === showArchive && [row.title, row.subject, row.class_name, row.school_year].some(value => String(value || "").toLocaleLowerCase("sv").includes(planSearch.trim().toLocaleLowerCase("sv")))) && <p className="muted">Inga planeringar matchar sökningen. Prova ett annat ord eller rensa sökningen.</p>}
-      <div className="visual-planning-tree planning-board" id="planeringstrad"><div className="planning-board-bar"><button type="button" className="secondary" onClick={() => { if (librarySubject) setLibrarySubject(''); else if (librarySchool) setLibrarySchool(''); else setTeacherTab('mina'); setLibraryBoardPage(0) }}>← Tillbaka</button><strong>{librarySubject ? librarySubject.split('|')[1] : librarySchool || 'Mina planeringar'}</strong><div className="planning-board-tools"><button type="button" className="secondary" aria-pressed={showArchive} onClick={() => { setShowArchive(value => !value); setLibrarySchool(''); setLibrarySubject('') }}>{showArchive ? '📂 Visa aktiva' : '🗃 Arkiv'}</button><label htmlFor="library-year-select">Läsår</label><select id="library-year-select" value={libraryYear} onChange={event => { setLibraryYear(event.target.value); setLibrarySchool(''); setLibrarySubject('') }}><option value="alla">Alla läsår</option>{[...new Set(plans.map(row => String(row.school_year || parseContent(row.content)?.schoolYear || '').trim()).filter(Boolean))].sort((a,b) => b.localeCompare(a,'sv',{numeric:true})).map(year => <option key={year} value={year}>{year}</option>)}</select><button type="button" className="secondary" onClick={() => { const year = window.prompt('Nytt läsår (exempelvis 2027–2028):'); if (year?.trim()) { setLibraryYear(year.trim()); setLibrarySchool(''); setLibrarySubject('') } }}>＋ Läsår</button></div></div><div className="visual-tree-schools">
+      <div className="visual-planning-tree planning-board" id="planeringstrad"><div className="planning-board-bar"><button type="button" className="secondary" onClick={() => { if (librarySubject) setLibrarySubject(''); else if (librarySchool) setLibrarySchool(''); else setTeacherTab('mina'); setLibraryBoardPage(0) }}>← Tillbaka</button><strong>{librarySubject ? librarySubject.split('|')[1] : librarySchool || 'Mina planeringar'}</strong><div className="planning-board-tools"><button type="button" className="secondary" aria-pressed={showArchive} onClick={() => { setShowArchive(value => !value); setLibrarySchool(''); setLibrarySubject('') }}>{showArchive ? '📂 Visa aktiva' : '🗃 Arkiv'}</button><label htmlFor="library-year-select">Läsår</label><select id="library-year-select" value={libraryYear} onChange={event => { setLibraryYear(event.target.value); setLibrarySchool(''); setLibrarySubject('') }}><option value="alla">Alla läsår</option>{[...new Set(plans.map(row => String(row.school_year || parseContent(row.content)?.schoolYear || '').trim()).filter(Boolean))].sort((a,b) => b.localeCompare(a,'sv',{numeric:true})).map(year => <option key={year} value={year}>{year}</option>)}</select><button type="button" className="secondary" onClick={() => { const year = window.prompt('Nytt läsår (exempelvis 2027–2028):'); if (year?.trim()) { setLibraryYear(year.trim()); setLibrarySchool(''); setLibrarySubject('') } }}>＋ Läsår</button></div></div><div className="visual-tree-schools" ref={boardTreeRef}>
         {Object.entries(plans.filter(row => Boolean(parseContent(row.content)?.archived) === showArchive && (libraryYear === 'alla' || String(row.school_year || parseContent(row.content)?.schoolYear || '').trim() === libraryYear) && [row.title, row.subject, row.class_name, row.school_year].some(value => String(value || "").toLocaleLowerCase("sv").includes(planSearch.trim().toLocaleLowerCase("sv")))).reduce((groups, row) => {
           const data = parseContent(row.content) || {}
           const grade = String(data.grade || row.grade || '').trim()
