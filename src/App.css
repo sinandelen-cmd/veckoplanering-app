@@ -3589,3 +3589,15 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #mina-arsplaneringar .visual-tree-school:has(.school-folder-heading) .course-folder-link {
  font-weight:650;min-height:42px;
 }
+
+
+/* Läroböcker som egen undermapp under varje årskurs. */
+#mina-arsplaneringar .textbook-folder-list {margin:8px 0 10px 24px;padding-left:17px;border-left:2px solid #9ab0c1;display:grid;gap:8px}
+#mina-arsplaneringar .textbook-folder {position:relative;border:0;background:transparent;padding:0}
+#mina-arsplaneringar .textbook-folder:before {content:"";position:absolute;left:-17px;top:20px;width:17px;height:2px;background:#9ab0c1}
+#mina-arsplaneringar .textbook-folder>summary {cursor:pointer;list-style:none;background:#f5efff;border:1px solid #cbb4e8;border-radius:9px;padding:10px 14px;font-weight:650;color:#4b3271}
+#mina-arsplaneringar .textbook-folder>summary::-webkit-details-marker {display:none}
+#mina-arsplaneringar .textbook-folder>summary:before {content:"›";display:inline-block;margin-right:10px}
+#mina-arsplaneringar .textbook-folder[open]>summary:before {content:"⌄"}
+#mina-arsplaneringar .textbook-plan-list {margin:8px 0 4px 15px;padding-left:14px;border-left:2px solid #b3b8d0;display:grid;gap:7px}
+#mina-arsplaneringar .textbook-plan-list button {background:#fff;border:1px solid #d9dfea;border-radius:8px;padding:10px 12px;text-align:left;cursor:pointer;color:#263f59}
