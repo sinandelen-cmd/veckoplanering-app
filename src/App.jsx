@@ -1032,20 +1032,20 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   useEffect(() => {
     if (teacherTab !== 'bibliotek') return
     const tree = boardTreeRef.current
-    if (!tree) return
-    const board = tree.closest('.planning-board')
-    if (!board) return
+    const board = tree?.closest('.planning-board')
+    if (!tree || !board) return
     let frame = 0
     const fit = () => {
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => {
         tree.style.zoom = '1'
-        const availableHeight = Math.max(120, board.clientHeight - (board.querySelector('.planning-board-bar')?.offsetHeight || 0) - 28)
-        const availableWidth = Math.max(180, board.clientWidth - 28)
-        const contentHeight = Math.max(tree.scrollHeight, tree.offsetHeight)
-        const contentWidth = Math.max(tree.scrollWidth, tree.offsetWidth)
-        const scale = Math.min(1, availableHeight / Math.max(1, contentHeight), availableWidth / Math.max(1, contentWidth))
-        tree.style.zoom = String(Math.max(0.35, Math.min(1, scale)))
+        const rect = tree.getBoundingClientRect()
+        const availableHeight = Math.max(260, window.innerHeight - rect.top - 28)
+        const availableWidth = Math.max(260, board.clientWidth - 36)
+        const naturalHeight = Math.max(tree.scrollHeight, tree.offsetHeight)
+        const naturalWidth = Math.max(tree.scrollWidth, tree.offsetWidth)
+        const scale = Math.min(1, availableHeight / Math.max(1, naturalHeight), availableWidth / Math.max(1, naturalWidth))
+        tree.style.zoom = String(Math.max(0.55, scale))
       })
     }
     const observer = new ResizeObserver(fit)
