@@ -3189,3 +3189,35 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
     #mina-arsplaneringar>.library-search input { flex:1 1 180px; }
   }
 }
+
+
+/* Finjustering: kompakta mappar, jämn centrering och mindre luft. */
+@media screen {
+  #mina-arsplaneringar>.planning-board {
+    padding:10px 14px 16px!important;
+  }
+  #mina-arsplaneringar .planning-board>.visual-tree-schools {
+    row-gap:20px!important; column-gap:18px!important;
+    margin-top:12px!important;
+  }
+  #mina-arsplaneringar .planning-tree-root-row>.visual-tree-root {
+    min-width:170px!important; min-height:40px!important;
+    padding:7px 14px!important; font-size:15px!important;
+  }
+  #mina-arsplaneringar .visual-tree-school>.visual-tree-node {
+    min-height:42px!important; padding:8px 14px!important;
+  }
+  #mina-arsplaneringar .visual-tree-courses {
+    margin-top:20px!important; gap:12px!important;
+  }
+  #mina-arsplaneringar .visual-tree-course>.visual-tree-node,
+  #mina-arsplaneringar .visual-tree-grade-folder>.visual-tree-node {
+    min-height:42px!important; padding:8px 12px!important;
+  }
+  #mina-arsplaneringar .visual-tree-example-plans {
+    gap:8px!important; margin-top:9px!important;
+  }
+  #mina-arsplaneringar .visual-tree-grade-folders {
+    padding-top:16px!important; margin-top:8px!important;
+  }
+}
