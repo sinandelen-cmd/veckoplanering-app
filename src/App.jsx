@@ -1633,10 +1633,11 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       <div className="teacher-header-identity">
         <nav className="teacher-breadcrumb" aria-label="Du är här">
           {teacherTab !== "resultat" && <button type="button" onClick={() => { setTeacherTab("mina"); setCalendarOpen(false) }}>Startsida</button>}
+          {teacherTab === "bibliotek" && <><span aria-hidden="true">›</span><span aria-current="page">Mina planeringar</span></>}
           {teacherTab === "arsplan" && <><span aria-hidden="true">›</span><span aria-current="page">{plan.title?.trim() || "Ny planering"}</span></>}
           {teacherTab === "new" && <><span aria-hidden="true">›</span><span aria-current="page">Ny planering</span></>}
         </nav>
-        <h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Startsida" : (plan.title?.trim() || "Ny planering")}</h1>
+        <h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Startsida" : teacherTab === "bibliotek" ? "Mina planeringar" : (plan.title?.trim() || "Ny planering")}</h1>
         <p className="muted">{session.user.email}</p>
       </div>
       
@@ -2047,9 +2048,17 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     </div>
     
     <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
+      <section className="card planning-start-card">
+        <div className="section-heading"><div><p className="eyebrow">STARTSIDA</p><h2>Vad vill du göra?</h2><p className="muted">Välj ett av alternativen nedan.</p></div></div>
+        <div className="home-tiles">
+          <button type="button" className="home-tile home-tile-new" onClick={createPlan}><span className="home-tile-icon">＋</span><strong>Ny planering</strong><span>Skapa en grundplanering</span></button>
+          <button type="button" className="home-tile" onClick={() => { setShowArchive(false); setTeacherTab('bibliotek') }}><span className="home-tile-icon">📂</span><strong>Mina planeringar</strong><span>Öppna ämnen och kurser</span></button>
+        </div>
+      </section>
+    </div>
+    <div className="teacher-tab-panel" hidden={teacherTab !== "bibliotek"}>
     <section className="card" id="mina-arsplaneringar">
-      <div className="section-heading"><div><p className="eyebrow">MIN STARTSIDA</p><h2>Alla mina planeringar</h2><p className="muted">Öppna en planering nedan eller välj en funktion.</p></div></div>
-      <div className="home-tiles"><button type="button" className="home-tile home-tile-new" onClick={createPlan}><span className="home-tile-icon">＋</span><strong>Ny planering</strong><span>Skapa en ny årsplanering</span></button><button type="button" className="home-tile" onClick={() => document.getElementById("planeringstrad")?.scrollIntoView({ behavior: "smooth" })}><span className="home-tile-icon">▤</span><strong>Mina planeringar</strong><span>Årskurser och ämnen</span></button></div><div className="button-row" role="group" aria-label="Planeringsbibliotek">
+      <div className="section-heading"><div><p className="eyebrow">MITT BIBLIOTEK</p><h2>📂 Mina planeringar</h2><p className="muted">En kurs eller ett ämne per gren. Dina tidigare planeringar finns kvar.</p></div></div><div className="button-row" role="group" aria-label="Planeringsbibliotek">
         <button type="button" className={!showArchive ? 'primary' : 'secondary'} aria-pressed={!showArchive} onClick={() => setShowArchive(false)}>Aktiva ({plans.filter(row => !parseContent(row.content)?.archived).length})</button>
         <button type="button" className={showArchive ? 'primary' : 'secondary'} aria-pressed={showArchive} onClick={() => setShowArchive(true)}>Arkiv ({plans.filter(row => parseContent(row.content)?.archived).length})</button>
         <div className="library-history-toolbar" aria-label="Ångra, gör om och uppdatera">
@@ -2076,7 +2085,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           ;(groups[gradeLabel] ||= {})[subject] ||= []
           groups[gradeLabel][subject].push(row)
           return groups
-        }, {})).map(([grade, subjects]) => <section key={grade} className="planning-tree-grade"><h3>🌿 {grade}</h3><div className="planning-tree-subjects">{Object.entries(subjects).map(([subject, rows]) => <details key={subject} open className="planning-tree-subject"><summary>📚 {subject} ({rows.length})</summary><div className="planning-tree-plans">{rows.map(row => <article className="library-item" key={row.id} style={{ '--item-accent': planTheme(parseContent(row.content), row.id).accent, '--item-light': planTheme(parseContent(row.content), row.id).light, '--item-ink': planTheme(parseContent(row.content), row.id).ink }}>
+        }, {})).map(([grade, subjects]) => <section key={grade} className="planning-tree-grade"><h3>🌿 {grade}</h3><div className="planning-tree-subjects">{Object.entries(subjects).map(([subject, rows]) => <details key={subject} open className="planning-tree-subject"><summary>📚 {subject} <span className="muted">· {rows.length === 1 ? "Grundplanering" : rows.length + " befintliga planeringar"}</span></summary><div className="planning-tree-plans">{rows.map(row => <article className="library-item" key={row.id} style={{ '--item-accent': planTheme(parseContent(row.content), row.id).accent, '--item-light': planTheme(parseContent(row.content), row.id).light, '--item-ink': planTheme(parseContent(row.content), row.id).ink }}>
           <div><strong className="library-title">{row.title}</strong><p className="muted">{[row.subject, row.class_name, row.school_year].filter(Boolean).join(' · ')}</p></div>
           <div className="button-row library-actions" aria-label={"Åtgärder för "+row.title}>
             <span className={`status-badge ${row.published ? 'published' : 'draft'}`}>{row.published ? '● Publicerad' : '○ Utkast'}</span>
