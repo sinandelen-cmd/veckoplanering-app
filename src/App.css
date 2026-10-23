@@ -3817,3 +3817,7 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 /* Redigera ämnesnamn direkt i samma blå ämnesruta. */
 #mina-arsplaneringar .subject-folder-heading{position:relative}
 #mina-arsplaneringar .subject-folder-heading>.subject-inline-rename{position:absolute!important;z-index:5!important;left:52px!important;top:50%!important;transform:translateY(-50%)!important;width:calc(100% - 290px)!important;max-width:360px!important;min-width:100px!important;height:36px!important;margin:0!important;padding:4px 8px!important;border:1px solid #7aa5bb!important;border-radius:5px!important;background:#e7f2ff!important;box-shadow:none!important;font:inherit!important;color:#173c5b!important}
+
+/* Ämnesredigering: överlappa texten i samma blå knapp, aldrig en ny rad. */
+#mina-arsplaneringar .subject-folder-heading{position:relative!important}
+#mina-arsplaneringar .subject-folder-heading>.subject-inline-rename{position:absolute!important;left:76px!important;top:8px!important;transform:none!important;width:180px!important;min-width:0!important;max-width:calc(100% - 100px)!important;height:35px!important;display:block!important;box-sizing:border-box!important;margin:0!important;padding:2px 6px!important;background:#e7f2ff!important;border:0!important;border-bottom:1px solid #709db4!important;border-radius:0!important;outline:none!important;box-shadow:none!important;z-index:9!important}
