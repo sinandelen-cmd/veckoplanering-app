@@ -3758,3 +3758,9 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .calendar-quick-matrix th,.calendar-quick-matrix td{padding:3px 4px}
 .calendar-class-picker .student-class-copy-link{margin-left:auto;flex-shrink:0}
 @media(max-width:560px){.calendar-quick-matrix{width:100%;max-width:100%}}
+
+/* Diskreta kursåtgärder och borttagning av ämnesmapp */
+.course-folder-archive,.subject-folder-remove{border:1px solid #c9d9d4;border-radius:9px;background:#f5faf8;color:#28665b;font-size:12px;font-weight:650;padding:7px 10px;cursor:pointer;white-space:nowrap}
+.subject-folder-remove{background:#fff;border-color:#e6d0d0;color:#9a4141}
+.course-folder-with-delete .course-folder-delete,.textbook-plan-row .course-folder-delete{font-size:12px;padding:7px 9px}
+.subject-folder-heading{gap:7px;flex-wrap:wrap}
