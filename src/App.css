@@ -3039,3 +3039,27 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #mina-arsplaneringar .planning-board>.visual-tree-schools>.visual-tree-school:before{
   bottom:100%!important;height:17px!important;
 }
+
+
+/* Tydligare verktygsrad och skilda skolformsfärger. */
+#mina-arsplaneringar .planning-board-bar{
+ display:flex!important;align-items:center!important;flex-wrap:wrap;
+ gap:12px!important;padding:10px 12px 14px!important;
+ border-bottom:1px solid #cbdbe7!important;
+}
+#mina-arsplaneringar .planning-board-bar>strong{
+ font-size:1.08rem!important;color:#294b62!important;
+}
+#mina-arsplaneringar .planning-board-tools{
+ margin-left:auto!important;display:flex;align-items:center;gap:9px!important;
+ flex-wrap:wrap;justify-content:flex-end;
+}
+#mina-arsplaneringar .planning-board>.visual-tree-schools>.school-grundskola>.visual-tree-node{
+ background:#e5f2ff!important;border:2px solid #6ca9da!important;color:#194f7b!important;
+}
+#mina-arsplaneringar .planning-board>.visual-tree-schools>.school-gymnasiet>.visual-tree-node{
+ background:#e9f7eb!important;border:2px solid #70b88a!important;color:#225c3a!important;
+}
+#mina-arsplaneringar .planning-tree-root-row>.visual-tree-root{
+ background:#fff1d2!important;border:2px solid #d9ae55!important;color:#704a16!important;
+}
