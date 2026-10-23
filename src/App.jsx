@@ -2041,8 +2041,9 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           const title = String(row.title || '').trim()
           const courseName = course || [subjectName, title].find(value => /(?:matematik|svenska|engelska|fysik|kemi|biologi|historia|samhällskunskap)\s*\d+[a-z]?\b/i.test(value)) || ''
           const gradeMatch = grade.match(/(?:årskurs|åk)\s*(\d+)/i) || grade.match(/^(\d+)[A-Za-z]?$/) || className.match(/(?:årskurs|åk)\s*(\d+)/i) || className.match(/^(\d+)[A-Za-z]?$/)
-          const gradeLabel = courseName ? 'Gymnasiekurser' : gradeMatch ? 'Årskurs ' + gradeMatch[1] : 'Övriga planeringar'
-          const subject = courseName || subjectName || title || 'Övriga ämnen'
+          const schoolSubject = (subjectName || title.match(/^[^\d–-]+/)?.[0] || 'Övriga ämnen').trim()
+          const gradeLabel = courseName ? 'Gymnasiet' : gradeMatch ? 'Grundskolan' : 'Övriga planeringar'
+          const subject = courseName || (gradeMatch ? schoolSubject + ' ' + gradeMatch[1] : subjectName || title || 'Övriga ämnen')
           ;(groups[gradeLabel] ||= {})[subject] ||= []
           groups[gradeLabel][subject].push(row)
           return groups
