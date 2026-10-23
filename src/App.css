@@ -2524,3 +2524,11 @@ body { background: #fffaf2; color: var(--ink); }
 .planning-tree-subject summary{cursor:pointer;font-weight:700;padding:8px}
 .planning-tree-plans{display:grid;gap:10px;margin-top:12px}
 .planning-tree-plans .library-item{min-width:0}
+
+/* Tydlig, responsiv toppnavigering utan sidomeny */
+.planning-home-navigation{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:12px 20px;position:relative}
+.planning-home-navigation .planning-home-button{font-weight:800;background:#155e75;color:#fff;border-radius:12px;padding:12px 18px;margin-right:6px}
+.planning-history-buttons{display:flex;gap:6px;align-items:center;margin-right:auto}
+.planning-history-buttons button{border-radius:10px;padding:10px 13px}
+.planning-history-buttons button:disabled{opacity:.4;cursor:not-allowed}
+@media(max-width:720px){.planning-home-navigation{padding:10px;gap:6px}.planning-home-navigation .planning-home-button{width:100%;text-align:left}.planning-history-buttons{width:100%;margin-right:0}.planning-history-buttons button{flex:1}}
