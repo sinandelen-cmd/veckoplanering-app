@@ -3324,3 +3324,35 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
     }
   }
 }
+
+
+/* Sök längst till vänster i samma menyrad, med ren kompakt form. */
+.planning-home-navigation .nav-plan-search {
+  order:-1!important; margin:0 10px 0 0!important;
+  flex:0 1 250px!important; width:250px; min-width:160px;
+  position:relative; display:flex!important; align-items:center;
+}
+.planning-home-navigation .nav-plan-search .sr-only {
+  position:absolute!important; width:1px!important; height:1px!important;
+  padding:0!important; margin:-1px!important; overflow:hidden!important;
+  clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important;
+}
+.planning-home-navigation .nav-plan-search .nav-search-icon {
+  position:absolute; left:12px; top:50%; transform:translateY(-50%);
+  font-size:20px; color:#547487; pointer-events:none;
+}
+.planning-home-navigation .nav-plan-search input {
+  width:100%!important; height:42px!important; min-height:42px!important;
+  border-radius:12px!important; border:1px solid #c5d4de!important;
+  padding:8px 34px 8px 36px!important; font-size:14px!important;
+  background:#fff!important; box-shadow:0 1px 3px #12354a0b!important;
+}
+.planning-home-navigation .nav-plan-search input:focus {
+  outline:2px solid #64a8cf; outline-offset:1px;
+}
+@media(max-width:700px) {
+  .planning-home-navigation .nav-plan-search {
+    flex:1 1 190px!important; width:auto!important;
+    margin-right:4px!important;
+  }
+}
