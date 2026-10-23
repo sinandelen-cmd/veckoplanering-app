@@ -2716,3 +2716,9 @@ body { background: #fffaf2; color: var(--ink); }
   #mina-arsplaneringar .planning-board .visual-tree-course .visual-tree-grade-folders{flex-wrap:wrap;justify-content:center}
   #mina-arsplaneringar .planning-board .visual-tree-course .visual-tree-grade-folder{flex:1 1 90px;max-width:160px}
 }
+
+#mina-arsplaneringar .planning-board-bar{flex-wrap:wrap}
+#mina-arsplaneringar .planning-board-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto}
+#mina-arsplaneringar .planning-board-tools label{font-size:.85rem;font-weight:700}
+#mina-arsplaneringar .planning-board-tools select{max-width:145px;min-width:0;padding:8px}
+@media(max-width:650px){#mina-arsplaneringar .planning-board-tools{width:100%;justify-content:flex-start;margin-left:0}}
