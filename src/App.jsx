@@ -780,6 +780,10 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
       const lessons = scheduled.map((item, index) => {
         const lesson = {...item.lesson,day:item.day,date:item.date,name:'Lektion '+(index+1)}
         if(item.override?.text) lesson.topics=[{name:item.override.text}]
+        const requestedMoments = Math.max(1,Math.min(20,Number(selectedClass.momentsPerDay?.[item.day])||1))
+        const existingTopics = Array.isArray(lesson.topics) ? lesson.topics : []
+        // Lägg till tomma moment vid behov, men radera aldrig befintligt innehåll.
+        if(existingTopics.length < requestedMoments) lesson.topics=[...existingTopics,...Array.from({length:requestedMoments-existingTopics.length},()=>({name:'',pages:[],assignments:[],links:[]}))]
         return lesson
       })
       return {...week,content:'',lessons}
