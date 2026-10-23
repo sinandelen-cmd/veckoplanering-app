@@ -3772,3 +3772,17 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #mina-arsplaneringar .course-folder-link,#mina-arsplaneringar .textbook-plan-row>button:first-child{flex:1;min-width:0}
 
 #mina-arsplaneringar .course-folder-archive{flex:0 0 28px!important;width:28px!important;min-width:28px!important;height:28px!important;padding:0!important;font-size:17px!important;line-height:1}
+
+/* Kursåtgärder integrerade inuti kursens färgade textrad. */
+#mina-arsplaneringar .course-folder-with-delete,
+#mina-arsplaneringar .textbook-plan-row{position:relative!important;display:flex!important;align-items:center!important;gap:0!important;min-width:0}
+#mina-arsplaneringar .course-folder-with-delete>.course-folder-link,
+#mina-arsplaneringar .textbook-plan-row>button:first-child{flex:1 1 auto!important;width:100%!important;min-width:0!important;padding-right:78px!important}
+#mina-arsplaneringar .course-folder-with-delete>.course-folder-archive,
+#mina-arsplaneringar .textbook-plan-row>.course-folder-archive{position:absolute!important;right:39px!important;top:50%!important;transform:translateY(-50%)!important;z-index:2;display:flex!important;align-items:center!important;justify-content:center!important;flex:none!important;width:25px!important;min-width:25px!important;max-width:25px!important;height:25px!important;min-height:25px!important;padding:0!important;margin:0!important;border:0!important;box-shadow:none!important;background:transparent!important;color:#157e64!important;font-size:16px!important;line-height:1!important}
+#mina-arsplaneringar .course-folder-with-delete>.course-folder-delete,
+#mina-arsplaneringar .textbook-plan-row>.course-folder-delete{position:absolute!important;right:8px!important;top:50%!important;transform:translateY(-50%)!important;z-index:2;display:flex!important;align-items:center!important;justify-content:center!important;flex:none!important;width:25px!important;min-width:25px!important;max-width:25px!important;height:25px!important;min-height:25px!important;padding:0!important;margin:0!important;border:0!important;box-shadow:none!important;background:transparent!important;color:#b83342!important;font-size:20px!important;line-height:1!important}
+#mina-arsplaneringar .course-folder-with-delete>.course-folder-archive:hover,
+#mina-arsplaneringar .textbook-plan-row>.course-folder-archive:hover{background:#d6f1e8!important}
+#mina-arsplaneringar .course-folder-with-delete>.course-folder-delete:hover,
+#mina-arsplaneringar .textbook-plan-row>.course-folder-delete:hover{background:#ffe3e6!important}
