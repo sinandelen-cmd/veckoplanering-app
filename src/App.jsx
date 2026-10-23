@@ -1205,6 +1205,7 @@ function TeacherResults({ userId }) {
 }
 
 function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin, adminContent, pendingCount = 0 }) {
+  const [editingClassView,setEditingClassView] = useState('')
   const [plan, setPlan] = useState(emptyPlan())
   const [plans, setPlans] = useState([])
   const [showArchive, setShowArchive] = useState(false)
@@ -2389,7 +2390,6 @@ function GymnasiumDemoIndex() {
 }
 
 function AnnualApp() {
-  const [editingClassView,setEditingClassView] = useState('')
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [studentPlan, setStudentPlan] = useState(null)
