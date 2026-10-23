@@ -16,28 +16,32 @@ const describe = lesson => (lesson?.topics || []).map(topic => {
 }).filter(Boolean).join('; ') || lesson?.name || 'Lektion utan innehåll'
 
 export function buildClassSchedule(plan, group) {
-  const lessons = (plan.weeksData || []).flatMap(week => (week.lessons || []).map((lesson, index) => ({
-    lesson, weekNumber: week.weekNumber, weekTitle: week.title, weekStart: week.weekStart, index
-  })))
-  const start = new Date((group.startDate || plan.startDate || iso(new Date())) + 'T12:00:00')
   const days = Array.isArray(group.days) ? group.days : []
   const extraSlots = Array.isArray(group.extraSlots) ? group.extraSlots : []
-  const cancelled = Array.isArray(group.cancelledDates) ? group.cancelledDates : []
-  const slots = []
-  // Varje veckodag kan ha flera lektioner, t.ex. två på måndag.
-  for (let offset = 0; offset < 3650 && slots.length < lessons.length + cancelled.length; offset++) {
-    const date = nextDate(start, offset)
-    const dateKey = iso(date)
-    const day = DAYS[(date.getDay()+6)%7]
-    if (!day) continue
-    const count = days.filter(d => d === day).length + extraSlots.filter(s => s.date === dateKey).length
-    if (cancelled.includes(dateKey)) continue
-    for (let slot = 0; slot < count; slot++) slots.push({ date: dateKey, day, slot: slot+1, time: group.lessonTimes?.[day]?.[slot] || '' })
-  }
-  return slots.slice(0, lessons.length).map((slot, i) => ({
-    ...slot, ...lessons[i], lessonNumber: i+1,
-    override: group.overrides?.[String(i)] || null
-  }))
+  const cancelled = new Set(Array.isArray(group.cancelledDates) ? group.cancelledDates : [])
+  const firstDate = group.startDate || plan.startDate || ''
+  let lessonNumber = 0
+  // Varje klass använder innehållet från rätt grundvecka.
+  // Lektioner från en vecka flyttas aldrig automatiskt till nästa vecka.
+  return (plan.weeksData || []).flatMap(week => {
+    if (!week?.weekStart || week.hidden) return []
+    const source = Array.isArray(week.lessons) ? week.lessons : []
+    const mondayDate = monday(week.weekStart)
+    const slots = []
+    for (let offset = 0; offset < 5; offset++) {
+      const date = nextDate(mondayDate, offset)
+      const dateKey = iso(date)
+      const day = DAYS[offset]
+      if ((firstDate && dateKey < firstDate) || cancelled.has(dateKey)) continue
+      const count = days.filter(d => d === day).length + extraSlots.filter(slot => slot.date === dateKey).length
+      for (let n = 0; n < count; n++) slots.push({date:dateKey,day,slot:n+1,time:group.lessonTimes?.[day]?.[n] || ''})
+    }
+    return slots.map((slot, index) => {
+      const lesson = source[index] || {name:'Lektion '+(index+1),topics:[]}
+      lessonNumber++
+      return {...slot,lesson,weekNumber:week.weekNumber,weekTitle:week.title,weekStart:week.weekStart,index,lessonNumber,override:group.overrides?.[String(lessonNumber-1)] || null}
+    })
+  })
 }
 
 export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
