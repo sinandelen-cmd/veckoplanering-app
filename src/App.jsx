@@ -1444,12 +1444,13 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     const now = new Date()
     const year = now.getFullYear()
     const startYear = now.getMonth() >= 7 ? year : year - 1
-    const schoolYear = `${startYear}–${startYear + 1}`
+    const schoolYear = libraryYear === 'alla' ? `${startYear}–${startYear + 1}` : libraryYear
+    const targetYear = Number(schoolYear.match(/\d{4}/)?.[0]) || startYear
     const subject = source.subject || row.subject || ''
     const className = source.className || row.class_name || ''
     const title = `${source.title.replace(/(?:\s*[-–—]?\s*kopia(?:\s*\d+)?)$/i, '').trim()} – kopia`
     const oldStartYear = Number((source.schoolYear || '').match(/\d{4}/)?.[0])
-    const yearShift = Number.isFinite(oldStartYear) ? startYear - oldStartYear : 0
+    const yearShift = Number.isFinite(oldStartYear) ? targetYear - oldStartYear : 0
     const shiftDate = date => {
       if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !yearShift) return date
       const shifted = new Date(date + 'T12:00:00')
@@ -2113,7 +2114,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             <span className={`status-badge ${row.published ? 'published' : 'draft'}`}>{row.published ? '● Publicerad' : '○ Utkast'}</span>
             <button type="button" className="secondary library-action-open" disabled={busy} onClick={() => loadPlan(row)} title="Öppna och redigera planeringen">📖 Öppna</button>
             <button type="button" className="secondary library-action-rename" disabled={busy} onClick={() => renamePlan(row)} title="Ändra namnet på denna planering utan att påverka innehållet">✏️ Byt namn</button>
-            <button type="button" className="secondary library-action-copy" disabled={busy} onClick={() => clonePlan(row)} title="Skapa en separat kopia. Originalet finns kvar">📋 Skapa kopia</button>
+            <button type="button" className="secondary library-action-copy" disabled={busy} onClick={() => clonePlan(row)} title="Återanvänd som separat kopia i valt läsår. Originalet finns kvar">📋 Återanvänd som kopia</button>
             {row.published ? <button type="button" className="secondary library-action-unpublish" disabled={busy} onClick={() => unpublish(row)} title="Stäng av elevlänken utan att radera planeringen">🔒 Avpublicera</button> : <button type="button" className="secondary library-action-publish" disabled={busy} onClick={() => publishFromList(row)} title="Publicera den sparade planeringen i elevvyn">🌐 Publicera</button>}
             <button type="button" className="secondary library-action-archive" disabled={busy} onClick={() => setArchived(row, !showArchive)} title={showArchive ? "Flytta tillbaka planeringen till aktiva planeringar" : "Flytta planeringen till arkivet utan att radera den"}>{showArchive ? '↩ Flytta till aktiva' : '🗂 Arkivera'}</button>
             <button type="button" className="danger library-action-delete" disabled={busy} onClick={() => deletePlan(row)} title="Radera planeringen permanent">🗑 Radera</button>
