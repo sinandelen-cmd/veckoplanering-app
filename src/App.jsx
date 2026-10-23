@@ -1663,7 +1663,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           {false && teacherTab === "arsplan" && <><span aria-hidden="true">›</span><span aria-current="page">{plan.title?.trim() || "Ny planering"}</span></>}
           {false && teacherTab === "new" && <><span aria-hidden="true">›</span><span aria-current="page">Ny planering</span></>}
         </nav>
-        <h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Startsida" : teacherTab === "bibliotek" ? "Mina planeringar" : (plan.title?.trim() || "Ny planering")}</h1>
+        {teacherTab !== "bibliotek" && <h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Startsida" : (plan.title?.trim() || "Ny planering")}</h1>}
         {teacherTab !== 'bibliotek' && teacherTab !== 'arsplan' && <p className="muted">{session.user.email}</p>}
       </div>
       
