@@ -2287,7 +2287,7 @@ function AnnualApp() {
     const approved = colleagues.filter(item => item.status === 'approved')
     const rejected = colleagues.filter(item => item.status === 'rejected')
     return <TeacherApp key={session.user.id} session={session} isAdmin adminOpen={showAdminPanel} pendingCount={pending.length} onToggleAdmin={() => setShowAdminPanel(value => !value)} adminContent={<>
-      <UpdateNotices userId={session.user.id} isAdmin />
+      <UpdateNotices userId={session.user.id} isAdmin approvedTeachers={approved} />
       <section className="card" id="admin-teacher-panel">
       <h2>Administratör – lärarkonton</h2>
       <p>Endast du kan godkänna nya lärarkonton.</p>
