@@ -62,13 +62,14 @@ export default function UpdateNotices({ userId, isAdmin }) {
   }
 
   const unread = notices.filter(item => !seen.includes(item.id))
+  if (!isAdmin && unread.length === 0 && !status) return null
   return <section className="card app-update-notices" aria-label="Programuppdateringar">
     {isAdmin && <form onSubmit={send}>
-      <h2>Skicka uppdatering till kopplade lärare</h2>
+      <h2>📣 Skicka uppdatering till kopplade lärare</h2>
       <p className="muted">Skicka en notis när den nya webbversionen är publicerad. Lärarnas sparade planeringar ändras inte.</p>
       <label>Versionsnamn<input required maxLength={80} value={version} onChange={event => setVersion(event.target.value)} placeholder="Exempel: Version 1.3" /></label>
       <label>Vad är nytt?<textarea rows={2} value={description} onChange={event => setDescription(event.target.value)} placeholder="Förbättrad layout och schemamatris" /></label>
-      <button type="submit" disabled={sending || !version.trim()}>{sending ? 'Skickar…' : 'Skicka uppdatering till godkända lärare'}</button>
+      <button type="submit" className="primary" disabled={sending || !version.trim()}>{sending ? 'Skickar…' : 'Skicka uppdatering till godkända lärare'}</button>
     </form>}
     {unread.length > 0 && <div role="region" aria-label="Nya uppdateringar">
       <h2>🔔 Ny uppdatering finns</h2>
@@ -76,7 +77,7 @@ export default function UpdateNotices({ userId, isAdmin }) {
         <strong>{notice.version}</strong>
         {notice.description && <p>{notice.description}</p>}
         <p className="muted">Dina planeringar, klasser och lektioner behålls.</p>
-        <button type="button" onClick={() => acknowledge(notice)}>Uppdatera nu</button>
+        <button type="button" className="primary" onClick={() => acknowledge(notice)}>Uppdatera nu</button>
       </div>)}
     </div>}
     {status && <p role="status">{status}</p>}
