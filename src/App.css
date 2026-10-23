@@ -3833,3 +3833,16 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .calendar-import-feedback.loading{color:#38618c}
 .calendar-import-feedback.success{color:#157b56}
 .calendar-import-feedback.error{color:#ba3748}
+
+/* Lektionsmatris: kompakta momentkontroller i samma rad som kryssrutan */
+.calendar-quick-matrix{width:max-content;max-width:100%;box-sizing:border-box}
+.calendar-quick-matrix-scroll{max-width:100%;overflow-x:auto}
+.calendar-quick-matrix table{width:auto;min-width:390px;table-layout:auto}
+.calendar-quick-matrix th,.calendar-quick-matrix td{padding:7px 10px;vertical-align:middle}
+.calendar-quick-matrix th:first-child{min-width:65px}
+.calendar-quick-matrix td{min-width:56px}
+.calendar-quick-matrix td input[type="checkbox"]{display:block;margin:0 auto}
+.calendar-day-moments{display:inline-flex;align-items:center;justify-content:center;gap:3px;margin-left:6px;vertical-align:middle;white-space:nowrap}
+.calendar-day-moments button{width:22px;height:22px;min-width:22px;padding:0;border:1px solid #c8ddd5;border-radius:6px;background:#f1f7f4;color:#246d60;font-size:13px;line-height:1;cursor:pointer}
+.calendar-day-moments button:disabled{opacity:.35;cursor:default}
+.calendar-day-moments span{min-width:12px;text-align:center;font-size:12px;font-weight:700}
