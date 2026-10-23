@@ -2,6 +2,7 @@ name: Kontrollera årsplanering
 on:
   push:
     branches:
+      - main
       - feature/arsplanering-safe-updates-20261013
   pull_request:
     branches:
