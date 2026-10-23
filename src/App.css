@@ -2604,3 +2604,38 @@ body { background: #fffaf2; color: var(--ink); }
 .visual-tree-grade-folder>.visual-tree-node{width:100%;min-height:48px;cursor:pointer}
 .visual-tree-grade-folder>.visual-tree-node:hover{background:#e6f2fa}
 @media(max-width:650px){.visual-tree-grade-folders{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Håll årskurser på samma horisontella nivå, även när ämneskolumnen är smal. */
+.visual-tree-course:has(.visual-tree-grade-folders){overflow:visible}
+.visual-tree-course .visual-tree-grade-folders{
+  display:flex;
+  flex-direction:row;
+  flex-wrap:nowrap;
+  justify-content:center;
+  align-items:flex-start;
+  gap:16px;
+  width:max-content;
+  min-width:100%;
+  max-width:none;
+  margin:16px auto 0;
+  padding:28px 8px 0;
+  position:relative;
+  left:50%;
+  transform:translateX(-50%);
+}
+.visual-tree-course .visual-tree-grade-folder{
+  flex:0 0 142px;
+  width:142px;
+}
+.visual-tree-course .visual-tree-grade-folders:before{
+  left:calc(71px + 8px);
+  right:calc(71px + 8px);
+  top:14px;
+}
+.visual-tree-course .visual-tree-grade-folder:before{height:14px}
+.visual-tree-course .visual-tree-example-plans{overflow:visible}
+@media(max-width:650px){
+  .visual-tree-course .visual-tree-grade-folders{display:flex;flex-wrap:nowrap;gap:10px}
+  .visual-tree-course .visual-tree-grade-folder{flex:0 0 126px;width:126px}
+}
