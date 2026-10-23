@@ -3729,3 +3729,6 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 
 /* Diskret, ikonbaserad elevlänk längst till höger. */
 .student-class-copy-link{width:34px!important;height:34px!important;min-width:34px!important;padding:0!important;display:inline-flex;align-items:center;justify-content:center;border-radius:8px!important;font-size:17px!important;line-height:1!important;box-shadow:none!important}
+
+/* Kalenderns klassflikar ligger på en rad; klassvyn använder riktiga veckokort. */
+.calendar-class-picker{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.calendar-class-picker .calendar-class-buttons{margin:0;flex:1}.calendar-selected-class-cards{margin:12px 0 20px}.calendar-selected-class-cards .student-shell{margin:0;max-width:none;width:100%}.calendar-selected-class-cards .student-preview-classbar{display:none}
