@@ -2722,3 +2722,29 @@ body { background: #fffaf2; color: var(--ink); }
 #mina-arsplaneringar .planning-board-tools label{font-size:.85rem;font-weight:700}
 #mina-arsplaneringar .planning-board-tools select{max-width:145px;min-width:0;padding:8px}
 @media(max-width:650px){#mina-arsplaneringar .planning-board-tools{width:100%;justify-content:flex-start;margin-left:0}}
+
+
+/* Helskärmstavla för Mina planeringar: endast denna vy, inte veckoplaneringen. */
+@supports selector(:has(*)){
+  html:has(#mina-arsplaneringar:not([hidden])){scrollbar-width:none}
+  body:has(#mina-arsplaneringar:not([hidden])){overflow:hidden}
+  .planning-layout:has(#mina-arsplaneringar:not([hidden])){height:100dvh;overflow:hidden;display:flex!important;flex-direction:column}
+  .planning-layout:has(#mina-arsplaneringar:not([hidden]))>.shell{flex:1;min-height:0;overflow:hidden;width:100%;box-sizing:border-box}
+  .planning-layout:has(#mina-arsplaneringar:not([hidden])) .teacher-tab-panel:has(#mina-arsplaneringar){height:100%;min-height:0}
+  .planning-layout:has(#mina-arsplaneringar:not([hidden])) #mina-arsplaneringar{height:100%;min-height:0;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;padding:12px}
+  .planning-layout:has(#mina-arsplaneringar:not([hidden])) #mina-arsplaneringar>.library-search{flex:0 0 auto;margin:0;padding:6px 10px}
+  .planning-layout:has(#mina-arsplaneringar:not([hidden])) #mina-arsplaneringar>.planning-board{flex:1 1 0;height:auto;min-height:0;max-height:none;overflow:hidden;justify-content:flex-start;padding:8px}
+  .planning-layout:has(#mina-arsplaneringar:not([hidden])) #mina-arsplaneringar>.planning-board>.visual-tree-schools{margin-top:4px;gap:8px;align-content:start}
+  .planning-layout:has(#mina-arsplaneringar:not([hidden])) #mina-arsplaneringar>.planning-board .visual-tree-courses{margin-top:18px}
+  .planning-layout:has(#mina-arsplaneringar:not([hidden])) #mina-arsplaneringar>.planning-board .visual-tree-grade-folders{margin-top:5px;padding-top:20px}
+  .planning-layout:has(#mina-arsplaneringar:not([hidden])) #mina-arsplaneringar>.planning-board .visual-tree-node{min-height:35px;padding:7px 10px}
+  .planning-layout:has(#mina-arsplaneringar:not([hidden])) #mina-arsplaneringar>.planning-board .button-row{margin-top:4px!important}
+  .planning-layout:has(#mina-arsplaneringar:not([hidden])) #mina-arsplaneringar>.planning-board .visual-tree-example-plans{margin-top:5px;gap:5px}
+  .planning-layout:has(#mina-arsplaneringar:not([hidden])) #mina-arsplaneringar>.planning-board-bar{padding-bottom:5px}
+  .planning-layout:has(#mina-arsplaneringar:not([hidden])) #mina-arsplaneringar>p.muted{display:none}
+}
+@media(max-height:700px){
+  #mina-arsplaneringar .planning-board .visual-tree-node{font-size:.76rem!important;padding:5px 8px!important;min-height:28px!important}
+  #mina-arsplaneringar .planning-board .visual-tree-courses{margin-top:12px!important}
+  #mina-arsplaneringar .planning-board .visual-tree-grade-folders{margin-top:0!important;padding-top:15px!important}
+}
