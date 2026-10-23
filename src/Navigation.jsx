@@ -3,7 +3,7 @@ export default function Navigation({ active = 'mina', onNavigate, onNew, selecte
   return <>
     <nav className="planning-home-navigation" aria-label="Huvudnavigation">
       {active !== 'mina' && <button type="button" className="planning-home-button" onClick={() => { onCloseAdmin?.(); onNavigate?.('mina') }}>⌂ Startsida</button>}
-      <button type="button" onClick={() => { onCloseAdmin?.(); onNavigate?.('bibliotek') }}>▤ Mina planeringar</button>
+
       {isAdmin && <button type="button" onClick={onOpenAdmin}>⚙ Administration {pendingCount > 0 ? '(' + pendingCount + ')' : ''}</button>}
       <button type="button" onClick={onSignOut}>Logga ut</button>
     </nav>
