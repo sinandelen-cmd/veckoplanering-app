@@ -3707,3 +3707,7 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .class-student-link-note p{margin:3px 0 0}
 .class-schedule-toggle{margin:8px 0!important}
 .class-schedule-toggle button{font-size:12px!important;padding:6px 10px!important}
+
+/* Fristående gymnasiedemo, inga kontodata. */
+.gym-demo-index{max-width:1120px;margin:24px auto}.gym-demo-index .eyebrow{font-weight:800;color:#287b83}.gym-demo-courses{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:18px}.gym-demo-course{border:1px solid #dce9e8;background:#f9fcfc;border-radius:13px;padding:16px;display:grid;gap:10px}.gym-demo-course h2{font-size:17px;margin:0}.gym-demo-course p{margin:0;color:#486273}.gym-demo-classlinks{display:flex;gap:7px;flex-wrap:wrap}.gym-demo-classlinks a{display:inline-block;background:#e5f4f1;border:1px solid #b9dcd3;color:#1d625b;border-radius:8px;padding:7px 10px;font-weight:700;font-size:12px;text-decoration:none}.gym-demo-classlinks a:hover{background:#d1ebe5}.gym-demo-course>a:last-child{font-size:12px;margin-top:4px}
+.student-class-view{max-width:900px;margin:24px auto}.student-class-lessons{display:grid;gap:9px;margin-top:16px}.student-class-lesson{padding:12px 14px;border:1px solid #dce7ec;border-radius:10px;background:#fafcfd}.student-class-lesson p{margin:6px 0 0;line-height:1.5}
