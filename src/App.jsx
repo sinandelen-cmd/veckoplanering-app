@@ -1629,7 +1629,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     setStatus('Fyll i uppgifterna och välj Skapa planering.')
   }
   return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}`}><Navigation onBack={() => restoreNavigation(-1)} onForward={() => restoreNavigation(1)} canBack={navigationIndex > 0} canForward={navigationIndex < navigationHistory.length - 1} active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={id => { setTeacherTab(id); if (id === 'mina' || id === 'arsplan') setCalendarOpen(false); if (id === 'elevvy') { setPreviewStudents(true); setCalendarOpen(false) } else { setPreviewStudents(false) } }} onOpenExample={openExample} onOpenArchive={() => { setShowArchive(true); setTeacherTab('bibliotek') }} onNew={createPlan} onToggleCalendar={() => { setTeacherTab('arsplan'); setCalendarOpen(true) }} calendarOpen={calendarOpen} isAdmin={isAdmin} adminOpen={adminOpen} onOpenAdmin={onToggleAdmin} onCloseAdmin={() => { if (adminOpen) onToggleAdmin?.() }} onSignOut={() => supabase.auth.signOut()} pendingCount={pendingCount} /><main className="shell" id="lararvy">
-  <UpdateNotices userId={session.user.id} isAdmin={isAdmin} />
+  {!isAdmin && <UpdateNotices userId={session.user.id} isAdmin={false} />}
   {adminOpen ? adminContent : <>
     {teacherTab !== "elevvy" && <header className="topbar">
       <div className="teacher-header-identity">
@@ -2287,6 +2287,7 @@ function AnnualApp() {
     const approved = colleagues.filter(item => item.status === 'approved')
     const rejected = colleagues.filter(item => item.status === 'rejected')
     return <TeacherApp key={session.user.id} session={session} isAdmin adminOpen={showAdminPanel} pendingCount={pending.length} onToggleAdmin={() => setShowAdminPanel(value => !value)} adminContent={<>
+      <UpdateNotices userId={session.user.id} isAdmin />
       <section className="card" id="admin-teacher-panel">
       <h2>Administratör – lärarkonton</h2>
       <p>Endast du kan godkänna nya lärarkonton.</p>
