@@ -363,25 +363,33 @@ async function extractText(file) {
 
 const TEXTBOOK_CATALOG = {
   Grundskola: {
-    Matematik: ['Matte Direkt','Matematik XYZ','Favorit matematik','Prio Matematik','Koll på matematik','Eldorado','Matematik Alfa Beta Gamma','Milli matematik','Matte Direkt Triumf'],
-    Svenska: ['Klara svenskan','Prima svenska','Simsalabim','Zick Zack','Spegla språket','Svenska impulser','Kontakt','Arkad','Jalla','Upptäck texten'],
-    Engelska: ['Awesome','Sparks'],
-    Biologi: ['Spektrum','Titano','PULS'],
-    Fysik: ['Spektrum','Titano','PULS'],
-    Kemi: ['Spektrum','Titano','PULS'],
-    Historia: ['SOL Nova','Utkik','Koll på'],
-    Geografi: ['SOL Nova','Utkik','Koll på'],
-    Samhällskunskap: ['SOL Nova','Utkik','Koll på'],
-    Religionskunskap: ['SOL Nova','Utkik','Koll på'],
-    Spanska: ['Qué bien'], Franska: ['Bon Voyage','Chez nous'], Tyska: ['Der Sprung','Alles Deutsch']
+    Matematik: ['Matte Direkt','Matematik XYZ','Favorit matematik','Prio Matematik','Koll på matematik','Eldorado','Matematik Alfa Beta Gamma','Milli matematik','Matte Direkt Triumf',"Singma matematik","Matematikboken","Pixel matematik","Prima matematik","Mondo matematik","Matematik X","Matematik Y","Matematik Z"],
+    Svenska: ['Klara svenskan','Prima svenska','Simsalabim','Zick Zack','Spegla språket','Svenska impulser','Kontakt','Arkad','Jalla','Upptäck texten',"Svenska Direkt","Bums svenska","ABC-klubben","Läsresan","Språkskrinet","Robin"],
+    Engelska: ['Awesome','Sparks',"What's Up?","Magic!","Wings","Good Stuff","New Champion","Happy"],
+    Biologi: ['Spektrum','Titano','PULS',"Biologi Direkt","NO Direkt","Utkik Biologi"],
+    Fysik: ['Spektrum','Titano','PULS',"Fysik Direkt","NO Direkt","Utkik Fysik"],
+    Kemi: ['Spektrum','Titano','PULS',"Kemi Direkt","NO Direkt","Utkik Kemi"],
+    Historia: ['SOL Nova','Utkik','Koll på',"Historia Direkt","SO Direkt","PULS Historia"],
+    Geografi: ['SOL Nova','Utkik','Koll på',"Geografi Direkt","SO Direkt","PULS Geografi"],
+    Samhällskunskap: ['SOL Nova','Utkik','Koll på',"Samhällskunskap Direkt","SO Direkt","PULS Samhällskunskap"],
+    Religionskunskap: ['SOL Nova','Utkik','Koll på',"Religion Direkt","SO Direkt","PULS Religion"],
+    Spanska: ['Qué bien',"¡Vale!","¡Vamos!","Caminando"], Franska: ['Bon Voyage','Chez nous',"Escalade","Allez hop!"], Tyska: ['Der Sprung','Alles Deutsch',"Lieber Deutsch","Genau!"]
+    Teknik: ["Teknik Direkt","PULS Teknik"],
   },
   Gymnasiet: {
-    Matematik: ['Matematik 5000+','Matematik 7000','Matematik Origo','CordaNova'],
-    Svenska: ['Svenska impulser','Människans texter','Helt enkelt','Språkporten'],
-    Engelska: ['Blueprint','Solid Gold','Viewpoints'],
-    Fysik: ['Heureka'], Kemi: ['Gymnasiekemi'], Biologi: ['Iris'],
-    Historia: ['Perspektiv på historien'], Samhällskunskap: ['Reflex'],
-    Naturkunskap: ['Frank','Synpunkt'], Företagsekonomi: ['E3000']
+    Matematik: ['Matematik 5000+','Matematik 7000','Matematik Origo','CordaNova',"Matematik 5000","Matematik 4000","Exponent","M-serien"],
+    Svenska: ['Svenska impulser','Människans texter','Helt enkelt','Språkporten',"Svenska rum","Svenska för livet"],
+    Engelska: ['Blueprint','Solid Gold','Viewpoints',"Progress Gold","Echo","Blueprint A"],
+    Fysik: ['Heureka',"Impuls Fysik","Ergo Fysik"], Kemi: ['Gymnasiekemi',"Kemiboken","Reaktion Kemi"], Biologi: ['Iris',"Biologi Campus","Spira Biologi"],
+    Historia: ['Perspektiv på historien',"Alla tiders historia","Epok Historia"], Samhällskunskap: ['Reflex',"Forum Samhällskunskap","Kompass Samhällskunskap"],
+    Naturkunskap: ['Frank','Synpunkt',"Insikt Naturkunskap"], Företagsekonomi: ['E3000',"Goodwill Företagsekonomi","E2000"]
+    Religionskunskap: ["Under samma himmel"],
+    Psykologi: ["Psykologi 1 och 2"],
+    Filosofi: ["Filosofi 1 och 2"],
+    Geografi: ["Geografi 1 och 2"],
+    Spanska: ["Caminando"],
+    Franska: ["Escalade"],
+    Tyska: ["Lieber Deutsch"],
   }
 }
 function booksForSubject(school, subject) {
