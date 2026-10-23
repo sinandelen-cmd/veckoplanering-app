@@ -2593,3 +2593,14 @@ body { background: #fffaf2; color: var(--ink); }
 .visual-tree-example-plans{display:grid;gap:8px;margin-top:14px}
 .visual-tree-plan{background:white;border:1px solid #cbd5e1;border-radius:8px;padding:10px 6px;font-size:.8rem;text-align:left;overflow-wrap:anywhere}
 @media(max-width:700px){.visual-tree-schools{gap:8px}.visual-tree-courses{grid-template-columns:1fr;gap:14px}.visual-tree-courses:before,.visual-tree-course:before{display:none}.visual-tree-school>.visual-tree-node:after{display:none}.visual-tree-node{padding:10px 6px;font-size:.82rem}.visual-tree-root{min-width:170px}}
+
+
+/* Ämne -> årskurser som riktiga förgrenade noder */
+.visual-tree-grade-folders{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:14px;position:relative;padding-top:24px;margin-top:12px}
+.visual-tree-grade-folders:before{content:"";position:absolute;top:11px;left:12%;right:12%;border-top:2px solid #8ea7b7}
+.visual-tree-course[open]>.visual-tree-example-plans:before{content:"";display:block;width:2px;height:14px;background:#8ea7b7;margin:0 auto}
+.visual-tree-grade-folder{position:relative;min-width:0}
+.visual-tree-grade-folder:before{content:"";position:absolute;bottom:100%;left:50%;height:14px;border-left:2px solid #8ea7b7}
+.visual-tree-grade-folder>.visual-tree-node{width:100%;min-height:48px;cursor:pointer}
+.visual-tree-grade-folder>.visual-tree-node:hover{background:#e6f2fa}
+@media(max-width:650px){.visual-tree-grade-folders{grid-template-columns:repeat(2,minmax(0,1fr))}}
