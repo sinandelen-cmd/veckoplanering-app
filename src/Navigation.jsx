@@ -2,7 +2,8 @@ export default function Navigation({ active = 'mina', onNavigate, onNew, selecte
   if (!onNavigate) return <nav className="public-navigation" aria-label="Huvudmeny"><a href="/">Årsplanering</a></nav>
   return <>
     <nav className="planning-home-navigation" aria-label="Huvudnavigation">
-      <button type="button" className="planning-home-button" onClick={() => { onCloseAdmin?.(); onNavigate?.('mina') }}>⌂ Startsida</button>\n      <div className="planning-history-buttons" aria-label="Sidnavigering"><button type="button" onClick={onBack} disabled={!canBack} title="Till föregående sida">← Tillbaka</button><button type="button" onClick={onForward} disabled={!canForward} title="Till nästa sida">Framåt →</button></div>
+      <button type="button" className="planning-home-button" onClick={() => { onCloseAdmin?.(); onNavigate?.('mina') }}>⌂ Startsida</button>
+      <div className="planning-history-buttons" aria-label="Sidnavigering"><button type="button" onClick={onBack} disabled={!canBack} title="Till föregående sida">← Tillbaka</button><button type="button" onClick={onForward} disabled={!canForward} title="Till nästa sida">Framåt →</button></div>
       <button type="button" onClick={() => { onCloseAdmin?.(); onNew?.() }}>＋ Ny planering</button>
       <button type="button" onClick={() => { onCloseAdmin?.(); onNavigate?.('bibliotek') }}>▤ Mina planeringar</button>
       <button type="button" onClick={() => { onCloseAdmin?.(); onOpenArchive?.() }}>Arkiv</button>
@@ -14,6 +15,6 @@ export default function Navigation({ active = 'mina', onNavigate, onNew, selecte
       <button type="button" className={(active === 'arsplan' || active === 'redigera') && !calendarOpen ? 'top-navigation-link active' : 'top-navigation-link'} role="tab" id="tab-lararvy" aria-selected={(active === 'arsplan' || active === 'redigera') && !calendarOpen} aria-controls="panel-lararvy" onClick={() => { onCloseAdmin?.(); onNavigate?.('arsplan') }}><span aria-hidden="true">▤</span> Lärarvy</button>
 
       <button type="button" className={active === 'elevvy' ? 'top-navigation-link active' : 'top-navigation-link'} role="tab" id="tab-elevvy" aria-selected={active === 'elevvy'} aria-controls="panel-elevvy" onClick={() => { onCloseAdmin?.(); onNavigate?.('elevvy') }}><span aria-hidden="true">♙</span> Elevvy</button>
-    </nav>
+    </nav>}
   </>
 }
