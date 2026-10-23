@@ -71,7 +71,7 @@ export default function UpdateNotices({ userId, isAdmin, approvedTeachers = [] }
   return <section className="card app-update-notices" aria-label="Programuppdateringar">
     {isAdmin && <form onSubmit={send}>
       <h2>📣 Programuppdateringar – administratör</h2>
-      <p className="muted">Skicka en notis när den nya webbversionen är publicerad. Lärarnas sparade planeringar ändras inte.</p>
+      <p className="muted">Publicera först den nya programversionen i Cloudflare. Skicka sedan notisen så att lärarna kan bekräfta uppdateringen och ladda om sidan. Sparade planeringar ändras inte.</p>
       <label>Versionsnamn<input required maxLength={80} value={version} onChange={event => setVersion(event.target.value)} placeholder="Exempel: Version 1.3" /></label>
       <label>Vad är nytt?<textarea rows={2} value={description} onChange={event => setDescription(event.target.value)} placeholder="Förbättrad layout och schemamatris" /></label>
       <fieldset style={{border:'1px solid #d6b98a',borderRadius:10,padding:12}}><legend>Välj utskick</legend>
@@ -96,7 +96,7 @@ export default function UpdateNotices({ userId, isAdmin, approvedTeachers = [] }
         <strong>{notice.test_recipient_id ? 'TEST · ' : ''}{notice.version}</strong>
         {notice.description && <p>{notice.description}</p>}
         <p className="muted">Dina planeringar, klasser och lektioner behålls.</p>
-        <button type="button" className="primary" onClick={() => acknowledge(notice)}>Uppdatera nu</button>
+        <button type="button" className="primary" onClick={() => acknowledge(notice)}>Bekräfta och ladda om</button>
       </div>)}
     </div>}
     {status && <p role="status">{status}</p>}
