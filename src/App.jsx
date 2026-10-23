@@ -1794,9 +1794,47 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     return true
   }
   const bookChoices = bookPicker ? booksForSubject(bookPicker.school, bookPicker.subject).filter(book => [book.title,book.publisher,book.subject,book.levels].some(value => value.toLocaleLowerCase('sv').includes(bookQuery.toLocaleLowerCase('sv')))) : []
-  const confirmBook = name => { const item = bookPicker; if (!item) return; const title = item.course ? item.subject + ' – ' + item.course : item.subject; if (!createInBranch(item.school,item.subject,item.year,item.course,name)) return; setBookPicker(null); setQuickCreateTitle(title) }
-  // Kursen öppnas först för granskning. Automatisk sparning under vyskiftet kan orsaka en tom sida.
-  useEffect(() => { if (quickCreateTitle && teacherTab === 'new') setQuickCreateTitle('') }, [quickCreateTitle, teacherTab])
+  const confirmBook = async name => {
+    const item = bookPicker
+    if (!item || busy) return
+    if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
+    const fresh = {
+      ...emptyPlan(), schoolYear:libraryYear === 'alla' ? '' : libraryYear,
+      schoolForm:item.school === 'Gymnasiet' ? 'Gymnasieskola' : 'Grundskola',
+      subject:item.subject,grade:item.year || '',textbook:name,
+      course:item.course || (item.school === 'Gymnasiet' ? item.subject : ''),
+      title:item.course ? item.subject+' – '+item.course : item.year ? item.subject+' – '+item.year : item.subject,
+      lessonsPerWeek:5,lessonDays:['Måndag','Tisdag','Onsdag','Torsdag','Fredag']
+    }
+    fresh.weeksData = makeWeeks(fresh)
+    setBusy(true)
+    setStatus('Skapar grundplanering och veckor…')
+    try {
+      const payload = {kind:'arsplanering-v2',...fresh,published:false,publicSlug:''}
+      const {data,error} = await supabase.from('veckoplanering').insert({
+        user_id:session.user.id,title:fresh.title,week_start:fresh.startDate,
+        content:JSON.stringify(payload),subject:fresh.subject,school_year:fresh.schoolYear,
+        class_name:fresh.className,start_date:fresh.startDate,weeks:fresh.weeks,
+        ...publicationFields(false,false,'',null),updated_at:new Date().toISOString()
+      }).select('id').single()
+      if(error) throw error
+      setPlan(payload)
+      savedPlanRef.current = JSON.stringify(payload)
+      setSavedRevision(v=>v+1)
+      setSelectedId(data.id)
+      setCreatingFromBranch(false)
+      setSimpleSetup(false)
+      setTeacherTab('arsplan')
+      setCalendarOpen(true)
+      setPreviewStudents(false)
+      setBookPicker(null)
+      setStatus('Grundplaneringen är skapad. Veckorna visas nedan.')
+      try {window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`,String(data.id))} catch {}
+      void loadPlans()
+    } catch(error) {
+      setStatus('Kunde inte skapa grundplaneringen: '+(error.message||'Okänt fel'))
+    } finally {setBusy(false)}
+  }
   return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}`}><Navigation onBack={() => restoreNavigation(-1)} onForward={() => restoreNavigation(1)} canBack={navigationIndex > 0} canForward={navigationIndex < navigationHistory.length - 1} active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={id => { setTeacherTab(id); if (id === 'mina' || id === 'arsplan') setCalendarOpen(false); if (id === 'elevvy') { setPreviewStudents(true); setCalendarOpen(false) } else { setPreviewStudents(false) } }} onOpenExample={openExample} onOpenArchive={() => { setShowArchive(true); setTeacherTab('bibliotek') }} onNew={createPlan} onToggleCalendar={() => { setTeacherTab('arsplan'); setCalendarOpen(true) }} calendarOpen={calendarOpen} isAdmin={isAdmin} adminOpen={adminOpen} onOpenAdmin={onToggleAdmin} onCloseAdmin={() => { if (adminOpen) onToggleAdmin?.() }} onSignOut={() => supabase.auth.signOut()} pendingCount={pendingCount} planSearch={planSearch} onPlanSearchChange={setPlanSearch} showArchive={showArchive} /><main className={`shell${adminOpen ? " admin-workspace" : ""}`} id="lararvy">{teacherTab === 'arsplan' && openedFromLibrary && <div className="button-row" style={{marginBottom:14}}><button type="button" className="secondary" onClick={returnToPlanningTree}>← Tillbaka till träddiagrammet</button></div>}
   {!isAdmin && <UpdateNotices userId={session.user.id} isAdmin={false} />}
   {adminOpen ? adminContent : <>
