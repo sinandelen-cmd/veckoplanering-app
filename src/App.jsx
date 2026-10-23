@@ -664,10 +664,10 @@ function ImportantDatesForWeek({ week, plan }) {
   </div>
 }
 
-function StudentView({ plan, error, preview = false, printPage = null, printWeekStart = null }) {
+function StudentView({ plan, error, preview = false, printPage = null, printWeekStart = null, initialClass = "", hideSelector = false }) {
   const [page, setPage] = useState(0)
   const [singlePrintWeek, setSinglePrintWeek] = useState(null)
-  const [previewClass, setPreviewClass] = useState('')
+  const [previewClass, setPreviewClass] = useState(initialClass)
   const [linkCopied, setLinkCopied] = useState(false)
   useEffect(()=>{setLinkCopied(false)},[previewClass])
   const requestedClass = new URLSearchParams(window.location.search).get('klass')
@@ -726,7 +726,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   const pageWeekLabel = studentWeekPageLabel(visibleWeeks)
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
   if (!preview && requestedClass && plan && !selectedClass) return <main className="shell"><section className="card"><h2>Klassen hittades inte</h2><p>Kontrollera elevlänken med din lärare.</p></section></main>
-  const previewClassSelector = preview && plan?.classGroups?.length>0 && <div className="student-preview-classbar"><div className="student-preview-class-buttons"><button type="button" className={!previewClass?'active':''} onClick={()=>setPreviewClass('')}>📘 Grundplanering</button>{plan.classGroups.map(g=><button key={g.name} type="button" className={previewClass===g.name?'active':''} onClick={()=>setPreviewClass(g.name)}>🏫 {g.name}</button>)}</div><button type="button" className="student-class-copy-link" aria-label={linkCopied ? "Elevlänken kopierad" : "Kopiera elevlänk för "+(previewClass || "grundplaneringen")} title={linkCopied ? "Elevlänken kopierad" : "Kopiera elevlänk för "+(previewClass || "grundplaneringen")} disabled={!plan?.published||!plan?.publicSlug} onClick={async()=>{const url=window.location.origin+'/elev/'+encodeURIComponent(plan.publicSlug)+(previewClass?'?klass='+encodeURIComponent(previewClass):'');try{await navigator.clipboard.writeText(url);setLinkCopied(true)}catch{window.prompt('Kopiera elevlänk',url)}}}><span aria-hidden="true">{linkCopied?'✓':'🔗'}</span></button></div>
+  const previewClassSelector = preview && !hideSelector && plan?.classGroups?.length>0 && <div className="student-preview-classbar"><div className="student-preview-class-buttons"><button type="button" className={!previewClass?'active':''} onClick={()=>setPreviewClass('')}>📘 Grundplanering</button>{plan.classGroups.map(g=><button key={g.name} type="button" className={previewClass===g.name?'active':''} onClick={()=>setPreviewClass(g.name)}>🏫 {g.name}</button>)}</div><button type="button" className="student-class-copy-link" aria-label={linkCopied ? "Elevlänken kopierad" : "Kopiera elevlänk för "+(previewClass || "grundplaneringen")} title={linkCopied ? "Elevlänken kopierad" : "Kopiera elevlänk för "+(previewClass || "grundplaneringen")} disabled={!plan?.published||!plan?.publicSlug} onClick={async()=>{const url=window.location.origin+'/elev/'+encodeURIComponent(plan.publicSlug)+(previewClass?'?klass='+encodeURIComponent(previewClass):'');try{await navigator.clipboard.writeText(url);setLinkCopied(true)}catch{window.prompt('Kopiera elevlänk',url)}}}><span aria-hidden="true">{linkCopied?'✓':'🔗'}</span></button></div>
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
   return <>{previewClassSelector}<main style={planThemeStyle(plan)} className={`shell student-shell ${printPage === null ? "student-screen-view" : "student-print-page"} ${printPage !== null && visibleWeeks.length === 1 ? "student-print-spacious" : ""}`}>
     {printPage === null && <div className="student-print-action"><button type="button" className="secondary" onClick={() => window.print()}>🖨️ Skriv ut elevvyn</button></div>}
@@ -1807,7 +1807,9 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
 
     
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div id="kopplade-klasser"><ClassSchedules plan={{...plan,weeksData:weeks}} publicSlug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} /></div>}
-    {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline">
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && Array.isArray(plan.classGroups) && plan.classGroups.length>0 && <div className="student-preview-classbar editing-class-picker"><div className="student-preview-class-buttons"><button type="button" className={!editingClassView?'active':''} onClick={()=>setEditingClassView('')}>📘 Grundplanering</button>{plan.classGroups.map(g=><button type="button" key={g.name} className={editingClassView===g.name?'active':''} onClick={()=>setEditingClassView(g.name)}>🏫 {g.name}</button>)}</div><button type="button" className="student-class-copy-link" aria-label="Kopiera elevlänk för vald klass" title="Kopiera elevlänk för vald klass" disabled={!plan.published||!plan.publicSlug} onClick={async()=>{const url=window.location.origin+'/elev/'+encodeURIComponent(plan.publicSlug)+(editingClassView?'?klass='+encodeURIComponent(editingClassView):'');try{await navigator.clipboard.writeText(url);setStatus('Elevlänken för '+(editingClassView||'grundplaneringen')+' har kopierats.')}catch{window.prompt('Kopiera elevlänk',url)}}}>🔗</button></div>}
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && plan.classGroups?.some(g=>g.name===editingClassView) && <section className="editing-selected-class-weekly"><StudentView key={editingClassView} plan={{...sanitizeForStudents({...plan,weeksData:weeks}),classGroups:[plan.classGroups.find(g=>g.name===editingClassView)],published:plan.published,publicSlug:plan.publicSlug}} preview initialClass={editingClassView} hideSelector /></section>}
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline" style={editingClassView && plan.classGroups?.some(g=>g.name===editingClassView)?{display:"none"}:undefined}>
     <div className="calendar-bulk-visibility" style={{ margin: '8px 0 18px' }}><button type="button" className="secondary" disabled={busy} onClick={() => setAllWeeksVisibility(!weeks.every(week => !week.hidden))} style={{ padding: '13px 20px', fontSize: '1.05rem', fontWeight: 800, background: '#e4f6e9', border: '2px solid #80b69a', borderRadius: 12 }}>{weeks.every(week => !week.hidden) ? '☑ Dölj alla veckor i Elevvy' : '☐ Visa alla veckor i Elevvy'}</button></div>
 <section className="card">
       <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
@@ -2218,6 +2220,7 @@ function GymnasiumDemoIndex() {
 }
 
 function AnnualApp() {
+  const [editingClassView,setEditingClassView] = useState('')
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [studentPlan, setStudentPlan] = useState(null)
