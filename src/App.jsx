@@ -1041,6 +1041,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [simpleSetup, setSimpleSetup] = useState(true)
   const [simpleMore, setSimpleMore] = useState(false)
   const [teacherTab, setTeacherTab] = useState("mina")
+  const [creatingFromBranch, setCreatingFromBranch] = useState(false)
   const boardTreeRef = useRef(null)
   useEffect(() => {
     if (teacherTab !== 'bibliotek') return
@@ -1664,6 +1665,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   }
   const createPlan = () => {
     if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
+    setCreatingFromBranch(false)
     const fresh = {...emptyPlan(), lessonsPerWeek:5, lessonDays:['Måndag','Tisdag','Onsdag','Torsdag','Fredag']}
     try { window.sessionStorage.removeItem(`arsplanering-last-open-${session.user.id}`) } catch { /* Lagring kan vara blockerad */ }
     setSimpleSetup(true)
@@ -1677,6 +1679,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const createInBranch = (school, subject, grade = '') => {
     if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
     const fresh = { ...emptyPlan(), schoolYear: libraryYear === 'alla' ? '' : libraryYear, schoolForm: school === 'Gymnasiet' ? 'Gymnasieskola' : 'Grundskola', subject, grade, course: school === 'Gymnasiet' ? subject : '', title: grade ? subject + ' – ' + grade : subject, lessonsPerWeek: 5, lessonDays: ['Måndag','Tisdag','Onsdag','Torsdag','Fredag'] }
+    setCreatingFromBranch(true)
     setSimpleSetup(true); setSimpleMore(true); setPlan(fresh); setSelectedId(null); savedPlanRef.current = JSON.stringify(fresh)
     setSavedRevision(revision => revision + 1); setTeacherTab('new'); setCalendarOpen(false); setPreviewStudents(false); setA4Demo(false)
     setStatus('Ny grundplanering för ' + (grade ? subject + ' – ' + grade : subject) + '. Fyll i och spara.')
@@ -1866,7 +1869,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           </div>
         </details>
         <div style={{marginTop:14,padding:"12px 14px",border:"1px solid #d4e5d7",borderRadius:12,background:"#f4faf4"}}><strong>Steg 2: Lägg till klasser efter att du skapat planeringen</strong><p className="muted" style={{margin:"6px 0 0"}}>Skapa först grundplaneringen. Därefter lägger du till 8A, 8B och andra klasser, med egna dagar och antal lektioner. Alla delar samma lektionsinnehåll.</p>{(plan.classGroups||[]).length>0&&<p style={{margin:"8px 0 0"}}>Redan förberedda klasser: {plan.classGroups.map(g=>g.name).join(", ")}. De följer med när du sparar.</p>}</div>
-        {simpleMore && <div className="simple-extra-fields"><h3>Fler uppgifter</h3><label>Ämne – välj i listan eller skriv ett eget<input list="planning-subject-options" value={plan.subject || ""} onChange={e => setPlan(p => ({...p,subject:e.target.value}))} placeholder="Välj eller skriv ämne, t.ex. Modersmål" /><datalist id="planning-subject-options">{["Matematik","Svenska","Svenska som andraspråk","Engelska","Biologi","Fysik","Kemi","Teknik","Historia","Geografi","Religionskunskap","Samhällskunskap","Idrott och hälsa","Bild","Musik","Slöjd","Hem- och konsumentkunskap","Moderna språk","Modersmål","Entreprenörskap"].map(subject => <option key={subject} value={subject} />)}</datalist></label><div className="form-grid"><label>Skolform<select value={plan.schoolForm || ""} onChange={e => setPlan(p => ({ ...p, schoolForm: e.target.value, grade: "", course: "" }))}><option value="">Välj skolform</option><option value="Grundskola">Grundskolan</option><option value="Gymnasieskola">Gymnasiet</option></select></label><label>Årskurs<input value={plan.grade || ""} onChange={e => setPlan(p => ({ ...p, grade: e.target.value }))} placeholder="6" /></label><label>Lektioner per vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 1)) }))} /></label><label>Kommun<input value={plan.municipality || ""} onChange={e => setPlan(p => ({ ...p, municipality: e.target.value }))} /></label></div>
+        {simpleMore && <div className="simple-extra-fields"><h3>Fler uppgifter</h3><label>Ämne – välj i listan eller skriv ett eget<input list="planning-subject-options" value={plan.subject || ""} onChange={e => setPlan(p => ({...p,subject:e.target.value}))} placeholder="Välj eller skriv ämne, t.ex. Modersmål" /><datalist id="planning-subject-options">{["Matematik","Svenska","Svenska som andraspråk","Engelska","Biologi","Fysik","Kemi","Teknik","Historia","Geografi","Religionskunskap","Samhällskunskap","Idrott och hälsa","Bild","Musik","Slöjd","Hem- och konsumentkunskap","Moderna språk","Modersmål","Entreprenörskap"].map(subject => <option key={subject} value={subject} />)}</datalist></label><div className="form-grid">{!creatingFromBranch && <label>Skolform<select value={plan.schoolForm || ""} onChange={e => setPlan(p => ({ ...p, schoolForm: e.target.value, grade: "", course: "" }))}><option value="">Välj skolform</option><option value="Grundskola">Grundskolan</option><option value="Gymnasieskola">Gymnasiet</option></select></label>}<label>Årskurs<input value={plan.grade || ""} onChange={e => setPlan(p => ({ ...p, grade: e.target.value }))} placeholder="6" /></label>{!creatingFromBranch && <label>Lektioner per vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 1)) }))} /></label>}<label>Kommun<input value={plan.municipality || ""} onChange={e => setPlan(p => ({ ...p, municipality: e.target.value }))} /></label></div>
         </div>}
         <details className="simple-import-section" style={{marginTop:14}} aria-label="Importera underlag"><summary style={{cursor:"pointer",fontWeight:700}}>Importera underlag (valfritt)</summary>
           <h3>Importera underlag (valfritt)</h3>
