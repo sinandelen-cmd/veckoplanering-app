@@ -291,7 +291,7 @@ assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(true\); setPrevi
 
 assert.match(app, /function insertExampleWeek\(\)/)
 
-assert.match(app, /onClick=\{\(\) => clonePlan\(row\)\}/, 'Planeringar ska kunna kopieras utan att originalet ändras')
+assert.match(app, /onClick=\{\(\) => loadPlan\(row\)\}/, 'Sparade kurser ska kunna öppnas från mappträdet')
 assert.match(app, /archived: false, published: false/)
 assert.match(app, /showArchive \? .*Visa aktiva.*Arkiv/, "Arkivet ska vara åtkomligt inne i planeringstavlan")
 assert.match(app, /async function setArchived\(row, archived\)/)
