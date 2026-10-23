@@ -46,8 +46,8 @@ export default function ClassSchedules({ plan, onChange }) {
   const [days, setDays] = React.useState([])
   const [selected, setSelected] = React.useState(0)
   const [showAll, setShowAll] = React.useState(false)
-  const [showMatrix, setShowMatrix] = React.useState(false)
-  const [showClassMenu, setShowClassMenu] = React.useState(false)
+  const [showMatrix, setShowMatrix] = React.useState(true)
+  const [showClassMenu, setShowClassMenu] = React.useState(true)
   const [compare, setCompare] = React.useState(false)
   const [showClassDetails, setShowClassDetails] = React.useState(false)
   const [selectedComparisonWeek, setComparisonWeek] = React.useState(0)
@@ -74,7 +74,7 @@ export default function ClassSchedules({ plan, onChange }) {
   const visibleComparisonWeeks = showAll ? comparisonWeeks : comparisonWeeks.slice(0,8)
   const unscheduledGroups = groups.filter(g => !(g.days || []).length)
   return <section className="card" aria-label="Kopplade klasser">
-    <h2>Planera en gång – fördela till dina klasser</h2>
+    <h2>Grundplanering · Kopplade klasser</h2>
     <p><strong>En grundplanering – flera klasser.</strong> Skriv lektionsinnehållet en gång. Varje klass får sedan samma lektioner i rätt ordning, på sina egna veckodagar och i sin egen takt.</p>
     <p className="muted">Exempel: 8A kan ha 3 lektioner på måndag, onsdag och fredag, medan 8B har 2 på tisdag och torsdag. Båda följer samma innehåll, men blir klara olika veckor.</p>
     {groups.length===0 && <div style={{display:"flex",gap:10,alignItems:"end",flexWrap:"wrap",margin:"16px 0"}}>
