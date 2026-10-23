@@ -3826,3 +3826,10 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .calendar-class-picker .calendar-upload-file{display:inline-flex!important;align-items:center!important;justify-content:center!important;white-space:nowrap!important;cursor:pointer!important;gap:6px!important;margin-left:auto!important;padding:10px 13px!important;border:1px solid #9fc9c5!important;border-radius:11px!important;background:#fff!important;color:#176d65!important;font-size:13px!important;font-weight:700!important}
 .calendar-class-picker .calendar-upload-file:hover{background:#e9f5f3!important}
 .calendar-class-picker .calendar-upload-file input[type=file]{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;overflow:hidden!important}
+
+/* Tydlig status direkt vid filuppladdningen. */
+.calendar-upload-file.is-loading{opacity:.7;cursor:wait!important}
+.calendar-import-feedback{display:inline-flex;align-items:center;max-width:280px;font-size:12px;font-weight:650;line-height:1.3;white-space:normal}
+.calendar-import-feedback.loading{color:#38618c}
+.calendar-import-feedback.success{color:#157b56}
+.calendar-import-feedback.error{color:#ba3748}
