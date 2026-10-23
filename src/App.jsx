@@ -383,6 +383,24 @@ function unitsFromWorkbook(workbook) {
 function distributeText(plan,text){return distributeUnits(plan,unitsFromText(text))}
 function distributeChapterWorkbook(plan,workbook){return distributeUnits(plan,unitsFromWorkbook(workbook))}
 
+// OCR laddas först när en bild eller en skannad PDF behöver tolkas.
+let ocrScriptPromise
+async function recognizeImage(source) {
+  if (!ocrScriptPromise) ocrScriptPromise = new Promise((resolve,reject)=>{
+    if (window.Tesseract) {resolve(window.Tesseract);return}
+    const script=document.createElement('script')
+    script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js'
+    script.onload=()=>window.Tesseract ? resolve(window.Tesseract) : reject(new Error('Bildigenkänningen kunde inte startas.'))
+    script.onerror=()=>reject(new Error('Bildigenkänningen kunde inte laddas. Kontrollera internetanslutningen.'))
+    document.head.appendChild(script)
+  }).catch(error=>{ocrScriptPromise=null;throw error})
+  const engine=await ocrScriptPromise
+  const result=await engine.recognize(source,'swe+eng')
+  const text=result?.data?.text?.trim()||''
+  if(!text)throw new Error('Ingen läsbar text hittades i bilden. Prova en tydligare bild.')
+  return text
+}
+
 async function extractText(file) {
   const name = file.name.toLowerCase()
   if (name.endsWith('.txt') || name.endsWith('.csv')) return file.text()
@@ -409,13 +427,23 @@ async function extractText(file) {
         if (!row) {row={y,parts:[]};rows.push(row)}
         row.parts.push({x:item.transform?.[4] ?? 0,text:item.str})
       }
-      pages.push(rows.sort((a,b)=>b.y-a.y).map(row=>row.parts.sort((a,b)=>a.x-b.x).map(part=>part.text).join(' ').trim()).join('\n'))
+      let pageText=rows.sort((a,b)=>b.y-a.y).map(row=>row.parts.sort((a,b)=>a.x-b.x).map(part=>part.text).join(' ').trim()).join('\n')
+      if (!pageText.trim()) {
+        const viewport=page.getViewport({scale:1.8})
+        const canvas=document.createElement('canvas')
+        canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height)
+        const context=canvas.getContext('2d')
+        await page.render({canvasContext:context,viewport}).promise
+        pageText=await recognizeImage(canvas)
+        canvas.width=0;canvas.height=0
+      }
+      pages.push(pageText)
     }
     const result=pages.join('\n')
-    if(!result.trim()) throw new Error('PDF-filen innehåller ingen läsbar text. Skannade PDF-filer behöver bildigenkänning som ännu inte stöds.')
+    if(!result.trim()) throw new Error('Ingen läsbar text hittades i PDF-filen.')
     return result
   }
-  if (/\\.(?:png|jpe?g|webp|heic|gif)$/i.test(name)) throw new Error('Bilder behöver bildigenkänning (OCR). Den funktionen är ännu inte aktiverad – ingen import har gjorts.')
+  if (/\\.(?:png|jpe?g|webp)$/i.test(name)) return recognizeImage(file)
   if (/\\.doc$/i.test(name)) throw new Error('Äldre Word-filer (.doc) stöds ännu inte. Spara som .docx för att importera.')
   throw new Error('Filtypen stöds inte. Använd Excel, DOCX, textbaserad PDF, CSV eller TXT.')
 }
