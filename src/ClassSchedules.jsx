@@ -46,6 +46,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
   const [days, setDays] = React.useState([])
   const [selected, setSelected] = React.useState(0)
   const [showAll, setShowAll] = React.useState(false)
+  const [expandedWeek, setExpandedWeek] = React.useState(null)
   const [showMatrix, setShowMatrix] = React.useState(true)
   const [showClassMenu, setShowClassMenu] = React.useState(false)
   const [compare, setCompare] = React.useState(false)
@@ -144,9 +145,9 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
       <p className="muted">Lektionsdagar och antal lektioner ändras i klassmatrisen ovan. Här hanterar du endast särskilda ändringar för den valda klassen.</p>
       <p><strong>{schedule.length} planerade lektioner</strong> från grundplaneringen. Lektionsnumren börjar om på 1 varje kalendervecka. Det gemensamma innehållet fortsätter i rätt ordning. Ändringar i en klass påverkar inte andra klasser.</p>
       {!(group.days || []).length && <p role="alert">Välj minst en lektion per vecka för att se planeringen.</p>}
-      {weeksShown.map(week => <div key={week.weekStart} style={{border:'1px solid #cbd5e1',borderRadius:10,padding:12,margin:'12px 0'}}>
-        <h4 style={{margin:'0 0 10px'}}>Vecka {(() => {const d=new Date(week.weekStart+'T12:00:00');d.setDate(d.getDate()+3);const y=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-y)/86400000-3+(y.getDay()+6)%7)/7)})()} · {week.weekStart}</h4>
-        {week.items.map(item => <div key={item.lessonNumber} style={{padding:'8px 0',borderTop:'1px solid #e2e8f0'}}>
+      {weeksShown.map(week => <div key={week.weekStart} className="class-week-compact">
+        <button type="button" className="class-week-compact-toggle" aria-expanded={expandedWeek===week.weekStart} onClick={()=>setExpandedWeek(current=>current===week.weekStart?null:week.weekStart)}><span>{expandedWeek===week.weekStart?"▾":"▸"} Vecka {(() => {const d=new Date(week.weekStart+'T12:00:00');d.setDate(d.getDate()+3);const y=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-y)/86400000-3+(y.getDay()+6)%7)/7)})()}</span><span>{week.items.length} lektioner · {week.weekStart}</span></button>
+        {expandedWeek===week.weekStart && week.items.map(item => <div key={item.lessonNumber} style={{padding:'8px 0',borderTop:'1px solid #e2e8f0'}}>
           <strong>{DAY_SHORT[DAYS.indexOf(item.day)]} {item.date} – Lektion {item.weekLessonNumber}</strong>
           <div className="muted">Gemensam lektion {item.lessonNumber} · Från grundplaneringens vecka {item.weekNumber || '?'}{item.weekTitle ? ' · '+item.weekTitle : ''}</div>
           <div style={{whiteSpace:'pre-wrap'}}>{item.override?.text ?? describe(item.lesson)}</div>
