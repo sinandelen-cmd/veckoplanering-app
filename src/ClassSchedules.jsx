@@ -91,6 +91,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
     <div className="class-mini-row">
       <strong className="class-mini-label">Klasser</strong>
       <div className="class-mini-chips">{groups.map((g,i)=><button type="button" key={i} className={'class-mini-chip'+(selected===i?' active':'')} aria-pressed={selected===i} onClick={()=>{setSelected(i);setCompare(false);setShowClassDetails(false)}}>{g.name}</button>)}
+        {groups.length>0 && <button type="button" className="class-mini-add" onClick={()=>{if(!window.confirm('Ta bort klassen '+groups[selected]?.name+'?'))return;onChange({...plan,classGroups:groups.filter((_,i)=>i!==selected)});setSelected(0)}}>− Ta bort klass</button>}
         <button type="button" className="class-mini-add" onClick={()=>setAddingClass(v=>!v)} aria-expanded={addingClass}>+ Klass</button>
       </div>
       <button type="button" className="class-mini-schema" disabled={!groups.length} aria-expanded={showClassMenu} onClick={()=>{setShowClassMenu(v=>!v);setCompare(false);setShowClassDetails(false)}}>▦ Schema</button>
