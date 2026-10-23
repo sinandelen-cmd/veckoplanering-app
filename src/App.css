@@ -2808,22 +2808,12 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 }
 
 
-/* Behåll respektive skolforms egen position när en gren öppnas.
-   Den valda grenen får bredd inom sin halva, i stället för att flyttas till vänster. */
+
+/* Fast vänster/höger-position för skolformer även när bara en gren visas. */
 #mina-arsplaneringar .planning-board>.visual-tree-schools{
-  display:grid!important;
-  grid-template-columns:repeat(2,minmax(0,1fr))!important;
-  align-items:start;
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ align-items:start;
 }
-#mina-arsplaneringar .planning-board>.visual-tree-schools>.visual-tree-school:first-child{
-  grid-column:1;
-}
-#mina-arsplaneringar .planning-board>.visual-tree-schools>.visual-tree-school:last-child{
-  grid-column:2;
-}
-#mina-arsplaneringar .planning-board>.visual-tree-schools>.visual-tree-school:only-child{
-  grid-column:1 / -1;
-}
-#mina-arsplaneringar .planning-board>.visual-tree-schools:has(>.visual-tree-school:only-child){
-  grid-template-columns:minmax(0,1fr)!important;
-}
+#mina-arsplaneringar .planning-board>.visual-tree-schools>.school-grundskola{grid-column:1!important}
+#mina-arsplaneringar .planning-board>.visual-tree-schools>.school-gymnasiet{grid-column:2!important}
+#mina-arsplaneringar .planning-board>.visual-tree-schools>.visual-tree-school:only-child{width:100%;min-width:0}
