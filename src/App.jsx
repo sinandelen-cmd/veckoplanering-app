@@ -1365,6 +1365,28 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
 
   useEffect(() => { loadPlans() }, [])
 
+  function shiftAllWeeks(index, target) {
+    const currentWeeks=displayWeeks(plan)
+    const selected=currentWeeks[index]
+    if(!selected)return
+    const current=calendarWeekNumber(selected.weekStart)
+    if(!Number.isInteger(target)||target<1||target>53||current==null)return
+    const shiftedDate=addWeeks(selected.weekStart,target-current)
+    if(calendarWeekNumber(shiftedDate)!==target){setStatus('Veckonumret finns inte vid detta årsskifte.');return}
+    const shift=target-current
+    setPlan(previous=>{
+      const source=displayWeeks(previous)
+      const updated=source.map(week=>{
+        const weekStart=addWeeks(week.weekStart,shift)
+        const weekNumber=calendarWeekNumber(weekStart)
+        const title=!week.title||/^Vecka\s+\d+$/i.test(week.title) ? 'Vecka '+weekNumber : week.title
+        return {...week,weekStart,weekNumber,title}
+      })
+      return {...previous,startDate:updated[0]?.weekStart||previous.startDate,startWeek:updated[0]?.weekNumber||previous.startWeek,weeksData:updated}
+    })
+    setStatus('Alla veckor och datum har anpassats. Spara planeringen för att behålla ändringen.')
+  }
+
   function updateWeek(index, changes) {
     setPlan(p => ({ ...p, weeksData: displayWeeks(p).map((week, i) => {
       if (i !== index) return week
@@ -1987,9 +2009,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             if (!Number.isInteger(target) || target < 1 || target > 53 || current === null) return
             const nextDate = addWeeks(week.weekStart, target - current)
             if (calendarWeekNumber(nextDate) !== target) { setStatus('Veckonumret finns inte vid detta årsskifte.'); return }
-            if (weeks.some((other, i) => i !== index && other.weekStart === nextDate)) { setStatus('Det finns redan en planering för den veckan.'); return }
-            updateWeek(index, { weekStart: nextDate, weekNumber: target })
-            setStatus('')
+            shiftAllWeeks(index, target)
           }} /></strong><span style={{ fontSize: "1.15rem", fontWeight: 700 }}>{formatDate(week.weekStart)}</span>
             <button type="button" className="remove-small" disabled={weeks.length <= 1} onClick={() => {
               if (hasWeekWork(week, index) && !window.confirm(`Ta bort vecka ${week.weekNumber} och allt innehåll i veckan?`)) return
@@ -2242,9 +2262,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             if (!Number.isInteger(target) || target < 1 || target > 53 || current === null) return
             const nextDate = addWeeks(week.weekStart, target - current)
             if (calendarWeekNumber(nextDate) !== target) { setStatus('Veckonumret finns inte vid detta årsskifte.'); return }
-            if (weeks.some((other, i) => i !== index && other.weekStart === nextDate)) { setStatus('Det finns redan en planering för den veckan.'); return }
-            updateWeek(index, { weekStart: nextDate, weekNumber: target })
-            setStatus('')
+            shiftAllWeeks(index, target)
           }} /></strong><span style={{ fontSize: "1.15rem", fontWeight: 700 }}>{formatDate(week.weekStart)}</span>
             <button type="button" className="remove-small" disabled={weeks.length <= 1} onClick={() => {
               if (hasWeekWork(week, index) && !window.confirm(`Ta bort vecka ${week.weekNumber} och allt innehåll i veckan?`)) return
