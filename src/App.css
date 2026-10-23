@@ -3726,3 +3726,6 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 
 /* Elevvy: klassflikar och kopieringsknapp på en enda horisontell rad. */
 .student-preview-classbar{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:nowrap;padding:10px 14px;margin:8px 0 14px;background:#f0f8f6;border:1px solid #c8dfd8;border-radius:10px}.student-preview-class-buttons{display:flex;gap:7px;align-items:center;flex-wrap:wrap;min-width:0}.student-class-copy-link{margin-left:auto;flex-shrink:0;background:#1465c0!important;color:white!important;border:1px solid #1056a6!important;border-radius:9px;padding:9px 15px;font-weight:800;cursor:pointer;white-space:nowrap}.student-class-copy-link:hover{background:#0d529f!important}.student-class-copy-link:disabled{opacity:.55;cursor:not-allowed}@media(max-width:650px){.student-preview-classbar{flex-wrap:wrap}.student-class-copy-link{margin-left:auto}}
+
+/* Diskret, ikonbaserad elevlänk längst till höger. */
+.student-class-copy-link{width:34px!important;height:34px!important;min-width:34px!important;padding:0!important;display:inline-flex;align-items:center;justify-content:center;border-radius:8px!important;font-size:17px!important;line-height:1!important;box-shadow:none!important}
