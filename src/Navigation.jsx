@@ -2,11 +2,8 @@ export default function Navigation({ active = 'mina', onNavigate, onNew, selecte
   if (!onNavigate) return <nav className="public-navigation" aria-label="Huvudmeny"><a href="/">Årsplanering</a></nav>
   return <>
     <nav className="planning-home-navigation" aria-label="Huvudnavigation">
-      <button type="button" className="planning-home-button" onClick={() => { onCloseAdmin?.(); onNavigate?.('mina') }}>⌂ Startsida</button>
-      <div className="planning-history-buttons" aria-label="Sidnavigering"><button type="button" onClick={onBack} disabled={!canBack} title="Till föregående sida">← Tillbaka</button><button type="button" onClick={onForward} disabled={!canForward} title="Till nästa sida">Framåt →</button></div>
-      {active !== 'arsplan' && active !== 'elevvy' && active !== 'redigera' && <button type="button" onClick={() => { onCloseAdmin?.(); onNew?.() }}>＋ Ny planering</button>}
+      {active !== 'mina' && <button type="button" className="planning-home-button" onClick={() => { onCloseAdmin?.(); onNavigate?.('mina') }}>⌂ Startsida</button>}
       <button type="button" onClick={() => { onCloseAdmin?.(); onNavigate?.('bibliotek') }}>▤ Mina planeringar</button>
-      <button type="button" onClick={() => { onCloseAdmin?.(); onOpenArchive?.() }}>Arkiv</button>
       {isAdmin && <button type="button" onClick={onOpenAdmin}>⚙ Administration {pendingCount > 0 ? '(' + pendingCount + ')' : ''}</button>}
       <button type="button" onClick={onSignOut}>Logga ut</button>
     </nav>
