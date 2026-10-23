@@ -9,7 +9,7 @@ import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url'
 import { supabase } from './supabase'
 import './App.css'
 import Navigation from './Navigation.jsx'
-import ClassSchedules from './ClassSchedules.jsx'
+import ClassSchedules, { buildClassSchedule } from './ClassSchedules.jsx'
 import { MUNICIPALITIES_BY_COUNTY } from './swedishMunicipalities.js'
 import { NATIONAL_EXAMS_2026_27, NATIONAL_EXAM_PERIODS_2026_27 } from './nationalExams.js'
 
@@ -460,6 +460,7 @@ function sanitizeForStudents(plan) {
     title: String(plan?.title || ''),
     subject: String(plan?.subject || ''),
     className: String(plan?.className || ''),
+    classGroups: Array.isArray(plan?.classGroups) ? plan.classGroups.filter(g=>g && typeof g.name==='string').map(g=>({name:g.name.slice(0,80),startDate:String(g.startDate || plan.startDate || ''),days:Array.isArray(g.days)?g.days.filter(d=>['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].includes(d)):[],cancelledDates:Array.isArray(g.cancelledDates)?g.cancelledDates.filter(d=>/^\\d{4}-\\d{2}-\\d{2}$/.test(d)):[],lessonTimes:g.lessonTimes && typeof g.lessonTimes==='object'?g.lessonTimes:{},overrides:g.overrides && typeof g.overrides==='object'?g.overrides:{}})) : [],
     schoolYear: String(plan?.schoolYear || ''),
     grade: String(plan?.grade || ''),
     schoolForm: String(plan?.schoolForm || ''),
@@ -665,6 +666,9 @@ function ImportantDatesForWeek({ week, plan }) {
 function StudentView({ plan, error, preview = false, printPage = null, printWeekStart = null }) {
   const [page, setPage] = useState(0)
   const [singlePrintWeek, setSinglePrintWeek] = useState(null)
+  const requestedClass = new URLSearchParams(window.location.search).get('klass')
+  const selectedClass = requestedClass && plan?.classGroups?.find(g => g.name === requestedClass)
+  const classLessons = selectedClass ? buildClassSchedule(plan,selectedClass) : []
   useEffect(() => {
     if (printPage !== null) return undefined
     const clearPrintSelection = () => setSinglePrintWeek(null)
@@ -708,6 +712,8 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     : (printWeekStart ? studentWeeks.filter(week => week.weekStart === printWeekStart) : (printGroups[printPage]?.weeks || []))
   const pageWeekLabel = studentWeekPageLabel(visibleWeeks)
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
+  if (requestedClass && plan && !selectedClass) return <main className="shell"><section className="card"><h2>Klassen hittades inte</h2><p>Kontrollera elevlänken med din lärare.</p></section></main>
+  if (selectedClass) return <main className="shell student-class-view"><section className="card"><h1>{plan.title}</h1><h2>📚 {selectedClass.name} · Klassens lektioner</h2><p className="muted">Detta är schemat för {selectedClass.name}. Alla klasser följer samma grundplanering i sin egen takt.</p>{classLessons.length===0?<p>Inga schemalagda lektioner ännu. Läraren behöver välja lektionsdagar och publicera planeringen.</p>:<div className="student-class-lessons">{classLessons.map((item,i)=><article key={i} className="student-class-lesson"><strong>{item.date} · {item.day} · Lektion {item.lessonNumber}{item.time?' · '+item.time:''}</strong><p>{item.override?.text || (item.lesson?.topics || []).map(t=>[t.name,t.pagesLabel,t.assignmentsLabel].filter(Boolean).join(' · ')).filter(Boolean).join('; ') || item.lesson?.name || 'Lektion'}</p></article>)}</div>}</section></main>
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
   return <><main style={planThemeStyle(plan)} className={`shell student-shell ${printPage === null ? "student-screen-view" : "student-print-page"} ${printPage !== null && visibleWeeks.length === 1 ? "student-print-spacious" : ""}`}>
     {printPage === null && <div className="student-print-action"><button type="button" className="secondary" onClick={() => window.print()}>🖨️ Skriv ut elevvyn</button></div>}
@@ -1780,7 +1786,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     </div>}
 
     
-    {selectedId && !calendarOpen && teacherTab === "arsplan" && <div id="kopplade-klasser"><ClassSchedules plan={{...plan,weeksData:weeks}} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} /></div>}
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && <div id="kopplade-klasser"><ClassSchedules plan={{...plan,weeksData:weeks}} publicSlug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} /></div>}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline">
     <div className="calendar-bulk-visibility" style={{ margin: '8px 0 18px' }}><button type="button" className="secondary" disabled={busy} onClick={() => setAllWeeksVisibility(!weeks.every(week => !week.hidden))} style={{ padding: '13px 20px', fontSize: '1.05rem', fontWeight: 800, background: '#e4f6e9', border: '2px solid #80b69a', borderRadius: 12 }}>{weeks.every(week => !week.hidden) ? '☑ Dölj alla veckor i Elevvy' : '☐ Visa alla veckor i Elevvy'}</button></div>
 <section className="card">
