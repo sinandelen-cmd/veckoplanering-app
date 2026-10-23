@@ -668,9 +668,20 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   const [page, setPage] = useState(0)
   const [singlePrintWeek, setSinglePrintWeek] = useState(null)
   const [previewClass, setPreviewClass] = useState('')
+  const [linkCopied, setLinkCopied] = useState(false)
+  useEffect(()=>{setLinkCopied(false)},[previewClass])
   const requestedClass = new URLSearchParams(window.location.search).get('klass')
   const selectedClass = (preview ? previewClass : requestedClass) && plan?.classGroups?.find(g => g.name === (preview ? previewClass : requestedClass))
   const classLessons = selectedClass ? buildClassSchedule(plan,selectedClass) : []
+  const classWeeks = selectedClass ? Object.values(classLessons.reduce((acc,item)=>{
+    const weekStart=mondayOf(item.date)
+    if(!acc[weekStart]) acc[weekStart]={weekStart,weekNumber:calendarWeekNumber(weekStart),title:'',chapter:'',content:'',lessons:[],pages:[],assignments:[],links:[]}
+    const lesson={...item.lesson,day:item.day,date:item.date,name:item.override?.text || item.lesson?.name || 'Lektion '+item.lessonNumber}
+    if(item.override?.text) lesson.topics=[{name:item.override.text}]
+    acc[weekStart].lessons.push(lesson)
+    return acc
+  },{})).sort((a,b)=>a.weekStart.localeCompare(b.weekStart)) : []
+
   useEffect(() => {
     if (printPage !== null) return undefined
     const clearPrintSelection = () => setSinglePrintWeek(null)
@@ -694,7 +705,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
       + (lesson.topics || []).filter(Boolean).reduce((topicSum, topic) => topicSum + String(topic.name || '').length
         + (topic.pages?.length || 0) * 8 + (topic.assignments?.length || 0) * 10
         + (topic.links?.length || 0) * 10, 0), 0))
-  const studentWeeks = Array.isArray(plan?.weeksData) ? [...plan.weeksData]
+  const studentWeeks = Array.isArray(selectedClass ? classWeeks : plan?.weeksData) ? [...(selectedClass ? classWeeks : plan.weeksData)]
     .filter(week => week && !week.hidden && (week.weekStart || '') <= toIsoDate(new Date()) && (!week.hideDate || week.hideDate > toIsoDate(new Date())))
     .sort((a, b) => weekContentScore(b) - weekContentScore(a))
     .filter((week, index, weeks) => weeks.findIndex(other => (other.weekStart || `number-${other.weekNumber}`) === (week.weekStart || `number-${week.weekNumber}`)) === index)
@@ -715,8 +726,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   const pageWeekLabel = studentWeekPageLabel(visibleWeeks)
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
   if (!preview && requestedClass && plan && !selectedClass) return <main className="shell"><section className="card"><h2>Klassen hittades inte</h2><p>Kontrollera elevlänken med din lärare.</p></section></main>
-  const previewClassSelector = preview && plan?.classGroups?.length>0 && <div className="student-preview-classbar"><div className="student-preview-class-buttons"><button type="button" className={!previewClass?'active':''} onClick={()=>setPreviewClass('')}>📘 Grundplanering</button>{plan.classGroups.map(g=><button key={g.name} type="button" className={previewClass===g.name?'active':''} onClick={()=>setPreviewClass(g.name)}>🏫 {g.name}</button>)}</div><button type="button" className="secondary" disabled={!plan?.published} onClick={async()=>{const slug=plan.publicSlug;if(!slug)return;const url=window.location.origin+'/elev/'+encodeURIComponent(slug)+(previewClass?'?klass='+encodeURIComponent(previewClass):'');try{await navigator.clipboard.writeText(url)}catch{window.prompt('Kopiera elevlänk',url)}}}>🔗 Kopiera elevlänk{previewClass?' för '+previewClass:''}</button>{!plan?.published&&<span className="muted">Publicera för att aktivera elevlänken</span>}</div>
-  if (selectedClass) return <>{previewClassSelector}<main className="shell student-class-view"><section className="card"><h1>{plan.title}</h1><h2>📚 {selectedClass.name} · Klassens lektioner</h2><p className="muted">Detta är schemat för {selectedClass.name}. Alla klasser följer samma grundplanering i sin egen takt.</p>{classLessons.length===0?<p>Inga schemalagda lektioner ännu. Läraren behöver välja lektionsdagar och publicera planeringen.</p>:<div className="student-class-lessons">{classLessons.map((item,i)=><article key={i} className="student-class-lesson"><strong>{item.date} · {item.day} · Lektion {item.lessonNumber}{item.time?' · '+item.time:''}</strong><p>{item.override?.text || (item.lesson?.topics || []).map(t=>[t.name,t.pagesLabel,t.assignmentsLabel].filter(Boolean).join(' · ')).filter(Boolean).join('; ') || item.lesson?.name || 'Lektion'}</p></article>)}</div>}</section></main></>
+  const previewClassSelector = preview && plan?.classGroups?.length>0 && <div className="student-preview-classbar"><div className="student-preview-class-buttons"><button type="button" className={!previewClass?'active':''} onClick={()=>setPreviewClass('')}>📘 Grundplanering</button>{plan.classGroups.map(g=><button key={g.name} type="button" className={previewClass===g.name?'active':''} onClick={()=>setPreviewClass(g.name)}>🏫 {g.name}</button>)}</div><button type="button" className="student-class-copy-link" disabled={!plan?.published||!plan?.publicSlug} onClick={async()=>{const url=window.location.origin+'/elev/'+encodeURIComponent(plan.publicSlug)+(previewClass?'?klass='+encodeURIComponent(previewClass):'');try{await navigator.clipboard.writeText(url);setLinkCopied(true)}catch{window.prompt('Kopiera elevlänk',url)}}}>{linkCopied?'✓ Länken kopierad':'🔗 Kopiera elevlänk'}</button></div>
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
   return <>{previewClassSelector}<main style={planThemeStyle(plan)} className={`shell student-shell ${printPage === null ? "student-screen-view" : "student-print-page"} ${printPage !== null && visibleWeeks.length === 1 ? "student-print-spacious" : ""}`}>
     {printPage === null && <div className="student-print-action"><button type="button" className="secondary" onClick={() => window.print()}>🖨️ Skriv ut elevvyn</button></div>}
