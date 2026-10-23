@@ -3063,3 +3063,40 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #mina-arsplaneringar .planning-tree-root-row>.visual-tree-root{
  background:#fff1d2!important;border:2px solid #d9ae55!important;color:#704a16!important;
 }
+
+
+/* Läsbar planeringstavla: ingen krympning när fler grenar öppnas. */
+@media screen {
+  html:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar),
+  body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) {
+    height:auto!important; overflow-y:auto!important;
+  }
+  .planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) {
+    height:auto!important; min-height:100dvh!important; overflow:visible!important;
+    display:block!important;
+  }
+  .planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar)>.shell,
+  .planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar)>.shell>main,
+  .planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) .teacher-tab-panel:has(#mina-arsplaneringar),
+  .planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) #mina-arsplaneringar,
+  .planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) #mina-arsplaneringar>.planning-board {
+    height:auto!important; min-height:0!important; overflow:visible!important; flex:initial!important;
+  }
+  #mina-arsplaneringar .planning-board>.visual-tree-schools {
+    zoom:1!important; width:100%!important; align-items:start;
+  }
+  #mina-arsplaneringar .visual-tree-courses {
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));
+    gap:16px;
+  }
+  #mina-arsplaneringar .visual-tree-node,
+  #mina-arsplaneringar .visual-tree-root {
+    font-size:clamp(14px,1vw,17px)!important;
+    line-height:1.4;
+  }
+  #mina-arsplaneringar .visual-tree-grade-folders {
+    flex-wrap:wrap!important; width:100%!important; max-width:100%!important;
+    left:auto!important; transform:none!important;
+  }
+  #mina-arsplaneringar .visual-tree-grade-folder { flex:1 1 140px!important; }
+}
