@@ -2532,3 +2532,8 @@ body { background: #fffaf2; color: var(--ink); }
 .planning-history-buttons button{border-radius:10px;padding:10px 13px}
 .planning-history-buttons button:disabled{opacity:.4;cursor:not-allowed}
 @media(max-width:720px){.planning-home-navigation{padding:10px;gap:6px}.planning-home-navigation .planning-home-button{width:100%;text-align:left}.planning-history-buttons{width:100%;margin-right:0}.planning-history-buttons button{flex:1}}
+
+/* Lektionstider per klass och dag i schemamatrisen */
+.class-lesson-slots{display:flex;flex-direction:column;gap:5px;margin-top:5px}
+.class-lesson-slot{display:flex;align-items:center;justify-content:center;gap:5px;font-size:.78rem;font-weight:700}
+.class-lesson-slot input[type=time]{width:105px;max-width:100%;min-height:34px;padding:4px;border:1px solid #a7b7b0;border-radius:7px;background:#fff;font:inherit}
