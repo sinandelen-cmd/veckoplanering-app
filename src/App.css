@@ -3356,3 +3356,43 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
     margin-right:4px!important;
   }
 }
+
+
+/* Återställ korta förgreningsarmar mellan rot och skolformer. */
+@media screen {
+  #mina-arsplaneringar .planning-board>.visual-tree-schools {
+    position:relative!important;
+    row-gap:36px!important;
+  }
+  #mina-arsplaneringar .planning-board>.visual-tree-schools>.planning-tree-root-row {
+    position:relative!important; z-index:1;
+  }
+  #mina-arsplaneringar .planning-board>.visual-tree-schools>.planning-tree-root-row:after {
+    content:""!important; display:block!important;
+    position:absolute!important; left:50%!important;
+    bottom:-18px!important; height:18px!important;
+    width:2px!important; background:#91a9bb!important;
+    transform:translateX(-50%)!important;
+  }
+  #mina-arsplaneringar .planning-board>.visual-tree-schools:before {
+    content:""!important; display:block!important;
+    position:absolute!important; z-index:0!important;
+    top:calc(40px + 18px)!important; left:25%!important; right:25%!important;
+    height:2px!important; background:#91a9bb!important;
+  }
+  #mina-arsplaneringar .planning-board>.visual-tree-schools>.visual-tree-school {
+    position:relative!important;
+  }
+  #mina-arsplaneringar .planning-board>.visual-tree-schools>.visual-tree-school:before {
+    content:""!important; display:block!important;
+    position:absolute!important; top:-18px!important; left:50%!important;
+    width:2px!important; height:18px!important;
+    background:#91a9bb!important; transform:translateX(-50%)!important;
+  }
+  @media(max-width:700px) {
+    #mina-arsplaneringar .planning-board>.visual-tree-schools:before,
+    #mina-arsplaneringar .planning-board>.visual-tree-schools>.visual-tree-school:before {
+      display:none!important;
+    }
+  }
+}
