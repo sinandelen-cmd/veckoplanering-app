@@ -1520,14 +1520,12 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     if (!file) return
     setBusy(true); setStatus(`Läser ${file.name}...`); setPendingImport(null); setFileImportState({phase:'loading',message:`Läser ${file.name}…`})
     try {
-      const chapterWeeks = /\\.xlsx?$/i.test(file.name) ? distributeChapterWorkbook(plan, XLSX.read(await file.arrayBuffer(),{type:'array'})) : null
+      const chapterWeeks = /[.]xlsx?$/i.test(file.name) ? distributeChapterWorkbook(plan, XLSX.read(await file.arrayBuffer(),{type:'array'})) : null
       const text = chapterWeeks ? '' : await extractText(file)
       const lines = normalizeLines(text)
-      const parsed = file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')
-        ? lines.map(line => line.includes('|') ? line : line).join('\n')
-        : text
-      setPendingImport({ source: file.name, weeksData: chapterWeeks || distributeText(plan, parsed) })
-      setStatus('Importen är klar för förhandsgranskning. Inget har ersatts ännu.'); setFileImportState({phase:'success',message:`${file.name} är inläst – granska nedan.`})
+      const parsed = text
+      setPendingImport({ source: file.name, weeksData: chapterWeeks || distributeText(plan, parsed), structured: Boolean(chapterWeeks) })
+      setStatus(chapterWeeks ? 'Kapitel och delmoment är fördelade på planeringens lektioner. Granska före import.' : 'Importen är klar för förhandsgranskning. Inget har ersatts ännu.'); setFileImportState({phase:'success',message:`${file.name} är inläst – granska nedan.`})
     } catch (error) { const message=error.message || 'Importen misslyckades.'; setStatus(message); setFileImportState({phase:'error',message}) }
     setBusy(false)
   }
