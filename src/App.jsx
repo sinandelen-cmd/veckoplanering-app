@@ -2020,7 +2020,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
     <section className="card" id="mina-arsplaneringar">
       <div className="section-heading"><div><p className="eyebrow">MIN STARTSIDA</p><h2>Alla mina planeringar</h2><p className="muted">Öppna en planering nedan eller välj en funktion.</p></div></div>
-      <div className="home-tiles"><button type="button" className="home-tile home-tile-new" onClick={createPlan}><span className="home-tile-icon">＋</span><strong>Ny planering</strong><span>Skapa en ny årsplanering</span></button></div><div className="button-row" role="group" aria-label="Planeringsbibliotek">
+      <div className="home-tiles"><button type="button" className="home-tile home-tile-new" onClick={createPlan}><span className="home-tile-icon">＋</span><strong>Ny planering</strong><span>Skapa en ny årsplanering</span></button><button type="button" className="home-tile" onClick={() => document.getElementById("planeringstrad")?.scrollIntoView({ behavior: "smooth" })}><span className="home-tile-icon">▤</span><strong>Mina planeringar</strong><span>Årskurser och ämnen</span></button></div><div className="button-row" role="group" aria-label="Planeringsbibliotek">
         <button type="button" className={!showArchive ? 'primary' : 'secondary'} aria-pressed={!showArchive} onClick={() => setShowArchive(false)}>Aktiva ({plans.filter(row => !parseContent(row.content)?.archived).length})</button>
         <button type="button" className={showArchive ? 'primary' : 'secondary'} aria-pressed={showArchive} onClick={() => setShowArchive(true)}>Arkiv ({plans.filter(row => parseContent(row.content)?.archived).length})</button>
         <div className="library-history-toolbar" aria-label="Ångra, gör om och uppdatera">
@@ -2031,8 +2031,17 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       </div>
       <div className="library-search"><label htmlFor="library-plan-search">🔎 Sök bland {showArchive ? "arkiverade" : "aktiva"} planeringar</label><input id="library-plan-search" type="search" placeholder="Sök namn, ämne, klass eller läsår…" value={planSearch} onChange={event => setPlanSearch(event.target.value)} />{planSearch && <button type="button" className="secondary" onClick={() => setPlanSearch('')}>Rensa</button>}</div>
       {planSearch && plans.some(row => Boolean(parseContent(row.content)?.archived) === showArchive) && !plans.some(row => Boolean(parseContent(row.content)?.archived) === showArchive && [row.title, row.subject, row.class_name, row.school_year].some(value => String(value || "").toLocaleLowerCase("sv").includes(planSearch.trim().toLocaleLowerCase("sv")))) && <p className="muted">Inga planeringar matchar sökningen. Prova ett annat ord eller rensa sökningen.</p>}
-      {!plans.some(row => Boolean(parseContent(row.content)?.archived) === showArchive) ? <p className="muted">{showArchive ? 'Arkivet är tomt.' : 'Du har inga aktiva årsplaneringar ännu.'}</p> : <div className="library-list home-plan-grid">
-        {plans.filter(row => Boolean(parseContent(row.content)?.archived) === showArchive && [row.title, row.subject, row.class_name, row.school_year].some(value => String(value || "").toLocaleLowerCase("sv").includes(planSearch.trim().toLocaleLowerCase("sv")))).map(row => <article className="library-item" key={row.id} style={{ '--item-accent': planTheme(parseContent(row.content), row.id).accent, '--item-light': planTheme(parseContent(row.content), row.id).light, '--item-ink': planTheme(parseContent(row.content), row.id).ink }}>
+      {!plans.some(row => Boolean(parseContent(row.content)?.archived) === showArchive) ? <p className="muted">{showArchive ? 'Arkivet är tomt.' : 'Du har inga aktiva årsplaneringar ännu.'}</p> : <div className="library-list planning-tree" id="planeringstrad">
+        {Object.entries(plans.filter(row => Boolean(parseContent(row.content)?.archived) === showArchive && [row.title, row.subject, row.class_name, row.school_year].some(value => String(value || "").toLocaleLowerCase("sv").includes(planSearch.trim().toLocaleLowerCase("sv")))).reduce((groups, row) => {
+          const data = parseContent(row.content) || {}
+          const grade = String(data.grade || row.grade || data.className || row.class_name || '').trim()
+          const match = grade.match(/(?:årskurs|åk)\s*(\d+)/i) || grade.match(/^(\d+)[A-Za-z]?$/)
+          const gradeLabel = match ? 'Årskurs ' + match[1] : (grade || 'Övriga årskurser')
+          const subject = String(data.subject || row.subject || data.course || row.title || 'Övriga ämnen').trim()
+          ;(groups[gradeLabel] ||= {})[subject] ||= []
+          groups[gradeLabel][subject].push(row)
+          return groups
+        }, {})).map(([grade, subjects]) => <section key={grade} className="planning-tree-grade"><h3>🌿 {grade}</h3><div className="planning-tree-subjects">{Object.entries(subjects).map(([subject, rows]) => <details key={subject} open className="planning-tree-subject"><summary>📚 {subject} ({rows.length})</summary><div className="planning-tree-plans">{rows.map(row => <article className="library-item" key={row.id} style={{ '--item-accent': planTheme(parseContent(row.content), row.id).accent, '--item-light': planTheme(parseContent(row.content), row.id).light, '--item-ink': planTheme(parseContent(row.content), row.id).ink }}>
           <div><strong className="library-title">{row.title}</strong><p className="muted">{[row.subject, row.class_name, row.school_year].filter(Boolean).join(' · ')}</p></div>
           <div className="button-row library-actions" aria-label={"Åtgärder för "+row.title}>
             <span className={`status-badge ${row.published ? 'published' : 'draft'}`}>{row.published ? '● Publicerad' : '○ Utkast'}</span>
@@ -2043,7 +2052,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             <button type="button" className="secondary library-action-archive" disabled={busy} onClick={() => setArchived(row, !showArchive)} title={showArchive ? "Flytta tillbaka planeringen till aktiva planeringar" : "Flytta planeringen till arkivet utan att radera den"}>{showArchive ? '↩ Flytta till aktiva' : '🗂 Arkivera'}</button>
             <button type="button" className="danger library-action-delete" disabled={busy} onClick={() => deletePlan(row)} title="Radera planeringen permanent">🗑 Radera</button>
           </div>
-        </article>)}
+        </article>)}</div></details>)}</div></section>)}}
       </div>}
       <p className="muted">Arkivering döljer bara planeringen från den aktiva listan. Publicerade elevlänkar påverkas inte.</p>
     </section>
