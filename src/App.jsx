@@ -1819,8 +1819,6 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       </div>
       {shareMessage && <p role="status" className="share-feedback">{shareMessage}</p>}
     </section>}
-    {teacherTab !== "elevvy" && teacherTab !== "resultat" && <div className="planning-context"><span className={`planning-save-state ${busy ? "saving" : isDirty ? "unsaved" : selectedId ? "saved" : "new"}`} aria-live="polite"><span aria-hidden="true">{busy ? "◌" : isDirty ? "●" : selectedId ? "✓" : "○"}</span> {busy ? "Sparar ändringarna…" : isDirty ? "Osparade ändringar – spara innan du lämnar sidan" : selectedId ? "Alla ändringar sparade" : "Ny planering – inte sparad"}</span></div>}
-
     {teacherTab !== "elevvy" && (isDirty || busy) && <div className="quick-save-bar" role="region" aria-label="Snabbspara årsplanering">
       <span aria-live="polite">{busy ? "Sparar…" : "Osparade ändringar"}</span>
       <span className="autosave-info">Sparas automatiskt</span>
