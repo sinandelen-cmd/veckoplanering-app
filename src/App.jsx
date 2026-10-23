@@ -764,16 +764,15 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   // Klassens schema får bara placera lektioner i redan skapade veckor.
   const classWeeks = selectedClass ? (Array.isArray(plan?.weeksData) ? plan.weeksData : [])
     .filter(week => week && !week.hidden && week.weekStart)
-    .map(week => ({
-      ...week,
-      lessons: classLessons
-        .filter(item => mondayOf(item.date) === week.weekStart)
-        .map(item => {
-          const lesson = {...item.lesson,day:item.day,date:item.date,name:item.override?.text || item.lesson?.name || 'Lektion '+item.lessonNumber}
-          if(item.override?.text) lesson.topics=[{name:item.override.text}]
-          return lesson
-        })
-    })) : []
+    .map(week => {
+      const scheduled = classLessons.filter(item => mondayOf(item.date) === week.weekStart)
+      const lessons = scheduled.map((item, index) => {
+        const lesson = {...item.lesson,day:item.day,date:item.date,name:'Lektion '+(index+1)}
+        if(item.override?.text) lesson.topics=[{name:item.override.text}]
+        return lesson
+      })
+      return {...week,content:'',lessons}
+    }) : []
 
   useEffect(() => {
     if (printPage !== null) return undefined
