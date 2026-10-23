@@ -2045,7 +2045,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             <p className="muted">Använd i första hand momenten under varje lektion. Här kan du även lägga material för hela veckan.</p>
             <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
           </details>
-        </article></div>)}
+        </article>{weeks.some(other=>other.weekStart>week.weekStart)&&<div className="insert-week-between" style={{display:'flex',justifyContent:'center',padding:'14px 0'}}><button type="button" className="secondary" disabled={weeks.length>=52} onClick={()=>insertBlankWeekAfter(index)}>＋ Lägg till vecka mellan veckorna</button></div>}</div>)}
           </div>
         </section>)}
       </div>
