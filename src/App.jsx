@@ -2120,39 +2120,57 @@ function AnnualApp() {
   async function reviewRequest(userId, approve) {
     if (reviewingUserId) return
     const applicant = requests.find(item => item.user_id === userId)
+    const email = applicant?.email || 'lärarkontot'
+    if (!window.confirm(`${approve ? 'Godkänna' : 'Avslå'} ansökan för ${email}?`)) return
     setReviewingUserId(userId)
     setAdminNotice('')
     setAdminError('')
     try {
       const { error } = await supabase.rpc('admin_review_teacher_request', { p_user_id: userId, p_approve: approve })
-      if (error) { setAdminError('Kunde inte ändra ansökan. Försök igen.'); return }
+      if (error) { setAdminError(`Kunde inte ${approve ? 'godkänna' : 'avslå'} ${email}. Försök igen.`); return }
       setRequests(previous => previous.map(item => item.user_id === userId ? { ...item, status: approve ? 'approved' : 'rejected' } : item))
-      setAdminNotice(`${applicant?.email || 'Lärarkontot'} har ${approve ? 'godkänts' : 'avslagits'}.`)
       await loadRequests()
+      setAdminNotice(`${email} har ${approve ? 'godkänts' : 'avslagits'}.`)
+    } catch (error) {
+      setAdminError(`Kunde inte ändra ansökan för ${email}: ${error?.message || 'Okänt fel'}.`)
     } finally { setReviewingUserId(null) }
   }
 
-  async function changeTeacher(userId,action,period=null) {
-    if(reviewingUserId) return
-    setReviewingUserId(userId);setAdminError('');setAdminNotice('')
+  async function changeTeacher(userId, action, period = null) {
+    if (reviewingUserId) return
+    const email = requests.find(item => item.user_id === userId)?.email || 'lärarkontot'
+    if ((action === 'block' || action === 'activate') && !window.confirm(`${action === 'block' ? 'Spärra' : 'Återaktivera'} ${email}?`)) return
+    setReviewingUserId(userId)
+    setAdminError('')
+    setAdminNotice('')
     try {
-      const {error}=await supabase.rpc('admin_set_teacher_access',{p_user_id:userId,p_action:action,p_period:period})
-      if(error) setAdminError('Ändringen kunde inte sparas: '+error.message)
-      else {setAdminNotice('Kontot har uppdaterats.');await loadRequests()}
-    } finally {setReviewingUserId(null)}
+      const { error } = await supabase.rpc('admin_set_teacher_access', { p_user_id: userId, p_action: action, p_period: period })
+      if (error) { setAdminError(`Ändringen för ${email} kunde inte sparas: ${error.message}`); return }
+      await loadRequests()
+      const descriptions = { block: 'spärrats', activate: 'återaktiverats', timer: 'fått uppdaterad giltighetstid', extend: 'fått förlängd giltighetstid' }
+      setAdminNotice(`${email} har ${descriptions[action] || 'uppdaterats'}.`)
+    } catch (error) {
+      setAdminError(`Ändringen för ${email} misslyckades: ${error?.message || 'Okänt fel'}.`)
+    } finally { setReviewingUserId(null) }
   }
 
-  async function setTeacherExpiry(userId,email) {
-    const date=window.prompt('Ange slutdatum för '+email+' (ÅÅÅÅ-MM-DD):')
-    if(date===null) return
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(Date.parse(date))) {setAdminError('Ange ett giltigt datum i formatet ÅÅÅÅ-MM-DD.');return}
-    if(!window.confirm('Ändra slutdatum för '+email+' till '+date+'?')) return
-    setReviewingUserId(userId);setAdminError('');setAdminNotice('')
+  async function setTeacherExpiry(userId, email) {
+    if (reviewingUserId) return
+    const date = window.prompt('Ange slutdatum för ' + email + ' (ÅÅÅÅ-MM-DD):')
+    if (date === null) return
+    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) { setAdminError('Ange ett giltigt datum i formatet ÅÅÅÅ-MM-DD.'); return }
+    if (!window.confirm('Ändra slutdatum för ' + email + ' till ' + date + '?')) return
+    setReviewingUserId(userId)
+    setAdminError('')
+    setAdminNotice('')
     try {
-      const {error}=await supabase.rpc('admin_set_teacher_expiry',{p_user_id:userId,p_date:date})
-      if(error) setAdminError('Slutdatum kunde inte sparas: '+error.message)
-      else {setAdminNotice('Slutdatum har uppdaterats för '+email+'.');await loadRequests()}
-    } finally {setReviewingUserId(null)}
+      const { error } = await supabase.rpc('admin_set_teacher_expiry', { p_user_id: userId, p_date: date })
+      if (error) { setAdminError('Slutdatum för ' + email + ' kunde inte sparas: ' + error.message); return }
+      await loadRequests()
+      setAdminNotice('Slutdatum har uppdaterats för ' + email + '.')
+    } catch (error) {
+      setAdminError('Slutdatum för ' + email + ' kunde inte sparas: ' + (error?.message || 'Okänt fel'))
+    } finally { setReviewingUserId(null) }
   }
 
   const isPublicDemo = window.location.pathname.replace(/\/$/, '') === '/elev/demo-vecka-42'
