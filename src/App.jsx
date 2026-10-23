@@ -373,7 +373,7 @@ const TEXTBOOK_CATALOG = {
     Geografi: ['SOL Nova','Utkik','Koll på',"Geografi Direkt","SO Direkt","PULS Geografi"],
     Samhällskunskap: ['SOL Nova','Utkik','Koll på',"Samhällskunskap Direkt","SO Direkt","PULS Samhällskunskap"],
     Religionskunskap: ['SOL Nova','Utkik','Koll på',"Religion Direkt","SO Direkt","PULS Religion"],
-    Spanska: ['Qué bien',"¡Vale!","¡Vamos!","Caminando"], Franska: ['Bon Voyage','Chez nous',"Escalade","Allez hop!"], Tyska: ['Der Sprung','Alles Deutsch',"Lieber Deutsch","Genau!"]
+    Spanska: ['Qué bien',"¡Vale!","¡Vamos!","Caminando"], Franska: ['Bon Voyage','Chez nous',"Escalade","Allez hop!"], Tyska: ['Der Sprung','Alles Deutsch',"Lieber Deutsch","Genau!"],
     Teknik: ["Teknik Direkt","PULS Teknik"],
   },
   Gymnasiet: {
@@ -382,7 +382,7 @@ const TEXTBOOK_CATALOG = {
     Engelska: ['Blueprint','Solid Gold','Viewpoints',"Progress Gold","Echo","Blueprint A"],
     Fysik: ['Heureka',"Impuls Fysik","Ergo Fysik"], Kemi: ['Gymnasiekemi',"Kemiboken","Reaktion Kemi"], Biologi: ['Iris',"Biologi Campus","Spira Biologi"],
     Historia: ['Perspektiv på historien',"Alla tiders historia","Epok Historia"], Samhällskunskap: ['Reflex',"Forum Samhällskunskap","Kompass Samhällskunskap"],
-    Naturkunskap: ['Frank','Synpunkt',"Insikt Naturkunskap"], Företagsekonomi: ['E3000',"Goodwill Företagsekonomi","E2000"]
+    Naturkunskap: ['Frank','Synpunkt',"Insikt Naturkunskap"], Företagsekonomi: ['E3000',"Goodwill Företagsekonomi","E2000"],
     Religionskunskap: ["Under samma himmel"],
     Psykologi: ["Psykologi 1 och 2"],
     Filosofi: ["Filosofi 1 och 2"],
@@ -1686,7 +1686,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
     const fresh = { ...emptyPlan(), schoolYear: libraryYear === 'alla' ? '' : libraryYear, schoolForm: school === 'Gymnasiet' ? 'Gymnasieskola' : 'Grundskola', subject, grade, textbook, course: courseName || (school === 'Gymnasiet' ? subject : ''), title: courseName ? subject + ' – ' + courseName : grade ? subject + ' – ' + grade : subject, lessonsPerWeek: 5, lessonDays: ['Måndag','Tisdag','Onsdag','Torsdag','Fredag'] }
     setCreatingFromBranch(true)
-    setSimpleSetup(true); setSimpleMore(true); setPlan(fresh); setSelectedId(null); savedPlanRef.current = JSON.stringify(fresh)
+    setSimpleSetup(true); setSimpleMore(false); setPlan(fresh); setSelectedId(null); savedPlanRef.current = JSON.stringify(fresh)
     setSavedRevision(revision => revision + 1); setTeacherTab('new'); setCalendarOpen(false); setPreviewStudents(false); setA4Demo(false)
     setStatus('Ny grundplanering för ' + (grade ? subject + ' – ' + grade : subject) + '. Fyll i och spara.')
   }
@@ -1846,29 +1846,13 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
 
     <div className={`teacher-tab-panel ${simpleSetup ? "simple-setup-active" : ""}`} id="panel-lararvy" role="tabpanel" aria-labelledby="tab-lararvy" hidden={teacherTab !== "arsplan" && teacherTab !== "new"}>
     {simpleSetup && <section className="card simple-setup-card" aria-label="Skapa ny planering">
-      <h2>Skapa en ny planering</h2>
-      <div style={{margin:"12px 0 20px",padding:16,border:"2px solid #8bb6a2",borderRadius:12,background:"#effaf3"}} aria-label="Testa flera klasser">
-      <h2>Testa samma planering i flera klasser</h2>
-      <p>Fyll i en färdig testplanering med 25 matematiklektioner och fyra klasser med olika dagar och antal lektioner. Inga befintliga planeringar påverkas.</p>
-      <button type="button" className="secondary" onClick={() => {
-        const base = {...emptyPlan(), title:'TEST – Matematik, flera klasser', subject:'Matematik', className:'Årskurs 8', schoolYear:'2026–2027', startDate:mondayOf(), weeks:5, lessonsPerWeek:5, lessonDays:['Måndag','Tisdag','Onsdag','Torsdag','Fredag']}
-        const topics = Array.from({length:25},(_,i)=>`Gemensam matematiklektion ${i+1}`)
-        const weeks = makeWeeks(base,5).map((week, wi) => ({...week, lessons:week.lessons.map((lesson, li) => ({...lesson,topics:[{name:topics[wi*5+li]}]}))}))
-        setPlan({...base, weeksData:weeks, classGroups:[
-          {name:'8A',days:['Måndag','Tisdag','Onsdag','Torsdag','Fredag'],startDate:base.startDate,cancelledDates:[],overrides:{}},
-          {name:'8B',days:['Tisdag'],startDate:base.startDate,cancelledDates:[],overrides:{}},
-          {name:'8C',days:['Måndag','Torsdag','Fredag'],startDate:base.startDate,cancelledDates:[],overrides:{}},
-          {name:'8D',days:['Måndag','Tisdag','Onsdag','Torsdag'],startDate:base.startDate,cancelledDates:[],overrides:{}}
-        ]})
-        setStatus('Testplaneringen är ifylld. Klicka på Skapa planering nedan för att spara den på ditt konto.')
-      }}>Fyll i testplanering med 8A, 8B, 8C och 8D</button>
-      </div>
-
-      <p className="muted">Fyll i uppgifterna och tryck på Skapa planering. Du kan lägga till lektioner och material efteråt.</p>
+      <h2>Skapa planering</h2>
+      <p className="muted">Ämne, skolform, årskurs och lärobok följer med från din valda mapp. Du kan lägga till klasser, lektioner och material efteråt.</p>
       <form onSubmit={event => { event.preventDefault(); save(true, true) }}>
         <div style={{marginBottom:14}}>
-          <label style={{display:"grid",gap:5}}><strong>Planeringens namn</strong><span className="muted">Skriv namnet på din gemensamma grundplanering. Klasser lägger du till efteråt.</span><input required value={plan.title} onChange={event => setPlan(p => ({ ...p, title:event.target.value, subject: (!p.subject || p.subject===p.title) ? event.target.value : p.subject }))} placeholder="Exempel: Matematik 1b" /></label>
+          <label style={{display:"grid",gap:5}}><strong>Planeringens namn</strong><input required value={plan.title} onChange={event => setPlan(p => ({ ...p, title:event.target.value, subject: (!p.subject || p.subject===p.title) ? event.target.value : p.subject }))} placeholder="Exempel: Matematik 1b" /></label>
         </div>
+        {creatingFromBranch && <p className="muted">📚 {plan.subject} · {plan.grade || plan.course} {plan.textbook ? "· 📘 " + plan.textbook : ""} · {plan.lessonsPerWeek} lektioner/vecka</p>}
         <details style={{margin:"10px 0 14px",padding:"10px 12px",border:"1px solid #e1d7c8",borderRadius:10}}>
           <summary style={{cursor:"pointer",fontWeight:600}}>Läsår och startdatum</summary>
           <div className="form-grid" style={{marginTop:12}}>
@@ -1876,7 +1860,6 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             <label>Startdatum<input type="date" required value={plan.startDate} onChange={event=>{if(event.target.value)setPlan(p=>({...p,startDate:mondayOf(`${event.target.value}T12:00:00`),weeksData:[]}))}} /></label>
           </div>
         </details>
-        <div style={{marginTop:14,padding:"12px 14px",border:"1px solid #d4e5d7",borderRadius:12,background:"#f4faf4"}}><strong>Steg 2: Lägg till klasser efter att du skapat planeringen</strong><p className="muted" style={{margin:"6px 0 0"}}>Skapa först grundplaneringen. Därefter lägger du till 8A, 8B och andra klasser, med egna dagar och antal lektioner. Alla delar samma lektionsinnehåll.</p>{(plan.classGroups||[]).length>0&&<p style={{margin:"8px 0 0"}}>Redan förberedda klasser: {plan.classGroups.map(g=>g.name).join(", ")}. De följer med när du sparar.</p>}</div>
         {simpleMore && <div className="simple-extra-fields"><h3>Fler uppgifter</h3><label>Ämne – välj i listan eller skriv ett eget<input list="planning-subject-options" value={plan.subject || ""} onChange={e => setPlan(p => ({...p,subject:e.target.value}))} placeholder="Välj eller skriv ämne, t.ex. Modersmål" /><datalist id="planning-subject-options">{["Matematik","Svenska","Svenska som andraspråk","Engelska","Biologi","Fysik","Kemi","Teknik","Historia","Geografi","Religionskunskap","Samhällskunskap","Idrott och hälsa","Bild","Musik","Slöjd","Hem- och konsumentkunskap","Moderna språk","Modersmål","Entreprenörskap"].map(subject => <option key={subject} value={subject} />)}</datalist></label><div className="form-grid">{!creatingFromBranch && <label>Skolform<select value={plan.schoolForm || ""} onChange={e => setPlan(p => ({ ...p, schoolForm: e.target.value, grade: "", course: "" }))}><option value="">Välj skolform</option><option value="Grundskola">Grundskolan</option><option value="Gymnasieskola">Gymnasiet</option></select></label>}<label>Årskurs<input value={plan.grade || ""} onChange={e => setPlan(p => ({ ...p, grade: e.target.value }))} placeholder="6" /></label>{!creatingFromBranch && <label>Lektioner per vecka<input type="number" min="1" max="8" value={plan.lessonsPerWeek} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(8, Number(e.target.value) || 1)) }))} /></label>}<label>Kommun<input value={plan.municipality || ""} onChange={e => setPlan(p => ({ ...p, municipality: e.target.value }))} /></label></div>
         </div>}
         <details className="simple-import-section" style={{marginTop:14}} aria-label="Importera underlag"><summary style={{cursor:"pointer",fontWeight:700}}>Importera underlag (valfritt)</summary>
