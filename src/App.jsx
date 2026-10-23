@@ -1051,24 +1051,29 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     const fit = () => {
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => {
-        // Mät trädet i naturlig storlek och skala hela grenen, inte enskilda rutor.
         tree.style.zoom = '1'
-        const rect = tree.getBoundingClientRect()
-        const availableHeight = Math.max(100, window.innerHeight - rect.top - 20)
-        const availableWidth = Math.max(100, board.clientWidth - 24)
-        const naturalHeight = Math.max(tree.scrollHeight, tree.offsetHeight)
-        const naturalWidth = Math.max(tree.scrollWidth, tree.offsetWidth)
-        const scale = Math.min(1, availableHeight / Math.max(1, naturalHeight), availableWidth / Math.max(1, naturalWidth))
-        // Undvik minsta zoomgräns som annars klipper av långa grenar.
-        const nextZoom = Math.max(0.15, scale)
-        tree.style.zoom = String(nextZoom)
+        const bar = board.querySelector('.planning-board-bar')
+        const availableHeight = Math.max(1, board.clientHeight - (bar?.offsetHeight || 0) - 56)
+        const availableWidth = Math.max(1, board.clientWidth - 28)
+        const naturalHeight = Math.max(1, tree.scrollHeight, tree.offsetHeight)
+        const naturalWidth = Math.max(1, tree.scrollWidth, tree.offsetWidth)
+        const zoom = Math.min(1, availableHeight / naturalHeight, availableWidth / naturalWidth)
+        tree.style.zoom = String(Math.max(0.05, zoom))
       })
     }
     const observer = new ResizeObserver(fit)
     observer.observe(board)
+    const changes = new MutationObserver(fit)
+    changes.observe(tree, { subtree: true, childList: true, attributes: true, attributeFilter: ['open'] })
     window.addEventListener('resize', fit)
     fit()
-    return () => { cancelAnimationFrame(frame); observer.disconnect(); window.removeEventListener('resize', fit); tree.style.zoom = '1' }
+    return () => {
+      cancelAnimationFrame(frame)
+      observer.disconnect()
+      changes.disconnect()
+      window.removeEventListener('resize', fit)
+      tree.style.zoom = '1'
+    }
   }, [teacherTab, librarySchool, librarySubject, libraryYear, showArchive, planSearch, plans])
 
   const [status, setStatus] = useState('')
