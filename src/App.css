@@ -3801,3 +3801,8 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #mina-arsplaneringar .textbook-plan-row>.course-folder-delete{right:10px!important}
 #mina-arsplaneringar .textbook-plan-row>.course-folder-archive,
 #mina-arsplaneringar .textbook-plan-row>.course-folder-delete{background:transparent!important;border:0!important;box-shadow:none!important;width:23px!important;height:23px!important;min-width:23px!important}
+
+/* Arkivsymbolen ska se ut som en riktig arkivlåda (Lucide archive). */
+#mina-arsplaneringar .course-folder-archive{font-size:0!important;color:#168066!important}
+#mina-arsplaneringar .course-folder-archive svg{display:none!important}
+#mina-arsplaneringar .course-folder-archive::before{content:""!important;display:block!important;width:17px!important;height:17px!important;flex:0 0 17px!important;background-color:#168066!important;-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='4' rx='1'/%3E%3Cpath d='M5 8v12h14V8M10 12h4'/%3E%3C/svg%3E")!important;mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='4' rx='1'/%3E%3Cpath d='M5 8v12h14V8M10 12h4'/%3E%3C/svg%3E")!important;-webkit-mask-size:contain!important;mask-size:contain!important;-webkit-mask-position:center!important;mask-position:center!important;-webkit-mask-repeat:no-repeat!important;mask-repeat:no-repeat!important}
