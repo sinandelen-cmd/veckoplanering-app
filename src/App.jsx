@@ -1919,7 +1919,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     {simpleSetup && <section className="card simple-setup-card" aria-label="Skapa ny planering">
       <h2>Skapa planering</h2>
       <p className="muted">Ämne, skolform, årskurs och lärobok följer med från din valda mapp. Du kan lägga till klasser, lektioner och material efteråt.</p>
-      <form onSubmit={event => { event.preventDefault(); save(true, true) }}>
+      <form onSubmit={event => { event.preventDefault(); void save(false) }}>
         <div style={{marginBottom:14}}>
           <label style={{display:"grid",gap:5}}><strong>Planeringens namn</strong><input required value={plan.title} onChange={event => setPlan(p => ({ ...p, title:event.target.value, subject: (!p.subject || p.subject===p.title) ? event.target.value : p.subject }))} placeholder="Exempel: Matematik 1b" /></label>
         </div>
