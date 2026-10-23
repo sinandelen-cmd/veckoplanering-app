@@ -2181,6 +2181,22 @@ function publicDemoWeek42() {
     lessons }] })
 }
 
+const GYMNASIUM_DEMO_COURSES = [
+  {id:'mat1b',subject:'Matematik',course:'Matematik 1b',book:'Matematik 5000+',classes:[['EK25A',['Måndag','Onsdag','Fredag']],['EK25B',['Tisdag','Torsdag']],['SA25A',['Måndag','Torsdag']]],topics:['Algebraiska uttryck','Ekvationer','Procent och förändringsfaktor','Linjära funktioner','Problemlösning']},
+  {id:'mat2b',subject:'Matematik',course:'Matematik 2b',book:'Matematik Origo',classes:[['EK24A',['Måndag','Torsdag']],['SA24A',['Tisdag','Fredag']]],topics:['Andragradsekvationer','Parabler','Statistik','Logaritmer','Modellering']},
+  {id:'sv1',subject:'Svenska',course:'Svenska nivå 1',book:'Svenska impulser',classes:[['NA25A',['Måndag','Onsdag']],['TE25A',['Tisdag','Fredag']]],topics:['Muntlig framställning','Argumenterande text','Källkritik','Litterär analys','Respons och bearbetning']},
+  {id:'en1',subject:'Engelska',course:'Engelska nivå 1',book:'Blueprint',classes:[['EK25A',['Tisdag','Fredag']],['SA25B',['Måndag','Torsdag']]],topics:['Reading strategies','Discussion','Writing a review','Listening comprehension','Presentations']},
+  {id:'hi1b',subject:'Historia',course:'Historia nivå 1b',book:'Perspektiv på historien',classes:[['SA25A',['Tisdag','Torsdag']],['SA25B',['Måndag','Fredag']]],topics:['Historiska källor','Industrialiseringen','Demokratisering','1900-talets konflikter','Historiebruk']}
+]
+function gymnasiumDemoPlan(course) {
+  const plan={...emptyPlan(),title:'DEMO · '+course.course,subject:course.subject,course:course.course,textbook:course.book,schoolForm:'gymnasiet',schoolYear:'2026–2027',startDate:'2026-10-19',weeks:3,lessonsPerWeek:5,studentLayout:'list'}
+  const weeks=makeWeeks(plan,3).map((week,wi)=>({...week,lessons:Array.from({length:5},(_,li)=>{const topic=course.topics[(wi*5+li)%course.topics.length];return {name:topic,topics:[{name:topic+' – övningar och diskussion',pagesLabel:'Exempelsidor '+(10+wi*10+li*2)+'–'+(11+wi*10+li*2),assignmentsLabel:'Uppgift '+(li+1)+'–'+(li+4)}]}})}))
+  return sanitizeForStudents({...plan,weeksData:weeks,classGroups:course.classes.map(([name,days],i)=>({name,startDate:'2026-10-19',days,lessonTimes:Object.fromEntries(days.map((day,j)=>[day,[i%2===0?'09:00':'10:15']])),cancelledDates:[],overrides:{}}))})
+}
+function GymnasiumDemoIndex() {
+  return <main className="shell gym-demo-index"><section className="card"><p className="eyebrow">SEPARAT DEMOMILJÖ · FIKTIVA UPPGIFTER</p><h1>Gymnasiet – testkurser</h1><p>Fem fiktiva kurser med olika klasser och lektionsscheman. Demot sparar ingenting i ditt konto eller i Supabase.</p><div className="gym-demo-courses">{GYMNASIUM_DEMO_COURSES.map(course=><article className="gym-demo-course" key={course.id}><h2>{course.subject} · {course.course}</h2><p>📘 {course.book}</p><div className="gym-demo-classlinks">{course.classes.map(([name])=><a key={name} href={'/elev/demo-gymnasiet-'+course.id+'?klass='+encodeURIComponent(name)}>🔗 Elevvy {name}</a>)}</div><a href={'/elev/demo-gymnasiet-'+course.id}>Visa gemensam planering →</a></article>)}</div></section></main>
+}
+
 function AnnualApp() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -2284,6 +2300,8 @@ function AnnualApp() {
   }
 
   const isPublicDemo = window.location.pathname.replace(/\/$/, '') === '/elev/demo-vecka-42'
+  const isGymnasiumDemoIndex = window.location.pathname.replace(/\/$/, '') === '/demo/gymnasiet'
+  const gymnasiumDemoId = window.location.pathname.match(/^\/elev\/demo-gymnasiet-([a-z0-9]+)\/?$/)?.[1]
 
   const studentSlug = useMemo(() => {
     const match = window.location.pathname.match(/^\/elev\/([^/]+)\/?$/)
@@ -2292,6 +2310,8 @@ function AnnualApp() {
 
   useEffect(() => {
     if (isPublicDemo) { setStudentPlan(publicDemoWeek42()); setLoading(false); return undefined }
+    if (gymnasiumDemoId) { const course=GYMNASIUM_DEMO_COURSES.find(item=>item.id===gymnasiumDemoId);if(course)setStudentPlan(gymnasiumDemoPlan(course));else setStudentError('Demokursen finns inte.');setLoading(false);return undefined }
+    if (isGymnasiumDemoIndex) { setLoading(false); return undefined }
     if (studentSlug) {
       supabase.rpc('get_public_annual_plan', { slug_value: studentSlug })
         .maybeSingle()
@@ -2332,6 +2352,7 @@ function AnnualApp() {
   }
 
   if (loading) return <><Navigation /><main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar...</p></section></main></>
+  if (isGymnasiumDemoIndex) return <><Navigation /><GymnasiumDemoIndex /></>
   if (studentSlug) return <><Navigation /><StudentView plan={studentPlan} error={studentError} /></>
   if (!session) return <><Navigation /><Login email={email} password={password} setEmail={setEmail} setPassword={setPassword} onSubmit={login} onSignUp={signUp} status={status} /></>
   if (accessLoading) return <><Navigation /><main className="shell"><section className="card"><h2>Kontrollerar lärarbehörighet…</h2></section></main></>
