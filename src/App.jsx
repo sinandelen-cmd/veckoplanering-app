@@ -762,8 +762,19 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   const classLessons = selectedClass ? buildClassSchedule(plan,selectedClass) : []
   // Grundplaneringens veckor är den enda källan för klassernas veckokort.
   // Klassens schema får bara placera lektioner i redan skapade veckor.
-  const classWeeks = selectedClass ? (Array.isArray(plan?.weeksData) ? plan.weeksData : [])
+  const sourceClassWeeks = (Array.isArray(plan?.weeksData) ? plan.weeksData : [])
     .filter(week => week && !week.hidden && week.weekStart)
+    .sort((a,b)=>a.weekStart.localeCompare(b.weekStart))
+  // Visa även mellanliggande kalenderveckor utan att ändra grundplaneringens data.
+  const classWeekTimeline = sourceClassWeeks.length ? (() => {
+    const byDate = new Map(sourceClassWeeks.map(week=>[week.weekStart,week]))
+    const timeline = []
+    for(let date=sourceClassWeeks[0].weekStart, end=sourceClassWeeks[sourceClassWeeks.length-1].weekStart;date<=end && timeline.length<110;date=addWeeks(date,1)){
+      timeline.push(byDate.get(date)||{weekStart:date,weekNumber:calendarWeekNumber(date),title:'Vecka '+calendarWeekNumber(date),lessons:[],content:''})
+    }
+    return timeline
+  })() : []
+  const classWeeks = selectedClass ? classWeekTimeline
     .map(week => {
       const scheduled = classLessons.filter(item => mondayOf(item.date) === week.weekStart)
       const lessons = scheduled.map((item, index) => {
