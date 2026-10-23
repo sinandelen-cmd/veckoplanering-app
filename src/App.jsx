@@ -1051,14 +1051,17 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     const fit = () => {
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => {
+        // Mät trädet i naturlig storlek och skala hela grenen, inte enskilda rutor.
         tree.style.zoom = '1'
         const rect = tree.getBoundingClientRect()
-        const availableHeight = Math.max(260, window.innerHeight - rect.top - 28)
-        const availableWidth = Math.max(260, board.clientWidth - 36)
+        const availableHeight = Math.max(100, window.innerHeight - rect.top - 20)
+        const availableWidth = Math.max(100, board.clientWidth - 24)
         const naturalHeight = Math.max(tree.scrollHeight, tree.offsetHeight)
         const naturalWidth = Math.max(tree.scrollWidth, tree.offsetWidth)
         const scale = Math.min(1, availableHeight / Math.max(1, naturalHeight), availableWidth / Math.max(1, naturalWidth))
-        tree.style.zoom = String(Math.max(0.55, scale))
+        // Undvik minsta zoomgräns som annars klipper av långa grenar.
+        const nextZoom = Math.max(0.15, scale)
+        tree.style.zoom = String(nextZoom)
       })
     }
     const observer = new ResizeObserver(fit)
@@ -1067,7 +1070,6 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     fit()
     return () => { cancelAnimationFrame(frame); observer.disconnect(); window.removeEventListener('resize', fit); tree.style.zoom = '1' }
   }, [teacherTab, librarySchool, librarySubject, libraryYear, showArchive, planSearch, plans])
-
 
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
