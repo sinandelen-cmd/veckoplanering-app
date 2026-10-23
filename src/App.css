@@ -2748,3 +2748,22 @@ body { background: #fffaf2; color: var(--ink); }
   #mina-arsplaneringar .planning-board .visual-tree-courses{margin-top:12px!important}
   #mina-arsplaneringar .planning-board .visual-tree-grade-folders{margin-top:0!important;padding-top:15px!important}
 }
+
+
+/* Bevara träddiagrammets ursprungliga proportioner; React skalar hela trädet. */
+.planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) #mina-arsplaneringar>.planning-board>.visual-tree-schools{
+  flex:0 0 auto;
+  align-content:start;
+  margin-top:22px;
+  transform-origin:top center;
+}
+.planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) #mina-arsplaneringar>.planning-board .visual-tree-courses{margin-top:40px}
+.planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) #mina-arsplaneringar>.planning-board .visual-tree-grade-folders{margin-top:16px;padding-top:28px}
+.planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) #mina-arsplaneringar>.planning-board .visual-tree-node{min-height:48px;padding:12px 18px}
+.planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) #mina-arsplaneringar>.planning-board .button-row{margin-top:12px!important}
+.planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) #mina-arsplaneringar>.planning-board .visual-tree-example-plans{margin-top:14px;gap:8px}
+@media(max-height:700px){
+  #mina-arsplaneringar .planning-board .visual-tree-node{font-size:clamp(.76rem,1vw,1rem)!important;min-height:48px!important;padding:12px 18px!important}
+  #mina-arsplaneringar .planning-board .visual-tree-courses{margin-top:40px!important}
+  #mina-arsplaneringar .planning-board .visual-tree-grade-folders{margin-top:16px!important;padding-top:28px!important}
+}
