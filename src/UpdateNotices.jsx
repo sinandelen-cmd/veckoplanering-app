@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 
-export default function UpdateNotices({ userId, isAdmin }) {
+export default function UpdateNotices({ userId, isAdmin, approvedTeachers = [] }) {
   const [notices, setNotices] = useState([])
   const [seen, setSeen] = useState([])
   const [version, setVersion] = useState('')
@@ -10,18 +10,7 @@ export default function UpdateNotices({ userId, isAdmin }) {
   const [sending, setSending] = useState(false)
   const [testMode, setTestMode] = useState(false)
   const [testRecipient, setTestRecipient] = useState('')
-  const [approvedTeachers, setApprovedTeachers] = useState([])
-
-  useEffect(() => {
-    if (!isAdmin) return
-    let active = true
-    supabase.from('teacher_access').select('user_id').eq('status', 'approved').neq('user_id', userId).then(({ data, error }) => {
-      if (!active) return
-      if (error) setStatus('Kunde inte hämta godkända testkonton.')
-      else setApprovedTeachers(data || [])
-    })
-    return () => { active = false }
-  }, [isAdmin, userId])
+  const selectableTeachers = approvedTeachers.filter(item => item.user_id !== userId)
 
   async function refresh() {
     if (!userId) return
@@ -49,7 +38,7 @@ export default function UpdateNotices({ userId, isAdmin }) {
 
   async function send(event) {
     event.preventDefault()
-    if (!isAdmin || !version.trim() || sending || (testMode && !approvedTeachers.some(item => item.user_id === testRecipient))) return
+    if (!isAdmin || !version.trim() || sending || (testMode && !selectableTeachers.some(item => item.user_id === testRecipient))) return
     setSending(true)
     setStatus('')
     const { error } = await supabase.from('app_update_notices').insert({
@@ -89,12 +78,12 @@ export default function UpdateNotices({ userId, isAdmin }) {
         <strong>Testläge aktivt – ingen annan kollega får notisen.</strong>
         <label>Välj godkänt testkonto
           <select required value={testRecipient} onChange={event => setTestRecipient(event.target.value)}>
-            <option value="">Välj lärarkonto</option>
-            {approvedTeachers.map(item => <option key={item.user_id} value={item.user_id}>{item.user_id}</option>)}
+            <option value="">Välj lärare via e-post</option>
+            {selectableTeachers.map(item => <option key={item.user_id} value={item.user_id}>{item.email || item.name || "Lärare utan e-post"}</option>)}
           </select>
         </label>
       </div>}
-      <button type="submit" className="primary" disabled={sending || !version.trim() || (testMode && !approvedTeachers.some(item => item.user_id === testRecipient))}>{sending ? 'Skickar…' : testMode ? 'Skicka testnotis endast till valt konto' : 'Skicka uppdatering till godkända lärare'}</button>
+      <button type="submit" className="primary" disabled={sending || !version.trim() || (testMode && !selectableTeachers.some(item => item.user_id === testRecipient))}>{sending ? 'Skickar…' : testMode ? 'Skicka testnotis endast till valt konto' : 'Skicka uppdatering till godkända lärare'}</button>
     </form>}
     {unread.length > 0 && <div role="region" aria-label="Nya uppdateringar">
       <h2>🔔 Ny uppdatering finns</h2>
