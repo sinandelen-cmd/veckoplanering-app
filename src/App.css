@@ -3738,3 +3738,18 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 
 /* Kompakt klassrad och schemapanel */
 .class-mini-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}.class-mini-label{font-size:13px;margin-right:3px}.class-mini-chips{display:flex;flex:1;flex-wrap:wrap;gap:5px;align-items:center}.class-mini-chip,.class-mini-add,.class-mini-schema{border:1px solid #c9d9d4;border-radius:7px;padding:6px 10px;font-size:12px;font-weight:650;cursor:pointer;background:#fff;color:#24554d}.class-mini-chip.active{background:#247e72;color:#fff;border-color:#247e72}.class-mini-add{border-style:dashed}.class-mini-schema{margin-left:auto;white-space:nowrap}.class-mini-new{display:flex;align-items:end;gap:8px;flex-wrap:wrap;padding:10px;background:#f6faf9;border-radius:9px}.class-mini-new label{display:flex;gap:8px;align-items:center;font-size:12px}.class-mini-new input{max-width:170px}.class-mini-warning{font-size:12px;color:#8b5415}.class-mini-panel{max-width:370px;margin:8px 0 14px auto;padding:12px;border:1px solid #d5e5e0;border-radius:10px;background:#f8fbfa}.class-mini-panel-title{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}.class-mini-panel-title button{padding:2px 7px}.class-mini-days{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin-top:10px}.class-mini-day{display:flex;flex-direction:column;align-items:center;gap:6px;padding:7px 2px;border-radius:7px;border:1px solid #dbe5e1;font-size:11px;cursor:pointer;background:white}.class-mini-day.checked{background:#e2f3ed;border-color:#8cbcb0}.class-mini-day input{margin:0;accent-color:#247e72}.class-mini-panel .muted{font-size:11px;margin:9px 0}@media(max-width:650px){.class-mini-panel{max-width:none;margin-left:0}.class-mini-schema{margin-left:0}}
+
+/* Mindre klassmatris med Stäng direkt i panelen */
+.calendar-quick-matrix{width:min(100%,510px);max-width:510px;box-sizing:border-box;padding:10px 12px;margin:8px 0 12px auto;font-size:12px}
+.calendar-quick-header{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.calendar-quick-header strong{font-size:12px}
+.calendar-quick-close{background:#fff;border:1px solid #c4d7d2;border-radius:6px;color:#245f56;font-size:11px;font-weight:650;padding:4px 8px;cursor:pointer}
+.calendar-quick-add{gap:6px;flex-wrap:nowrap}
+.calendar-quick-add label{font-size:11px;white-space:nowrap}
+.calendar-quick-add input{min-width:0;flex:1;font-size:12px;padding:5px 7px}
+.calendar-quick-add button{font-size:11px;padding:6px 8px;white-space:nowrap}
+.calendar-quick-matrix p{font-size:11px;margin:7px 0}
+.calendar-quick-matrix table{font-size:11px;width:100%}
+.calendar-quick-matrix th,.calendar-quick-matrix td{padding:4px 5px}
+.calendar-quick-matrix td input{width:14px;height:14px}
+@media(max-width:560px){.calendar-quick-matrix{max-width:100%;margin-left:0}.calendar-quick-add{flex-wrap:wrap}}
