@@ -3670,3 +3670,17 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .class-schedule-help[open] summary{margin:0 -12px 10px}
 .class-schedule-help p{margin:7px 0!important}
 @media(max-width:640px){.class-schedule-intro{display:block}.class-schedule-help{margin-top:12px}}
+
+/* Enhetliga, lugna verktygsknappar i planeringsvyn. */
+@media screen {
+ .planning-layout .topbar .button-row,
+ .planning-layout .topbar-share-actions,
+ .planning-layout .week-top .button-row {display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+ .planning-layout .topbar button,
+ .planning-layout .topbar-share-actions button,
+ .planning-layout .week-top button {min-height:36px;border-radius:9px;font-weight:600}
+ .planning-layout button:disabled {opacity:.48}
+ .planning-layout .status {font-size:12px;font-weight:600;padding:7px 11px;border-radius:20px}
+ .planning-layout .card>h2:first-child {line-height:1.3}
+ .planning-layout .button-row button {white-space:normal}
+}
