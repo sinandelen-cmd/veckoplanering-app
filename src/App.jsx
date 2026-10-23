@@ -1023,6 +1023,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [plans, setPlans] = useState([])
   const [showArchive, setShowArchive] = useState(false)
   const [planSearch, setPlanSearch] = useState("")
+  const [librarySchool, setLibrarySchool] = useState('')
   const [shareOpen, setShareOpen] = useState(false)
   const [shareRecipient, setShareRecipient] = useState("")
   const [sharePassword, setSharePassword] = useState("")
@@ -2054,7 +2055,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         <div className="section-heading"><div><p className="eyebrow">STARTSIDA</p><h2>Vad vill du göra?</h2><p className="muted">Välj ett av alternativen nedan.</p></div></div>
         <div className="home-tiles">
           <button type="button" className="home-tile home-tile-new" onClick={createPlan}><span className="home-tile-icon">＋</span><strong>Ny planering</strong><span>Skapa en grundplanering</span></button>
-          <button type="button" className="home-tile" onClick={() => { setShowArchive(false); setTeacherTab('bibliotek') }}><span className="home-tile-icon">📂</span><strong>Mina planeringar</strong><span>Öppna ämnen och kurser</span></button>
+          <button type="button" className="home-tile" onClick={() => { setShowArchive(false); setLibrarySchool(''); setTeacherTab('bibliotek') }}><span className="home-tile-icon">📂</span><strong>Mina planeringar</strong><span>Öppna ämnen och kurser</span></button>
         </div>
       </section>
     </div>
@@ -2082,12 +2083,14 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           const courseName = course || [subjectName, title].find(value => /(?:matematik|svenska|engelska|fysik|kemi|biologi|historia|samhällskunskap)\s*\d+[a-z]?\b/i.test(value)) || ''
           const gradeMatch = grade.match(/(?:årskurs|åk)\s*(\d+)/i) || grade.match(/^(\d+)[A-Za-z]?$/) || className.match(/(?:årskurs|åk)\s*(\d+)/i) || className.match(/^(\d+)[A-Za-z]?$/)
           const schoolSubject = (subjectName || title.match(/^[^\d–-]+/)?.[0] || 'Övriga ämnen').trim()
-          const gradeLabel = courseName ? 'Gymnasiet' : gradeMatch ? 'Grundskolan' : 'Övriga planeringar'
-          const subject = courseName || (gradeMatch ? schoolSubject + ' ' + gradeMatch[1] : subjectName || title || 'Övriga ämnen')
+          const schoolForm = String(data.schoolForm || data.school_form || row.school_form || '').toLocaleLowerCase('sv')
+          const isGymnasium = /gymnas/.test(schoolForm) || (!/grundskol/.test(schoolForm) && Boolean(courseName))
+          const gradeLabel = isGymnasium ? 'Gymnasiet' : /grundskol/.test(schoolForm) || gradeMatch ? 'Grundskola' : 'Övriga planeringar'
+          const subject = isGymnasium ? (courseName || subjectName || title || 'Övriga kurser') : (gradeMatch ? schoolSubject + ' ' + gradeMatch[1] : subjectName || title || 'Övriga ämnen')
           ;(groups[gradeLabel] ||= {})[subject] ||= []
           groups[gradeLabel][subject].push(row)
           return groups
-        }, {})).map(([grade, subjects]) => <section key={grade} className="planning-tree-grade"><h3>🌿 {grade}</h3><div className="planning-tree-subjects">{Object.entries(subjects).map(([subject, rows]) => <details key={subject} open className="planning-tree-subject"><summary>📚 {subject} <span className="muted">· {rows.length === 1 ? "Grundplanering" : rows.length + " befintliga planeringar"}</span></summary><div className="planning-tree-plans">{rows.map(row => <article className="library-item" key={row.id} style={{ '--item-accent': planTheme(parseContent(row.content), row.id).accent, '--item-light': planTheme(parseContent(row.content), row.id).light, '--item-ink': planTheme(parseContent(row.content), row.id).ink }}>
+        }, { Grundskola: {}, Gymnasiet: {} })).filter(([grade]) => !librarySchool || librarySchool === grade).map(([grade, subjects]) => <section key={grade} className="planning-tree-grade"><button type="button" className="secondary" aria-expanded={librarySchool === grade} onClick={() => setLibrarySchool(current => current === grade ? '' : grade)}>{librarySchool === grade ? '▾' : '▸'} {grade} ({Object.values(subjects).reduce((count, rows) => count + rows.length, 0)})</button>{librarySchool === grade && <div className="planning-tree-subjects">{!Object.keys(subjects).length && <p className="muted">Inga planeringar i denna kategori ännu.</p>}{Object.entries(subjects).map(([subject, rows]) => <details key={subject} open className="planning-tree-subject"><summary>📚 {subject} <span className="muted">· {rows.length === 1 ? "Grundplanering" : rows.length + " befintliga planeringar"}</span></summary><div className="planning-tree-plans">{rows.map(row => <article className="library-item" key={row.id} style={{ '--item-accent': planTheme(parseContent(row.content), row.id).accent, '--item-light': planTheme(parseContent(row.content), row.id).light, '--item-ink': planTheme(parseContent(row.content), row.id).ink }}>
           <div><strong className="library-title">{row.title}</strong><p className="muted">{[row.subject, row.class_name, row.school_year].filter(Boolean).join(' · ')}</p></div>
           <div className="button-row library-actions" aria-label={"Åtgärder för "+row.title}>
             <span className={`status-badge ${row.published ? 'published' : 'draft'}`}>{row.published ? '● Publicerad' : '○ Utkast'}</span>
@@ -2098,7 +2101,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             <button type="button" className="secondary library-action-archive" disabled={busy} onClick={() => setArchived(row, !showArchive)} title={showArchive ? "Flytta tillbaka planeringen till aktiva planeringar" : "Flytta planeringen till arkivet utan att radera den"}>{showArchive ? '↩ Flytta till aktiva' : '🗂 Arkivera'}</button>
             <button type="button" className="danger library-action-delete" disabled={busy} onClick={() => deletePlan(row)} title="Radera planeringen permanent">🗑 Radera</button>
           </div>
-        </article>)}</div></details>)}</div></section>)}
+        </article>)}</div></details>)}</div>}</section>)}
       </div>}
       <p className="muted">Arkivering döljer bara planeringen från den aktiva listan. Publicerade elevlänkar påverkas inte.</p>
     </section>
