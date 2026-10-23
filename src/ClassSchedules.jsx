@@ -57,8 +57,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
   const lessonsPerWeek = group => (group.days || []).length
   const schedule = React.useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
   const updateGroup = changes => onChange({ ...plan, classGroups: groups.map((g, i) => i === selected ? { ...g, ...changes } : g) })
-  // Tiderna lagras per klass, veckodag och lektion. Befintliga scheman
-  // utan lessonTimes fortsätter att fungera oförändrat.
+  // Tidigare schematider bevaras i datat, men behöver inte redigeras i matrisen.
   const setLessonTime = (classIndex, day, slotIndex, value) => {
     onChange({ ...plan, classGroups: groups.map((row, index) => {
       if (index !== classIndex) return row
@@ -97,11 +96,11 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
 
       {showMatrix && <div style={{overflowX:"auto"}}>
       <h3>Klassernas veckoschema</h3>
-      <p className="muted">Kryssa i lektionsdagarna och ange starttid för varje lektion. Lektionsnumren ordnas automatiskt från måndag till fredag. Tiderna gäller bara den valda klassen.</p>
+      <p className="muted">Kryssa i vilka dagar klassen har lektioner. Inga klockslag behövs.</p>
       <table style={{width:"100%",borderCollapse:"separate",borderSpacing:"4px",minWidth:460}}>
         <thead><tr><th style={{textAlign:"left",padding:8}}>Klass</th>{DAY_SHORT.map(d=><th key={d} style={{textAlign:"center",padding:8,background:"#f5ebce",borderRadius:6}}>{d}</th>)}<th style={{textAlign:"center",padding:8}}>Totalt</th></tr></thead>
         <tbody>{groups.map((g,i)=>{const sortedDays=DAYS.flatMap(day=>(g.days||[]).filter(d=>d===day));return <tr key={i}><th style={{textAlign:"left",padding:8,background:"#f7f6f0",borderRadius:6}}><button type="button" title={"Öppna särskilda ändringar för "+g.name} onClick={()=>{setSelected(i);setCompare(false);setShowClassDetails(true);setEditing(null)}} style={{border:0,background:"transparent",fontWeight:700,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:3}}>{g.name}</button></th>{DAYS.map(day=>{const count=(g.days||[]).filter(d=>d===day).length;const before=sortedDays.filter(d=>DAYS.indexOf(d)<DAYS.indexOf(day)).length;return <td key={day} style={{textAlign:"center",background:count?"#e2f3e5":"#f7f6f0",borderRadius:6,padding:8}}>
-          <label style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,flexWrap:"wrap",cursor:"pointer"}}><input aria-label={g.name+" "+day} type="checkbox" checked={count>0} onChange={e=>onChange({...plan,classGroups:groups.map((row,idx)=>idx===i?{...row,days:e.target.checked?[...(row.days||[]),day].sort((x,y)=>DAYS.indexOf(x)-DAYS.indexOf(y)):(row.days||[]).filter(d=>d!==day)}:row)})} />{count>0&&<div className="class-lesson-slots">{Array.from({length:count},(_,slot)=><label key={slot} className="class-lesson-slot"><span>L{before+slot+1}</span><input type="time" aria-label={g.name+" "+day+" lektion "+(slot+1)+" tid"} value={g.lessonTimes?.[day]?.[slot] || ''} onChange={event=>setLessonTime(i,day,slot,event.target.value)} /></label>)}</div>}</label>
+          <label style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,flexWrap:"wrap",cursor:"pointer"}}><input aria-label={g.name+" "+day} type="checkbox" checked={count>0} onChange={e=>onChange({...plan,classGroups:groups.map((row,idx)=>idx===i?{...row,days:e.target.checked?[...(row.days||[]),day].sort((x,y)=>DAYS.indexOf(x)-DAYS.indexOf(y)):(row.days||[]).filter(d=>d!==day)}:row)})} />{count>0&&<span className="class-matrix-lesson-count">{count>1?count+' lektioner':'Lektion '+(before+1)}</span>}}</label>
         </td>})}<td style={{textAlign:"center",fontWeight:700}}>{sortedDays.length}</td></tr>})}</tbody>
         <tfoot><tr><td colSpan={7} style={{padding:"14px 6px 4px",borderTop:"2px solid #d8e5dc"}}><div style={{display:"flex",gap:10,alignItems:"end",flexWrap:"wrap"}}><label style={{flex:"1 1 180px"}}>Ny klass<input value={name} onChange={e=>setName(e.target.value)} placeholder="Exempel: 8D" /></label><button type="button" disabled={!name.trim()||groups.some(g=>g.name.toLocaleLowerCase('sv')===name.trim().toLocaleLowerCase('sv'))} onClick={addClass}>+ Lägg till klassrad</button></div></td></tr></tfoot>
       </table>
