@@ -1645,10 +1645,10 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}`}><Navigation onBack={() => restoreNavigation(-1)} onForward={() => restoreNavigation(1)} canBack={navigationIndex > 0} canForward={navigationIndex < navigationHistory.length - 1} active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={id => { setTeacherTab(id); if (id === 'mina' || id === 'arsplan') setCalendarOpen(false); if (id === 'elevvy') { setPreviewStudents(true); setCalendarOpen(false) } else { setPreviewStudents(false) } }} onOpenExample={openExample} onOpenArchive={() => { setShowArchive(true); setTeacherTab('bibliotek') }} onNew={createPlan} onToggleCalendar={() => { setTeacherTab('arsplan'); setCalendarOpen(true) }} calendarOpen={calendarOpen} isAdmin={isAdmin} adminOpen={adminOpen} onOpenAdmin={onToggleAdmin} onCloseAdmin={() => { if (adminOpen) onToggleAdmin?.() }} onSignOut={() => supabase.auth.signOut()} pendingCount={pendingCount} /><main className={`shell${adminOpen ? " admin-workspace" : ""}`} id="lararvy">{teacherTab === 'arsplan' && openedFromLibrary && <div className="button-row" style={{marginBottom:14}}><button type="button" className="secondary" onClick={returnToPlanningTree}>← Tillbaka till träddiagrammet</button></div>}
   {!isAdmin && <UpdateNotices userId={session.user.id} isAdmin={false} />}
   {adminOpen ? adminContent : <>
-    {teacherTab !== "elevvy" && <header className="topbar">
+    {teacherTab !== "elevvy" && teacherTab !== "mina" && <header className="topbar">
       <div className="teacher-header-identity">
         <nav className="teacher-breadcrumb" aria-label="Du är här">
-          {teacherTab !== "resultat" && <button type="button" onClick={() => { setTeacherTab("mina"); setCalendarOpen(false) }}>Startsida</button>}
+          {teacherTab !== "resultat" && teacherTab !== "mina" && <button type="button" onClick={() => { setTeacherTab("mina"); setCalendarOpen(false) }}>Startsida</button>}
           {teacherTab === "bibliotek" && <><span aria-hidden="true">›</span><span aria-current="page">Mina planeringar</span></>}
           {teacherTab === "arsplan" && <><span aria-hidden="true">›</span><span aria-current="page">{plan.title?.trim() || "Ny planering"}</span></>}
           {teacherTab === "new" && <><span aria-hidden="true">›</span><span aria-current="page">Ny planering</span></>}
@@ -2065,7 +2065,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     
     <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
       <section className="card planning-start-card">
-        <div className="section-heading"><div><p className="eyebrow">STARTSIDA</p><h2>Vad vill du göra?</h2><p className="muted">Välj ett av alternativen nedan.</p></div></div>
+        <div className="section-heading"><div><h1>Vad vill du göra?</h1><p className="muted">Välj vad du vill arbeta med.</p></div></div>
         <div className="home-tiles">
           <button type="button" className="home-tile home-tile-new" onClick={createPlan}><span className="home-tile-icon">＋</span><strong>Ny planering</strong><span>Skapa en grundplanering</span></button>
           <button type="button" className="home-tile" onClick={() => { setShowArchive(false); setLibrarySchool(''); setTeacherTab('bibliotek') }}><span className="home-tile-icon">📂</span><strong>Mina planeringar</strong><span>Öppna ämnen och kurser</span></button>
