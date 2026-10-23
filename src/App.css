@@ -2900,3 +2900,48 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
     display:none!important;
   }
 }
+
+
+/* Tavla utan sidrullning: huvudytan är själva main.shell (inte ett nästlat main). */
+@media screen {
+ html:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar),
+ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){height:100%;overflow:hidden!important}
+ .planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){
+   height:100dvh!important;min-height:0!important;overflow:hidden!important;
+   display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+   grid-template-rows:auto minmax(0,1fr)!important;
+ }
+ .planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar)>.shell{
+   grid-column:1!important;grid-row:2!important;
+   height:100%!important;min-height:0!important;overflow:hidden!important;
+   display:flex!important;flex-direction:column!important;
+   padding:8px 14px!important;margin:0 auto!important;
+ }
+ .planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) .teacher-tab-panel:has(#mina-arsplaneringar){
+   flex:1 1 0!important;min-height:0!important;height:auto!important;overflow:hidden!important;
+   display:flex!important;flex-direction:column!important;
+ }
+ .planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) #mina-arsplaneringar{
+   flex:1 1 0!important;min-height:0!important;height:auto!important;
+   overflow:hidden!important;display:flex!important;flex-direction:column!important;
+   padding:10px!important;gap:8px!important;
+ }
+ .planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) #mina-arsplaneringar>.planning-board{
+   flex:1 1 0!important;min-height:0!important;height:auto!important;
+   overflow:hidden!important;display:flex!important;flex-direction:column!important;
+   padding:12px!important;
+ }
+ .planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) #mina-arsplaneringar>.planning-board>.planning-board-bar{
+   flex:0 0 auto!important;min-height:0;
+ }
+ .planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) #mina-arsplaneringar>.planning-board>.visual-tree-schools{
+   flex:0 0 auto!important;margin-top:22px!important;
+ }
+ .planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) #mina-arsplaneringar>.library-search{
+   flex:0 0 auto!important;
+ }
+ .planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) .topbar{
+   margin:0!important;padding:3px 0!important;
+ }
+ .planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) #mina-arsplaneringar>p.muted{display:none!important}
+}
