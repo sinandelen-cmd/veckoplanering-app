@@ -3753,3 +3753,8 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .calendar-quick-matrix th,.calendar-quick-matrix td{padding:4px 5px}
 .calendar-quick-matrix td input{width:14px;height:14px}
 @media(max-width:560px){.calendar-quick-matrix{max-width:100%;margin-left:0}.calendar-quick-add{flex-wrap:wrap}}
+
+.calendar-quick-matrix{width:min(100%,410px);max-width:410px;padding:9px 10px;box-shadow:0 5px 16px rgba(24,74,65,.07)}
+.calendar-quick-matrix th,.calendar-quick-matrix td{padding:3px 4px}
+.calendar-class-picker .student-class-copy-link{margin-left:auto;flex-shrink:0}
+@media(max-width:560px){.calendar-quick-matrix{width:100%;max-width:100%}}
