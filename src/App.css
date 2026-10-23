@@ -2509,3 +2509,18 @@ body { background: #fffaf2; color: var(--ink); }
 .calendar-overview-history button { display:inline-flex; align-items:center; gap:6px; padding:8px 14px !important; border:1px solid #d1c0e2 !important; border-radius:9px !important; background:#f2ecfa !important; color:#694583 !important; font-size:13px !important; font-weight:750 !important; }
 .calendar-overview-history button:disabled { opacity:.48; cursor:not-allowed; }
 @media print { .calendar-overview-history { display:none !important; } }
+
+/* Navigation without a left sidebar and grouped planning tree */
+.planning-home-navigation{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 20px;background:#fff;border-bottom:1px solid #e4e7eb}
+.planning-home-navigation button{border:1px solid #d8e0e7;border-radius:10px;padding:10px 14px;background:#f8fafc;color:#243b53;cursor:pointer;font-weight:650}
+.planning-home-navigation button:hover{background:#eaf3fc}
+.planning-layout{display:block!important;padding-left:0!important;margin-left:0!important}
+.planning-layout .shell{margin-left:auto!important;max-width:1300px}
+.planning-tree{display:grid;gap:22px}
+.planning-tree-grade{border:1px solid #dbe3eb;border-radius:16px;padding:18px;background:#f9fbfd}
+.planning-tree-grade h3{text-align:center;margin:0 0 14px}
+.planning-tree-subjects{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.planning-tree-subject{background:white;border:1px solid #dce3eb;border-radius:12px;padding:12px;min-width:0}
+.planning-tree-subject summary{cursor:pointer;font-weight:700;padding:8px}
+.planning-tree-plans{display:grid;gap:10px;margin-top:12px}
+.planning-tree-plans .library-item{min-width:0}
