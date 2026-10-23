@@ -3221,3 +3221,28 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
     padding-top:16px!important; margin-top:8px!important;
   }
 }
+
+
+/* Sökning till höger i huvudmenyn – endast biblioteksfliken. */
+.planning-home-navigation .nav-plan-search {
+  margin-left:auto; display:flex; align-items:center; gap:6px;
+  min-width:0; position:relative;
+}
+.planning-home-navigation .nav-plan-search label {
+  font-size:13px; font-weight:650; white-space:nowrap; color:#385468;
+}
+.planning-home-navigation .nav-plan-search input {
+  box-sizing:border-box; width:clamp(175px,22vw,300px); height:38px;
+  min-height:38px; padding:6px 30px 6px 12px;
+  border:1px solid #cbd5df; border-radius:9px;
+  background:#fff; font-size:14px;
+}
+.planning-home-navigation .nav-search-clear {
+  position:absolute; right:5px; padding:3px 7px; min-height:25px;
+  border:0; background:transparent; color:#536477;
+}
+@media(max-width:700px) {
+  .planning-home-navigation { flex-wrap:wrap; }
+  .planning-home-navigation .nav-plan-search { margin-left:0; flex:1 1 100%; }
+  .planning-home-navigation .nav-plan-search input { width:100%; flex:1; }
+}
