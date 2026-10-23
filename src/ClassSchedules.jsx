@@ -86,11 +86,9 @@ export default function ClassSchedules({ plan, onChange }) {
   const visibleComparisonWeeks = showAll ? comparisonWeeks : comparisonWeeks.slice(0,8)
   const unscheduledGroups = groups.filter(g => !(g.days || []).length)
   return <section className="card" aria-label="Kopplade klasser">
-    <h2>Grundplanering · Kopplade klasser</h2>
-    <p><strong>En grundplanering – flera klasser.</strong> Skriv lektionsinnehållet en gång. Varje klass får sedan samma lektioner i rätt ordning, på sina egna veckodagar och i sin egen takt.</p>
-    <p className="muted">Exempel: 8A kan ha 3 lektioner på måndag, onsdag och fredag, medan 8B har 2 på tisdag och torsdag. Båda följer samma innehåll, men blir klara olika veckor.</p>
+    <div className="class-schedule-intro"><div><h2>Klasser och schema</h2><p className="muted">Samma planering för flera klasser – varje klass följer sitt eget schema.</p></div><details className="class-schedule-help"><summary>ⓘ Så fungerar det</summary><p>Skriv lektionsinnehållet en gång. Lägg sedan till dina klasser och välj deras lektionsdagar. Alla klasser följer samma innehåll i rätt ordning, men i sin egen takt.</p><p>Exempel: 8A har lektioner måndag, onsdag och fredag medan 8B har tisdag och torsdag.</p></details></div>
     {groups.length===0 && <div style={{display:"flex",gap:10,alignItems:"end",flexWrap:"wrap",margin:"16px 0"}}>
-      <label style={{flex:"1 1 180px"}}>Klassens namn<input value={name} onChange={e=>setName(e.target.value)} placeholder="Exempel: 8A" /></label>
+      <label style={{flex:"1 1 180px"}}>Lägg till din första klass<input value={name} onChange={e=>setName(e.target.value)} placeholder="Skriv klass, t.ex. 8A" /></label>
       <button type="button" disabled={!name.trim()||groups.some(g=>g.name.toLocaleLowerCase('sv')===name.trim().toLocaleLowerCase('sv'))} onClick={addClass}>+ Lägg till klass</button>
     </div>}
     {unscheduledGroups.length>0 && <p role="alert" style={{background:"#fff0d7",padding:12,borderRadius:8,border:"1px solid #e2b66d"}}><strong>Schema saknas:</strong> {unscheduledGroups.map(g=>g.name).join(", ")}. Kryssa i minst en lektionsdag för varje klass så att inga lektioner missas.</p>}
