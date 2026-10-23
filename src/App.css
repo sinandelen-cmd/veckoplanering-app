@@ -3846,3 +3846,9 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .calendar-day-moments button{width:22px;height:22px;min-width:22px;padding:0;border:1px solid #c8ddd5;border-radius:6px;background:#f1f7f4;color:#246d60;font-size:13px;line-height:1;cursor:pointer}
 .calendar-day-moments button:disabled{opacity:.35;cursor:default}
 .calendar-day-moments span{min-width:12px;text-align:center;font-size:12px;font-weight:700}
+
+/* Diskreta momentknappar utan rutor: minus röd, plus blå */
+.calendar-day-moments button{border:0!important;background:transparent!important;border-radius:0!important;box-shadow:none!important;padding:0!important;width:19px;height:22px;min-width:19px;font-weight:800;font-size:17px}
+.calendar-day-moments button:first-child{color:#d13d45!important}
+.calendar-day-moments button:last-child{color:#176fcb!important}
+.calendar-day-moments button:disabled{opacity:.28}
