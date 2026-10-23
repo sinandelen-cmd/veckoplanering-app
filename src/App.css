@@ -3770,3 +3770,5 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #mina-arsplaneringar .course-folder-archive{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-width:68px;padding:6px 8px;font-size:11px;background:#edf7f4;border:1px solid #a9cfc4;border-radius:7px;color:#23685a;white-space:nowrap}
 #mina-arsplaneringar .course-folder-delete{display:inline-flex;align-items:center;justify-content:center;flex:0 0 28px!important;width:28px!important;min-width:28px!important;height:28px!important;padding:0!important;border:1px solid #efc0c0;border-radius:7px;background:#fff3f3;color:#a62d38;font-size:21px!important;font-weight:500;line-height:1}
 #mina-arsplaneringar .course-folder-link,#mina-arsplaneringar .textbook-plan-row>button:first-child{flex:1;min-width:0}
+
+#mina-arsplaneringar .course-folder-archive{flex:0 0 28px!important;width:28px!important;min-width:28px!important;height:28px!important;padding:0!important;font-size:17px!important;line-height:1}
