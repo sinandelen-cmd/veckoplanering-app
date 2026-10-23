@@ -2158,7 +2158,7 @@ function AnnualApp() {
     if (reviewingUserId) return
     const date = window.prompt('Ange slutdatum för ' + email + ' (ÅÅÅÅ-MM-DD):')
     if (date === null) return
-    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) { setAdminError('Ange ett giltigt datum i formatet ÅÅÅÅ-MM-DD.'); return }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) { setAdminError('Ange ett giltigt datum i formatet ÅÅÅÅ-MM-DD.'); return }
     if (!window.confirm('Ändra slutdatum för ' + email + ' till ' + date + '?')) return
     setReviewingUserId(userId)
     setAdminError('')
