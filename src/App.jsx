@@ -2068,7 +2068,6 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       <section className="card planning-start-card">
         <div className="section-heading"><div><h1>Vad vill du göra?</h1><p className="muted">Välj vad du vill arbeta med.</p></div></div>
         <div className="home-tiles">
-          <button type="button" className="home-tile home-tile-new" onClick={createPlan}><span className="home-tile-icon">＋</span><strong>Ny planering</strong><span>Skapa en grundplanering</span></button>
           <button type="button" className="home-tile" onClick={() => { setShowArchive(false); setLibrarySchool(''); setLibrarySubject(''); setLibraryBoardPage(0); setTeacherTab('bibliotek') }}><span className="home-tile-icon">📂</span><strong>Mina planeringar</strong><span>Öppna ämnen och kurser</span></button>
         </div>
       </section>
