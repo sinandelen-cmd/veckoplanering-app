@@ -3821,3 +3821,8 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 /* Ämnesredigering: överlappa texten i samma blå knapp, aldrig en ny rad. */
 #mina-arsplaneringar .subject-folder-heading{position:relative!important}
 #mina-arsplaneringar .subject-folder-heading>.subject-inline-rename{position:absolute!important;left:76px!important;top:8px!important;transform:none!important;width:180px!important;min-width:0!important;max-width:calc(100% - 100px)!important;height:35px!important;display:block!important;box-sizing:border-box!important;margin:0!important;padding:2px 6px!important;background:#e7f2ff!important;border:0!important;border-bottom:1px solid #709db4!important;border-radius:0!important;outline:none!important;box-shadow:none!important;z-index:9!important}
+
+/* Filuppladdning längst till höger på klassraden. */
+.calendar-class-picker .calendar-upload-file{display:inline-flex!important;align-items:center!important;justify-content:center!important;white-space:nowrap!important;cursor:pointer!important;gap:6px!important;margin-left:auto!important;padding:10px 13px!important;border:1px solid #9fc9c5!important;border-radius:11px!important;background:#fff!important;color:#176d65!important;font-size:13px!important;font-weight:700!important}
+.calendar-class-picker .calendar-upload-file:hover{background:#e9f5f3!important}
+.calendar-class-picker .calendar-upload-file input[type=file]{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;overflow:hidden!important}
