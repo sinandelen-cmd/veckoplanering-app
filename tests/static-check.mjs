@@ -290,7 +290,7 @@ assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(true\); setPrevi
 
 assert.match(app, /function insertExampleWeek\(\)/)
 
-assert.match(app, /Återanvänd som ny/)
+assert.match(app, /onClick=\{\(\) => clonePlan\(row\)\}/, 'Planeringar ska kunna kopieras utan att originalet ändras')
 assert.match(app, /archived: false, published: false/)
 assert.match(app, /Arkiv \(/)
 assert.match(app, /async function setArchived\(row, archived\)/)
