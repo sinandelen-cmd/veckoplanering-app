@@ -2639,3 +2639,36 @@ body { background: #fffaf2; color: var(--ink); }
   .visual-tree-course .visual-tree-grade-folders{display:flex;flex-wrap:nowrap;gap:10px}
   .visual-tree-course .visual-tree-grade-folder{flex:0 0 126px;width:126px}
 }
+
+
+/* Tavelläge: varje biblioteksnivå får en egen, skärmanpassad vy. Veckoplaneringen berörs inte. */
+#mina-arsplaneringar .planning-board{
+  box-sizing:border-box;
+  height:clamp(380px,calc(100dvh - 250px),900px);
+  min-height:380px;
+  overflow:auto;
+  display:flex;
+  flex-direction:column;
+  padding:14px;
+  scrollbar-width:thin;
+}
+#mina-arsplaneringar .planning-board-bar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  flex:0 0 auto;padding:4px 8px 14px;
+}
+#mina-arsplaneringar .planning-board>.visual-tree-schools{
+  flex:1;align-content:center;align-items:start;
+  margin-top:18px;gap:clamp(12px,2vw,26px);
+}
+#mina-arsplaneringar .planning-board .visual-tree-courses{
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));
+  gap:clamp(10px,1.6vw,22px);
+}
+#mina-arsplaneringar .planning-board .visual-tree-node{
+  font-size:clamp(.76rem,1vw,1rem);
+  padding:clamp(8px,1.3vw,16px);
+}
+@media(max-width:650px){
+  #mina-arsplaneringar .planning-board{height:calc(100dvh - 205px);min-height:350px}
+  #mina-arsplaneringar .planning-board>.visual-tree-schools{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
