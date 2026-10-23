@@ -3620,3 +3620,6 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .grade-folder-heading>span:first-child{flex-shrink:0}
 .grade-folder-booknames{margin-left:auto;text-align:right;font-size:12px;font-weight:500;opacity:.72;max-width:58%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:480px){.grade-folder-booknames{max-width:48%;font-size:11px}}
+
+#mina-arsplaneringar .visual-tree-grade-folder>summary.grade-folder-heading{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;width:100%!important;box-sizing:border-box!important;text-align:left!important;gap:12px!important}
+#mina-arsplaneringar .visual-tree-grade-folder>summary.grade-folder-heading>.grade-folder-booknames{display:block!important;margin-left:auto!important;flex:0 1 auto!important;text-align:right!important;font-size:11px!important;font-weight:400!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;min-width:0!important;max-width:55%!important}
