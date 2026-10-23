@@ -3691,3 +3691,19 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .course-create-dialog input,.course-create-dialog select{width:100%;padding:10px 12px;border:1px solid #b8cbd7;border-radius:9px;background:#fff;color:#263f59;font-size:14px}
 .course-create-dialog input[readonly]{background:#f0f5f8;color:#526b7a}
 .course-create-dialog .textbook-picker-actions{margin-top:7px}
+
+/* En kompakt sammanhållen panel för klasser och schema. */
+#kopplade-klasser>.card{padding:16px 20px!important;margin-bottom:12px!important}
+#kopplade-klasser .class-schedule-intro{margin-bottom:9px!important;align-items:center}
+#kopplade-klasser .class-schedule-intro h2{font-size:19px!important;margin:0 0 2px!important}
+#kopplade-klasser .class-schedule-intro .muted{font-size:12px}
+.class-compact-toolbar{display:flex;align-items:end;gap:8px;margin:10px 0;flex-wrap:wrap}
+.class-compact-input{display:grid;gap:4px;flex:1 1 220px;font-size:12px;font-weight:700}
+.class-compact-input input{width:100%;min-height:36px;padding:7px 10px;border:1px solid #bfd8ce;border-radius:9px}
+.class-compact-toolbar>button{min-height:36px;padding:7px 14px!important;border-radius:9px}
+.class-compact-list{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:9px 0;font-size:12px}
+.class-compact-chip{border:1px solid #c9dce4!important;background:#f1f7f9!important;border-radius:20px!important;padding:5px 10px!important;font-size:12px!important}
+.class-student-link-note{padding:9px 12px;background:#f6f9fa;border:1px solid #e0e8e9;border-radius:9px;font-size:12px;line-height:1.5;margin:10px 0}
+.class-student-link-note p{margin:3px 0 0}
+.class-schedule-toggle{margin:8px 0!important}
+.class-schedule-toggle button{font-size:12px!important;padding:6px 10px!important}
