@@ -2767,3 +2767,42 @@ body { background: #fffaf2; color: var(--ink); }
   #mina-arsplaneringar .planning-board .visual-tree-courses{margin-top:40px!important}
   #mina-arsplaneringar .planning-board .visual-tree-grade-folders{margin-top:16px!important;padding-top:28px!important}
 }
+
+
+/* Bibliotekstavla: ingen avklippning, kompakt sidhuvud, bibehållna proportioner. */
+html:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar),
+body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!important;scrollbar-width:auto!important}
+.planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){
+  height:auto!important;min-height:100dvh!important;overflow:visible!important;
+}
+.planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar)>.shell{
+  overflow:visible!important;min-height:0!important;padding-top:10px!important;
+}
+.planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) .teacher-tab-panel:has(#mina-arsplaneringar){
+  height:auto!important;overflow:visible!important;
+}
+.planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) #mina-arsplaneringar{
+  height:auto!important;overflow:visible!important;padding:12px!important;gap:8px!important;
+}
+.planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) #mina-arsplaneringar>.planning-board{
+  flex:none!important;height:auto!important;min-height:0!important;max-height:none!important;
+  overflow:visible!important;padding:14px!important;
+}
+.planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) #mina-arsplaneringar>.planning-board>.visual-tree-schools{
+  width:100%;max-width:100%;box-sizing:border-box;align-content:start;
+}
+.planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) .topbar{
+  padding-top:4px!important;padding-bottom:4px!important;
+}
+.planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) .planning-context{
+  margin:0!important;padding:2px 0!important;
+}
+.planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) .planning-save-state{
+  display:none!important;
+}
+.planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar) #mina-arsplaneringar>.library-search{
+  padding:6px 10px!important;
+}
+@media(min-width:800px){
+  .planning-layout:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar)>.shell{max-width:1500px!important}
+}
