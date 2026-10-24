@@ -26,6 +26,9 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Start local student fixture
+        env:
+          VITE_SUPABASE_URL: http://127.0.0.1:4199
+          VITE_SUPABASE_ANON_KEY: isolated-calendar-test-key
         run: |
           npm run dev -- --host 127.0.0.1 --port 4177 > /tmp/isolated-calendar-vite.log 2>&1 &
           for i in $(seq 1 40); do
