@@ -155,4 +155,38 @@ testWithPlan('W10 cancel exam title',planOf(3),['3','2',null],0,(p,b)=>assert.de
   console.log('PASS W25-W26 synthetic snapshot undo/redo contract (not React UI)')
 }
 
+
+const classSource = fs.readFileSync(new URL('../src/ClassSchedules.jsx', import.meta.url), 'utf8')
+const classStart = classSource.indexOf('export function buildClassSchedule(plan, group) {')
+const classEnd = classSource.indexOf('\nexport default function ClassSchedules', classStart)
+assert.ok(classStart >= 0 && classEnd > classStart, 'Class schedule builder must exist')
+const classBuilder = classSource.slice(classStart, classEnd).replace('export function ', 'function ')
+const DAYS = ['Måndag','Tisdag','Onsdag','Torsdag','Fredag']
+const iso = d => [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')
+const monday = value => {const d=new Date(value+'T12:00:00');d.setDate(d.getDate()-((d.getDay()+6)%7));return d}
+const nextDate = (start,offset)=>{const d=new Date(start);d.setDate(d.getDate()+offset);return d}
+const buildClassSchedule = new Function('DAYS','iso','monday','nextDate',classBuilder+'\nreturn buildClassSchedule')(DAYS,iso,monday,nextDate)
+testWithPlan('W34 class A and B map to inserted base week',planOf(3),['3','2','Matteprov'],0,(p,b)=>{
+  const a=buildClassSchedule(p,p.classGroups[0])
+  const bLessons=buildClassSchedule(p,p.classGroups[1])
+  assert.ok(a.some(item=>item.weekStart===p.weeksData[1].weekStart))
+  assert.ok(bLessons.some(item=>item.weekStart===p.weeksData[1].weekStart))
+  assert.ok(a.every(item=>p.weeksData.some(w=>w.weekStart===item.weekStart)))
+  assert.ok(bLessons.every(item=>p.weeksData.some(w=>w.weekStart===item.weekStart)))
+  assert.deepEqual(p.classGroups,b.classGroups)
+})
+testWithPlan('W33 cancelled class day stays cancelled',planOf(6),['1'],0,(p)=>{
+  const a=buildClassSchedule(p,p.classGroups[0])
+  assert.ok(!a.some(item=>item.date==='2026-02-02'))
+  assert.ok(a.some(item=>item.date==='2026-01-12'))
+})
+testWithPlan('W34 class override index stays unchanged',planOf(3),['1'],0,(p,b)=>{
+  assert.deepEqual(p.classGroups[0].overrides,b.classGroups[0].overrides)
+  const before=buildClassSchedule(b,b.classGroups[0])
+  const after=buildClassSchedule(p,p.classGroups[0])
+  assert.equal(before[1].override?.text,'Special')
+  assert.equal(after[1].override?.text,'Special')
+  assert.notEqual(before[1].weekStart,after[1].weekStart)
+})
+
 console.log('Actual insertion function: '+passed+' synthetic checks passed (not browser or integration tests)')
