@@ -1,0 +1,31 @@
+name: Isolated Supabase image registry probe
+on:
+  push:
+    branches:
+      - test/class-schedule-regressions-20261024
+    paths:
+      - '.github/workflows/supabase-registry-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe exact pinned PostgreSQL image tag without pulling or retagging
+        shell: bash
+        run: |
+          set -u
+          for image in \
+            'public.ecr.aws/supabase/postgres:17.6.1.095' \
+            'docker.io/supabase/postgres:17.6.1.095'; do
+            echo "::group::Checking manifest for $image"
+            if timeout 45s docker manifest inspect "$image" >/dev/null 2>&1; then
+              echo "AVAILABLE: $image"
+            else
+              echo "::warning title=Image manifest unavailable::Could not verify $image (missing tag, rate limit, or registry/network error)."
+            fi
+            echo "::endgroup::"
+          done
+          echo "This is a non-destructive availability probe, NOT a successful Supabase startup."
