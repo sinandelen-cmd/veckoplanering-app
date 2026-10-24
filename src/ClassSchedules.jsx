@@ -112,7 +112,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
   const archivedOverrideCount = archivedOverrideEntries.length
   const updateGroup = changes => onChange({ ...plan, classGroups: groups.map((g, i) => i === selected ? { ...g, ...changes } : g) })
   const restoreArchivedOverride = (key, target) => {
-    if (!group || !/^(0|[1-9]\\d*)$/.test(target) || !schedule[Number(target)]) return
+    if (!group || !/^(0|[1-9]\d*)$/.test(target) || !schedule[Number(target)]) return
     if (Object.hasOwn(group.overrides || {}, target)) return
     if (!window.confirm('Återkoppla den arkiverade anpassningen till vald lektion? Kontrollera lektion och innehåll noga.')) return
     const overrides = { ...group.overrides, [target]: group.overrides[key] }
