@@ -1,0 +1,43 @@
+# Fyrdubbel arbetsgrupp: isolerad RPC och verklig App.jsx i Chromium
+
+Datum: 2026-10-24. Endast feature-gren `feature/provtraning-infogad-vecka`, draft PR #5.
+
+## 18 genomförda moment
+
+1. Kontrollerade de senaste båda GitHub Actions-flödena och deras commit-SHA.
+2. Bekräftade att `89588ea` hade gröna kod/SQL- och Chromium-jobb.
+3. Granskade dokumentationen för lokal Supabase CLI, Docker, Auth och PostgREST.
+4. Bekräftade att lokal stack behöver Docker och egna migrationsfiler; ingen produktion får länkas.
+5. Granskade isolerade PostgreSQL-roller och RLS-test från föregående arbetsgrupp.
+6. Granskade den föreslagna, ännu inte driftsatta `hideDate`-RPC-rättningen.
+7. Skapade en **körbar**, isolerad PostgreSQL SECURITY DEFINER-RPC med temporär tabell.
+8. Lade till offentlig, privat, saknad och tom plan som testdata.
+9. Lade till kontroll att dolda veckor inte returneras.
+10. Lade till elevroll, schemaåtkomst och begränsad RPC EXECUTE.
+11. Säkrade `BEGIN`/`ROLLBACK` så testobjekten inte lever kvar.
+12. Kopplade RPC-kontraktstestet till GitHub Actions SQL-jobb.
+13. Lade till offlinekontroll för temporär tabell, funktionsbehörighet och rollback.
+14. Utökade verkliga Chromium-klicktestet: legacy-varningen kvar efter veckoinfogning och ångra.
+15. Granskade `AnnualApp`-inloggning, lärarbehörighet och laddning av planeringar.
+16. Byggde nytt Chromium-test som öppnar **riktiga `src/main.jsx` och `App.jsx`**.
+17. Isolerade Auth/REST-nätverk mot `127.0.0.1:4199` med fiktiv lärare och nekad extern trafik.
+18. Lade till separat Vite-start på port 4176 och hantering av CORS-preflight i browser-CI.
+
+## Verifieringsnivå
+
+- SQL-testet anropar en **verklig körbar PostgreSQL-funktion**, med SECURITY DEFINER, elevroll, test-RLS och publika/privata data. Denna funktion är en **syntetisk kontraktsmodell**, inte den verkliga `public.get_public_annual_plan` från Supabase. Inga produktionsnycklar eller produktionsdata används.
+- Chromium-fixturen med `ClassSchedules` och produktionshooken `usePlanHistory` körs fortfarande.
+- Det nya Chromium-testet laddar **hela riktiga App.jsx** och försöker logga in mot en **lokal HTTP-mock** för Auth och lärarens REST-frågor. Detta är inte GoTrue/PostgREST eller ett riktigt inloggat Supabase-konto. Körningen måste vara grön innan den räknas som godkänd.
+- Den fullständiga lokala Supabase-stacken har **inte** startats. För det behövs en separat CLI/Docker-konfiguration, lokal schema/migration för verklig `veckoplanering`, `teacher_access` och elev-RPC samt integration med Auth. Dessa kan inte ersättas av mockarna.
+- Arkiverade `legacy-unmapped:`-anpassningar finns kvar i lärarutkastet, visas som antal i klassvyn och filtreras bort från elevernas snapshot. Automatisk återkoppling görs inte utan säker lektionstillhörighet.
+
+## Kvarvarande hinder
+
+1. Full Supabase CLI-stack med Auth, PostgREST, verkligt schema/RLS och verklig `get_public_annual_plan` i isolerad testmiljö.
+2. Full App.jsx-redigerings- och publiceringsresa i Chromium mot den teststacken.
+3. Gränssnitt för manuell återkoppling av arkiverade anpassningar.
+4. Slutlig grön CI för **senaste commit** och separat releasegodkännande.
+
+**Planstatus:** 7/8 kvalitetspaket (87,5 %), 1 kvar. Detta är inte ett påstående om total kodtäckning eller releaseklarhet. **Tidsbedömning:** 1–3 ytterligare fyrdubbla arbetsgrupper för riktig lokal Supabase-fullstack och end-to-end, möjligen fler om databasmodellen behöver återskapas.
+
+Ingen produktion, publicering eller merge.
