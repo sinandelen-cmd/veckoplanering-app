@@ -19,7 +19,7 @@ export function buildClassSchedule(plan, group) {
   const days = Array.isArray(group.days) ? group.days : []
   const extraSlots = Array.isArray(group.extraSlots) ? group.extraSlots : []
   const cancelled = new Set(Array.isArray(group.cancelledDates) ? group.cancelledDates : [])
-  const closures = Array.isArray(group.schoolClosures) ? group.schoolClosures : []
+  const closures = [...(Array.isArray(plan.schoolClosures) ? plan.schoolClosures.filter(event => !event.classNames || event.classNames.includes(group.name)) : []), ...(Array.isArray(group.schoolClosures) ? group.schoolClosures : [])]
   const weeks = (plan.weeksData || []).filter(week => week?.weekStart && !week.hidden)
   if (!weeks.length) return []
   const firstDate = group.startDate || plan.startDate || ''
@@ -133,6 +133,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", themes
   const [closureStart, setClosureStart] = React.useState('')
   const [closureEnd, setClosureEnd] = React.useState('')
   const [closureNote, setClosureNote] = React.useState('')
+  const [cancelledLessons, setCancelledLessons] = React.useState(1)
   const [archiveTargets, setArchiveTargets] = React.useState({})
   const group = groups[selected]
   const lessonsPerWeek = group => (group.days || []).length
@@ -211,10 +212,11 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", themes
           <label>Typ<select value={closureType} onChange={e=>setClosureType(e.target.value)}>{['Studiedag','Halvdag','Lov','Helgdag','Inställd lektion','Annan ledighet'].map(t=><option key={t}>{t}</option>)}</select></label>
           <label>Från datum<input type="date" value={closureStart} onChange={e=>{setClosureStart(e.target.value);if(!closureEnd||closureEnd<e.target.value)setClosureEnd(e.target.value)}}/></label>
           <label>Till datum<input type="date" value={closureEnd} min={closureStart} onChange={e=>setClosureEnd(e.target.value)}/></label>
+          {closureType === 'Halvdag' && <label>Antal inställda lektioner<input type="number" min="1" max="20" value={cancelledLessons} onChange={e=>setCancelledLessons(Math.max(1,Math.min(20,Number(e.target.value)||1)))}/></label>}
           <label>Anteckning<input value={closureNote} placeholder="Valfri information" onChange={e=>setClosureNote(e.target.value)}/></label>
         </div>
-        <button type="button" disabled={!closureStart || (closureEnd && closureEnd<closureStart)} onClick={()=>{updateGroup({schoolClosures:[...(group.schoolClosures||[]),{id:Date.now().toString(36),type:closureType,startDate:closureStart,endDate:closureEnd||closureStart,note:closureNote,cancelledLessons:1}]});setClosureStart('');setClosureEnd('');setClosureNote('')}}>+ Lägg till</button>
-        {(group.schoolClosures||[]).map(event=><div className="class-closure-item" key={event.id}><span><strong>{event.type}</strong> · {event.startDate}{event.endDate!==event.startDate?' – '+event.endDate:''}{event.note?' · '+event.note:''}</span><button type="button" aria-label={'Ta bort '+event.type+' '+event.startDate} onClick={()=>updateGroup({schoolClosures:(group.schoolClosures||[]).filter(e=>e.id!==event.id)})}>Ta bort</button></div>)}
+        <button type="button" disabled={!closureStart || (closureEnd && closureEnd<closureStart)} onClick={()=>{updateGroup({schoolClosures:[...(group.schoolClosures||[]),{id:Date.now().toString(36),type:closureType,startDate:closureStart,endDate:closureEnd||closureStart,note:closureNote,cancelledLessons:closureType==='Halvdag'?cancelledLessons:0}]});setClosureStart('');setClosureEnd('');setClosureNote('')}}>+ Lägg till</button>
+        {(group.schoolClosures||[]).map(event=><div className="class-closure-item" key={event.id}><span><strong>{event.type}</strong> · {event.startDate}{event.endDate!==event.startDate?' – '+event.endDate:''}{event.type==='Halvdag'?' · '+(event.cancelledLessons||1)+' inställd(a) lektion(er)':''}{event.note?' · '+event.note:''}</span><button type="button" aria-label={'Ta bort '+event.type+' '+event.startDate} onClick={()=>updateGroup({schoolClosures:(group.schoolClosures||[]).filter(e=>e.id!==event.id)})}>Ta bort</button></div>)}
       </div>}
     </div>}
     {showClassMenu && groups.length > 0 && <div style={{display:"flex",gap:10,flexWrap:"wrap",margin:"12px 0"}}>
