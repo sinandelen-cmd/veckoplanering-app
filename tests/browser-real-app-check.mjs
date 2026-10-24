@@ -53,5 +53,40 @@ try {
  for(let i=0;i<50&&!requests.includes('/rest/v1/veckoplanering');i++)await page.waitForTimeout(100)
  assert.ok(requests.includes('/rest/v1/veckoplanering'),'Real App must fetch isolated teacher plans')
  assert.equal(requests.some(s=>s.startsWith('BLOCKED EXTERNAL')),false,'App must not call external URLs')
+
+ // Verify real public student view accordion behavior against isolated RPC data.
+ const studentPage=await browser.newPage()
+ const monday=new Date()
+ monday.setHours(12,0,0,0)
+ monday.setDate(monday.getDate()-((monday.getDay()+6)%7))
+ const iso=(offset)=>{const d=new Date(monday);d.setDate(d.getDate()+offset);return d.toISOString().slice(0,10)}
+ const fixtureWeeks=[-14,-7,0].map((offset,index)=>({
+  weekStart:iso(offset),weekNumber:index+1,title:'Testvecka '+(index+1),
+  content:'Isolerat elevinnehåll '+(index+1),lessons:[]
+ }))
+ await studentPage.route('**/*',async route=>{
+  const url=new URL(route.request().url())
+  if(url.port==='4199' && url.pathname.includes('/rest/v1/rpc/get_public_annual_plan')){
+   return route.fulfill({status:200,headers:{'access-control-allow-origin':'*','content-type':'application/json'},
+    body:JSON.stringify({published_content:JSON.stringify({title:'Isolerad elevplanering',weeksData:fixtureWeeks})})})
+  }
+  if(url.hostname!=='127.0.0.1' && url.hostname!=='localhost')return route.abort('blockedbyclient')
+  return route.continue()
+ })
+ await studentPage.goto('http://127.0.0.1:4176/elev/isolerat-test')
+ const accordion=studentPage.locator('details.student-week-accordion')
+ await accordion.first().waitFor({timeout:15000})
+ assert.equal(await accordion.count(),1,'Only current student week is shown initially')
+ assert.equal(await accordion.first().getAttribute('open'),'','Current week is expanded initially')
+ const toggle=studentPage.getByRole('button',{name:/Visa tidigare veckor/})
+ await toggle.click()
+ assert.equal(await accordion.count(),3,'Earlier student weeks become available on request')
+ assert.equal(await studentPage.locator('details.student-week-accordion').first().locator('summary').textContent().then(s=>s.includes('Testvecka 3')),true,'Current week stays first')
+ await accordion.nth(1).locator('summary').click()
+ assert.equal(await accordion.nth(1).getAttribute('open'),'','An earlier week can be expanded')
+ await studentPage.getByRole('button',{name:'Dölj tidigare veckor'}).click()
+ assert.equal(await accordion.count(),1,'Earlier student weeks can be hidden again')
+ await studentPage.close()
+ console.log('PASS Chromium real App.jsx student accordion: current first, earlier weeks toggle, expand and hide')
  console.log('PASS Chromium real App.jsx login and teacher access, strictly isolated HTTP mocks; no real GoTrue/PostgREST')
 }finally{await browser.close()}
