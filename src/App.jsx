@@ -1,5 +1,6 @@
 function capitalizeFirstSwedish(value) { return String(value || '').replace(/^(\s*)([a-zåäö])/i, (_, spaces, letter) => spaces + letter.toLocaleUpperCase('sv-SE')) }
 import UpdateNotices from './UpdateNotices.jsx'
+import { usePlanHistory } from './usePlanHistory.js'
 import { groupStudentWeeksForPrint } from './printGroups.js'
 import { Component, Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
@@ -1279,42 +1280,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const initialPlansLoadedRef = useRef(false)
   const latestPlanRef = useRef(plan)
   useEffect(() => { latestPlanRef.current = plan }, [plan])
-  const historyRef = useRef({ past: [], current: JSON.stringify(plan), future: [] })
-  const historySkipRef = useRef(false)
-  const [historyVersion, setHistoryVersion] = useState(0)
-  useEffect(() => {
-    const next = JSON.stringify(plan)
-    const history = historyRef.current
-    if (next === history.current) return
-    if (historySkipRef.current) {
-      historySkipRef.current = false
-      history.current = next
-      return
-    }
-    history.past.push(history.current)
-    if (history.past.length > 60) history.past.shift()
-    history.current = next
-    history.future = []
-    setHistoryVersion(v => v + 1)
-  }, [plan])
-  const undoPlan = () => {
-    const h = historyRef.current
-    if (!h.past.length) return
-    h.future.unshift(h.current)
-    h.current = h.past.pop()
-    historySkipRef.current = true
-    setPlan(JSON.parse(h.current))
-    setHistoryVersion(v => v + 1)
-  }
-  const redoPlan = () => {
-    const h = historyRef.current
-    if (!h.future.length) return
-    h.past.push(h.current)
-    h.current = h.future.shift()
-    historySkipRef.current = true
-    setPlan(JSON.parse(h.current))
-    setHistoryVersion(v => v + 1)
-  }
+  const { undoPlan, redoPlan, historyVersion, historyRef, historySkipRef } = usePlanHistory(plan, setPlan)
   const savedPlanRef = useRef(JSON.stringify(plan))
   const [, setSavedRevision] = useState(0)
   const isDirty = JSON.stringify(plan) !== savedPlanRef.current
