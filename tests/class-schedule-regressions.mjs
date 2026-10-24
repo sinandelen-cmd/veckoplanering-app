@@ -40,6 +40,21 @@ assert.deepEqual(names(sparse8A),['42-0','42-1','42-2','42-3',...Array.from({len
 assert.equal(JSON.stringify(sparsePlan),sparseSnapshot)
 console.log('PASS sparse source weeks: 8A and 8C fill calendar weeks 43–44 without changing saved data')
 
+// Isolated demo: one, two, three, four and mixed moments per meeting.
+const demoPlan={startDate:'2026-10-19',weeksData:[{weekStart:'2026-10-19',weekNumber:43,lessons:Array.from({length:12},(_,i)=>({name:'Moment '+(i+1),topics:[{name:'Moment '+(i+1),pagesLabel:'Sida '+i,assignmentsLabel:'Uppgift '+i}]}))}],schoolClosures:[]}
+const demoOriginal=JSON.stringify(demoPlan)
+for(const count of [1,2,3,4]){
+ const rows=build(demoPlan,{name:'Test '+count,days:['Måndag','Tisdag','Torsdag','Fredag'],momentsPerDay:{Måndag:count,Tisdag:count,Torsdag:count,Fredag:count}})
+ assert.equal(rows.length,Math.ceil(12/count))
+ assert.deepEqual(rows.flatMap(row=>Array.from(row.lesson.topics,t=>t.name)),Array.from({length:12},(_,i)=>'Moment '+(i+1)))
+ assert.equal(rows[0].lesson.topics.length,count)
+}
+const mixed=build(demoPlan,{name:'Test Mix',days:['Måndag','Tisdag','Torsdag','Fredag'],momentsPerDay:{Måndag:1,Tisdag:2,Torsdag:3,Fredag:4}})
+assert.deepEqual(mixed.slice(0,4).map(row=>row.lesson.topics.length),[1,2,3,4])
+assert.deepEqual(mixed.flatMap(row=>Array.from(row.lesson.topics,t=>t.name)),Array.from({length:12},(_,i)=>'Moment '+(i+1)))
+assert.equal(JSON.stringify(demoPlan),demoOriginal)
+console.log('PASS isolated demo classes: 1, 2, 3, 4 and mixed moments preserve order and source data')
+
 const normal = build(base, group('A'))
 assert.deepEqual(dates(normal), ['2026-10-19','2026-10-20','2026-10-21','2026-10-22'])
 assert.deepEqual(names(normal), ['Lesson 1','Lesson 2','Lesson 3','Lesson 4'])
