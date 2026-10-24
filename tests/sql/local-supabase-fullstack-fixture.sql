@@ -90,7 +90,6 @@ select jsonb_set(
 $function$;
 REVOKE ALL ON FUNCTION public.get_public_annual_plan(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_public_annual_plan(text) TO anon,authenticated;
-,false) or (w.week->>'hideDate')::date > s.today)
 ), chosen as (
  select e.* from eligible e
  where not coalesce((e.doc->>'autoReleaseWeeks')::boolean,false)
