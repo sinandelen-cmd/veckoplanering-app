@@ -3861,3 +3861,12 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .lesson-assessment-fields input,.lesson-assessment-fields select,.lesson-assessment-fields textarea{width:100%;max-width:100%;box-sizing:border-box;background:#fff;border:1px solid #e3aaaa;border-radius:7px;padding:9px;color:#292929}
 .lesson-assessment-fields textarea{min-height:60px;resize:vertical}
 .lesson-add-assessment{margin:8px 0;border:1px solid #c94747;background:#fff4f4;color:#a72b2b;border-radius:8px;padding:7px 12px;font-weight:650;cursor:pointer}
+
+/* Klassvisa studiedagar, halvdagar och lov */
+.class-closure-section{margin:12px 0}
+.class-closure-editor{margin-top:10px;padding:14px;border:1px solid #b9d6d1;border-radius:12px;background:#f4faf9;display:grid;gap:10px}
+.class-closure-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px}
+.class-closure-fields label{display:grid;gap:5px;font-size:13px;font-weight:650}
+.class-closure-fields input,.class-closure-fields select{width:100%;min-width:0;box-sizing:border-box;border:1px solid #b9d6d1;border-radius:7px;padding:8px;background:#fff}
+.class-closure-item{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 0;border-top:1px solid #d8e6e2}
+.class-closure-item button{border:0;background:transparent;color:#b12b38;cursor:pointer;font-weight:650}
