@@ -48,3 +48,9 @@ Ingen produktion, publicering eller merge.
 20. Lade till ett negativt verkligt App.jsx-inloggningstest: fel lösenord ska ge felmeddelande och behålla inloggningsvyn innan lyckad testinloggning. Detta är ett nytt teststeg; invänta slutlig CI för `bf5472a` eller senare.
 
 Tidigare kod- och SQL-körning `40088992498` på `83f0241` var också **success**, inklusive det anropbara RPC-kontraktstestet. Det är fortfarande en syntetisk funktion, inte produktions-RPC.
+
+## Korrigering av ny Chromium-regression
+
+- Browser-körningarna `995918a` och `821cb3c` visade en asynkron timingfråga: den riktiga App.jsx begär planeringslistan **efter** lärarbehörigheten; testet kontrollerade för tidigt. Lade till begränsad väntan (`ea88e9d`).
+- Browser-körningen `bf5472a` visade att det nya negativa inloggningstestet förväntade sig ett 400-svar som inte hade kopplats in i mockens Auth-handler. Lade till det faktiska 400-svaret (`2aeebea`).
+- Dessa är testhärdningar, inte produktionsändringar. Kontrollera nya båda workflows innan slutligt godkännande.
