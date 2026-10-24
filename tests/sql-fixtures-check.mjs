@@ -2,10 +2,18 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 
 // Safe offline guard: only SELECT/CTE fixtures, never DDL/DML or network access.
-for (const file of ['tests/sql/automatic-week-release-regression.sql', 'tests/sql/future-week-release-regression.sql', 'tests/sql/hide-date-boundary-regression.sql']) {
+const fixtures = new Map([
+  ['tests/sql/automatic-week-release-regression.sql', 6],
+  ['tests/sql/future-week-release-regression.sql', 9],
+  ['tests/sql/hide-date-boundary-regression.sql', 7],
+])
+
+for (const [file, expectedCases] of fixtures) {
   const sql = readFileSync(file, 'utf8')
   const withoutComments = sql.replace(/^--.*$/gm, '').trim()
   assert.match(withoutComments, /^WITH\s/i, file + ' must start with a read-only CTE')
+  const caseCount = (withoutComments.match(/^\s*\('/gm) || []).length
+  assert.equal(caseCount, expectedCases, file + ' must retain all synthetic cases')
   assert.equal((withoutComments.match(/;\s*$/g) || []).length, 1, file + ' must terminate with a semicolon')
   assert.equal((withoutComments.match(/;/g) || []).length, 1, file + ' must contain exactly one statement')
   assert.doesNotMatch(withoutComments, /\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE|GRANT|REVOKE)\b/i, file + ' must not modify data')
