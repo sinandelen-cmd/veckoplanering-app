@@ -37,6 +37,34 @@ const monday = value => {const d=new Date(value+'T12:00:00');d.setDate(d.getDate
 const nextDate = (start,offset)=>{const d=new Date(start);d.setDate(d.getDate()+offset);return d}
 const buildClassSchedule = new Function('DAYS','iso','monday','nextDate',classBuilder+'\nreturn buildClassSchedule')(DAYS,iso,monday,nextDate)
 
+
+ // Regression: global school holidays, class targeting and overlapping half-days.
+{
+  const lessons = ['A','B','C','D'].map(id => ({id,name:id,topics:[]}))
+  const base = {weeksData:[
+    {weekStart:'2026-10-05',weekNumber:41,lessons:lessons.slice(0,2)},
+    {weekStart:'2026-10-12',weekNumber:42,lessons:lessons.slice(2)}
+  ]}
+  const groupA = {name:'8A',days:['Måndag','Onsdag'],overrides:{}}
+  const groupB = {name:'8B',days:['Måndag','Onsdag'],overrides:{}}
+  const normal = buildClassSchedule(base,groupA)
+  const holiday = {...base,schoolClosures:[{name:'Lov',startDate:'2026-10-05',endDate:'2026-10-07'}]}
+  const delayed = buildClassSchedule(holiday,groupA)
+  assert.deepEqual(delayed.map(item=>item.lesson.id),['A','B','C','D'])
+  assert.equal(delayed[0].date,'2026-10-12')
+  assert.equal(normal[0].date,'2026-10-05')
+  const targeted = {...base,schoolClosures:[{name:'Studiedag',startDate:'2026-10-05',endDate:'2026-10-05',classNames:['8A']}]}
+  assert.equal(buildClassSchedule(targeted,groupA)[0].date,'2026-10-07')
+  assert.equal(buildClassSchedule(targeted,groupB)[0].date,'2026-10-05')
+  const half = {...base,schoolClosures:[{type:'Halvdag',startDate:'2026-10-05',endDate:'2026-10-05',cancelledLessons:1}]}
+  assert.equal(buildClassSchedule(half,groupA)[0].date,'2026-10-07')
+  const extra = {...groupA,extraSlots:[{date:'2026-10-05'}]}
+  assert.equal(buildClassSchedule(half,extra)[0].date,'2026-10-05')
+  const overlapping = {...base,schoolClosures:[{type:'Halvdag',startDate:'2026-10-05',endDate:'2026-10-05',cancelledLessons:1}]}
+  const overlappingGroup = {...extra,schoolClosures:[{type:'Halvdag',startDate:'2026-10-05',endDate:'2026-10-05',cancelledLessons:1}]}
+  assert.equal(buildClassSchedule(overlapping,overlappingGroup)[0].date,'2026-10-07')
+}
+
 // Regression: class-specific closures must defer, never discard, source lessons.
 {
   const lessons = ['A','B','C','D'].map(id => ({id,name:id,topics:[]}))
