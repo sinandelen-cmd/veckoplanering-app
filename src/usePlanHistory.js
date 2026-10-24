@@ -9,7 +9,12 @@ export function usePlanHistory(plan, setPlan) {
   useEffect(() => {
     const next = JSON.stringify(plan)
     const history = historyRef.current
-    if (next === history.current) return
+    if (next === history.current) {
+      // Undo/redo already set current to the restored snapshot. Consume the
+      // skip flag now, or the next genuine edit will incorrectly be ignored.
+      if (historySkipRef.current) historySkipRef.current = false
+      return
+    }
     if (historySkipRef.current) {
       historySkipRef.current = false
       history.current = next
