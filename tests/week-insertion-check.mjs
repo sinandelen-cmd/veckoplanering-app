@@ -218,10 +218,11 @@ testWithPlan('W32 hidden source week produces no class lessons',(()=>{
 })
 {
   // Verify actual undo/redo handlers, without mounting React.
-  const undoStart=source.indexOf('  const undoPlan = () => {')
-  const redoEnd=source.indexOf('  const savedPlanRef =',undoStart)
+  const historySource=fs.readFileSync(new URL('../src/usePlanHistory.js',import.meta.url),'utf8')
+  const undoStart=historySource.indexOf('  const undoPlan = () => {')
+  const redoEnd=historySource.indexOf('  return { undoPlan, redoPlan,',undoStart)
   assert.ok(undoStart>=0 && redoEnd>undoStart)
-  const handlers=source.slice(undoStart,redoEnd)
+  const handlers=historySource.slice(undoStart,redoEnd)
   const first=planOf(3)
   const second=structuredClone(first)
   second.weeksData[1].title='Redigerad'
