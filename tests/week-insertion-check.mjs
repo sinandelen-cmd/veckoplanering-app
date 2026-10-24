@@ -352,10 +352,14 @@ testWithPlan('W32 two classes remap independently',(()=>{
   p.classGroups[1].overrides={'1':{text:'B original second'}}
   return p
 })(),['1'],0,(p,b)=>{
-  assert.equal(buildClassSchedule(p,p.classGroups[0])[2].override?.text,'A original second')
-  assert.equal(buildClassSchedule(p,p.classGroups[1])[2].override?.text,'B original second')
-  assert.equal(buildClassSchedule(p,p.classGroups[0])[1].override,null)
-  assert.equal(buildClassSchedule(p,p.classGroups[1])[1].override,null)
+  for (const [i, text] of [[0,'A original second'],[1,'B original second']]) {
+    const original=buildClassSchedule(b,b.classGroups[i])[1]
+    const updated=buildClassSchedule(p,p.classGroups[i])
+    const moved=updated.find(item=>item.lesson.id===original.lesson.id)
+    assert.ok(moved, 'class '+i+' original lesson survives insertion')
+    assert.equal(moved.override?.text,text)
+    assert.equal(updated[1].override,null)
+  }
   assert.deepEqual(b.classGroups[0].overrides,{'1':{text:'A original second'}})
 })
 testWithPlan('W32 overrides before insertion stay in place',(()=>{
