@@ -107,6 +107,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
   const group = groups[selected]
   const lessonsPerWeek = group => (group.days || []).length
   const schedule = React.useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
+  const archivedOverrideCount = Object.keys(group?.overrides || {}).filter(key => key.startsWith('legacy-unmapped:')).length
   const updateGroup = changes => onChange({ ...plan, classGroups: groups.map((g, i) => i === selected ? { ...g, ...changes } : g) })
   // Tidigare schematider bevaras i datat, men behöver inte redigeras i matrisen.
   const setLessonTime = (classIndex, day, slotIndex, value) => {
@@ -200,6 +201,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
     </div>}
     {showClassMenu && group && !compare && showClassDetails && <>
       <h3>{group.name} – eget lektionsschema</h3>
+      {archivedOverrideCount > 0 && <p role="status" className="muted">{archivedOverrideCount} äldre klassanpassning{archivedOverrideCount === 1 ? '' : 'ar'} har sparats separat eftersom deras ursprungliga lektion inte säkert kan identifieras. De visas inte på någon annan lektion och har inte raderats. Återkoppling kräver manuell granskning.</p>}
       <p><strong>{lessonsPerWeek(group)} lektioner per vecka.</strong> Lektionsdagarna visas i matrisen ovan. En klass kan ha fler eller färre lektioner än de andra.</p>
       <label>Startdatum <input type="date" value={group.startDate || plan.startDate || ''} onChange={e => updateGroup({startDate:e.target.value})} /></label>
       <p className="muted">Lektionsdagar och antal lektioner ändras i klassmatrisen ovan. Här hanterar du endast särskilda ändringar för den valda klassen.</p>
