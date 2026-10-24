@@ -30,3 +30,10 @@ Datum: 2026-10-24. Feature-gren och draft PR #5; ingen produktion, publicering e
 - **CI:** Senaste körningar efter ändringarna måste bekräftas. Tidigare gröna körningar bevisar inte att nya RLS-testet är grönt.
 
 **Status:** 7/8 tidigare verifierade kvalitetsdelar, 87,5 %. Den sista delen är inte klar. Bedömning: minst en större arbetsgrupp, sannolikt fler om en lokal Supabase-stack och inloggad E2E måste byggas upp från grunden. Release kräver separat användargodkännande.
+
+## Säkerhetsrättning och verifierade CI-resultat
+
+- Isolerad RLS-rollsimulering har **passerat** i ordinarie GitHub Actions på `546797f`, run `40088637910` (både verify och SQL-regressions success). Testet verifierar egna PostgreSQL-roller/policies; det är **inte** produktions-Supabase-RLS.
+- Chromium på `8e8fc9e`, run `40088566877`, **success** efter att ett testfel i fixturens numeriska indexidentifiering korrigerades.
+- Ny säkerhetsrättning i `src/App.jsx`: `legacy-unmapped:`-nycklar filtreras bort från elevernas publiceringssnapshot. Värdena bevaras i lärarens utkast; de får inte automatiskt exponeras i elevkopian. Ny regression i `tests/publish-handler-check.mjs` bekräftar båda villkoren.
+- Den nya publiceringsfiltreringens CI måste verifieras på commit `0006793` eller senare. Det går inte att räkna den som godkänd förrän dess körning är grön.
