@@ -63,7 +63,20 @@ try{
  await page.goto('http://127.0.0.1:4177/elev/'+encodeURIComponent(stored.public_slug))
  const earlierWeeks = page.getByRole('button',{name:/Visa tidigare veckor/})
  if(await earlierWeeks.count()) await earlierWeeks.click()
- await page.getByText('Synlig text från verklig App.jsx-redigering').first().waitFor({timeout:20000})
+ try {
+  await page.getByText('Synlig text från verklig App.jsx-redigering').first().waitFor({timeout:20000})
+ } catch (error) {
+  console.error('Student view diagnostic:', JSON.stringify({
+   url:page.url(),
+   headings:await page.locator('h1,h2,h3').allTextContents(),
+   accordions:await page.locator('.student-week-accordion').count(),
+   weekCards:await page.locator('.student-week-card').count(),
+   visibleText:(await page.locator('body').innerText()).slice(0,2500),
+   storedWeekStart:studentDoc.weeksData?.[0]?.weekStart,
+   storedWeekContent:studentDoc.weeksData?.[0]?.content,
+  }))
+  throw error
+ }
  assert.equal(await page.getByText('Privat veckoinnehåll').count(),0)
  console.log('PASS full real App.jsx: teacher folder -> plan -> teacher editor -> automatic PostgREST publication -> sanitized public RPC -> Chromium student view')
 
