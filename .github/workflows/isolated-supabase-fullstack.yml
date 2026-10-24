@@ -5,11 +5,13 @@ on:
   workflow_dispatch:
 concurrency:
   group: isolated-supabase-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # Preserve a running Docker image download when a newer commit arrives.
+  # New runs queue instead of repeatedly cancelling fullstack verification.
+  cancel-in-progress: false
 jobs:
   fullstack:
     runs-on: ubuntu-latest
-    timeout-minutes: 16
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -33,14 +35,14 @@ jobs:
           cp tests/sql/local-supabase-fullstack-fixture.sql "$(find supabase/migrations -type f -name '*isolated_fullstack_fixture.sql' | head -1)"
           test -s "$(find supabase/migrations -type f -name '*isolated_fullstack_fixture.sql' | head -1)"
       - name: Start disposable Docker Supabase fullstack (never linked to production)
-        timeout-minutes: 6
+        timeout-minutes: 10
         run: |
           # Bound startup and report the actual Docker failure instead of waiting
           # through another multi-minute registry retry.
           set -o pipefail
           log_file="$(mktemp)"
-          echo "Starting isolated Supabase (hard limit: 4 minutes)"
-          if timeout --signal=TERM --kill-after=15s 4m npx --yes supabase@2.81.3 start --exclude realtime,storage-api,imgproxy,studio,postgres-meta,edge-runtime,logflare,vector,supavisor,mailpit 2>&1 | tee "$log_file"; then
+          echo "Starting isolated Supabase (hard limit: 8 minutes)"
+          if timeout --signal=TERM --kill-after=15s 8m npx --yes supabase@2.81.3 start --exclude realtime,storage-api,imgproxy,studio,postgres-meta,edge-runtime,logflare,vector,supavisor,mailpit 2>&1 | tee "$log_file"; then
             rm -f "$log_file"
             exit 0
           fi
