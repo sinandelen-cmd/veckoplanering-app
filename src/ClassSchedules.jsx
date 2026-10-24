@@ -158,7 +158,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", themes
   const [cancelledFrom, setCancelledFrom] = React.useState('end')
   const [archiveTargets, setArchiveTargets] = React.useState({})
   const controlledIndex = groups.findIndex(g => g.name === selectedClassName)
-  const activeIndex = onSelectClass ? controlledIndex : selected
+  const activeIndex = onSelectClass && controlledIndex >= 0 ? controlledIndex : Math.min(selected, groups.length - 1)
   const group = groups[activeIndex]
   const lessonsPerWeek = group => (group.days || []).length
   const schedule = React.useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
