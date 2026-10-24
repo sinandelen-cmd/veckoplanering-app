@@ -21,3 +21,18 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Verify application build
         run: npm run build
+      - name: Install isolated Playwright runner
+        run: npm install --no-save --package-lock=false playwright@1.56.1
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start local student fixture
+        run: |
+          npm run dev -- --host 127.0.0.1 --port 4177 > /tmp/isolated-calendar-vite.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:4177/tests/calendar-student-fixture.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/isolated-calendar-vite.log
+          exit 1
+      - name: Chromium class student schedule fixture
+        run: node tests/calendar-student-chromium.mjs
