@@ -746,8 +746,8 @@ function ImportantDatesForWeek({ week, plan, selectedClass = null }) {
   const closures = [...sharedClosures, ...(selectedClass?.schoolClosures || [])].filter(item => validSchoolClosure({ ...item, name: item.name || item.type }))
   const exams = []
   const entries = dates.flatMap(({ date, day }) => {
-    const events = closures.filter(item => item.startDate <= date && item.endDate >= date)
-      .map(item => ({ name: item.name || item.type, kind: /studiedag/i.test(item.name || item.type || '') ? 'study' : 'holiday', verified: item.verified !== false }))
+    const events = closures.filter(item => item.startDate <= date && (item.endDate || item.startDate) >= date)
+      .map(item => ({ name: item.name || item.type, kind: /studiedag/i.test(item.name || item.type || '') ? 'study' : item.type === 'Halvdag' ? 'halfday' : 'holiday', verified: item.verified !== false, cancelledLessons: item.type === 'Halvdag' ? Math.max(1, Number(item.cancelledLessons) || 1) : 0 }))
     
     events.push(...exams.filter(item => item.date === date).map(item => ({ name: 'NP – ' + item.subject + ', delprov ' + item.part, kind: 'exam', verified: true })))
     return events.map(event => ({ ...event, date, day }))
@@ -757,7 +757,7 @@ function ImportantDatesForWeek({ week, plan, selectedClass = null }) {
     <h4>📅 Viktiga datum</h4>
     {entries.map((item, index) => <div className={`student-important-date student-important-date-${item.kind}`} key={item.date + item.name + index}>
       <strong>{item.day} <small>{Number(item.date.slice(8))}/{Number(item.date.slice(5, 7))}</small></strong>
-      <span>{item.kind === 'exam' ? '📝' : item.kind === 'study' ? '📘' : '🌼'} {item.name}{!item.verified && <small> · Kontrollera datum</small>}</span>
+      <span>{item.kind === 'exam' ? '📝' : item.kind === 'study' ? '📘' : item.kind === 'halfday' ? '🕛' : '🌼'} {item.name}{item.kind === 'halfday' ? ' · '+item.cancelledLessons+' inställd(a) lektion(er)' : ''}{!item.verified && <small> · Kontrollera datum</small>}</span>
     </div>)}
   </div>
 }
