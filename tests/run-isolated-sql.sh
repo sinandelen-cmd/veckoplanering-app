@@ -53,3 +53,14 @@ psql -X -v ON_ERROR_STOP=1 -At -f tests/sql/isolated-rls-regression.sql | awk -F
     if (count != 1 || failed) { print "Isolated RLS assertion missing or failed" > "/dev/stderr"; exit 1 }
     print "Checked 1 isolated RLS role case"
   }'
+
+echo "Running ephemeral callable RPC contract"
+psql -X -v ON_ERROR_STOP=1 -At -f tests/sql/isolated-rpc-contract.sql | awk -F'|' '
+  NF == 4 {
+    count++
+    if ($4 != "t") { print "FAILED: " $0 > "/dev/stderr"; failed=1 }
+  }
+  END {
+    if (count != 1 || failed) { print "RPC contract assertion missing or failed" > "/dev/stderr"; exit 1 }
+    print "Checked 1 isolated RPC contract case"
+  }'
