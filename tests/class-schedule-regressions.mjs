@@ -50,6 +50,20 @@ const untouched = JSON.stringify(base)
 assert.deepEqual(dates(build(base, group('B'))), dates(normal))
 assert.equal(JSON.stringify(base), untouched)
 
+// A holiday in class A must not affect class B even when they share the source plan.
+const classA = build(base, group('A', [closure('Studiedag','2026-10-19')]))
+const classB = build(base, group('B'))
+assert.equal(classA[0].date, '2026-10-20')
+assert.equal(classB[0].date, '2026-10-19')
+assert.deepEqual(names(classA), names(classB))
+
+// An entire source week closed for one class must be moved into the next week.
+const longClosure = build(base, group('A', [{
+  type:'Lov', startDate:'2026-10-19', endDate:'2026-10-23'
+}]))
+assert.deepEqual(dates(longClosure), ['2026-10-26','2026-10-27','2026-10-28','2026-10-29'])
+assert.deepEqual(names(longClosure), names(normal))
+
 // The 104-week safety horizon must terminate when a class has no scheduled weekdays.
 const empty = build(base, {name:'C', days:[], schoolClosures:[]})
 assert.equal(empty.length, 0)
