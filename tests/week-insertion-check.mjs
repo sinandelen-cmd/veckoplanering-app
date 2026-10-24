@@ -443,6 +443,18 @@ testWithPlan('W23 publication metadata unchanged after undo snapshot',(()=>{
   assert.equal(published.classGroups[1].lessonTimes.Fredag[0],'10:15')
   const republished=sanitizer(draft)
   assert.notEqual(JSON.stringify(republished),frozenPublished)
+  const publicationStart=source.indexOf('function publicationFields(publish, keepPublished, slug, publishedPayload) {')
+  const publicationEnd=source.indexOf('\nfunction Login(',publicationStart)
+  assert.ok(publicationStart>=0 && publicationEnd>publicationStart)
+  const publicationFields=new Function(source.slice(publicationStart,publicationEnd)+'\nreturn publicationFields')()
+  const firstFields=publicationFields(true,false,'isolated-test',published)
+  assert.equal(firstFields.published,true)
+  assert.equal(firstFields.public_slug,'isolated-test')
+  assert.equal(firstFields.published_content,frozenPublished)
+  assert.deepEqual(publicationFields(false,true,'ignored',republished),{})
+  assert.equal(publicationFields(false,false,null,null).published_content,null)
+  assert.notEqual(publicationFields(true,false,'isolated-test',republished).published_content,firstFields.published_content)
+
   passed++
   console.log('PASS W30-W31 actual student sanitizer snapshot stays unchanged until explicit resanitization')
 }
