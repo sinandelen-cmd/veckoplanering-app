@@ -68,7 +68,7 @@ function testWithPlan(name, initial, prompts, index, expected) {
 const consecutive = (start, count) => Array.from({length:count}, (_,i)=>week(addWeeks(start,i),'original-'+i))
 const planOf = (count, start='2026-01-05') => ({
   weeksData:consecutive(start,count), weeks:count, lessonsPerWeek:3,
-  classGroups:[{id:'class-a',name:'A',schedule:[{day:'monday',lesson:1}]},{id:'class-b',name:'B',schedule:[{day:'friday',lesson:2}]}]
+  classGroups:[{name:'A',startDate:'2026-01-05',days:['Måndag'],cancelledDates:['2026-02-02'],overrides:{'2026-02-09':{text:'Special'}}},{name:'B',startDate:'2026-01-05',days:['Fredag'],extraSlots:[{date:'2026-02-13'}],lessonTimes:{Fredag:['10:15']},overrides:{}}]
 })
 testWithPlan('W17 insert 52nd week',planOf(51),['1'],0,(p,b)=>{
   assert.equal(p.weeks,52)
@@ -109,6 +109,33 @@ testWithPlan('W32 class group metadata unchanged',planOf(3),['3','2','Prov'],0,(
   assert.deepEqual(p.classGroups,b.classGroups)
   assert.equal(p.weeksData[1].lessons[1].assessment.type,'Prov')
 })
+testWithPlan('W23 publication and hide dates remain calendar-anchored',(()=>{
+  const p=planOf(3)
+  p.weeksData[1].publishDate='2026-02-01'
+  p.weeksData[1].hideDate='2026-02-28'
+  return p
+})(),['1'],0,(p,b)=>{
+  assert.equal(p.weeksData[2].publishDate,b.weeksData[1].publishDate)
+  assert.equal(p.weeksData[2].hideDate,b.weeksData[1].hideDate)
+  assert.equal(p.weeksData[2].weekStart,addWeeks(b.weeksData[1].weekStart,1))
+})
+testWithPlan('W33 class exceptions and overrides preserved',planOf(3),['1'],0,(p,b)=>{
+  assert.deepEqual(p.classGroups[0].cancelledDates,b.classGroups[0].cancelledDates)
+  assert.deepEqual(p.classGroups[0].overrides,b.classGroups[0].overrides)
+  assert.deepEqual(p.classGroups[1].extraSlots,b.classGroups[1].extraSlots)
+  assert.deepEqual(p.classGroups[1].lessonTimes,b.classGroups[1].lessonTimes)
+})
+testWithPlan('W14 insert after first week leaves first unchanged',planOf(3),['1'],0,(p,b)=>{
+  assert.deepEqual(p.weeksData[0],b.weeksData[0])
+  assert.equal(p.weeksData[2].weekStart,addWeeks(b.weeksData[1].weekStart,1))
+})
+testWithPlan('W15 insert before last week moves last exactly one week',planOf(3),['1'],1,(p,b)=>{
+  assert.deepEqual(p.weeksData[0],b.weeksData[0])
+  assert.deepEqual(p.weeksData[1],b.weeksData[1])
+  assert.equal(p.weeksData[3].weekStart,addWeeks(b.weeksData[2].weekStart,1))
+})
+testWithPlan('W11 reject fractional lesson number',planOf(3),['3','1.5'],0,(p,b)=>assert.deepEqual(p,b))
+testWithPlan('W10 cancel exam title',planOf(3),['3','2',null],0,(p,b)=>assert.deepEqual(p,b))
 // The React undo/redo hooks are not mounted here. Verify the full-snapshot
 // contract with synthetic data; browser behavior remains unverified.
 {
