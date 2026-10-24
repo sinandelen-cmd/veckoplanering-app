@@ -733,7 +733,7 @@ function a4DemoPlan(plan) {
   return { ...plan, title: 'A4-TEST – INTE SPARAD', studentLayout: 'grid', weeksData }
 }
 
-function ImportantDatesForWeek({ week, plan }) {
+function ImportantDatesForWeek({ week, plan, selectedClass = null }) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(week?.weekStart || '')) return null
   const monday = new Date(week.weekStart + 'T12:00:00')
   monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
@@ -742,11 +742,12 @@ function ImportantDatesForWeek({ week, plan }) {
     date.setDate(monday.getDate() + index)
     return { date: toIsoDate(date), day: ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag'][index] }
   })
-  const closures = (Array.isArray(plan.schoolClosures) ? plan.schoolClosures : []).filter(validSchoolClosure)
+  const sharedClosures = (Array.isArray(plan.schoolClosures) ? plan.schoolClosures : []).filter(item => !item.classNames || !selectedClass || item.classNames.includes(selectedClass.name))
+  const closures = [...sharedClosures, ...(selectedClass?.schoolClosures || [])].filter(item => validSchoolClosure({ ...item, name: item.name || item.type }))
   const exams = []
   const entries = dates.flatMap(({ date, day }) => {
     const events = closures.filter(item => item.startDate <= date && item.endDate >= date)
-      .map(item => ({ name: item.name, kind: /studiedag/i.test(item.name) ? 'study' : 'holiday', verified: item.verified }))
+      .map(item => ({ name: item.name || item.type, kind: /studiedag/i.test(item.name || item.type || '') ? 'study' : 'holiday', verified: item.verified !== false }))
     
     events.push(...exams.filter(item => item.date === date).map(item => ({ name: 'NP – ' + item.subject + ', delprov ' + item.part, kind: 'exam', verified: true })))
     return events.map(event => ({ ...event, date, day }))
@@ -874,7 +875,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
         </div>
         {!/^Vecka\s+\d+$/i.test(week.title || '') && week.title?.trim() && <h3>{week.title}</h3>}
         <div className="week-content">{week.content || (!week.pages?.length && !week.assignments?.length && !week.links?.length && !week.lessons?.some(lesson => lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.length || topic.assignments?.length || topic.links?.length)) ? 'Ingen planering angiven ännu.' : '')}</div>
-        <ImportantDatesForWeek week={week} plan={plan} />
+        <ImportantDatesForWeek week={week} plan={plan} selectedClass={selectedClass} />
         <LessonDetails week={week} entryType={plan.entryType || 'lektion'} lessonDisplay="dag-och-lektion" />
         <WeekDetails week={week} />
       </article></details></div>)}</details>))
