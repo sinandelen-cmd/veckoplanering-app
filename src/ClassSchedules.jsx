@@ -59,17 +59,26 @@ export function remapClassOverridesAfterInsertion(previous, next, insertAfterInd
     const newSchedule = buildClassSchedule(next, group)
     const newByWeekAndSlot = new Map(newSchedule.map(item => [item.weekStart + ':' + item.index, item]))
     const remapped = {}
+    const unresolved = []
+    // Prioritize matched lessons. Never let an orphaned historical index overwrite
+    // a valid override that moved to that same index after insertion.
     for (const [key, value] of Object.entries(overrides)) {
       if (!/^(0|[1-9]\d*)$/.test(key)) { remapped[key] = value; continue }
       const oldItem = oldSchedule[Number(key)]
-      if (!oldItem) { remapped[key] = value; continue }
-      const oldWeekIndex = beforeWeeks.findIndex(week => week.weekStart === oldItem.weekStart)
-      if (oldWeekIndex < 0) { remapped[key] = value; continue }
+      const oldWeekIndex = oldItem ? beforeWeeks.findIndex(week => week.weekStart === oldItem.weekStart) : -1
       const targetIndex = oldWeekIndex + (oldWeekIndex > insertAfterIndex ? 1 : 0)
-      const targetWeek = afterWeeks[targetIndex]
+      const targetWeek = oldWeekIndex >= 0 ? afterWeeks[targetIndex] : null
       const targetItem = targetWeek && newByWeekAndSlot.get(targetWeek.weekStart + ':' + oldItem.index)
-      if (!targetItem) { remapped[key] = value; continue }
+      if (!targetItem) { unresolved.push([key, value]); continue }
       remapped[String(targetItem.lessonNumber - 1)] = value
+    }
+    for (const [key, value] of unresolved) {
+      if (!Object.hasOwn(remapped, key)) { remapped[key] = value; continue }
+      // Preserve the old value without assigning it to a different lesson.
+      let legacyKey = 'legacy-unmapped:' + key
+      let suffix = 1
+      while (Object.hasOwn(remapped, legacyKey)) legacyKey = 'legacy-unmapped:' + key + ':' + suffix++
+      remapped[legacyKey] = value
     }
     return { ...group, overrides: remapped }
   })
