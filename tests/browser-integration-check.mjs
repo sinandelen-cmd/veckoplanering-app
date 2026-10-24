@@ -6,6 +6,7 @@ try{
  await page.goto('http://127.0.0.1:4175/tests/browser-fixture.html')
  await page.getByRole('button',{name:'▦ Schema'}).click()
  await page.getByRole('button',{name:/Visa enskilda ändringar/}).click()
+ await page.getByRole('status').filter({hasText:'äldre klassanpassning'}).waitFor()
  await page.getByRole('button',{name:/2026-01-12/}).click()
  await page.getByText('Anpassad ursprungslektion').first().waitFor()
  assert.equal(await page.getByTestId('override-index').textContent(),'1')
