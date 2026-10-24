@@ -55,6 +55,44 @@ assert.deepEqual(Array.from(mixed).flatMap(row=>Array.from(row.lesson.topics,t=>
 assert.equal(JSON.stringify(demoPlan),demoOriginal)
 console.log('PASS isolated demo classes: 1, 2, 3, 4 and mixed moments preserve order and source data')
 
+// Closure matrix for all five synthetic moment configurations.
+// Verify full-day studiedag, a week of lov, and a half-day with one cancelled
+// teaching slot. The same twelve source moments must survive in order.
+const demoGroups=[
+ ...[1,2,3,4].map(count=>({name:'Test '+count,days:['Måndag','Tisdag','Torsdag','Fredag'],momentsPerDay:{Måndag:count,Tisdag:count,Torsdag:count,Fredag:count}})),
+ {name:'Test Mix',days:['Måndag','Tisdag','Torsdag','Fredag'],momentsPerDay:{Måndag:1,Tisdag:2,Torsdag:3,Fredag:4}}
+]
+const allDemoTopics=Array.from({length:12},(_,i)=>'Moment '+(i+1))
+const topicSequence=rows=>Array.from(rows).flatMap(row=>Array.from(row.lesson.topics,t=>t.name))
+const demoPlanBeforeClosures=JSON.stringify(demoPlan)
+for(const g of demoGroups){
+ const baseline=build(demoPlan,g)
+ const cases=[
+  ['Studiedag',[closure('Studiedag','2026-10-19')],'2026-10-20'],
+  ['Lov',[{type:'Lov',startDate:'2026-10-19',endDate:'2026-10-23'}],'2026-10-26'],
+  ['Halvdag',[closure('Halvdag','2026-10-19',{cancelledLessons:1})],'2026-10-20'],
+  ['Studiedag + Lov + Halvdag',[
+    closure('Studiedag','2026-10-19'),
+    closure('Halvdag','2026-10-20',{cancelledLessons:1}),
+    {type:'Lov',startDate:'2026-10-22',endDate:'2026-10-23'}
+  ],'2026-10-21']
+ ]
+ for(const [label,events,firstDate] of cases){
+  const isolatedGroup={...g,schoolClosures:events}
+  const groupBefore=JSON.stringify(isolatedGroup)
+  const rows=build(demoPlan,isolatedGroup)
+  assert.deepEqual(topicSequence(rows),allDemoTopics,g.name+' '+label+' all moments preserved in order')
+  assert.equal(rows[0]?.date,firstDate,g.name+' '+label+' first teaching date')
+  assert.ok(rows.at(-1).date>=baseline.at(-1).date,g.name+' '+label+' does not finish earlier')
+  assert.equal(rows.some(row=>events.some(event=>event.type!=='Halvdag' && row.date>=event.startDate && row.date<=event.endDate)),false,g.name+' '+label+' closed dates empty')
+  assert.equal(JSON.stringify(isolatedGroup),groupBefore,g.name+' '+label+' class data immutable')
+  assert.deepEqual(topicSequence(build(demoPlan,g)),allDemoTopics,g.name+' unaffected after '+label)
+ }
+ console.log('PASS closure matrix '+g.name+': studiedag, lov, halvdag and combined closures; all 12 moments preserved')
+}
+assert.equal(JSON.stringify(demoPlan),demoPlanBeforeClosures)
+console.log('PASS closure matrix: all five demo classes preserve source data and moment order')
+
 const normal = build(base, group('A'))
 assert.deepEqual(dates(normal), ['2026-10-19','2026-10-20','2026-10-21','2026-10-22'])
 assert.deepEqual(names(normal), ['Lesson 1','Lesson 2','Lesson 3','Lesson 4'])
