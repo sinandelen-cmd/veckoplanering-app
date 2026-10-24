@@ -9,7 +9,7 @@ concurrency:
 jobs:
   fullstack:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,26 +37,20 @@ jobs:
           # This disposable runner must never authenticate to a container registry.
           # Capture startup output and fail immediately on external registry quotas.
           set -o pipefail
-          for attempt in 1 2; do
-            log_file="$(mktemp)"
-            echo "Starting isolated Supabase (attempt $attempt of 2)"
-            if timeout --signal=TERM --kill-after=15s 4m npx --yes supabase@2.81.3 start --exclude realtime,storage-api,imgproxy,studio,postgres-meta,edge-runtime,logflare,vector,supavisor,mailpit 2>&1 | tee "$log_file"; then
-              rm -f "$log_file"
-              exit 0
-            fi
-            if grep -Eiq 'toomanyrequests|Data limit exceeded|rate.?limit|pull rate limit|429 Too Many Requests' "$log_file"; then
-              echo "::error title=External Docker registry quota::Container images could not be downloaded due to registry rate/data limits. This is an external CI infrastructure failure; app and database tests were not reached."
-              rm -f "$log_file"
-              exit 1
-            fi
+          # One bounded attempt: retrying registry quotas only delays feedback.
+          log_file="$(mktemp)"
+          echo "Starting isolated Supabase (maximum 3 minutes)"
+          if timeout --signal=TERM --kill-after=15s 3m npx --yes supabase@2.81.3 start --exclude realtime,storage-api,imgproxy,studio,postgres-meta,edge-runtime,logflare,vector,supavisor,mailpit 2>&1 | tee "$log_file"; then
             rm -f "$log_file"
-            if [ "$attempt" -eq 2 ]; then
-              echo "::error title=Isolated Supabase startup failed::The disposable Docker stack did not start after two bounded attempts. Review startup logs above."
-              exit 1
-            fi
-            npx --yes supabase@2.81.3 stop --no-backup || true
-            sleep 15
-          done
+          elif grep -Eiq 'toomanyrequests|Data limit exceeded|rate.?limit|pull rate limit|429 Too Many Requests' "$log_file"; then
+            echo "::error title=External Docker registry quota::Container downloads were blocked by registry limits. Application and database tests were not reached."
+            rm -f "$log_file"
+            exit 1
+          else
+            echo "::error title=Isolated Supabase startup failed::Startup failed or exceeded the three-minute limit; see the log above."
+            rm -f "$log_file"
+            exit 1
+          fi
       - name: Capture local-only API endpoint and ephemeral anon key
         run: |
           npx --yes supabase@2.81.3 status -o env > /tmp/isolated-supabase-status.env
@@ -87,4 +81,4 @@ jobs:
         run: node tests/browser-local-supabase-fullstack-check.mjs
       - name: Stop isolated Supabase stack
         if: always()
-        run: npx --yes supabase@2.81.3 stop --no-backup || true
+        run: timeout --signal=TERM --kill-after=10s 45s npx --yes supabase@2.81.3 stop --no-backup || true
