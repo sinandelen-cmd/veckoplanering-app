@@ -170,12 +170,12 @@ const momentPlan = {...base, weeksData:[{...week, lessons:[
 ]}]}
 const twoDayClass = {name:'8C',days:['Måndag','Torsdag'],momentsPerDay:{Måndag:3,Torsdag:2}}
 const distributed = build(momentPlan,twoDayClass)
-assert.deepEqual(Array.from(distributed,row=>row.lesson.topics.map(t=>t.name)),[['A','B','C'],['D','E'],['F','G','H']])
-assert.deepEqual(Array.from(distributed,row=>row.lesson.topics.map(t=>t.pages[0])),[['11','12','13'],['14','15'],['16','17','18']])
+assert.deepEqual(Array.from(distributed,row=>Array.from(row.lesson.topics,t=>t.name)),[['A','B','C'],['D','E'],['F','G','H']])
+assert.deepEqual(Array.from(distributed,row=>Array.from(row.lesson.topics,t=>t.pages[0])),[['11','12','13'],['14','15'],['16','17','18']])
 assert.equal(distributed[0].lesson.topics[2].assignments[0],'Solve')
 assert.deepEqual(dates(distributed),['2026-10-19','2026-10-22','2026-10-26'])
 assert.equal(momentPlan.weeksData[0].lessons[1].topics[0].name,'C')
 const delayedMoments=build(momentPlan,{...twoDayClass,schoolClosures:[closure('Studiedag','2026-10-19')]})
-assert.deepEqual(Array.from(delayedMoments,row=>row.lesson.topics.map(t=>t.name)),[['A','B'],['C','D','E'],['F','G'],['H']])
+assert.deepEqual(Array.from(delayedMoments,row=>Array.from(row.lesson.topics,t=>t.name)),[['A','B'],['C','D','E'],['F','G'],['H']])
 
 console.log('Class scheduling regression checks: OK')
