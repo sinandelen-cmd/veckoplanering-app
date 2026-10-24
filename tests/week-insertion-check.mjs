@@ -201,8 +201,12 @@ testWithPlan('W34 class A and B map to inserted base week',planOf(3),['3','2','M
   const bLessons=buildClassSchedule(p,p.classGroups[1])
   assert.ok(a.some(item=>item.weekStart===p.weeksData[1].weekStart))
   assert.ok(bLessons.some(item=>item.weekStart===p.weeksData[1].weekStart))
-  assert.ok(a.every(item=>p.weeksData.some(w=>w.weekStart===item.weekStart)))
-  assert.ok(bLessons.every(item=>p.weeksData.some(w=>w.weekStart===item.weekStart)))
+  // Deferred lessons may take place after the last base week; their source
+  // week must still exist in the plan and their dates must not move backwards.
+  assert.ok(a.every(item=>p.weeksData.some(w=>w.weekStart===item.sourceWeekStart)))
+  assert.ok(bLessons.every(item=>p.weeksData.some(w=>w.weekStart===item.sourceWeekStart)))
+  assert.ok(a.every((item,i)=>i===0||item.date>=a[i-1].date))
+  assert.ok(bLessons.every((item,i)=>i===0||item.date>=bLessons[i-1].date))
   assert.deepEqual(p.classGroups,b.classGroups)
 })
 testWithPlan('W33 cancelled class day stays cancelled',planOf(6),['1'],0,(p)=>{
