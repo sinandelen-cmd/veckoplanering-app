@@ -1262,6 +1262,9 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [editingClassView,setEditingClassView] = useState('')
   const [plan, setPlan] = useState(emptyPlan())
   const [plans, setPlans] = useState([])
+  const [colleagueEmail, setColleagueEmail] = useState('')
+  const [planColleagues, setPlanColleagues] = useState([])
+  const [sharingBusy, setSharingBusy] = useState(false)
   const [showArchive, setShowArchive] = useState(false)
   const [planSearch, setPlanSearch] = useState("")
   const [libraryYear, setLibraryYear] = useState('alla')
@@ -1352,8 +1355,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
 
   async function loadPlans() {
     const { data, error } = await supabase.from('veckoplanering')
-      .select('id,title,content,week_start,created_at,updated_at,subject,school_year,class_name,start_date,weeks,published,public_slug')
-      .eq('user_id', session.user.id).order('created_at', { ascending: false })
+      .select('id,user_id,title,content,week_start,created_at,updated_at,subject,school_year,class_name,start_date,weeks,published,public_slug')
+      .order('created_at', { ascending: false })
     if (error) {
       setStatus(`Kunde inte hämta planeringar: ${error.message}`)
       return false
@@ -1380,6 +1383,37 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       } catch { /* Lagring kan vara blockerad */ }
     }
     return true
+  }
+
+  const selectedPlanRow = plans.find(row => String(row.id) === String(selectedId))
+  const isSelectedPlanOwner = !selectedId || selectedPlanRow?.user_id === session.user.id
+
+  async function loadPlanColleagues(planId) {
+    if (!planId || !plans.some(row => String(row.id) === String(planId) && row.user_id === session.user.id)) {
+      setPlanColleagues([])
+      return
+    }
+    const { data, error } = await supabase.from('plan_collaborators').select('user_id,created_at').eq('plan_id', planId)
+    if (error) setStatus('Kunde inte läsa delningen: ' + error.message)
+    else setPlanColleagues(data || [])
+  }
+  useEffect(() => { loadPlanColleagues(selectedId) }, [selectedId, plans])
+
+  async function inviteColleague() {
+    if (!selectedId || !isSelectedPlanOwner || !colleagueEmail.trim() || sharingBusy) return
+    setSharingBusy(true)
+    const { error } = await supabase.rpc('invite_plan_colleague', { p_plan_id: selectedId, p_email: colleagueEmail.trim() })
+    if (error) setStatus('Kunde inte bjuda in: ' + error.message)
+    else { setStatus('Kollegan har nu redigerings- och publiceringsbehörighet.'); setColleagueEmail(''); await loadPlanColleagues(selectedId) }
+    setSharingBusy(false)
+  }
+  async function revokeColleague(userId) {
+    if (!selectedId || !isSelectedPlanOwner || sharingBusy || !window.confirm('Ta bort kollegans tillgång till denna planering?')) return
+    setSharingBusy(true)
+    const { error } = await supabase.rpc('revoke_plan_colleague', { p_plan_id: selectedId, p_user_id: userId })
+    if (error) setStatus('Kunde inte ta bort delningen: ' + error.message)
+    else { setStatus('Delningen är borttagen.'); await loadPlanColleagues(selectedId) }
+    setSharingBusy(false)
   }
 
   useEffect(() => { loadPlans() }, [])
@@ -1553,7 +1587,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       let databaseSlug = ''
       if (selectedId) {
         const { data: existing, error: lookupError } = await supabase.from('veckoplanering')
-          .select('published,public_slug').eq('id', selectedId).eq('user_id', session.user.id).single()
+          .select('published,public_slug,user_id').eq('id', selectedId).single()
         if (lookupError) {
           setStatus(`Kunde inte kontrollera publiceringsstatus: ${lookupError.message}`)
           setBusy(false)
@@ -1567,7 +1601,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       const payload = { kind: 'arsplanering-v2', ...plan, themeId: plan.themeId || planTheme(plan, selectedId).id, weeksData: weeks, published: publish || keepPublished, publicSlug: slug }
       const publishedPayload = publish ? sanitizeForStudents(payload) : null
       const row = {
-        user_id: session.user.id,
+        ...(selectedId ? {} : { user_id: session.user.id }),
         title: plan.title,
         week_start: plan.startDate,
         content: JSON.stringify(payload),
@@ -1580,7 +1614,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         updated_at: new Date().toISOString(),
       }
       const query = selectedId
-        ? supabase.from('veckoplanering').update(row).eq('id', selectedId).eq('user_id', session.user.id).select('id').single()
+        ? supabase.from('veckoplanering').update(row).eq('id', selectedId).select('id').single()
         : supabase.from('veckoplanering').insert(row).select('id').single()
       const { data, error } = await query
       if (error) setStatus(`Kunde inte spara: ${error.message}`)
@@ -2319,6 +2353,14 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       </div>}
     </section>
 
+    {selectedId && teacherTab === 'arsplan' && <section className="card" aria-label="Dela planering med kollega" style={{marginBottom:16}}>
+      <h3>👥 Dela planering</h3>
+      {isSelectedPlanOwner ? <>
+        <p className="muted">Bjud in en godkänd lärarkollega. Kollegan loggar in med sitt eget konto och kan redigera och publicera, men inte dela vidare.</p>
+        <div className="button-row"><input type="email" aria-label="Kollegans e-postadress" placeholder="Kollegans e-postadress" value={colleagueEmail} onChange={event => setColleagueEmail(event.target.value)} /><button type="button" className="secondary" disabled={sharingBusy || !colleagueEmail.trim()} onClick={inviteColleague}>Bjud in</button></div>
+        {planColleagues.map(colleague => <div className="button-row" key={colleague.user_id}><span>Kollega · {colleague.user_id.slice(0,8)}… · Kan redigera och publicera</span><button type="button" className="secondary" disabled={sharingBusy} onClick={() => revokeColleague(colleague.user_id)}>Ta bort delning</button></div>)}
+      </> : <p className="muted">Du är medredigerare och kan spara och publicera. Endast ägaren kan ändra delningen.</p>}
+    </section>}
     <div className="button-row" aria-label="Spara planering"><button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara ändringar</button><span className="autosave-info">Publiceras automatiskt när det finns innehåll</span></div>
     <div className="week-overview-toolbar" aria-label="Årskalender och zoom"><strong>Veckor i planeringen <span className="week-count-badge">{weeks.length} {weeks.length === 1 ? "vecka" : "veckor"}</span></strong><button type="button" className="primary" onClick={() => {
         setCalendarOpen(true)
