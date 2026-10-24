@@ -1,0 +1,23 @@
+name: Isolated calendar and class scheduling checks
+on:
+  push:
+    branches:
+      - test/isolated-calendar-from-main-20261024
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  calendar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run class scheduling regressions
+        run: node tests/class-schedule-regressions.mjs
+      - name: Install project dependencies
+        run: npm install --no-audit --no-fund
+      - name: Verify application build
+        run: npm run build
