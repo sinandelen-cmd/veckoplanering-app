@@ -18,6 +18,10 @@ try {
    const headers={'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'GET,POST,PATCH,OPTIONS','content-type':'application/json'}
    if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers,body:''})
    if(url.pathname==='/auth/v1/token'){
+    const submitted=route.request().postDataJSON()
+    if(submitted.password==='incorrect-password'){
+      return route.fulfill({status:400,headers,body:JSON.stringify({message:'Invalid login credentials',code:'invalid_credentials'})})
+    }
     return route.fulfill({status:200,headers,body:JSON.stringify({
      access_token:'isolated.fake.jwt',refresh_token:'isolated-refresh',token_type:'bearer',expires_in:3600,
      user:{id:'isolated-teacher',email:'teacher@example.test',aud:'authenticated',role:'authenticated'}
