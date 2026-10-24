@@ -394,3 +394,11 @@ assert.match(insertWeekSource, /if \(choice === null\) return/)
 assert.match(insertWeekSource, /if \(input === null\) return/)
 assert.match(insertWeekSource, /if \(title === null\) return/)
 assert.match(insertWeekSource, /\/\^Vecka\\s\+\\d\+\$\/i\.test\(week\.title\)/)
+
+// Calendar closures must remain editable and scoped to selected class or all classes.
+assert.match(app, /aria-expanded=\{showClosureEditor\}/)
+assert.match(app, /onChangeSchoolClosures\?\.\(/)
+assert.match(app, /schoolClosures:\[\.\.\.\(group\.schoolClosures\|\|\[\]\),item\]/)
+assert.match(app, /onChangeSchoolClosures=\{closures=>setPlan/)
+assert.match(app, /closureKind==='Halvdag'/)
+assert.match(app, /cancelledLessons:closureKind==='Halvdag'\?closureCancelled:0/)
