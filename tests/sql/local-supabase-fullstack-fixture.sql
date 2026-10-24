@@ -53,13 +53,13 @@ AS $function$
      ) WITH ORDINALITY w(value,ordinality)
      WHERE COALESCE((w.value->>'hidden')::boolean,false)=false
        AND (
-         NOT coalesce((w.value->>'hideDate') ~ '^\\d{4}-\\d{2}-\\d{2}$',false)
+         NOT coalesce((w.value->>'hideDate') ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$',false)
          OR (w.value->>'hideDate')::date > current_date
        )
        AND (
          NOT coalesce((p.published_content->>'autoReleaseWeeks')::boolean,false)
          OR (
-           CASE WHEN (w.value->>'publishDate') ~ '^\\d{4}-\\d{2}-\\d{2}$'
+           CASE WHEN (w.value->>'publishDate') ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
              THEN (w.value->>'publishDate')::date
              ELSE (w.value->>'weekStart')::date END
            <= current_date
