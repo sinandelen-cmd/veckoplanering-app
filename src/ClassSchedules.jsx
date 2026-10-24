@@ -107,8 +107,18 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
   const group = groups[selected]
   const lessonsPerWeek = group => (group.days || []).length
   const schedule = React.useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
-  const archivedOverrideCount = Object.keys(group?.overrides || {}).filter(key => key.startsWith('legacy-unmapped:')).length
+  const archivedOverrideEntries = Object.entries(group?.overrides || {}).filter(([key]) => key.startsWith('legacy-unmapped:'))
+  const archivedOverrideCount = archivedOverrideEntries.length
   const updateGroup = changes => onChange({ ...plan, classGroups: groups.map((g, i) => i === selected ? { ...g, ...changes } : g) })
+  const restoreArchivedOverride = (key, target) => {
+    if (!group || !/^(0|[1-9]\\d*)$/.test(target) || !schedule[Number(target)]) return
+    if (Object.hasOwn(group.overrides || {}, target)) return
+    if (!window.confirm('Återkoppla den arkiverade anpassningen till vald lektion? Kontrollera lektion och innehåll noga.')) return
+    const overrides = { ...group.overrides, [target]: group.overrides[key] }
+    delete overrides[key]
+    updateGroup({ overrides })
+    setArchiveTargets(previous => ({ ...previous, [key]: '' }))
+  }
   // Tidigare schematider bevaras i datat, men behöver inte redigeras i matrisen.
   const setLessonTime = (classIndex, day, slotIndex, value) => {
     onChange({ ...plan, classGroups: groups.map((row, index) => {
@@ -202,6 +212,19 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
     {showClassMenu && group && !compare && showClassDetails && <>
       <h3>{group.name} – eget lektionsschema</h3>
       {archivedOverrideCount > 0 && <p role="status" className="muted">{archivedOverrideCount} äldre klassanpassning{archivedOverrideCount === 1 ? '' : 'ar'} har sparats separat eftersom deras ursprungliga lektion inte säkert kan identifieras. De visas inte på någon annan lektion och har inte raderats. Återkoppling kräver manuell granskning.</p>}
+      {archivedOverrideCount > 0 && <section aria-label="Återkoppla arkiverade klassanpassningar">
+        <p className="muted">Välj en lektion manuellt. Befintliga lektionsanpassningar kan inte skrivas över. Bekräftelse krävs.</p>
+        {archivedOverrideEntries.map(([key, value]) => <div key={key} style={{padding:'10px 0',borderBottom:'1px solid #ddd'}}>
+          <p><strong>Arkiverad: {key}</strong> – {String(value?.text || value?.name || 'Anpassning utan text').slice(0,160)}</p>
+          <label>Välj mottagande lektion
+            <select aria-label={'Mottagande lektion för '+key} value={archiveTargets[key] || ''} onChange={event=>setArchiveTargets(previous=>({...previous,[key]:event.target.value}))}>
+              <option value="">Välj lektion…</option>
+              {schedule.filter(item=>!Object.hasOwn(group.overrides || {},String(item.lessonNumber-1))).map(item=><option key={item.lessonNumber} value={String(item.lessonNumber-1)}>{item.date} · Lektion {item.lessonNumber} · {item.lesson?.name || ''}</option>)}
+            </select>
+          </label>
+          <button type="button" className="secondary" disabled={!archiveTargets[key] || Object.hasOwn(group.overrides || {},archiveTargets[key])} onClick={()=>restoreArchivedOverride(key,archiveTargets[key])}>Återkoppla till vald lektion</button>
+        </div>)}
+      </section>}
       <p><strong>{lessonsPerWeek(group)} lektioner per vecka.</strong> Lektionsdagarna visas i matrisen ovan. En klass kan ha fler eller färre lektioner än de andra.</p>
       <label>Startdatum <input type="date" value={group.startDate || plan.startDate || ''} onChange={e => updateGroup({startDate:e.target.value})} /></label>
       <p className="muted">Lektionsdagar och antal lektioner ändras i klassmatrisen ovan. Här hanterar du endast särskilda ändringar för den valda klassen.</p>
