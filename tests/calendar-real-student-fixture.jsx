@@ -17,7 +17,8 @@ const source={
     {name:'8A',days:['Måndag','Tisdag','Onsdag','Torsdag','Fredag'],schoolClosures:[{type:'Lov',startDate:'2026-10-19',endDate:'2026-10-23'}]},
     {name:'8B',days:['Måndag','Tisdag','Onsdag','Torsdag','Fredag']},
     {name:'8C',days:['Måndag','Tisdag','Onsdag','Torsdag','Fredag'],extraSlots:[{date:'2026-10-19'}],lessonTimes:{Måndag:['08:15','13:10']},schoolClosures:[{type:'Halvdag',startDate:'2026-10-19',endDate:'2026-10-19',cancelledLessons:1,cancelledFrom:'start'}]},
-    {name:'8D',days:['Måndag','Tisdag','Onsdag','Torsdag','Fredag'],schoolClosures:[{type:'Studiedag',startDate:'2026-10-19',endDate:'2026-10-19'}]}
+    {name:'8D',days:['Måndag','Tisdag','Onsdag','Torsdag','Fredag'],schoolClosures:[{type:'Studiedag',startDate:'2026-10-19',endDate:'2026-10-19'}]},
+    {name:'8E',days:['Måndag','Torsdag'],momentsPerDay:{Måndag:3,Torsdag:2}}
   ]
 }
 const studentPlan=sanitizeForStudents(source)
