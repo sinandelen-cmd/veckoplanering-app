@@ -3852,3 +3852,12 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .calendar-day-moments button:first-child{color:#d13d45!important}
 .calendar-day-moments button:last-child{color:#176fcb!important}
 .calendar-day-moments button:disabled{opacity:.28}
+
+/* Prov och examinationer – tydlig markering i lärar- och elevvy */
+.lesson-assessment-card{margin:12px 0;padding:14px 16px;background:#fff0f0;border:2px solid #dc4444;border-radius:12px;color:#812222;display:grid;gap:8px}
+.lesson-assessment-card>strong{font-size:1.05rem;color:#a62121}
+.lesson-assessment-card p{margin:0;white-space:pre-wrap}
+.lesson-assessment-fields{display:grid;gap:8px}
+.lesson-assessment-fields input,.lesson-assessment-fields select,.lesson-assessment-fields textarea{width:100%;max-width:100%;box-sizing:border-box;background:#fff;border:1px solid #e3aaaa;border-radius:7px;padding:9px;color:#292929}
+.lesson-assessment-fields textarea{min-height:60px;resize:vertical}
+.lesson-add-assessment{margin:8px 0;border:1px solid #c94747;background:#fff4f4;color:#a72b2b;border-radius:8px;padding:7px 12px;font-weight:650;cursor:pointer}
