@@ -34,6 +34,16 @@ try {
  await switchClass('8D')
  assert.equal(await page.locator('#student-week-2026-10-19').getByText('Moment 1').count(),1)
  assert.equal(await page.locator('#student-week-2026-10-19').getByText('Moment 4').count(),1)
+ // Empty class weeks must explain the actual scheduling condition.
+ await switchClass('8F')
+ await page.locator('#student-week-2026-10-19').getByText(/8F börjar 2026-11-02/).waitFor()
+ console.log('PASS real StudentView 8F: empty week explains later class start')
+ await switchClass('8G')
+ await page.locator('#student-week-2026-10-19').getByText(/Inga lektionsdagar är valda för 8G/).waitFor()
+ console.log('PASS real StudentView 8G: empty week explains missing lesson days')
+ await switchClass('8H')
+ await page.locator('#student-week-2026-10-19').getByText(/Registrerad ledighet: Lov/).waitFor()
+ console.log('PASS real StudentView 8H: empty week explains class holiday')
  assert.deepEqual(pageErrors,[])
  console.log('PASS real StudentView 8D: study day preserves all lessons')
 } finally {await browser.close()}
