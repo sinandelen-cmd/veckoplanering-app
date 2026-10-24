@@ -2787,7 +2787,17 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
           <button type="button" onClick={()=>changeLesson(i,{...lesson,assessment:null})}>Ta bort provmarkering</button>
         </div> : <><div>{lesson.assessment.title}</div>{lesson.assessment.description && <p>{lesson.assessment.description}</p>}</>}
       </div>}
-      {editable && !lesson.assessment && <button type="button" className="lesson-add-assessment" onClick={()=>updateAssessment(i,{type:'Prov',title:'',description:''})}>+ Infoga prov/test</button>}
+      {editable && <div className="lesson-quick-actions" aria-label="Lägg till i lektionen">
+        <button type="button" onClick={() => {
+          const topics = [...(lesson.topics || [])]
+          if (!topics.length) topics.push({name:'',pages:[],assignments:[],links:[]})
+          const index = topics.length - 1
+          topics[index] = {...topics[index], links:[...(topics[index].links || []), {label:'',url:''}]}
+          changeLesson(i, {...lesson,topics})
+        }}><span className="quick-action-link" aria-hidden="true">↗</span> Länk</button>
+        <button type="button" onClick={() => changeLesson(i, {...lesson,topics:[...(lesson.topics || []),{name:'',pages:[],assignments:[],links:[]}]})}><span className="quick-action-moment" aria-hidden="true">⊕</span> Moment</button>
+        <button type="button" disabled={!!lesson.assessment} onClick={()=>updateAssessment(i,{type:'Prov',title:'',description:''})}><span className="quick-action-exam" aria-hidden="true">☑</span> Prov</button>
+      </div>}
       {(lesson.topics || []).map((topic, j) => ({ topic, j })).filter(({ topic }) => (editable || topic.classMomentPlaceholder || topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || '')))).map(({ topic, j }) => {
         const updateTopic = next => changeLesson(i, { ...lesson, topics: (lesson.topics || []).map((item, index) => index === j ? next : item) })
         const pages = Array.isArray(topic.pages) ? topic.pages : []
@@ -2828,7 +2838,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
           {editable && <button type="button" className="remove-small" onClick={() => { if (!(topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm('Ta bort momentet och allt innehåll?')) changeLesson(i, { ...lesson, topics: (lesson.topics || []).filter((_, index) => index !== j) }) }}>× Ta bort moment</button>}
         </div>
       })}
-      {editable && <button type="button" className="secondary" onClick={() => changeLesson(i, { ...lesson, topics: [...(lesson.topics || []), { name: '', pages: [], assignments: [], links: [] }] })}>+ Moment</button>}
+
     </section>)}
     {editable && (entryType !== 'dag' || WEEKDAYS.some(day => !lessons.some(lesson => lesson.name === day))) && <button type="button" className="secondary" onClick={() => {
       if (entryType === 'dag') {
