@@ -548,7 +548,7 @@ function sanitizeForStudents(plan) {
     subject: String(plan?.subject || ''),
     className: String(plan?.className || ''),
     startDate: String(plan?.startDate || ''),
-    classGroups: Array.isArray(plan?.classGroups) ? plan.classGroups.filter(g=>g && typeof g.name==='string').map(g=>({name:g.name.slice(0,80),startDate:String(g.startDate || plan.startDate || ''),days:Array.isArray(g.days)?g.days.filter(d=>['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].includes(d)):[],extraSlots:Array.isArray(g.extraSlots)?g.extraSlots.filter(item=>item && /^\d{4}-\d{2}-\d{2}$/.test(item.date || '')).map(item=>({date:item.date})):[],cancelledDates:Array.isArray(g.cancelledDates)?g.cancelledDates.filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)):[],lessonTimes:g.lessonTimes && typeof g.lessonTimes==='object'?g.lessonTimes:{},overrides:g.overrides && typeof g.overrides==='object'?g.overrides:{}})) : [],
+    classGroups: Array.isArray(plan?.classGroups) ? plan.classGroups.filter(g=>g && typeof g.name==='string').map(g=>({name:g.name.slice(0,80),startDate:String(g.startDate || plan.startDate || ''),days:Array.isArray(g.days)?g.days.filter(d=>['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].includes(d)):[],extraSlots:Array.isArray(g.extraSlots)?g.extraSlots.filter(item=>item && /^\d{4}-\d{2}-\d{2}$/.test(item.date || '')).map(item=>({date:item.date})):[],cancelledDates:Array.isArray(g.cancelledDates)?g.cancelledDates.filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)):[],lessonTimes:g.lessonTimes && typeof g.lessonTimes==='object'?g.lessonTimes:{},schoolClosures:Array.isArray(g.schoolClosures)?g.schoolClosures.filter(item=>item && /^\d{4}-\d{2}-\d{2}$/.test(item.startDate||'') && /^\d{4}-\d{2}-\d{2}$/.test(item.endDate||item.startDate||'')).map(item=>({type:String(item.type||''),startDate:item.startDate,endDate:item.endDate||item.startDate,cancelledLessons:Number(item.cancelledLessons)||1,cancelledFrom:item.cancelledFrom==='start'?'start':'end'})):[],momentsPerDay:g.momentsPerDay && typeof g.momentsPerDay==='object'?g.momentsPerDay:{},overrides:g.overrides && typeof g.overrides==='object'?g.overrides:{}})) : [],
     schoolYear: String(plan?.schoolYear || ''),
     grade: String(plan?.grade || ''),
     schoolForm: String(plan?.schoolForm || ''),
@@ -768,8 +768,11 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   // Visa även mellanliggande kalenderveckor utan att ändra grundplaneringens data.
   const classWeekTimeline = sourceClassWeeks.length ? (() => {
     const byDate = new Map(sourceClassWeeks.map(week=>[week.weekStart,week]))
+    // Include weeks added by class-specific closures; the source plan stays unchanged.
+    const lastScheduled = classLessons.length ? mondayOf(classLessons[classLessons.length-1].date) : sourceClassWeeks[sourceClassWeeks.length-1].weekStart
+    const timelineEnd = lastScheduled > sourceClassWeeks[sourceClassWeeks.length-1].weekStart ? lastScheduled : sourceClassWeeks[sourceClassWeeks.length-1].weekStart
     const timeline = []
-    for(let date=sourceClassWeeks[0].weekStart, end=sourceClassWeeks[sourceClassWeeks.length-1].weekStart;date<=end && timeline.length<110;date=addWeeks(date,1)){
+    for(let date=sourceClassWeeks[0].weekStart, end=sourceClassWeeks[sourceClassWeeks.length-1].weekStart;date<=timelineEnd && timeline.length<110;date=addWeeks(date,1)){
       timeline.push(byDate.get(date)||{weekStart:date,weekNumber:calendarWeekNumber(date),title:'Vecka '+calendarWeekNumber(date),lessons:[],content:''})
     }
     return timeline
