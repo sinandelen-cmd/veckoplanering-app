@@ -409,7 +409,10 @@ testWithPlan('W25 undo snapshot restores original class override indices',(()=>{
   return p
 })(),['1'],0,(p,b)=>{
   assert.deepEqual(JSON.parse(JSON.stringify(b)).classGroups[0].overrides,{'1':{text:'Original'}})
-  assert.deepEqual(p.classGroups[0].overrides,{'2':{text:'Original'}})
+  const original=buildClassSchedule(b,b.classGroups[0])[1]
+  const moved=buildClassSchedule(p,p.classGroups[0]).find(item=>item.lesson.id===original.lesson.id)
+  assert.ok(moved)
+  assert.deepEqual(p.classGroups[0].overrides,{[String(moved.lessonNumber-1)]:{text:'Original'}})
 })
 
 
@@ -420,7 +423,8 @@ testWithPlan('W32 zero-padded and negative legacy keys remain unchanged',(()=>{
 })(),['1'],0,p=>{
   assert.deepEqual(p.classGroups[0].overrides['01'],{text:'Padded'})
   assert.deepEqual(p.classGroups[0].overrides['-1'],{text:'Negative'})
-  assert.equal(p.classGroups[0].overrides['2']?.text,'Real')
+  assert.equal(Object.values(p.classGroups[0].overrides).filter(value=>value?.text==='Real').length,1)
+  assert.ok(buildClassSchedule(p,p.classGroups[0]).some(item=>item.override?.text==='Real'))
 })
 testWithPlan('W32 no classGroups remains absent for legacy plan',(()=>{
   const p=planOf(3)
