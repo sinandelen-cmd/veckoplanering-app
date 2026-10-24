@@ -27,6 +27,15 @@ export function buildClassSchedule(plan, group) {
     lesson, sourceIndex, sourceWeekStart: week.weekStart,
     sourceWeekNumber: week.weekNumber, sourceWeekTitle: week.title
   })))
+  // A class may work on a different number of moments per lesson. Keep the
+  // complete topic objects (including pages, assignments and links) intact.
+  // The source lesson list is never modified.
+  const momentQueue = queue.flatMap(source => {
+    const topics = Array.isArray(source.lesson?.topics) ? source.lesson.topics : []
+    return topics.length ? topics.map(topic => ({...source, topic})) : [{...source, topic:null}]
+  })
+  const variableMoments = Object.values(group.momentsPerDay || {}).some(value => Number(value) > 1)
+  const scheduledQueue = variableMoments ? momentQueue : queue
   const results = []
   let cursor = 0
   const lastWeekStart = weeks[weeks.length - 1].weekStart
@@ -34,7 +43,7 @@ export function buildClassSchedule(plan, group) {
   // Bound the horizon so an unscheduled class cannot cause an infinite loop.
   for (let weekOffset = 0; weekOffset < weeks.length + 104; weekOffset++) {
     const week = weeks[weekOffset]
-    if (!week && cursor >= queue.length) break
+    if (!week && cursor >= scheduledQueue.length) break
     const start = week?.weekStart || iso(nextDate(monday(lastWeekStart), (weekOffset - weeks.length + 1) * 7))
     const slots = []
     for (let offset = 0; offset < 5; offset++) {
@@ -51,14 +60,19 @@ export function buildClassSchedule(plan, group) {
       for (let n = 0; n < count; n++) slots.push({date: dateKey, day, slot: n + 1, time: group.lessonTimes?.[day]?.[n] || ''})
     }
     for (const slot of slots) {
-      const source = queue[cursor]
+      const source = scheduledQueue[cursor]
       if (!source) break
       const lessonNumber = cursor + 1
-      results.push({...slot, lesson: source.lesson, weekNumber: source.sourceWeekNumber,
+      const requestedMoments = Math.max(1, Math.min(20, Number(group.momentsPerDay?.[slot.day]) || 1))
+      const selectedMoments = variableMoments ? scheduledQueue.slice(cursor, cursor + requestedMoments) : []
+      const scheduledLesson = variableMoments
+        ? {...source.lesson, topics: selectedMoments.filter(item => item.topic !== null).map(item => item.topic)}
+        : source.lesson
+      results.push({...slot, lesson: scheduledLesson, weekNumber: source.sourceWeekNumber,
         weekTitle: source.sourceWeekTitle, weekStart: start, sourceWeekStart: source.sourceWeekStart,
         index: source.sourceIndex, lessonNumber,
         override: group.overrides?.[String(cursor)] || null})
-      cursor++
+      cursor += variableMoments ? selectedMoments.length : 1
     }
   }
   return results
