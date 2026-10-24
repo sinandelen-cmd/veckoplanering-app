@@ -40,3 +40,10 @@ assert.doesNotMatch(transactionFixture,/\b(COMMIT|TRUNCATE|DROP\s+TABLE|CREATE\s
 assert.match(transactionFixture,/user_id='wrong-teacher'/)
 assert.match(transactionFixture,/user_id='teacher-1'/)
 console.log('SQL transaction fixture structure OK: ephemeral table, owner predicate, rollback')
+
+const isolatedRpc=readFileSync('tests/sql/isolated-rpc-contract.sql','utf8')
+for(const pattern of [/\bBEGIN\s*;/i,/CREATE\s+TEMP\s+TABLE/i,/SECURITY\s+DEFINER/i,/SET\s+search_path\s*=\s*pg_temp/i,/\bROLLBACK\s*;/i,/private-plan/,/hidden/,/GRANT\s+EXECUTE/i]){
+  assert.match(isolatedRpc,pattern,'Isolated RPC fixture must retain its security guard')
+}
+assert.doesNotMatch(isolatedRpc,/\b(COMMIT|TRUNCATE|DROP\s+TABLE|CREATE\s+SCHEMA|GRANT\s+ALL)\s*;/i)
+console.log('SQL RPC contract fixture structure OK: temporary table/function, RLS, rollback')
