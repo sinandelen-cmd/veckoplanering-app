@@ -43,7 +43,9 @@ export function buildClassSchedule(plan, group) {
       if ((firstDate && dateKey < firstDate) || cancelled.has(dateKey)) continue
       const closure = closures.find(event => event?.startDate && dateKey >= event.startDate && dateKey <= (event.endDate || event.startDate))
       if (closure && closure.type !== 'Halvdag') continue
-      const regularCount = days.includes(day) ? Math.max(1, Number(group.momentsPerDay?.[day]) || 1) : 0
+      // momentsPerDay controls topics within ONE lesson, never the number of lessons.
+      // Otherwise a class with extra topics consumes multiple base lessons on the same day.
+      const regularCount = days.includes(day) ? 1 : 0
       const scheduledCount = regularCount + extraSlots.filter(slot => slot.date === dateKey).length
       const count = closure?.type === 'Halvdag' ? Math.max(0, scheduledCount - Math.max(1, Number(closure.cancelledLessons) || 1)) : scheduledCount
       for (let n = 0; n < count; n++) slots.push({date: dateKey, day, slot: n + 1, time: group.lessonTimes?.[day]?.[n] || ''})
