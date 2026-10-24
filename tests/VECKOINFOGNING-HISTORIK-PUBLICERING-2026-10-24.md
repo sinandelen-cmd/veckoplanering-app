@@ -15,7 +15,7 @@ Datum 2026-10-24. Feature-gren `feature/provtraning-infogad-vecka`; PR #5 förbl
 9. Testat klickad veckoinfogning, ångra och gör om med React-state.
 10. Testat ny redigering efter ångra och krav på att gör om rensas.
 11. **Hittat verklig bugg:** skip-flaggan för historiken förblev sann när useEffect såg ett redan återställt snapshot; nästa redigering registrerades inte och redo fanns kvar.
-12. Rättat skip-flaggan i den gemensamma produktionshooken `46861a7`.
+12. Rättat skip-flaggan i den gemensamma produktionshooken `fe309ad`. Den tidigare committen `46861a7` avsåg samma rättning men innehöll inte ändringen; Chromium CI avslöjade detta och ändringen verifierades i källan.
 13. Utökat Chromium-testet så en ny redigering efter ångra själv kan ångras och göras om.
 14. Granskat verklig publiceringssanitiserare `sanitizeForStudents` och befintliga snapshot-regressioner.
 15. Skapat isolerad PostgreSQL-fixture med TEMP TABLE och transaktion.
@@ -41,3 +41,8 @@ Datum 2026-10-24. Feature-gren `feature/provtraning-infogad-vecka`; PR #5 förbl
 - Slutligt produkt-/releasegodkännande och verifierat gröna senaste GitHub Actions.
 
 **Status:** 7 av 8 definierade kvalitetsdelar, 87,5 %, kvar 1. Den sista delen kan inte markeras som färdig innan ovanstående blockerare är lösta. Bedömd kvarvarande tid: minst en större arbetsgrupp för isolerad Supabase-/App-integration; kan kräva fler beroende på testmiljö och eventuella fel. Ingen tids- eller releasegaranti.
+
+## Senaste verifieringsläge
+- Ordinarie CI med isolerade PostgreSQL-transactionstester: **success** på `626df6d` (run `40087428933`).
+- Browser-CI med ofixad skip-flagga: **failure** på `46861a7`; det är en reproducerad regression, inte godkänt test.
+- Den faktiska rättningen är commit `fe309ad`. Dess nya Chromium-körning måste slutföras innan browser-regressionen får status grön.
