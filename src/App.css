@@ -3910,3 +3910,13 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .student-chapter-heading.chapter-tone-5{background:#d7f3f8;color:#145f72;border-left:7px solid #2599b0}
 .student-chapter-heading.chapter-tone-6{background:#f3efcd;color:#696018;border-left:7px solid #a89a2a}
 .student-chapter-heading.chapter-tone-7{background:#e4e7f0;color:#39476b;border-left:7px solid #6e81af}
+
+/* Compact lesson actions follow the existing planning theme, without colored tiles. */
+.lesson-quick-actions{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin:10px 0 16px}
+.lesson-quick-actions button{display:inline-flex;align-items:center;gap:6px;background:transparent!important;border:0!important;box-shadow:none!important;padding:5px 3px!important;font-size:.9rem;font-weight:650;cursor:pointer;color:inherit}
+.lesson-quick-actions button:hover{text-decoration:underline}
+.lesson-quick-actions button:disabled{opacity:.4;cursor:default;text-decoration:none}
+.lesson-quick-actions span{font-size:1.35rem;line-height:1}
+.lesson-quick-actions .quick-action-link{color:#377ed4}
+.lesson-quick-actions .quick-action-moment{color:#25966c}
+.lesson-quick-actions .quick-action-exam{color:#d34c5a}
