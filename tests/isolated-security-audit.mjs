@@ -24,6 +24,15 @@ for (const file of files) {
   for (let i = 0; i < lines.length; i++) {
     for (const [label, regex] of patterns) {
       if (!regex.test(lines[i])) continue;
+      // Only the disposable local-only Chromium fixture uses this credential.
+      // Keep the exception restricted to the exact test file and test identity.
+      if (label === 'credential assignment' &&
+          file === 'tests/browser-local-supabase-fullstack-check.mjs' &&
+          lines[i].includes("email:'isolated-teacher-a@example.test'") &&
+          lines[i].includes("base+'/auth/v1/token?grant_type=password'")) {
+        console.log(`Fixture-only test credential reviewed at ${file}:${i + 1}; value suppressed.`);
+        continue;
+      }
       findings++;
       // Never print matching text, values, or the line itself.
       console.log(`::warning file=${file},line=${i + 1},title=Security review::${label}; inspect locally before approval`);
