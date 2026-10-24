@@ -369,4 +369,44 @@ testWithPlan('W25 undo snapshot restores original class override indices',(()=>{
   assert.deepEqual(p.classGroups[0].overrides,{'2':{text:'Original'}})
 })
 
+
+testWithPlan('W32 zero-padded and negative legacy keys remain unchanged',(()=>{
+  const p=planOf(3)
+  p.classGroups[0].overrides={'01':{text:'Padded'},'-1':{text:'Negative'},'1':{text:'Real'}}
+  return p
+})(),['1'],0,p=>{
+  assert.deepEqual(p.classGroups[0].overrides['01'],{text:'Padded'})
+  assert.deepEqual(p.classGroups[0].overrides['-1'],{text:'Negative'})
+  assert.equal(p.classGroups[0].overrides['2']?.text,'Real')
+})
+testWithPlan('W32 no classGroups remains absent for legacy plan',(()=>{
+  const p=planOf(3)
+  delete p.classGroups
+  return p
+})(),['1'],0,p=>{
+  assert.equal(Object.hasOwn(p,'classGroups'),false)
+  assert.equal(p.weeksData.length,4)
+})
+testWithPlan('W33 school closure before inserted week retains override target',(()=>{
+  const p=planOf(5)
+  p.classGroups[0].schoolClosures=[{startDate:'2026-01-12',type:'Studiedag'}]
+  p.classGroups[0].overrides={'1':{text:'January 19'}}
+  return p
+})(),['1'],0,(p,b)=>{
+  const old=buildClassSchedule(b,b.classGroups[0]).find(x=>x.override?.text==='January 19')
+  const after=buildClassSchedule(p,p.classGroups[0]).find(x=>x.override?.text==='January 19')
+  assert.equal(after?.lesson.id,old?.lesson.id)
+})
+testWithPlan('W23 publication metadata unchanged after undo snapshot',(()=>{
+  const p=planOf(3)
+  p.weeksData[1].publishDate='2026-01-15'
+  p.weeksData[1].hideDate='2026-02-15'
+  p.classGroups[0].overrides={'1':{text:'Original'}}
+  return p
+})(),['1'],0,(p,b)=>{
+  assert.equal(p.weeksData[2].publishDate,b.weeksData[1].publishDate)
+  assert.equal(p.weeksData[2].hideDate,b.weeksData[1].hideDate)
+  assert.equal(b.classGroups[0].overrides['1'].text,'Original')
+})
+
 console.log('Actual insertion function: '+passed+' synthetic checks passed (not browser or integration tests)')
