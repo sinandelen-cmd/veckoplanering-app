@@ -3,7 +3,7 @@ import {createRoot} from 'react-dom/client'
 import ClassSchedules,{buildClassSchedule} from '../src/ClassSchedules.jsx'
 import {sanitizeForStudents} from '../src/App.jsx'
 const initial={startDate:'2026-10-19',entryType:'lektion',weeksData:[{weekStart:'2026-10-19',weekNumber:43,lessons:Array.from({length:4},(_,i)=>({name:'Lektion '+(i+1),topics:[{name:'Moment '+(i+1)}]}))}],classGroups:[
-{name:'8A',days:['Måndag','Tisdag','Onsdag','Torsdag','Fredag'],schoolClosures:[]},
+{name:'8A',days:['Måndag','Tisdag','Onsdag','Torsdag','Fredag'],schoolClosures:[{name:'Studiedag',type:'Studiedag',startDate:'2026-10-22',endDate:'2026-10-22',classNames:['8B'],verified:true}]},
 {name:'8B',days:['Måndag','Tisdag','Onsdag','Torsdag','Fredag'],schoolClosures:[]}
 ],schoolClosures:[]}
 function App(){
