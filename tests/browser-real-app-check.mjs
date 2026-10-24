@@ -61,7 +61,7 @@ try {
  monday.setDate(monday.getDate()-((monday.getDay()+6)%7))
  const iso=(offset)=>{const d=new Date(monday);d.setDate(d.getDate()+offset);return d.toISOString().slice(0,10)}
  const fixtureWeeks=[-14,-7,0].map((offset,index)=>({
-  weekStart:iso(offset),weekNumber:index+1,title:'Testvecka '+(index+1),
+  weekStart:iso(offset),weekNumber:index+1,title:'Testvecka '+(index+1),chapter:'Kapitel '+(index+1),
   content:'Isolerat elevinnehåll '+(index+1),lessons:[]
  }))
  await studentPage.route('**/*',async route=>{
