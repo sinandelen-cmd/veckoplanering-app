@@ -34,13 +34,18 @@ export function buildClassSchedule(plan, group) {
   const results = []
   let cursor = 0
   let topicOffset = 0
-  const lastWeekStart = weeks[weeks.length - 1].weekStart
+  // The saved source weeks may have gaps (e.g. week 42 followed by week 45).
+  // Lessons form an ordered queue, but teaching slots must follow real calendar
+  // weeks rather than jumping directly to the next saved source week.
+  const calendarStarts = weeks.map(week => iso(monday(week.weekStart))).sort()
+  const firstWeekStart = calendarStarts[0]
+  const lastWeekStart = calendarStarts[calendarStarts.length - 1]
+  const sourceWeekSpan = Math.round((monday(lastWeekStart) - monday(firstWeekStart)) / (7 * 86400000)) + 1
   // Continue into future calendar weeks if closures delayed unfinished lessons.
   // Bound the horizon so an unscheduled class cannot cause an infinite loop.
-  for (let weekOffset = 0; weekOffset < weeks.length + 104; weekOffset++) {
-    const week = weeks[weekOffset]
-    if (!week && cursor >= scheduledQueue.length) break
-    const start = week?.weekStart || iso(nextDate(monday(lastWeekStart), (weekOffset - weeks.length + 1) * 7))
+  for (let weekOffset = 0; weekOffset < sourceWeekSpan + 104; weekOffset++) {
+    if (cursor >= scheduledQueue.length) break
+    const start = iso(nextDate(monday(firstWeekStart), weekOffset * 7))
     const slots = []
     for (let offset = 0; offset < 5; offset++) {
       const dateKey = iso(nextDate(monday(start), offset))
