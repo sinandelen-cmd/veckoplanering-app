@@ -8,6 +8,12 @@ try {
  await page.getByRole('heading',{name:'Klasser och schema'}).waitFor()
  const read=async id=>JSON.parse(await page.getByTestId(id).textContent())
  const base=await read('teacher-plan')
+ const globalStudent=await read('student-plan')
+ assert.deepEqual(globalStudent.schoolClosures[0].classNames,['8B'])
+ assert.equal((await read('8A-schedule'))[3].date,'2026-10-22')
+ assert.equal((await read('8B-schedule'))[3].date,'2026-10-23')
+ console.log('PASS teacher/student: globally scoped school closure affects only 8B')
+
  const add=async(type,start,end=start)=>{
    const toggle=page.getByRole('button',{name:/studiedag \/ halvdag \/ lov/})
    if((await toggle.getAttribute('aria-expanded'))!=='true')await toggle.click()
