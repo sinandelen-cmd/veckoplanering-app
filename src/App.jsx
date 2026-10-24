@@ -652,7 +652,7 @@ function chapterTone(chapter) {
   const value = String(chapter || '').trim().toLocaleLowerCase('sv-SE')
   let hash = 0
   for (const char of value) hash = (hash * 31 + char.codePointAt(0)) >>> 0
-  return hash % 4
+  return hash % 8
 }
 
 function studentWeekDateRange(dateString) {
