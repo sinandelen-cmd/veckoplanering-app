@@ -16,6 +16,16 @@ const [row]=await rows.json()
 assert.ok(row?.id)
 const published=await fetch(base+'/rest/v1/veckoplanering?id=eq.'+row.id,{method:'PATCH',headers,body:JSON.stringify({published:true})})
 assert.equal(published.status,200)
+// Seed the plan before the app logs in and loads its initial plan list.
+ const draft={kind:'arsplanering-v2',title:'Isolerad UI-plan',subject:'Matematik',schoolForm:'Grundskola',grade:'Årskurs 7',
+  startDate:'2026-01-05',weeks:2,entryType:'vecka',autoReleaseWeeks:false,lessonsPerWeek:1,
+  weeksData:[{weekStart:'2026-01-05',weekNumber:2,title:'UI vecka synlig',content:'',hidden:false,lessons:[{name:'Lektion 1',topics:[]}]},
+             {weekStart:'2026-01-12',weekNumber:3,title:'UI vecka dold',content:'Privat veckoinnehåll',hidden:true,lessons:[]}],
+  classGroups:[],schoolClosures:[]}
+ const created=await fetch(base+'/rest/v1/veckoplanering',{method:'POST',headers,body:JSON.stringify({
+  user_id:session.user.id,title:draft.title,subject:draft.subject,week_start:draft.startDate,start_date:draft.startDate,
+  content:JSON.stringify(draft),published:false,public_slug:null,published_content:null})})
+ assert.equal(created.status,201,'Create teacher UI draft '+await created.text().catch(()=>'')) 
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']})
 try{
  const page=await browser.newPage()
@@ -29,15 +39,6 @@ try{
  await page.getByRole('heading',{name:'Logga in som lärare'}).waitFor({state:'hidden',timeout:20000})
  await page.getByText('Kontrollerar lärarbehörighet…').waitFor({state:'hidden',timeout:20000})
  // Full REAL App.jsx teacher editor -> automatic publication -> student RPC/browser.
- const draft={kind:'arsplanering-v2',title:'Isolerad UI-plan',subject:'Matematik',schoolForm:'Grundskola',grade:'Årskurs 7',
-  startDate:'2026-01-05',weeks:2,entryType:'vecka',autoReleaseWeeks:false,lessonsPerWeek:1,
-  weeksData:[{weekStart:'2026-01-05',weekNumber:2,title:'UI vecka synlig',content:'',hidden:false,lessons:[{name:'Lektion 1',topics:[]}]},
-             {weekStart:'2026-01-12',weekNumber:3,title:'UI vecka dold',content:'Privat veckoinnehåll',hidden:true,lessons:[]}],
-  classGroups:[],schoolClosures:[]}
- const created=await fetch(base+'/rest/v1/veckoplanering',{method:'POST',headers,body:JSON.stringify({
-  user_id:session.user.id,title:draft.title,subject:draft.subject,week_start:draft.startDate,start_date:draft.startDate,
-  content:JSON.stringify(draft),published:false,public_slug:null,published_content:null})})
- assert.equal(created.status,201,'Create teacher UI draft '+await created.text().catch(()=>'')) 
  await page.getByRole('button',{name:/Mina planeringar/}).click()
  await page.getByRole('button',{name:/Grundskola \(/}).click()
  await page.getByRole('button',{name:/Matematik/,exact:false}).filter({has:page.locator('.folder-chevron')}).click()
