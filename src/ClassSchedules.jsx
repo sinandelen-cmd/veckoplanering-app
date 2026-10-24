@@ -48,6 +48,33 @@ export function buildClassSchedule(plan, group) {
   })
 }
 
+
+export function remapClassOverridesAfterInsertion(previous, next, insertAfterIndex) {
+  const groups = Array.isArray(previous.classGroups) ? previous.classGroups : []
+  const beforeWeeks = previous.weeksData || []
+  const afterWeeks = next.weeksData || []
+  return groups.map(group => {
+    const overrides = group.overrides || {}
+    const oldSchedule = buildClassSchedule(previous, group)
+    const newSchedule = buildClassSchedule(next, group)
+    const newByWeekAndSlot = new Map(newSchedule.map(item => [item.weekStart + ':' + item.index, item]))
+    const remapped = {}
+    for (const [key, value] of Object.entries(overrides)) {
+      if (!/^(0|[1-9]\\d*)$/.test(key)) { remapped[key] = value; continue }
+      const oldItem = oldSchedule[Number(key)]
+      if (!oldItem) { remapped[key] = value; continue }
+      const oldWeekIndex = beforeWeeks.findIndex(week => week.weekStart === oldItem.weekStart)
+      if (oldWeekIndex < 0) { remapped[key] = value; continue }
+      const targetIndex = oldWeekIndex + (oldWeekIndex > insertAfterIndex ? 1 : 0)
+      const targetWeek = afterWeeks[targetIndex]
+      const targetItem = targetWeek && newByWeekAndSlot.get(targetWeek.weekStart + ':' + oldItem.index)
+      if (!targetItem) { remapped[key] = value; continue }
+      remapped[String(targetItem.lessonNumber - 1)] = value
+    }
+    return { ...group, overrides: remapped }
+  })
+}
+
 export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
   const groups = Array.isArray(plan.classGroups) ? plan.classGroups : []
   const [name, setName] = React.useState('')
