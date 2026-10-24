@@ -21,7 +21,7 @@ CREATE POLICY isolated_public_read ON isolated_plans
 GRANT SELECT ON isolated_plans TO isolated_student;
 GRANT SELECT,UPDATE ON isolated_plans TO isolated_teacher;
 -- SET ROLE cannot access temp tables by default: explicit grant is required.
-GRANT USAGE ON SCHEMA pg_temp TO isolated_student,isolated_teacher;
+DO $ BEGIN EXECUTE format('GRANT USAGE ON SCHEMA %s TO isolated_student,isolated_teacher',pg_my_temp_schema()::regnamespace); END $;
 DO $$
 DECLARE visible_count integer;
 BEGIN
