@@ -18,6 +18,9 @@ try {
  const diagnostics=page.getByTestId('class-week-diagnostics')
  await diagnostics.locator('summary').click()
  await diagnostics.getByText(/Startdatum:/).waitFor()
+ const comparison=diagnostics.getByTestId('class-start-date-comparison')
+ await comparison.getByText(/Sparat startdatum:.*2026-10-19/).waitFor()
+ await comparison.getByText(/Första lektionen ligger i klassens startvecka/).waitFor()
  await diagnostics.getByText(/Måndag 2026-10-19: 1 planerad/).waitFor()
  await diagnostics.getByText(/Torsdag 2026-10-22: 1 planerad.*schemalagd dag/).waitFor()
  await diagnostics.getByText(/Vecka 44 \(2026-10-26/).waitFor()
@@ -71,6 +74,7 @@ try {
  await diagnostics.locator('summary').click()
  assert.deepEqual(await read('teacher-plan'),beforeDiagnostics)
  assert.equal((await read('8A-schedule'))[0].date,'2026-11-02')
+ await diagnostics.getByTestId('class-start-date-comparison').getByText(/Första lektionen ligger 2 kalendervecka/).waitFor()
  console.log('PASS teacher: opening and closing diagnostics never changes delayed start date or lessons')
  // Mobile Safari-like touch viewport: tapping the summary must never activate the adjacent start-date action.
  const mobile=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true})
