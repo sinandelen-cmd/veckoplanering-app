@@ -9,7 +9,8 @@ try {
  const read=async id=>JSON.parse(await page.getByTestId(id).textContent())
  const base=await read('teacher-plan')
  const add=async(type,start,end=start)=>{
-   await page.getByRole('button',{name:/Lägg till studiedag \/ halvdag \/ lov/}).click()
+   const toggle=page.getByRole('button',{name:/studiedag \/ halvdag \/ lov/})
+   if((await toggle.getAttribute('aria-expanded'))!=='true')await toggle.click()
    await page.getByLabel('Typ').selectOption(type)
    await page.getByLabel('Från datum').fill(start)
    await page.getByLabel('Till datum').fill(end)
