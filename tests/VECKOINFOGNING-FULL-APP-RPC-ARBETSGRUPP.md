@@ -54,3 +54,10 @@ Tidigare kod- och SQL-körning `40088992498` på `83f0241` var också **success*
 - Browser-körningarna `995918a` och `821cb3c` visade en asynkron timingfråga: den riktiga App.jsx begär planeringslistan **efter** lärarbehörigheten; testet kontrollerade för tidigt. Lade till begränsad väntan (`ea88e9d`).
 - Browser-körningen `bf5472a` visade att det nya negativa inloggningstestet förväntade sig ett 400-svar som inte hade kopplats in i mockens Auth-handler. Lade till det faktiska 400-svaret (`2aeebea`).
 - Dessa är testhärdningar, inte produktionsändringar. Kontrollera nya båda workflows innan slutligt godkännande.
+
+## Slutligt kod-CI för senaste teständringen
+
+- Commit `2aeebea`: ordinarie verify + isolerade PostgreSQL-regressioner **success** i run `40089151958`.
+- Samma commit: Chromium **success** i run `40089151883`. Detta inkluderar verkliga App.jsx-inloggningen, först felaktigt lösenord och därefter godkänd fiktiv lärare mot localhost-mock; klasschema/vecka/undo/redo i den andra isolerade Chromium-fixturen.
+- Efterföljande dokumentationscommit behöver inte ändra testkod men dess egen workflowstatus kontrolleras separat.
+- Ingen full GoTrue/PostgREST-stack, produktionslik migration eller faktisk produktions-RPC har körts. **Release ej godkänd.**
