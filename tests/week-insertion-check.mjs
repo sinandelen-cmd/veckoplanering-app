@@ -26,7 +26,24 @@ const makeWeeks = (plan) => [{
   title: 'Vecka ' + calendarWeekNumber(plan.startDate),
   lessons: Array.from({ length: plan.lessonsPerWeek }, (_, i) => ({ id: 'new-' + i, topics: [] })),
 }]
-const insert = new Function('displayWeeks','addWeeks','calendarWeekNumber','makeWeeks','plan','window','setPlan','setStatus',actualFunction + '\nreturn insertBlankWeekAfter') 
+const classSource = fs.readFileSync(new URL('../src/ClassSchedules.jsx', import.meta.url), 'utf8')
+const classStart = classSource.indexOf('export function buildClassSchedule(plan, group) {')
+const classEnd = classSource.indexOf('\nexport default function ClassSchedules', classStart)
+assert.ok(classStart >= 0 && classEnd > classStart, 'Class schedule builder must exist')
+const classBuilder = classSource.slice(classStart, classEnd).replace('export function ', 'function ')
+const DAYS = ['Måndag','Tisdag','Onsdag','Torsdag','Fredag']
+const iso = d => [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')
+const monday = value => {const d=new Date(value+'T12:00:00');d.setDate(d.getDate()-((d.getDay()+6)%7));return d}
+const nextDate = (start,offset)=>{const d=new Date(start);d.setDate(d.getDate()+offset);return d}
+const buildClassSchedule = new Function('DAYS','iso','monday','nextDate',classBuilder+'\nreturn buildClassSchedule')(DAYS,iso,monday,nextDate)
+
+const remapStart = classSource.indexOf('export function remapClassOverridesAfterInsertion(')
+const remapEnd = classSource.indexOf('\nexport default function ClassSchedules', remapStart)
+assert.ok(remapStart>=0 && remapEnd>remapStart)
+const remapBody=classSource.slice(remapStart,remapEnd).replace('export function ','function ')
+const remapClassOverridesAfterInsertion=new Function('buildClassSchedule',remapBody+'\nreturn remapClassOverridesAfterInsertion')(buildClassSchedule)
+
+const insert = new Function('displayWeeks','addWeeks','calendarWeekNumber','makeWeeks','plan','window','setPlan','setStatus','remapClassOverridesAfterInsertion',actualFunction + '\nreturn insertBlankWeekAfter') 
 const week = (date, name) => ({weekStart:date,weekNumber:calendarWeekNumber(date),title:'Vecka '+calendarWeekNumber(date),lessons:[{id:name,topics:[{name}]}]})
 let passed=0
 function test(name, dates, prompts, expected, lessonsPerWeek=3) {
@@ -34,7 +51,7 @@ function test(name, dates, prompts, expected, lessonsPerWeek=3) {
   const before=structuredClone(plan)
   let status=''
   const ask=[...prompts]
-  const fn=insert(displayWeeks,addWeeks,calendarWeekNumber,makeWeeks,plan,{prompt:()=>ask.shift()},updater=>{plan=updater(plan)},message=>{status=message})
+  const fn=insert(displayWeeks,addWeeks,calendarWeekNumber,makeWeeks,plan,{prompt:()=>ask.shift()},updater=>{plan=updater(plan)},message=>{status=message},remapClassOverridesAfterInsertion)
   fn(0)
   expected(plan,before,status)
   passed++
@@ -59,7 +76,7 @@ function testWithPlan(name, initial, prompts, index, expected) {
   let promptCalls = 0
   const fn = insert(displayWeeks, addWeeks, calendarWeekNumber, makeWeeks, plan,
     { prompt: () => { promptCalls++; return answers.shift() } },
-    updater => { plan = updater(plan) }, () => {})
+    updater => { plan = updater(plan) }, () => {},remapClassOverridesAfterInsertion)
   fn(index)
   expected(plan, before, promptCalls)
   passed++
@@ -142,7 +159,7 @@ testWithPlan('W10 cancel exam title',planOf(3),['3','2',null],0,(p,b)=>assert.de
   const before=planOf(3)
   let after
   const fn=insert(displayWeeks,addWeeks,calendarWeekNumber,makeWeeks,before,
-    {prompt:()=> '1'},updater=>{after=updater(before)},()=>{})
+    {prompt:()=> '1'},updater=>{after=updater(before)},()=>{},remapClassOverridesAfterInsertion)
   fn(0)
   const history={past:[JSON.stringify(before)],current:JSON.stringify(after),future:[]}
   history.future.unshift(history.current)
@@ -156,16 +173,6 @@ testWithPlan('W10 cancel exam title',planOf(3),['3','2',null],0,(p,b)=>assert.de
 }
 
 
-const classSource = fs.readFileSync(new URL('../src/ClassSchedules.jsx', import.meta.url), 'utf8')
-const classStart = classSource.indexOf('export function buildClassSchedule(plan, group) {')
-const classEnd = classSource.indexOf('\nexport default function ClassSchedules', classStart)
-assert.ok(classStart >= 0 && classEnd > classStart, 'Class schedule builder must exist')
-const classBuilder = classSource.slice(classStart, classEnd).replace('export function ', 'function ')
-const DAYS = ['Måndag','Tisdag','Onsdag','Torsdag','Fredag']
-const iso = d => [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')
-const monday = value => {const d=new Date(value+'T12:00:00');d.setDate(d.getDate()-((d.getDay()+6)%7));return d}
-const nextDate = (start,offset)=>{const d=new Date(start);d.setDate(d.getDate()+offset);return d}
-const buildClassSchedule = new Function('DAYS','iso','monday','nextDate',classBuilder+'\nreturn buildClassSchedule')(DAYS,iso,monday,nextDate)
 testWithPlan('W34 class A and B map to inserted base week',planOf(3),['3','2','Matteprov'],0,(p,b)=>{
   const a=buildClassSchedule(p,p.classGroups[0])
   const bLessons=buildClassSchedule(p,p.classGroups[1])
@@ -288,7 +295,7 @@ testWithPlan('W23 publication metadata does not leak to inserted week',(()=>{
   const historySkipRef={current:false}
   let plan=next
   const {undoPlan,redoPlan}=new Function('historyRef','historySkipRef','setPlan','setHistoryVersion',handlers+'\nreturn {undoPlan,redoPlan}')(
-    historyRef,historySkipRef,value=>{plan=value},()=>{})
+    historyRef,historySkipRef,value=>{plan=value},()=>{},remapClassOverridesAfterInsertion)
   undoPlan()
   assert.deepEqual(plan,first)
   assert.equal(historyRef.current.future.length,1)
