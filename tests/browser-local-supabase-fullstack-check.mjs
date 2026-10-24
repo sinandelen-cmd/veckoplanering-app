@@ -28,6 +28,42 @@ try{
  await page.getByRole('button',{name:'Logga in',exact:true}).click()
  await page.getByRole('heading',{name:'Logga in som lärare'}).waitFor({state:'hidden',timeout:20000})
  await page.getByText('Kontrollerar lärarbehörighet…').waitFor({state:'hidden',timeout:20000})
+ // Full REAL App.jsx teacher editor -> automatic publication -> student RPC/browser.
+ const draft={kind:'arsplanering-v2',title:'Isolerad UI-plan',subject:'Matematik',schoolForm:'Grundskola',grade:'Årskurs 7',
+  startDate:'2026-01-05',weeks:2,entryType:'vecka',autoReleaseWeeks:false,lessonsPerWeek:1,
+  weeksData:[{weekStart:'2026-01-05',weekNumber:2,title:'UI vecka synlig',content:'',hidden:false,lessons:[{name:'Lektion 1',topics:[]}]},
+             {weekStart:'2026-01-12',weekNumber:3,title:'UI vecka dold',content:'Privat veckoinnehåll',hidden:true,lessons:[]}],
+  classGroups:[],schoolClosures:[]}
+ const created=await fetch(base+'/rest/v1/veckoplanering',{method:'POST',headers,body:JSON.stringify({
+  user_id:session.user.id,title:draft.title,subject:draft.subject,week_start:draft.startDate,start_date:draft.startDate,
+  content:JSON.stringify(draft),published:false,public_slug:null,published_content:null})})
+ assert.equal(created.status,201,'Create teacher UI draft '+await created.text().catch(()=>'')) 
+ await page.getByRole('button',{name:/Mina planeringar/}).click()
+ await page.getByRole('button',{name:/Grundskola \(/}).click()
+ await page.getByRole('button',{name:/Matematik \(/}).click()
+ await page.getByRole('button',{name:/Isolerad UI-plan/}).click()
+ await page.getByRole('tab',{name:/Lärarvy/}).click()
+ const editor=page.locator('.week-card textarea').first()
+ await editor.waitFor({timeout:15000})
+ await editor.fill('Synlig text från verklig App.jsx-redigering')
+ const deadline=Date.now()+25000
+ let stored=null
+ while(Date.now()<deadline){
+  await page.waitForTimeout(1000)
+  const response=await fetch(base+'/rest/v1/veckoplanering?select=published,public_slug,published_content,content&title=eq.Isolerad%20UI-plan',{headers})
+  const rows=await response.json()
+  if(rows[0]?.published===true && rows[0]?.published_content){stored=rows[0];break}
+ }
+ assert.ok(stored,'App.jsx autosave must publish edited visible week in local PostgREST')
+ const studentDoc=typeof stored.published_content==='string'?JSON.parse(stored.published_content):stored.published_content
+ assert.ok(JSON.stringify(studentDoc).includes('Synlig text från verklig App.jsx-redigering'))
+ assert.ok(!JSON.stringify(studentDoc).includes('Privat veckoinnehåll'),'Hidden week content must never publish')
+ assert.ok(stored.public_slug,'App.jsx must assign student link')
+ await page.goto('http://127.0.0.1:4177/elev/'+encodeURIComponent(stored.public_slug))
+ await page.getByText('Synlig text från verklig App.jsx-redigering').first().waitFor({timeout:20000})
+ assert.equal(await page.getByText('Privat veckoinnehåll').count(),0)
+ console.log('PASS full real App.jsx: teacher folder -> plan -> teacher editor -> automatic PostgREST publication -> sanitized public RPC -> Chromium student view')
+
  await page.goto('http://127.0.0.1:4177/elev/isolated-public-a')
  await page.getByText('Visible',{exact:true}).first().waitFor({timeout:20000})
  assert.equal(await page.getByText('Hidden',{exact:true}).count(),0)
