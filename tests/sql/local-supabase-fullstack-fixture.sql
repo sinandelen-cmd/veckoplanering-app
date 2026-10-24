@@ -64,7 +64,7 @@ with source as (
  and (not coalesce((s.doc->>'autoReleaseWeeks')::boolean,false)
       or (case when (w.week->>'publishDate') ~ '^\d{4}-\d{2}-\d{2}$' then (w.week->>'publishDate')::date
              else date_trunc('week',(w.week->>'weekStart')::date::timestamp)::date end) <= s.today)
- and (not coalesce((w.week->>'hideDate') ~ '^\d{4}-\d{2}-\d{2} or (w.week->>'hideDate')::date > s.today)
+ and (not coalesce((w.week->>'hideDate') ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$', false) or (w.week->>'hideDate')::date > s.today)
 ), chosen as (
  select e.* from eligible e
  where not coalesce((e.doc->>'autoReleaseWeeks')::boolean,false)
