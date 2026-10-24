@@ -61,8 +61,15 @@ try{
  assert.ok(!JSON.stringify(studentDoc).includes('Privat veckoinnehåll'),'Hidden week content must never publish')
  assert.ok(stored.public_slug,'App.jsx must assign student link')
  await page.goto('http://127.0.0.1:4177/elev/'+encodeURIComponent(stored.public_slug))
- const earlierWeeks = page.getByRole('button',{name:/Visa tidigare veckor/})
- if(await earlierWeeks.count()) await earlierWeeks.click()
+ // Older published weeks are archived behind nested native <details> elements.
+ const history=page.locator('details.student-history-folder')
+ if(await history.count()) {
+  await history.locator('summary.student-history-heading').click()
+  const chapter=history.locator('details.student-chapter-section').first()
+  if(!(await chapter.evaluate(el=>el.open))) await chapter.locator('summary.student-chapter-heading').click()
+  const week=chapter.locator('details.student-week-accordion').first()
+  if(!(await week.evaluate(el=>el.open))) await week.locator('summary.student-week-summary').click()
+ }
  try {
   await page.getByText('Synlig text från verklig App.jsx-redigering').first().waitFor({timeout:20000})
  } catch (error) {
