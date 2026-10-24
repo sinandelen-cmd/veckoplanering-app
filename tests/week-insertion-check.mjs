@@ -535,7 +535,10 @@ testWithPlan('W32 orphan numeric collision does not overwrite valid lesson overr
   return p
 })(),['1'],0,(p,b)=>{
   const overrides=p.classGroups[0].overrides
-  assert.equal(overrides['3']?.text,'Third original')
+  const original=buildClassSchedule(b,b.classGroups[0]).find(x=>x.override?.text==='Third original')
+  const expected=buildClassSchedule(p,p.classGroups[0]).find(x=>x.lesson.id===original.lesson.id)
+  assert.ok(expected)
+  assert.equal(overrides[String(expected.lessonNumber-1)]?.text,'Third original')
   assert.equal(overrides['legacy-unmapped:3']?.text,'Orphan historical')
   const before=buildClassSchedule(b,b.classGroups[0]).find(x=>x.override?.text==='Third original')
   const after=buildClassSchedule(p,p.classGroups[0]).find(x=>x.override?.text==='Third original')
@@ -554,9 +557,12 @@ testWithPlan('W32 archived legacy key collision preserves both archived and orph
     'legacy-unmapped:3':{text:'Existing archive'}
   }
   return p
-})(),['1'],0,p=>{
+})(),['1'],0,(p,b)=>{
   const values=p.classGroups[0].overrides
-  assert.equal(values['3']?.text,'Valid original')
+  const original=buildClassSchedule(b,b.classGroups[0]).find(x=>x.override?.text==='Valid original')
+  const moved=buildClassSchedule(p,p.classGroups[0]).find(x=>x.lesson.id===original.lesson.id)
+  assert.ok(moved)
+  assert.equal(values[String(moved.lessonNumber-1)]?.text,'Valid original')
   assert.equal(values['legacy-unmapped:3']?.text,'Existing archive')
   assert.equal(values['legacy-unmapped:3:1']?.text,'Orphan numeric')
 })
