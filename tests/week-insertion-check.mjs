@@ -502,7 +502,7 @@ testWithPlan('W32 orphan numeric collision does not overwrite valid lesson overr
 })
 testWithPlan('W32 noncolliding historical numeric orphan remains unchanged',(()=>{
   const p=planOf(3);p.classGroups[0].overrides={'99':{text:'Unmapped'}};return p
-})(),['1'],0,p=>assert.deepEqual(p.classGroups[0].overrides,{'99':{text:'Unmapped'}}))
+})(),['1'],0,p=>assert.deepEqual(p.classGroups[0].overrides,{'legacy-unmapped:99':{text:'Unmapped'}}))
 
 
 testWithPlan('W32 archived legacy key collision preserves both archived and orphaned values',(()=>{
