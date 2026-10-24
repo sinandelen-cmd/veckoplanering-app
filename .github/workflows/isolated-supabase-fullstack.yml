@@ -34,6 +34,25 @@ jobs:
           npx --yes supabase@2.81.3 migration new isolated_fullstack_fixture
           cp tests/sql/local-supabase-fullstack-fixture.sql "$(find supabase/migrations -type f -name '*isolated_fullstack_fixture.sql' | head -1)"
           test -s "$(find supabase/migrations -type f -name '*isolated_fullstack_fixture.sql' | head -1)"
+      - name: Pre-pull isolated Supabase images from Docker Hub mirror
+        timeout-minutes: 8
+        run: |
+          # The public ECR registry sometimes rejects anonymous CI pulls with
+          # "toomanyrequests: Data limit exceeded". Pull equivalent tagged
+          # Supabase images from Docker Hub and retag them for local CLI use.
+          # A failed mirror pull does not conceal a later Supabase startup error.
+          images=(
+            "postgres:17.6.1.095"
+          )
+          for image in "${images[@]}"; do
+            name="${image%%:*}"
+            tag="${image#*:}"
+            if timeout 180s docker pull "supabase/${name}:${tag}"; then
+              docker tag "supabase/${name}:${tag}" "public.ecr.aws/supabase/${name}:${tag}"
+            else
+              echo "::warning title=Image mirror unavailable::Could not prefetch ${image}; normal Supabase startup will retry ECR."
+            fi
+          done
       - name: Start disposable Docker Supabase fullstack (never linked to production)
         timeout-minutes: 10
         run: |
