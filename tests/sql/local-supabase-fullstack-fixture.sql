@@ -48,7 +48,7 @@ CREATE OR REPLACE FUNCTION public.get_public_annual_plan(slug_value text)
  SET search_path TO 'public'
 AS $function$
 with source as (
- select v.published_content::jsonb as doc,
+ select case when jsonb_typeof(v.published_content::jsonb)='string' then (v.published_content::jsonb #>> '{}')::jsonb else v.published_content::jsonb end as doc,
         (now() at time zone 'Europe/Stockholm')::date as today
  from public.veckoplanering v
  where v.published = true and v.public_slug = slug_value and v.published_content is not null
