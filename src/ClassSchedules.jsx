@@ -20,34 +20,47 @@ export function buildClassSchedule(plan, group) {
   const extraSlots = Array.isArray(group.extraSlots) ? group.extraSlots : []
   const cancelled = new Set(Array.isArray(group.cancelledDates) ? group.cancelledDates : [])
   const closures = Array.isArray(group.schoolClosures) ? group.schoolClosures : []
+  const weeks = (plan.weeksData || []).filter(week => week?.weekStart && !week.hidden)
+  if (!weeks.length) return []
   const firstDate = group.startDate || plan.startDate || ''
-  let lessonNumber = 0
-  // Varje klass använder innehållet från rätt grundvecka.
-  // Lektioner från en vecka flyttas aldrig automatiskt till nästa vecka.
-  return (plan.weeksData || []).flatMap(week => {
-    if (!week?.weekStart || week.hidden) return []
-    const source = Array.isArray(week.lessons) ? week.lessons : []
-    const mondayDate = monday(week.weekStart)
+  const queue = weeks.flatMap(week => (Array.isArray(week.lessons) ? week.lessons : []).map((lesson, sourceIndex) => ({
+    lesson, sourceIndex, sourceWeekStart: week.weekStart,
+    sourceWeekNumber: week.weekNumber, sourceWeekTitle: week.title
+  })))
+  const results = []
+  let cursor = 0
+  const lastWeekStart = weeks[weeks.length - 1].weekStart
+  // Continue into future calendar weeks if closures delayed unfinished lessons.
+  // Bound the horizon so an unscheduled class cannot cause an infinite loop.
+  for (let weekOffset = 0; weekOffset < weeks.length + 104; weekOffset++) {
+    const week = weeks[weekOffset]
+    if (!week && cursor >= queue.length) break
+    const start = week?.weekStart || iso(nextDate(monday(lastWeekStart), (weekOffset - weeks.length + 1) * 7))
     const slots = []
     for (let offset = 0; offset < 5; offset++) {
-      const date = nextDate(mondayDate, offset)
-      const dateKey = iso(date)
+      const dateKey = iso(nextDate(monday(start), offset))
       const day = DAYS[offset]
       if ((firstDate && dateKey < firstDate) || cancelled.has(dateKey)) continue
-      const closure = closures.find(event => dateKey >= event.startDate && dateKey <= (event.endDate || event.startDate))
+      const closure = closures.find(event => event?.startDate && dateKey >= event.startDate && dateKey <= (event.endDate || event.startDate))
       if (closure && closure.type !== 'Halvdag') continue
-      const scheduledCount = days.filter(d => d === day).length + extraSlots.filter(slot => slot.date === dateKey).length
-      const count = closure?.type === 'Halvdag' ? Math.max(0,scheduledCount - Math.max(1,Number(closure.cancelledLessons)||1)) : scheduledCount
-      for (let n = 0; n < count; n++) slots.push({date:dateKey,day,slot:n+1,time:group.lessonTimes?.[day]?.[n] || ''})
+      const regularCount = days.includes(day) ? Math.max(1, Number(group.momentsPerDay?.[day]) || 1) : 0
+      const scheduledCount = regularCount + extraSlots.filter(slot => slot.date === dateKey).length
+      const count = closure?.type === 'Halvdag' ? Math.max(0, scheduledCount - Math.max(1, Number(closure.cancelledLessons) || 1)) : scheduledCount
+      for (let n = 0; n < count; n++) slots.push({date: dateKey, day, slot: n + 1, time: group.lessonTimes?.[day]?.[n] || ''})
     }
-    return slots.map((slot, index) => {
-      const lesson = source[index] || {name:'Lektion '+(index+1),topics:[]}
-      lessonNumber++
-      return {...slot,lesson,weekNumber:week.weekNumber,weekTitle:week.title,weekStart:week.weekStart,index,lessonNumber,override:group.overrides?.[String(lessonNumber-1)] || null}
-    })
-  })
+    for (const slot of slots) {
+      const source = queue[cursor]
+      if (!source) break
+      const lessonNumber = cursor + 1
+      results.push({...slot, lesson: source.lesson, weekNumber: source.sourceWeekNumber,
+        weekTitle: source.sourceWeekTitle, weekStart: start, sourceWeekStart: source.sourceWeekStart,
+        index: source.sourceIndex, lessonNumber,
+        override: group.overrides?.[String(cursor)] || null})
+      cursor++
+    }
+  }
+  return results
 }
-
 
 export function remapClassOverridesAfterInsertion(previous, next, insertAfterIndex) {
   const groups = Array.isArray(previous.classGroups) ? previous.classGroups : []
