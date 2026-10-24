@@ -42,7 +42,7 @@ try{
  await page.getByRole('button',{name:/Mina planeringar/}).click()
  await page.getByRole('button',{name:/Grundskola \(/}).click()
  await page.getByRole('button',{name:/Matematik/,exact:false}).filter({has:page.locator('.folder-chevron')}).click()
- await page.getByRole('button',{name:/Isolerad UI-plan/}).click()
+ await page.getByRole('button',{name:'📘 Isolerad UI-plan',exact:true}).click()
  await page.getByRole('tab',{name:/Lärarvy/}).click()
  const editor=page.locator('.week-card textarea').first()
  await editor.waitFor({timeout:15000})
