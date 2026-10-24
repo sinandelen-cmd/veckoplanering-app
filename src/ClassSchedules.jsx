@@ -223,6 +223,25 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", themes
     {group && <details className="class-schedule-help" data-testid="class-week-diagnostics"><summary>🔎 Varför är en klassvecka tom? Visa schemakontroll för {group.name}</summary>
       <p>Den här kontrollen visar sparade schemadagar och undantag utan att ändra något.</p>
       <p><strong>Startdatum:</strong> {group.startDate || plan.startDate || 'Saknas'} · <strong>Lektionsdagar:</strong> {(group.days || []).join(', ') || 'Inga valda'}</p>
+      <div role="status" data-testid="class-start-date-comparison" style={{padding:'10px 12px',border:'1px solid #cbd5e1',borderRadius:8,marginBottom:12}}>
+        <strong>Skrivskyddad datumjämförelse för {group.name}</strong>
+        {(() => {
+          const savedStart = group.startDate || plan.startDate || ''
+          const firstLesson = schedule.length ? [...schedule].sort((a,b) => a.date.localeCompare(b.date))[0].date : ''
+          const startWeek = savedStart ? iso(monday(savedStart)) : ''
+          const firstWeek = firstLesson ? iso(monday(firstLesson)) : ''
+          const gapWeeks = savedStart && firstLesson && firstWeek > startWeek
+            ? Math.round((monday(firstLesson) - monday(savedStart)) / (7 * 86400000)) : 0
+          return <p style={{margin:'6px 0 0'}}>
+            Sparat startdatum: <strong>{savedStart || 'Saknas'}</strong>. Första lektionen i beräknad elevvy: <strong>{firstLesson || 'Ingen lektion schemalagd'}</strong>.
+            {!firstLesson ? ' Kontrollera lektionsdagar, grundplaneringens innehåll och undantag nedan.'
+              : firstLesson < savedStart ? ' ⚠️ Avvikelse: en lektion ligger före sparat startdatum.'
+              : gapWeeks > 0 ? ` ⚠️ Första lektionen ligger ${gapWeeks} kalendervecka(or) efter startveckan. Kontrollera veckounderlag, lov och inställda datum nedan.`
+              : ' ✓ Första lektionen ligger i klassens startvecka.'}
+            {' '}Jämförelsen ändrar inga uppgifter.
+          </p>
+        })()}
+      </div>
       {(() => {
         const savedWeeks = (plan.weeksData || []).filter(week => week?.weekStart)
         const savedByMonday = new Map(savedWeeks.map(week => [iso(monday(week.weekStart)), week]))
