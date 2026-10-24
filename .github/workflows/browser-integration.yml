@@ -29,3 +29,18 @@ jobs:
           exit 1
       - name: Run real Chromium interactions against fixture only
         run: node tests/browser-integration-check.mjs
+
+      - name: Start actual App.jsx with localhost-only Supabase endpoint
+        env:
+          VITE_SUPABASE_URL: http://127.0.0.1:4199
+          VITE_SUPABASE_ANON_KEY: isolated-test-key-not-production
+        run: |
+          npm run dev -- --host 127.0.0.1 --port 4176 > /tmp/veckoplanering-real-app.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:4176/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/veckoplanering-real-app.log
+          exit 1
+      - name: Real App.jsx Chromium login and teacher access against isolated HTTP mocks
+        run: node tests/browser-real-app-check.mjs
