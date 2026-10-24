@@ -30,3 +30,11 @@ Datum: 2026-10-24. Endast feature-grenen `feature/provtraning-infogad-vecka`, dr
 Sju av åtta definierade kvalitetsdelar bedöms färdiga på kod-/testnivå (87,5 %). Den sista delen är **inte** färdig förrän browser- och publiceringsintegrationstest samt återstående historiska kollisionsfall är granskade. Inget godkännande för merge eller publicering.
 
 Tidsbedömning: minst en större arbetsgrupp till för att sätta upp och köra isolerade browser-/publiceringstester och besluta om gamla kollisionsfall; kan bli fler vid fel. Ingen pålitlig minutprognos.
+
+## Verkligt fel hittat av nya publiceringssnapshot-testet
+
+GitHub Actions på `48077752` visade en reproducerbar regression: `sanitizeForStudents` återanvände samma nästlade `classGroups[].overrides`-objekt som lärarutkastet. En ändring i utkastet kunde därför mutera det redan skapade snapshot-objektet i minnet. Detta betyder **inte** att tidigare JSON som redan sparats i databasen ändrades, men det bröt objektisoleringen och är en konkret säkerhets-/korrekthetsrisk.
+
+Rättning på feature-grenen `39903b8`: djupkopiera både `overrides` och `lessonTimes` när elevsnapshot byggs. Regressionstest `88256e9` ändrar efter publiceringssanering både klassens override-text och dess lektionstid och kräver att snapshot-objektet förblir oförändrat. CI för den sista testversionen måste fortfarande kontrolleras.
+
+Gräns: testet använder den verkliga sanitiserarens kod men ingen Supabase-anslutning. En browser-/serverintegrationstestning och särskild kollisionshantering för äldre numeriska klassindex återstår.
