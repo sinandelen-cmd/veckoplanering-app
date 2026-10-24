@@ -52,3 +52,6 @@ Datum 2026-10-24. Feature-gren `feature/provtraning-infogad-vecka`; PR #5 förbl
 Ytterligare kodvägstest `d0d71a5` exekverar den faktiska `publicationFields` från `App.jsx` tillsammans med `sanitizeForStudents`. Testet kontrollerar serialiserat `published_content`, `public_slug`, bevarande av tidigare publiceringsfält när `keepPublished` är sant, nollställning vid avpublicering och ny snapshot-sträng efter uttrycklig återpublicering. Detta är fortfarande ett isolerat funktionstest, inte en autentiserad Supabase-integration.
 
 **Bekräftad PostgreSQL-körning:** `40087489502` (success) körde temp-tabell, INSERT, UPDATE, båda PASS-fallen och ROLLBACK utan produktionsanslutning. Chromium efter skip-flaggefixen behöver fortfarande grön slutstatus.
+
+## React-effektens asynkrona uppdatering
+Chromium-testet kontrollerar nu att redo verkligen rensas **efter** att Reacts `useEffect` har hunnit registrera en ny redigering. Ett omedelbart DOM-värde före effekten får inte användas som slutligt felutfall. Ändringen i `37e4436` väntar uttryckligen på historikuppdateringen och låter testet misslyckas om den inte kommer inom fem sekunder. Detta skiljer faktisk historikregression från testtiming.
