@@ -178,4 +178,21 @@ assert.equal(momentPlan.weeksData[0].lessons[1].topics[0].name,'C')
 const delayedMoments=build(momentPlan,{...twoDayClass,schoolClosures:[closure('Studiedag','2026-10-19')]})
 assert.deepEqual(Array.from(delayedMoments,row=>Array.from(row.lesson.topics,t=>t.name)),[['A','B'],['C','D','E'],['F','G'],['H']])
 
+
+const classStarts = [
+  {name:'8A',days:['Måndag'],startDate:'2026-11-02'},
+  {name:'8B',days:['Tisdag'],startDate:'2026-10-12'},
+  {name:'8C',days:['Onsdag'],startDate:'2026-10-12'}
+]
+const startPlan = {...momentPlan,startDate:'2026-10-12',weeksData:[{...momentPlan.weeksData[0],weekStart:'2026-10-12'}]}
+const classResults = classStarts.map(group=>build(startPlan,group))
+assert.equal(classResults[0][0].date,'2026-11-02')
+assert.equal(classResults[1][0].date,'2026-10-13')
+assert.equal(classResults[2][0].date,'2026-10-14')
+assert.equal(classResults[1][0].lesson.topics[0].name,'A')
+assert.equal(classResults[2][0].lesson.topics[0].name,'A')
+const aligned = build(startPlan,{...classStarts[0],startDate:'2026-10-12'})
+assert.equal(aligned[0].date,'2026-10-12')
+assert.equal(startPlan.weeksData[0].lessons[0].topics[0].name,'A')
+
 console.log('Class scheduling regression checks: OK')
