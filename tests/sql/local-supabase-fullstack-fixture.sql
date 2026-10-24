@@ -40,36 +40,55 @@ CREATE POLICY teacher_plans_delete ON public.veckoplanering FOR DELETE TO authen
 REVOKE ALL ON public.teacher_access, public.veckoplanering FROM anon;
 GRANT SELECT ON public.teacher_access TO authenticated;
 GRANT SELECT,INSERT,UPDATE,DELETE ON public.veckoplanering TO authenticated;
+-- EXACT read-only production function with only NULL hideDate predicate patched in this disposable fixture.
 CREATE OR REPLACE FUNCTION public.get_public_annual_plan(slug_value text)
-RETURNS TABLE(published_content text) LANGUAGE sql STABLE SECURITY DEFINER
-SET search_path = ''
+ RETURNS TABLE(published_content text)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
 AS $function$
- SELECT jsonb_set(p.published_content,'{weeksData}',
-   COALESCE((
-     SELECT jsonb_agg(w.value ORDER BY w.ordinality)
-     FROM jsonb_array_elements(
-       CASE WHEN jsonb_typeof(p.published_content->'weeksData')='array'
-            THEN p.published_content->'weeksData' ELSE '[]'::jsonb END
-     ) WITH ORDINALITY w(value,ordinality)
-     WHERE COALESCE((w.value->>'hidden')::boolean,false)=false
-       AND (
-         NOT coalesce((w.value->>'hideDate') ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$',false)
-         OR (w.value->>'hideDate')::date > current_date
-       )
-       AND (
-         NOT coalesce((p.published_content->>'autoReleaseWeeks')::boolean,false)
-         OR (
-           CASE WHEN (w.value->>'publishDate') ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
-             THEN (w.value->>'publishDate')::date
-             ELSE (w.value->>'weekStart')::date END
-           <= current_date
-         )
-       )
-   ),'[]'::jsonb))::text
- FROM public.veckoplanering p
- WHERE p.public_slug=slug_value AND p.published IS TRUE
-   AND p.published_content IS NOT NULL
- LIMIT 1
-$function$;
+with source as (
+ select v.published_content::jsonb as doc,
+        (now() at time zone 'Europe/Stockholm')::date as today
+ from public.veckoplanering v
+ where v.published = true and v.public_slug = slug_value and v.published_content is not null
+ limit 1
+), eligible as (
+ select s.doc,s.today,w.week,w.ordinality,
+        case when (w.week->>'publishDate') ~ '^\d{4}-\d{2}-\d{2}$' then (w.week->>'publishDate')::date
+             else date_trunc('week', (w.week->>'weekStart')::date::timestamp)::date end as release_day
+ from source s
+ cross join lateral jsonb_array_elements(case when jsonb_typeof(s.doc->'weeksData')='array' then s.doc->'weeksData' else '[]'::jsonb end) with ordinality as w(week,ordinality)
+ where (w.week->>'weekStart') ~ '^\d{4}-\d{2}-\d{2}$'
+ and coalesce((w.week->>'hidden')::boolean,false)=false
+ and (not coalesce((s.doc->>'autoReleaseWeeks')::boolean,false)
+      or (case when (w.week->>'publishDate') ~ '^\d{4}-\d{2}-\d{2}$' then (w.week->>'publishDate')::date
+             else date_trunc('week',(w.week->>'weekStart')::date::timestamp)::date end) <= s.today)
+ and (not ((w.week->>'hideDate') ~ '^\d{4}-\d{2}-\d{2}$') or (w.week->>'hideDate')::date > s.today)
+), chosen as (
+ select e.* from eligible e
+ where not coalesce((e.doc->>'autoReleaseWeeks')::boolean,false)
+ or e.ordinality in (
+   select z.ordinality from eligible z
+   order by z.release_day desc,z.ordinality desc
+   limit greatest(1,least(12,coalesce(nullif(e.doc->>'visibleWeekCount','')::integer,2)))
+ )
+), assembled as (
+ select s.doc,
+   coalesce((select jsonb_agg(c.week order by c.ordinality) from chosen c),'[]'::jsonb) as shown
+ from source s
+)
+select jsonb_set(
+ jsonb_set(a.doc,'{weeksData}',a.shown),
+ '{schoolClosures}',
+ coalesce((select jsonb_agg(c.closure order by c.ordinality)
+ from jsonb_array_elements(case when jsonb_typeof(a.doc->'schoolClosures')='array' then a.doc->'schoolClosures' else '[]'::jsonb end) with ordinality as c(closure,ordinality)
+ where exists (select 1 from jsonb_array_elements(a.shown) as w(week)
+ where (c.closure->>'startDate') <= ((w.week->>'weekStart')::date+6)::text
+ and (c.closure->>'endDate') >= (w.week->>'weekStart'))),'[]'::jsonb)
+)::text from assembled a;
+$function$
+
+
 REVOKE ALL ON FUNCTION public.get_public_annual_plan(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_public_annual_plan(text) TO anon,authenticated;
