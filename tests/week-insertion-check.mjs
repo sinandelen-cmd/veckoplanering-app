@@ -28,7 +28,7 @@ const makeWeeks = (plan) => [{
 }]
 const classSource = fs.readFileSync(new URL('../src/ClassSchedules.jsx', import.meta.url), 'utf8')
 const classStart = classSource.indexOf('export function buildClassSchedule(plan, group) {')
-const classEnd = classSource.indexOf('\nexport default function ClassSchedules', classStart)
+const classEnd = classSource.indexOf('\nexport function remapClassOverridesAfterInsertion(', classStart)
 assert.ok(classStart >= 0 && classEnd > classStart, 'Class schedule builder must exist')
 const classBuilder = classSource.slice(classStart, classEnd).replace('export function ', 'function ')
 const DAYS = ['Måndag','Tisdag','Onsdag','Torsdag','Fredag']
