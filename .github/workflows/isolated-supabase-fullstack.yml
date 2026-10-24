@@ -32,6 +32,15 @@ jobs:
           npx --yes supabase@2.81.3 migration new isolated_fullstack_fixture
           cp tests/sql/local-supabase-fullstack-fixture.sql "$(find supabase/migrations -type f -name '*isolated_fullstack_fixture.sql' | head -1)"
           test -s "$(find supabase/migrations -type f -name '*isolated_fullstack_fixture.sql' | head -1)"
+      - name: Restore cached local Supabase Docker images
+        id: docker-cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/isolated-supabase-images.tar
+          key: isolated-supabase-cli-2.81.3-linux-images-v1
+      - name: Load cached local Supabase Docker images
+        if: steps.docker-cache-restore.outputs.cache-hit == 'true'
+        run: docker load -i "${{ runner.temp }}/isolated-supabase-images.tar"
       - name: Start disposable Docker Supabase fullstack (never linked to production)
         run: |
           # A fresh GitHub runner can hit the shared public ECR download quota.
@@ -59,6 +68,20 @@ jobs:
             echo "::error title=Isolated Supabase startup failed::Startup failed or timed out for a reason other than registry quota."
             exit 1
           done
+      - name: Prepare image cache after successful local startup
+        if: steps.docker-cache-restore.outputs.cache-hit != 'true'
+        run: |
+          # Only cache the images actually used by the isolated Supabase stack.
+          mapfile -t images < <(docker image ls --format '{{.Repository}}:{{.Tag}}' | grep '^public.ecr.aws/supabase/' | sort -u)
+          if [ "${#images[@]}" -gt 0 ]; then
+            docker save -o "${{ runner.temp }}/isolated-supabase-images.tar" "${images[@]}"
+          fi
+      - name: Save local Supabase image cache
+        if: steps.docker-cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/isolated-supabase-images.tar
+          key: isolated-supabase-cli-2.81.3-linux-images-v1
       - name: Capture local-only API endpoint and ephemeral anon key
         run: |
           npx --yes supabase@2.81.3 status -o env > /tmp/isolated-supabase-status.env
