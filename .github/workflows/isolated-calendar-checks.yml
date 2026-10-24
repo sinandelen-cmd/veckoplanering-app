@@ -36,3 +36,5 @@ jobs:
           exit 1
       - name: Chromium class student schedule fixture
         run: node tests/calendar-student-chromium.mjs
+      - name: Chromium actual StudentView integration
+        run: node tests/calendar-real-student-chromium.mjs
