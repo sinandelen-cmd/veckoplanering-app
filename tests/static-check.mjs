@@ -35,8 +35,14 @@ assert.match(app, /printGroups\[printPage\]\?\.weeks/)
 assert.match(app, /function isoWeekYear\(dateString\)/)
 assert.match(app, /weekStart \|\| `number-\$\{other\.weekNumber\}`/)
 assert.match(app, /\.sort\(\(a, b\) => \(a\.weekStart \|\| ''\)\.localeCompare\(b\.weekStart \|\| ''\)\)/)
+// Chapter names are presentation-only prefixes; editing retains topic metadata.
+assert.match(app, /function momentLabelWithoutChapter\(value, chapter\)/)
+assert.match(app, /momentLabelWithoutChapter\(topic\.name, week\?\.chapter\)/)
+assert.match(app, /updateTopic\(\{ \.\.\.topic, name: e\.target\.value \}\)/)
+assert.match(app, /rpc\('invite_plan_colleague'/)
+assert.match(app, /rpc\('revoke_plan_colleague'/)
 assert.match(app, /const keepPublished = !publish && databasePublished/)
-assert.match(app, /\.select\('published,public_slug'\)/)
+assert.match(app, /\.select\('published,public_slug,user_id'\)/)
 assert.match(app, /publishedPayload = publish \? sanitizeForStudents\(payload\) : null/)
 assert.match(app, /JSON\.stringify\(latestPlanRef\.current\) === savedPlanRef\.current/)
 // Draft saves must not overwrite the snapshot students currently see.
@@ -222,7 +228,7 @@ assert.equal(studentFixture.weeksData[0].links.length, 2, 'Publicering får inte
 const { groupStudentWeeksForPrint } = await import('../src/printGroups.js')
 const printShortWeek = index => ({ weekStart: '2027-01-' + String(index).padStart(2, '0'), content: 'Kort vecka' })
 const fourShort = groupStudentWeeksForPrint([1, 2, 3, 4, 5].map(printShortWeek))
-assert.deepEqual(fourShort.map(group => group.weeks.length), [4, 1])
+assert.deepEqual(fourShort.map(group => group.weeks.length), [2, 2, 1])
 const longWeek = { content: 'Långt innehåll '.repeat(100), lessons: [{ name: 'Lektion', topics: Array.from({ length: 18 }, (_, i) => ({ name: 'Moment ' + i })) }] }
 const mixedGroups = groupStudentWeeksForPrint([printShortWeek(1), longWeek, printShortWeek(2)])
 assert.deepEqual(mixedGroups.map(group => group.weeks.length), [1, 1, 1])
@@ -374,3 +380,25 @@ assert.match(approvalSql, /approved teachers delete/)
 assert.match(app, /access !== 'approved'/)
 assert.match(app, /admin_review_teacher_request/)
 assert.match(app, /admin_list_teacher_accounts/, 'Administratören ska kunna lista lärarkonton')
+
+
+// Regression: infogad provvecka ska valideras innan dialoger visas och
+// lektionsvalet ska baseras på den NYA veckan, inte föregående vecka.
+const insertWeekSource = app.split('function insertBlankWeekAfter(index) {')[1]?.split('\n  function updateWeek(')[0]
+assert.ok(insertWeekSource, 'Funktionen för att infoga vecka måste finnas')
+assert.ok(insertWeekSource.indexOf('current.length >= 52') < insertWeekSource.indexOf('window.prompt('), 'Kontrollera maxantal veckor före dialog')
+assert.match(insertWeekSource, /const count = previewWeek\?\.lessons\?\.length \|\| 0/)
+assert.match(insertWeekSource, /Number\.isInteger\(selected\)/)
+assert.match(insertWeekSource, /selected > count/)
+assert.match(insertWeekSource, /if \(choice === null\) return/)
+assert.match(insertWeekSource, /if \(input === null\) return/)
+assert.match(insertWeekSource, /if \(title === null\) return/)
+assert.match(insertWeekSource, /\/\^Vecka\\s\+\\d\+\$\/i\.test\(week\.title\)/)
+
+// Calendar closures must remain editable and scoped to selected class or all classes.
+assert.match(app, /aria-expanded=\{showClosureEditor\}/)
+assert.match(app, /onChangeSchoolClosures\?\.\(/)
+assert.match(app, /schoolClosures:\[\.\.\.\(group\.schoolClosures\|\|\[\]\),item\]/)
+assert.match(app, /onChangeSchoolClosures=\{closures=>setPlan/)
+assert.match(app, /closureKind==='Halvdag'/)
+assert.match(app, /cancelledLessons:closureKind==='Halvdag'\?closureCancelled:0/)

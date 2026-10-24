@@ -3870,3 +3870,66 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .class-closure-fields input,.class-closure-fields select{width:100%;min-width:0;box-sizing:border-box;border:1px solid #b9d6d1;border-radius:7px;padding:8px;background:#fff}
 .class-closure-item{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 0;border-top:1px solid #d8e6e2}
 .class-closure-item button{border:0;background:transparent;color:#b12b38;cursor:pointer;font-weight:650}
+
+/* Diskreta historikknappar längst till höger i veckans rubrikrad. */
+.week-history-actions { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; }
+.week-history-icon { width: 32px; height: 32px; min-width: 32px; padding: 0; border: 1px solid var(--plan-soft, #d9e4dc); border-radius: 9px; background: var(--plan-light, #f6faf7); color: var(--plan-ink, #285b4e); font-size: 23px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.week-history-icon:hover:not(:disabled) { background: var(--plan-soft, #e1efe6); }
+.week-history-icon:focus-visible { outline: 2px solid var(--plan-accent, #347a65); outline-offset: 2px; }
+.week-history-icon:disabled { opacity: .35; cursor: not-allowed; }
+
+/* Elevens veckokapitel: aktuell vecka öppnas, övriga kan fällas ut vid klick. */
+.student-week-accordion { margin: 0 0 12px; border: 1px solid var(--line, #d8dce4); border-radius: 14px; overflow: hidden; background: var(--surface, #fff); }
+.student-week-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; cursor: pointer; padding: 14px 18px; list-style: none; }
+.student-week-summary::-webkit-details-marker { display: none; }
+.student-week-summary strong { font-size: 1.1rem; }
+.student-week-summary span:nth-child(2) { flex: 1 1 160px; font-weight: 600; }
+.student-week-summary span:last-child { font-size: 1.3rem; transition: transform .2s; }
+.student-week-accordion[open] > .student-week-summary span:last-child { transform: rotate(180deg); }
+.student-week-summary:focus-visible { outline: 3px solid #2563eb; outline-offset: -3px; }
+.student-week-accordion > .student-week-card { margin: 0; border-radius: 0; }
+@media print { .student-week-summary { display: none !important; } .student-week-accordion { border: 0; break-inside: avoid; } .student-week-accordion > .student-week-card { display: block !important; } }
+
+/* Collapsible chapter navigation in student and teacher preview */
+.student-chapter-section{margin:0 0 36px;border:1px solid var(--border,#dbe2ec);border-radius:15px;overflow:hidden;background:var(--card,#fff)}
+.student-chapter-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;padding:17px 20px;font-size:1.08rem;font-weight:800;background:#e9efff;color:#243c73;list-style:none}
+.student-chapter-heading::-webkit-details-marker{display:none}
+.student-chapter-heading::marker{content:''}
+.student-chapter-count{font-size:.83rem;font-weight:600;white-space:nowrap;opacity:.78}
+.student-chapter-section>.chapter-week-group{margin:10px 12px}
+.student-all-weeks-toggle{margin:12px 0 16px}
+.student-chapter-section[open]>.student-chapter-heading{border-bottom:1px solid #d5def0}
+@media print{.student-chapter-section{break-inside:avoid}.student-chapter-section>.student-chapter-heading{print-color-adjust:exact}.student-all-weeks-toggle{display:none}}
+
+/* Each chapter has its own consistent visual identity across views. */
+.student-chapter-heading.chapter-tone-0{background:#dce9ff;color:#183d7c;border-left:7px solid #3b73d1}
+.student-chapter-heading.chapter-tone-1{background:#e9dcff;color:#542b8a;border-left:7px solid #8c55d7}
+.student-chapter-heading.chapter-tone-2{background:#d5f4e6;color:#185e45;border-left:7px solid #26986a}
+.student-chapter-heading.chapter-tone-3{background:#ffe6ca;color:#79400f;border-left:7px solid #d88926}
+.student-chapter-heading.chapter-tone-4{background:#ffe0e7;color:#852c4c;border-left:7px solid #ce527e}
+.student-chapter-heading.chapter-tone-5{background:#d7f3f8;color:#145f72;border-left:7px solid #2599b0}
+.student-chapter-heading.chapter-tone-6{background:#f3efcd;color:#696018;border-left:7px solid #a89a2a}
+.student-chapter-heading.chapter-tone-7{background:#e4e7f0;color:#39476b;border-left:7px solid #6e81af}
+
+/* Compact lesson actions follow the existing planning theme, without colored tiles. */
+.lesson-quick-actions{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin:10px 0 16px}
+.lesson-quick-actions button{display:inline-flex;align-items:center;gap:6px;background:transparent!important;border:0!important;box-shadow:none!important;padding:5px 3px!important;font-size:.9rem;font-weight:650;cursor:pointer;color:inherit}
+.lesson-quick-actions button:hover{text-decoration:underline}
+.lesson-quick-actions button:disabled{opacity:.4;cursor:default;text-decoration:none}
+.lesson-quick-actions span{font-size:1.35rem;line-height:1}
+.lesson-quick-actions .quick-action-link{color:#377ed4}
+.lesson-quick-actions .quick-action-moment{color:#25966c}
+.lesson-quick-actions .quick-action-exam{color:#d34c5a}
+
+/* Historical chapters retain their chapter colors and their original weeks. */
+.student-history-folder{margin:0 0 36px;display:block;width:100%}
+.student-history-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;padding:17px 20px;border:1px solid var(--border,#d6dde8);border-radius:14px;background:var(--surface,#f4f6fa);font-weight:700;list-style:none}
+.student-history-heading::-webkit-details-marker{display:none}
+.student-history-chapters{padding:20px 0 0 16px;display:flex;flex-direction:column;gap:36px}
+.student-history-chapters .student-chapter-section{margin-bottom:0}
+@media print{.student-history-folder{display:contents}.student-history-chapters{display:contents}}
+
+/* Clear chapter hierarchy in teacher and student views. */
+.chapter-heading { font-size: clamp(1.65rem, 2.4vw, 2.15rem); line-height: 1.2; font-weight: 850; padding: 20px 22px; }
+.student-chapter-heading { font-size: clamp(1.55rem, 2.2vw, 2rem); line-height: 1.2; font-weight: 850; padding: 20px 22px; }
+.student-chapter-count { font-size: .85rem; }
