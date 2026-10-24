@@ -82,6 +82,27 @@ const buildClassSchedule = new Function('DAYS','iso','monday','nextDate',classBu
   assert.equal(schedule.find(item=>item.lesson.id==='B')?.override?.text,'Klassens kommentar')
 }
 
+
+ // Regression: cancelling morning vs afternoon preserves actual remaining slot/time.
+{
+  const p = {weeksData:[{weekStart:'2026-10-05',weekNumber:41,lessons:[
+    {id:'A',topics:[]},{id:'B',topics:[]},{id:'C',topics:[]}
+  ]}]}
+  const group = {name:'7A',days:['Måndag','Onsdag','Fredag'],
+    extraSlots:[{date:'2026-10-05'}],
+    lessonTimes:{'Måndag':['08:00','13:00']}}
+  const morning = {...group,schoolClosures:[{type:'Halvdag',startDate:'2026-10-05',endDate:'2026-10-05',cancelledLessons:1,cancelledFrom:'start'}]}
+  const afternoon = {...group,schoolClosures:[{type:'Halvdag',startDate:'2026-10-05',endDate:'2026-10-05',cancelledLessons:1,cancelledFrom:'end'}]}
+  const a = buildClassSchedule(p,morning)
+  const b = buildClassSchedule(p,afternoon)
+  assert.deepEqual(a.map(item=>item.lesson.id),['A','B','C'])
+  assert.deepEqual(b.map(item=>item.lesson.id),['A','B','C'])
+  assert.equal(a[0].slot,2)
+  assert.equal(a[0].time,'13:00')
+  assert.equal(b[0].slot,1)
+  assert.equal(b[0].time,'08:00')
+}
+
 // Regression: class-specific closures must defer, never discard, source lessons.
 {
   const lessons = ['A','B','C','D'].map(id => ({id,name:id,topics:[]}))
