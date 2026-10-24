@@ -2078,7 +2078,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
                 const remaining = current.filter((_, i) => i !== index)
                 return { ...p, weeks: remaining.length, weeksData: remaining, startWeek: Number(remaining[0]?.weekNumber) || p.startWeek }
               })
-            }}>× Ta bort vecka</button></div>
+            }}>× Ta bort vecka</button><div className="week-history-actions" role="group" aria-label="Ångra eller gör om ändringar"><button type="button" className="week-history-icon" onClick={undoPlan} disabled={busy || historyRef.current.past.length === 0} aria-label="Ångra ändring" title="Ångra senaste ändring">↶</button><button type="button" className="week-history-icon" onClick={redoPlan} disabled={busy || historyRef.current.future.length === 0} aria-label="Gör om ändring" title="Gör om senaste ändring">↷</button></div></div>
           <label className="chapter-editor">Kapitel / tema (valfritt)<input value={week.chapter || ''} placeholder="Exempel: Kapitel 5 – Taluppfattning" onChange={e => updateWeek(index, { chapter: e.target.value })} /></label>
           {!/^Vecka\s+\d+$/i.test(week.title || '') && <input className="week-title" aria-label="Egen veckorubrik" value={week.title || ''} onChange={e => updateWeek(index, { title: e.target.value })} />}
           <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />
