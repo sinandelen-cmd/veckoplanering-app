@@ -831,6 +831,10 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   const visibleWeeks = printPage === null
     ? studentWeeks
     : (printWeekStart ? studentWeeks.filter(week => week.weekStart === printWeekStart) : (printGroups[printPage]?.weeks || []))
+  const studentChapterWeeks = printPage === null ? [...visibleWeeks].sort((a,b) => {
+    const priority = w => w.weekStart === currentStudentWeekStart ? 0 : w.weekStart > currentStudentWeekStart ? 1 : 2
+    return priority(a)-priority(b) || (priority(a) === 2 ? b.weekStart.localeCompare(a.weekStart) : a.weekStart.localeCompare(b.weekStart))
+  }) : visibleWeeks
   const pageWeekLabel = studentWeekPageLabel(visibleWeeks)
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
   if (!preview && requestedClass && plan && !selectedClass) return <main className="shell"><section className="card"><h2>Klassen hittades inte</h2><p>Kontrollera elevlänken med din lärare.</p></section></main>
@@ -843,8 +847,10 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     </header>}
     {studentWeeks.length === 0 && <p className="card empty" role="status">{plan.autoReleaseWeeks ? "Ingen vecka är publicerad för elever ännu. Nästa vecka visas automatiskt när dess måndag börjar." : "Det finns inga synliga veckor i den här planeringen ännu."}</p>}
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
-      {visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
-        {week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
+      {studentChapterWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
+        {printPage !== null && week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== studentChapterWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
+        <details className="student-week-accordion" defaultOpen={printPage !== null || week.weekStart === (jumpStudentWeek?.weekStart || studentChapterWeeks[0]?.weekStart)} key={`${previewClass}-${week.weekStart}`}>
+          <summary className="student-week-summary"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{week.chapter?.trim() || week.title?.trim() || 'Veckoplanering'}</span><span>{studentWeekDateRange(week.weekStart)}</span><span aria-hidden="true">⌄</span></summary>
         <article id={"student-week-" + week.weekStart} className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
 
         <div className="week-top student-week-top">
@@ -856,7 +862,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
         <ImportantDatesForWeek week={week} plan={plan} />
         <LessonDetails week={week} entryType={plan.entryType || 'lektion'} lessonDisplay="dag-och-lektion" />
         <WeekDetails week={week} />
-      </article></div>)}
+      </article></details></div>)}
     </section>
   </main>
   {false && printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">
