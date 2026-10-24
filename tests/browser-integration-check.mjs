@@ -20,6 +20,7 @@ try{
  await page.getByRole('button',{name:'Test: gör om'}).click()
  assert.equal(await page.getByTestId('override-index').textContent(),'2')
  await page.getByRole('button',{name:'8B',exact:true}).click()
+ await page.getByRole('button',{name:/Visa enskilda ändringar/}).click()
  await page.getByText('Klass B ursprung').first().waitFor()
  console.log('PASS Chromium: real ClassSchedules click interactions, insertion remapping and fixture undo/redo')
 }finally{await browser.close()}
