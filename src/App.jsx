@@ -1446,7 +1446,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       const following = existing.slice(index + 1).map(week => {
         const weekStart = addWeeks(week.weekStart, 1)
         const weekNumber = calendarWeekNumber(weekStart)
-        return { ...week, weekStart, weekNumber, title: !week.title || /^Vecka\\s+\\d+$/i.test(week.title) ? 'Vecka ' + weekNumber : week.title }
+        return { ...week, weekStart, weekNumber, title: !week.title || /^Vecka\s+\d+$/i.test(week.title) ? 'Vecka ' + weekNumber : week.title }
       })
       const weeksData = [...existing.slice(0, index + 1), inserted, ...following]
       return { ...previous, weeks: weeksData.length, weeksData }
