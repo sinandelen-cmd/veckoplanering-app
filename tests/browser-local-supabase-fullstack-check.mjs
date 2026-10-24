@@ -66,6 +66,8 @@ try{
  try {
   await page.getByText('Synlig text från verklig App.jsx-redigering').first().waitFor({timeout:20000})
  } catch (error) {
+  const rpcDebug=await fetch(base+'/rest/v1/rpc/get_public_annual_plan',{method:'POST',headers:{apikey:key,Authorization:'Bearer '+key,'content-type':'application/json',Accept:'application/vnd.pgrst.object+json'},body:JSON.stringify({slug_value:stored.public_slug})})
+  console.error('Student RPC debug:',rpcDebug.status,(await rpcDebug.text()).slice(0,1500))
   console.error('Student view diagnostic:', JSON.stringify({
    url:page.url(),
    headings:await page.locator('h1,h2,h3').allTextContents(),
