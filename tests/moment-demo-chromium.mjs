@@ -3,7 +3,7 @@ import {chromium} from 'playwright'
 
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']})
 try{
- const page=await browser.newPage({viewport:{width:1280,height:850}})
+ const page=await browser.newPage({viewport:{width:1280,height:850},hasTouch:true})
  const errors=[]
  page.on('pageerror',error=>errors.push(error.message))
  await page.route('**/*',route=>['127.0.0.1','localhost'].includes(new URL(route.request().url()).hostname)?route.continue():route.abort('blockedbyclient'))
