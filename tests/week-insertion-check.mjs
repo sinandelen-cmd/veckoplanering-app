@@ -68,7 +68,7 @@ function testWithPlan(name, initial, prompts, index, expected) {
 const consecutive = (start, count) => Array.from({length:count}, (_,i)=>week(addWeeks(start,i),'original-'+i))
 const planOf = (count, start='2026-01-05') => ({
   weeksData:consecutive(start,count), weeks:count, lessonsPerWeek:3,
-  classGroups:[{name:'A',startDate:'2026-01-05',days:['Måndag'],cancelledDates:['2026-02-02'],overrides:{'2026-02-09':{text:'Special'}}},{name:'B',startDate:'2026-01-05',days:['Fredag'],extraSlots:[{date:'2026-02-13'}],lessonTimes:{Fredag:['10:15']},overrides:{}}]
+  classGroups:[{name:'A',startDate:'2026-01-05',days:['Måndag'],cancelledDates:['2026-02-02'],overrides:{}},{name:'B',startDate:'2026-01-05',days:['Fredag'],extraSlots:[{date:'2026-02-13'}],lessonTimes:{Fredag:['10:15']},overrides:{}}]
 })
 testWithPlan('W17 insert 52nd week',planOf(51),['1'],0,(p,b)=>{
   assert.equal(p.weeks,52)
@@ -186,7 +186,7 @@ testWithPlan('W34 class override index stays unchanged',(()=>{const p=planOf(3);
   const after=buildClassSchedule(p,p.classGroups[0])
   assert.equal(before[1].override?.text,'Special')
   assert.equal(after[1].override?.text,'Special')
-  assert.notEqual(before[1].weekStart,after[1].weekStart)
+  assert.notEqual(before[1].lesson.id,after[1].lesson.id)
 })
 
 console.log('Actual insertion function: '+passed+' synthetic checks passed (not browser or integration tests)')
