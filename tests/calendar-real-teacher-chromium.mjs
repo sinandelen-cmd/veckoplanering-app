@@ -14,6 +14,14 @@ try {
  assert.equal((await read('8B-schedule'))[3].date,'2026-10-23')
  console.log('PASS teacher/student: globally scoped school closure affects only 8B')
 
+ // Read-only diagnostics must show saved lesson days and date-specific reasons.
+ const diagnostics=page.getByTestId('class-week-diagnostics')
+ await diagnostics.locator('summary').click()
+ await diagnostics.getByText(/Startdatum:/).waitFor()
+ await diagnostics.getByText(/Måndag 2026-10-19: 1 planerad/).waitFor()
+ await diagnostics.getByText(/Torsdag 2026-10-22: 1 planerad.*schemalagd dag/).waitFor()
+ assert.deepEqual(await read('teacher-plan'),base)
+ console.log('PASS teacher: read-only weekly diagnostics shows class days without changing plan')
  const add=async(type,start,end=start)=>{
    const toggle=page.getByRole('button',{name:/studiedag \/ halvdag \/ lov/})
    if((await toggle.getAttribute('aria-expanded'))!=='true')await toggle.click()
