@@ -122,4 +122,42 @@ assert.equal(afternoon[0].time, '13:10')
 assert.equal(afternoon[0].slot, 2)
 assert.equal(build(base, group('B'))[0].date, '2026-10-19')
 
+
+// Multiple overlapping half-days: cancelled slots must not duplicate lessons.
+// A fully cancelled day pushes every original lesson forward intact.
+const overlappingHalves = group('A', [
+  closure('Halvdag','2026-10-19',{cancelledLessons:1,cancelledFrom:'start'}),
+  closure('Halvdag','2026-10-19',{cancelledLessons:1,cancelledFrom:'end'}),
+])
+overlappingHalves.extraSlots = [{date:'2026-10-19'}]
+const overlapRows = build(base, overlappingHalves)
+assert.equal(dates(overlapRows).includes('2026-10-19'), false)
+assert.deepEqual(names(overlapRows), names(normal))
+assert.equal(new Set(names(overlapRows)).size, normal.length)
+
+// A long but supported interruption (52 weeks) must preserve ordering,
+// topics, and all source lessons, without altering the underlying plan.
+const extendedPlanSnapshot = JSON.stringify(base)
+const yearClosure = group('A',[{
+  type:'Lov',startDate:'2026-10-19',endDate:'2027-10-18'
+}])
+const yearRows = build(base, yearClosure)
+assert.equal(yearRows.length,normal.length)
+assert.deepEqual(names(yearRows),names(normal))
+assert.deepEqual(Array.from(yearRows,row=>row.lesson.topics[0].name),
+  Array.from(normal,row=>row.lesson.topics[0].name))
+assert.ok(yearRows[0].date > '2027-10-18')
+assert.equal(JSON.stringify(base),extendedPlanSnapshot)
+assert.deepEqual(dates(build(base,group('B'))),dates(normal))
+
+// A closure beyond the 104-extra-week safety horizon cannot be scheduled.
+// Verify the source lessons remain untouched; this is a documented limit,
+// not evidence that the unscheduled lessons were deleted.
+const beyondHorizon = build(base,group('A',[{
+  type:'Lov',startDate:'2026-10-19',endDate:'2030-01-01'
+}]))
+assert.equal(beyondHorizon.length,0)
+assert.deepEqual(base.weeksData[0].lessons.map(lesson=>lesson.name),names(normal))
+console.log('PASS overlap half-days, 52-week delay, source integrity and 104-week horizon boundary')
+
 console.log('Class scheduling regression checks: OK')
