@@ -486,4 +486,20 @@ testWithPlan('W32 noncolliding historical numeric orphan remains unchanged',(()=
   const p=planOf(3);p.classGroups[0].overrides={'99':{text:'Unmapped'}};return p
 })(),['1'],0,p=>assert.deepEqual(p.classGroups[0].overrides,{'99':{text:'Unmapped'}}))
 
+
+testWithPlan('W32 archived legacy key collision preserves both archived and orphaned values',(()=>{
+  const p=planOf(3)
+  p.classGroups[0].overrides={
+    '2':{text:'Valid original'},
+    '3':{text:'Orphan numeric'},
+    'legacy-unmapped:3':{text:'Existing archive'}
+  }
+  return p
+})(),['1'],0,p=>{
+  const values=p.classGroups[0].overrides
+  assert.equal(values['3']?.text,'Valid original')
+  assert.equal(values['legacy-unmapped:3']?.text,'Existing archive')
+  assert.equal(values['legacy-unmapped:3:1']?.text,'Orphan numeric')
+})
+
 console.log('Actual insertion function: '+passed+' synthetic checks passed (not browser or integration tests)')
