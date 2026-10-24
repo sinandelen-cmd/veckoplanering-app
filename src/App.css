@@ -3900,3 +3900,13 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .student-all-weeks-toggle{margin:12px 0 16px}
 .student-chapter-section[open]>.student-chapter-heading{border-bottom:1px solid #d5def0}
 @media print{.student-chapter-section{break-inside:avoid}.student-chapter-section>.student-chapter-heading{print-color-adjust:exact}.student-all-weeks-toggle{display:none}}
+
+/* Each chapter has its own consistent visual identity across views. */
+.student-chapter-heading.chapter-tone-0{background:#dce9ff;color:#183d7c;border-left:7px solid #3b73d1}
+.student-chapter-heading.chapter-tone-1{background:#e9dcff;color:#542b8a;border-left:7px solid #8c55d7}
+.student-chapter-heading.chapter-tone-2{background:#d5f4e6;color:#185e45;border-left:7px solid #26986a}
+.student-chapter-heading.chapter-tone-3{background:#ffe6ca;color:#79400f;border-left:7px solid #d88926}
+.student-chapter-heading.chapter-tone-4{background:#ffe0e7;color:#852c4c;border-left:7px solid #ce527e}
+.student-chapter-heading.chapter-tone-5{background:#d7f3f8;color:#145f72;border-left:7px solid #2599b0}
+.student-chapter-heading.chapter-tone-6{background:#f3efcd;color:#696018;border-left:7px solid #a89a2a}
+.student-chapter-heading.chapter-tone-7{background:#e4e7f0;color:#39476b;border-left:7px solid #6e81af}
