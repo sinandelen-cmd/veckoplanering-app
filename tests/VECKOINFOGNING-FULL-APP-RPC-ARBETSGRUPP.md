@@ -41,3 +41,10 @@ Datum: 2026-10-24. Endast feature-gren `feature/provtraning-infogad-vecka`, draf
 **Planstatus:** 7/8 kvalitetspaket (87,5 %), 1 kvar. Detta är inte ett påstående om total kodtäckning eller releaseklarhet. **Tidsbedömning:** 1–3 ytterligare fyrdubbla arbetsgrupper för riktig lokal Supabase-fullstack och end-to-end, möjligen fler om databasmodellen behöver återskapas.
 
 Ingen produktion, publicering eller merge.
+
+## Bekräftade gröna körningar och extra moment
+
+19. Granskade faktiskt Chromium-jobblogg: `83f0241` körde `tests/browser-real-app-check.mjs` och skrev **PASS** efter verklig App.jsx-inloggning och lärarbehörighetsfråga mot localhost-mock. Browser-run `40088992508` **success**.
+20. Lade till ett negativt verkligt App.jsx-inloggningstest: fel lösenord ska ge felmeddelande och behålla inloggningsvyn innan lyckad testinloggning. Detta är ett nytt teststeg; invänta slutlig CI för `bf5472a` eller senare.
+
+Tidigare kod- och SQL-körning `40088992498` på `83f0241` var också **success**, inklusive det anropbara RPC-kontraktstestet. Det är fortfarande en syntetisk funktion, inte produktions-RPC.
