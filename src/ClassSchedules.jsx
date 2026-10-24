@@ -223,7 +223,14 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", themes
     {group && <details className="class-schedule-help" data-testid="class-week-diagnostics"><summary>🔎 Varför är en klassvecka tom? Visa schemakontroll för {group.name}</summary>
       <p>Den här kontrollen visar sparade schemadagar och undantag utan att ändra något.</p>
       <p><strong>Startdatum:</strong> {group.startDate || plan.startDate || 'Saknas'} · <strong>Lektionsdagar:</strong> {(group.days || []).join(', ') || 'Inga valda'}</p>
-      {(plan.weeksData || []).filter(week => week?.weekStart && !week.hidden).slice(0, 8).map(week => {
+      {(() => {
+        const savedWeeks = (plan.weeksData || []).filter(week => week?.weekStart)
+        const savedByMonday = new Map(savedWeeks.map(week => [iso(monday(week.weekStart)), week]))
+        const earliest = savedWeeks.length ? savedWeeks.map(week => iso(monday(week.weekStart))).sort()[0] : iso(monday(plan.startDate))
+        return Array.from({length:8}, (_,index) => {
+        const weekMonday = nextDate(monday(earliest), index * 7)
+        return savedByMonday.get(iso(weekMonday)) || {weekStart:iso(weekMonday), missingSourceWeek:true}
+      }).map(week => {
         const weekMonday = monday(week.weekStart)
         const weekStart = iso(weekMonday)
         const weekEnd = iso(nextDate(weekMonday, 6))
@@ -245,11 +252,14 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", themes
           if (!reasons.length) reasons.push('schemalagd dag')
           return {date, day, slots:regular + extras, reasons:reasons.join('; ')}
         })
-        return <div key={weekStart} style={{marginBottom:12}}><strong>Vecka {week.weekNumber || weekStart} ({weekStart}–{weekEnd}): {scheduled.length} lektioner</strong>
-          {scheduled.length === 0 && <p>Ingen lektion placerad. Kontrollera dagarna nedan.</p>}
+        const weekNumber = (() => { const thursday = nextDate(weekMonday, 3); const firstThursday = new Date(thursday.getFullYear(),0,4,12); const firstMonday = monday(iso(firstThursday)); return 1 + Math.round((weekMonday - firstMonday) / (7 * 86400000)) })()
+        return <div key={weekStart} style={{marginBottom:12}}><strong>Vecka {weekNumber} ({weekStart}–{weekEnd}): {scheduled.length} lektioner</strong>
+          {week.missingSourceWeek && <p role="status">Veckan saknas i Grundplaneringens sparade veckounderlag. Schemalagda dagar visas nedan, men inga lektioner skapas eller flyttas automatiskt.</p>}
+          {!week.missingSourceWeek && week.hidden && <p>Veckan är markerad som dold i Grundplanering.</p>}
+          {scheduled.length === 0 && !week.missingSourceWeek && <p>Ingen lektion placerad. Kontrollera dagarna nedan.</p>}
           <ul>{dayRows.map(row => <li key={row.date}>{row.day} {row.date}: {row.slots} planerad(e) plats(er) – {row.reasons}</li>)}</ul>
         </div>
-      })}
+      })})()}
     </details>}
     {unscheduledGroups.length>0 && <p role="alert" className="class-mini-warning">Välj lektionsdagar för {unscheduledGroups.map(g=>g.name).join(', ')} via Schema.</p>}
     {showClassMenu && group && <div className="class-mini-panel">
