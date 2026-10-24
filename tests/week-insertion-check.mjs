@@ -345,11 +345,14 @@ testWithPlan('W32 legacy nonnumeric override keys are preserved',(()=>{
   assert.deepEqual(p.classGroups[0].overrides['legacy-2025'],{text:'Legacy'})
   assert.equal(buildClassSchedule(p,p.classGroups[0])[2].override?.text,'Second lesson')
 })
-testWithPlan('W32 legacy out-of-range index is preserved',(()=>{
+testWithPlan('W32 legacy out-of-range index is preserved safely in archive',(()=>{
   const p=planOf(3)
   p.classGroups[0].overrides={'999':{text:'Orphan'}}
   return p
-})(),['1'],0,p=>assert.deepEqual(p.classGroups[0].overrides['999'],{text:'Orphan'}))
+})(),['1'],0,p=>{
+  assert.equal(p.classGroups[0].overrides['999'],undefined)
+  assert.deepEqual(p.classGroups[0].overrides['legacy-unmapped:999'],{text:'Orphan'})
+})
 testWithPlan('W33 cancelled class day keeps later override on original lesson',(()=>{
   const p=planOf(5)
   p.classGroups[0].cancelledDates=['2026-01-12']
@@ -515,6 +518,16 @@ testWithPlan('W32 archived legacy key collision preserves both archived and orph
   assert.equal(values['3']?.text,'Valid original')
   assert.equal(values['legacy-unmapped:3']?.text,'Existing archive')
   assert.equal(values['legacy-unmapped:3:1']?.text,'Orphan numeric')
+})
+
+testWithPlan('W36 orphan numeric ordinal that becomes valid after insertion stays archived',(()=>{
+  const p=planOf(2)
+  p.classGroups[0].overrides={'2':{text:'Old orphan'}}
+  return p
+})(),['1'],0,p=>{
+  assert.equal(p.classGroups[0].overrides['2'],undefined)
+  assert.equal(p.classGroups[0].overrides['legacy-unmapped:2']?.text,'Old orphan')
+  assert.equal(buildClassSchedule(p,p.classGroups[0]).some(item=>item.override?.text==='Old orphan'),false)
 })
 
 console.log('Actual insertion function: '+passed+' synthetic checks passed (not browser or integration tests)')
