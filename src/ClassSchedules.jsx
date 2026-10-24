@@ -53,8 +53,12 @@ export function buildClassSchedule(plan, group) {
       const regularCount = days.includes(day) ? 1 : 0
       const scheduledCount = regularCount + extraSlots.filter(slot => slot.date === dateKey).length
       const cancelledCount = dayClosures.reduce((total, event) => total + (event.type === 'Halvdag' ? Math.max(1, Number(event.cancelledLessons) || 1) : 0), 0)
-      const count = Math.max(0, scheduledCount - cancelledCount)
-      for (let n = 0; n < count; n++) slots.push({date: dateKey, day, slot: n + 1, time: group.lessonTimes?.[day]?.[n] || ''})
+      // Keep the original slot number and time when the first lessons of a
+      // half-day are cancelled; otherwise the remaining lesson moves to the wrong time.
+      const cancelFromStart = dayClosures.some(event => event.type === 'Halvdag' && event.cancelledFrom === 'start')
+      const firstRemaining = cancelFromStart ? Math.min(scheduledCount, cancelledCount) : 0
+      const lastRemaining = cancelFromStart ? scheduledCount : Math.max(0, scheduledCount - cancelledCount)
+      for (let n = firstRemaining; n < lastRemaining; n++) slots.push({date: dateKey, day, slot: n + 1, time: group.lessonTimes?.[day]?.[n] || ''})
     }
     for (const slot of slots) {
       const source = scheduledQueue[cursor]
