@@ -104,6 +104,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
   const [closureStart, setClosureStart] = React.useState('')
   const [closureEnd, setClosureEnd] = React.useState('')
   const [closureNote, setClosureNote] = React.useState('')
+  const [archiveTargets, setArchiveTargets] = React.useState({})
   const group = groups[selected]
   const lessonsPerWeek = group => (group.days || []).length
   const schedule = React.useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
