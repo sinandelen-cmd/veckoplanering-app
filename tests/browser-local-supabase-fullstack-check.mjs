@@ -65,7 +65,7 @@ try{
  // browser to verify the published text independently of archive-toggle UX.
  await page.locator('details.student-history-folder, details.student-chapter-section, details.student-week-accordion').evaluateAll(nodes=>nodes.forEach(node=>{node.open=true}))
  try {
-  await page.getByText('Synlig text från verklig App.jsx-redigering').first().waitFor({timeout:20000})
+  await page.locator('main .week-content').filter({hasText:'Synlig text från verklig App.jsx-redigering'}).first().waitFor({state:'attached',timeout:20000})
  } catch (error) {
   const rpcDebug=await fetch(base+'/rest/v1/rpc/get_public_annual_plan',{method:'POST',headers:{apikey:key,Authorization:'Bearer '+key,'content-type':'application/json',Accept:'application/vnd.pgrst.object+json'},body:JSON.stringify({slug_value:stored.public_slug})})
   console.error('Student RPC debug:',rpcDebug.status,(await rpcDebug.text()).slice(0,1500))
