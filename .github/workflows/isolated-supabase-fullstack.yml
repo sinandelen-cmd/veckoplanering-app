@@ -41,16 +41,25 @@ jobs:
           # "toomanyrequests: Data limit exceeded". Pull equivalent tagged
           # Supabase images from Docker Hub and retag them for local CLI use.
           # A failed mirror pull does not conceal a later Supabase startup error.
+          # Exact source tags from supabase/cli v2.81.3:
+          # pkg/config/templates/Dockerfile (not guessed from registry errors).
+          # Map upstream Docker Hub images to the CLI's public ECR aliases.
           images=(
-            "postgres:17.6.1.095"
+            "supabase/postgres:17.6.1.095|postgres:17.6.1.095"
+            "library/kong:2.8.1|kong:2.8.1"
+            "postgrest/postgrest:v14.5|postgrest:v14.5"
+            "supabase/gotrue:v2.187.0|gotrue:v2.187.0"
+            "supabase/realtime:v2.78.10|realtime:v2.78.10"
+            "supabase/storage-api:v1.41.8|storage-api:v1.41.8"
           )
-          for image in "${images[@]}"; do
-            name="${image%%:*}"
-            tag="${image#*:}"
-            if timeout 180s docker pull "supabase/${name}:${tag}"; then
-              docker tag "supabase/${name}:${tag}" "public.ecr.aws/supabase/${name}:${tag}"
+          for entry in "${images[@]}"; do
+            source="${entry%%|*}"
+            target="public.ecr.aws/supabase/${entry#*|}"
+            if timeout 90s docker pull "$source"; then
+              docker tag "$source" "$target"
+              echo "Prefetched verified CLI source: $source"
             else
-              echo "::warning title=Image mirror unavailable::Could not prefetch ${image}; normal Supabase startup will retry ECR."
+              echo "::warning title=Image mirror unavailable::Could not prefetch $source; Supabase CLI will attempt its normal registry."
             fi
           done
       - name: Start disposable Docker Supabase fullstack (never linked to production)
