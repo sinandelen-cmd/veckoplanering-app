@@ -28,5 +28,9 @@ try{
  assert.equal(await page.getByTestId('plan-title').textContent(),' Redigerad')
  assert.equal(await page.getByTestId('can-redo').textContent(),'false')
  assert.equal(await page.getByRole('button',{name:'Test: gör om'}).isDisabled(),true)
+ await page.getByRole('button',{name:'Test: ångra'}).click()
+ assert.equal(await page.getByTestId('plan-title').textContent(),'')
+ await page.getByRole('button',{name:'Test: gör om'}).click()
+ assert.equal(await page.getByTestId('plan-title').textContent(),' Redigerad')
  console.log('PASS Chromium: real ClassSchedules click interactions, insertion remapping and production usePlanHistory undo/redo')
 }finally{await browser.close()}
