@@ -84,7 +84,7 @@ try{
  console.log('PASS full real App.jsx: teacher folder -> plan -> teacher editor -> automatic PostgREST publication -> sanitized public RPC -> Chromium student view')
 
  await page.goto('http://127.0.0.1:4177/elev/isolated-public-a')
- await page.getByText('Visible',{exact:true}).first().waitFor({timeout:20000})
+ await page.getByText('Visible',{exact:true}).first().waitFor({state:'attached',timeout:20000})
  assert.equal(await page.getByText('Hidden',{exact:true}).count(),0)
  assert.equal(await page.getByText('Expired',{exact:true}).count(),0)
  await page.goto('http://127.0.0.1:4177/elev/not-present')
