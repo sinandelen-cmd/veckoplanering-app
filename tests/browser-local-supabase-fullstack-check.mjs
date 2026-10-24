@@ -61,6 +61,8 @@ try{
  assert.ok(!JSON.stringify(studentDoc).includes('Privat veckoinnehåll'),'Hidden week content must never publish')
  assert.ok(stored.public_slug,'App.jsx must assign student link')
  await page.goto('http://127.0.0.1:4177/elev/'+encodeURIComponent(stored.public_slug))
+ const earlierWeeks = page.getByRole('button',{name:/Visa tidigare veckor/})
+ if(await earlierWeeks.count()) await earlierWeeks.click()
  await page.getByText('Synlig text från verklig App.jsx-redigering').first().waitFor({timeout:20000})
  assert.equal(await page.getByText('Privat veckoinnehåll').count(),0)
  console.log('PASS full real App.jsx: teacher folder -> plan -> teacher editor -> automatic PostgREST publication -> sanitized public RPC -> Chromium student view')
