@@ -33,7 +33,7 @@ jobs:
           cp tests/sql/local-supabase-fullstack-fixture.sql "$(find supabase/migrations -type f -name '*isolated_fullstack_fixture.sql' | head -1)"
           test -s "$(find supabase/migrations -type f -name '*isolated_fullstack_fixture.sql' | head -1)"
       - name: Start disposable Docker Supabase fullstack (never linked to production)
-        run: npx --yes supabase@2.81.3 start --exclude realtime,storage-api,imgproxy,studio,postgres-meta,edge-runtime,logflare,vector,supavisor,mailpit
+        run: npx --yes supabase@2.81.3 start --exclude realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor --exclude realtime,storage-api,imgproxy,studio,postgres-meta,edge-runtime,logflare,vector,supavisor,mailpit
       - name: Capture local-only API endpoint and ephemeral anon key
         run: |
           npx --yes supabase@2.81.3 status -o env > /tmp/isolated-supabase-status.env
