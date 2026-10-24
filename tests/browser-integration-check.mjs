@@ -22,5 +22,11 @@ try{
  await page.getByRole('button',{name:'8B',exact:true}).click()
  await page.getByRole('button',{name:/Visa enskilda ändringar/}).click()
  await page.getByText('Klass B ursprung').first().waitFor()
- console.log('PASS Chromium: real ClassSchedules click interactions, insertion remapping and fixture undo/redo')
+ await page.getByRole('button',{name:'Test: ångra'}).click()
+ assert.equal(await page.getByTestId('week-count').textContent(),'3')
+ await page.getByRole('button',{name:'Test: redigera titel'}).click()
+ assert.equal(await page.getByTestId('plan-title').textContent(),' Redigerad')
+ assert.equal(await page.getByTestId('can-redo').textContent(),'false')
+ assert.equal(await page.getByRole('button',{name:'Test: gör om'}).isDisabled(),true)
+ console.log('PASS Chromium: real ClassSchedules click interactions, insertion remapping and production usePlanHistory undo/redo')
 }finally{await browser.close()}
