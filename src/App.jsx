@@ -540,7 +540,7 @@ function planFromRow(row) {
 
 // Elevkopian innehåller bara fält som faktiskt visas för elever.
 // En spärrlista för teacherNotes räcker inte: andra interna fält kan tillkomma.
-function sanitizeForStudents(plan) {
+export function sanitizeForStudents(plan) {
   const sourceWeeks = Array.isArray(plan?.weeksData) ? (plan.entryType === 'dag' && plan.weeksData.length ? displayWeeks(plan) : plan.weeksData) : makeWeeks(plan)
   return {
     kind: 'arsplanering-v2',
@@ -751,7 +751,7 @@ function ImportantDatesForWeek({ week, plan }) {
   </div>
 }
 
-function StudentView({ plan, error, preview = false, printPage = null, printWeekStart = null, initialClass = "", hideSelector = false }) {
+export function StudentView({ plan, error, preview = false, printPage = null, printWeekStart = null, initialClass = "", hideSelector = false }) {
   const [page, setPage] = useState(0)
   const [singlePrintWeek, setSinglePrintWeek] = useState(null)
   const [previewClass, setPreviewClass] = useState(initialClass)
