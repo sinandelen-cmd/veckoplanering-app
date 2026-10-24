@@ -42,7 +42,7 @@ const sourcePlan={
   {weekStart:'2026-01-05',weekNumber:2,title:'Vecka 2',lessons:[{name:'Original',topics:[]}]},
   {weekStart:'2026-01-12',weekNumber:3,title:'Vecka 3',publishDate:'2026-01-12',hideDate:'2026-02-01',lessons:[{name:'Nästa',topics:[]}]}
  ],
- classGroups:[{name:'8A',startDate:'2026-01-05',days:['Måndag'],overrides:{'1':{text:'Klassens ursprungliga text'}},lessonTimes:{Måndag:['08:00']}}],
+ classGroups:[{name:'8A',startDate:'2026-01-05',days:['Måndag'],overrides:{'1':{text:'Klassens ursprungliga text'},'legacy-unmapped:99':{text:'Arkiverad privat anpassning'}},lessonTimes:{Måndag:['08:00']}}],
  privateTeacherOnly:'secret'
 }
 const planFromRow=()=>sourcePlan
@@ -61,6 +61,8 @@ assert.equal(database.get(row.id).published,true)
 const frozen=database.get(row.id).published_content
 const snapshot=JSON.parse(frozen)
 assert.equal(snapshot.classGroups[0].overrides['1'].text,'Klassens ursprungliga text')
+assert.equal(Object.keys(snapshot.classGroups[0].overrides).some(k=>k.startsWith('legacy-unmapped:')),false,'Archived unmapped overrides must not be sent to students')
+assert.equal(sourcePlan.classGroups[0].overrides['legacy-unmapped:99'].text,'Arkiverad privat anpassning','Teacher archive remains intact')
 assert.equal(snapshot.weeksData[1].hideDate,'2026-02-01')
 assert.equal(Object.hasOwn(snapshot,'privateTeacherOnly'),false)
 assert.equal(status,'Planeringen är publicerad för elever.')
