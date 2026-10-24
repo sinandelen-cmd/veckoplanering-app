@@ -220,6 +220,37 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", themes
       <button type="button" className="class-mini-schema" disabled={!groups.length} aria-expanded={showClassMenu} onClick={()=>{setShowClassMenu(v=>!v);setCompare(false);setShowClassDetails(false)}}>▦ Schema</button>
     </div>
     {addingClass && <div className="class-mini-new"><label>Ny klass <input value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addClass();if(name.trim())setAddingClass(false)}}} placeholder="T.ex. EK26A" /></label><button type="button" disabled={!name.trim()||groups.some(g=>g.name.toLocaleLowerCase('sv')===name.trim().toLocaleLowerCase('sv'))} onClick={()=>{addClass();setAddingClass(false);setShowClassMenu(true)}}>Lägg till</button></div>}
+    {group && <details className="class-schedule-help" data-testid="class-week-diagnostics"><summary>🔎 Varför är en klassvecka tom? Visa schemakontroll för {group.name}</summary>
+      <p>Den här kontrollen visar sparade schemadagar och undantag utan att ändra något.</p>
+      <p><strong>Startdatum:</strong> {group.startDate || plan.startDate || 'Saknas'} · <strong>Lektionsdagar:</strong> {(group.days || []).join(', ') || 'Inga valda'}</p>
+      {(plan.weeksData || []).filter(week => week?.weekStart && !week.hidden).slice(0, 8).map(week => {
+        const weekMonday = monday(week.weekStart)
+        const weekStart = iso(weekMonday)
+        const weekEnd = iso(nextDate(weekMonday, 6))
+        const scheduled = schedule.filter(item => item.date >= weekStart && item.date <= weekEnd)
+        const firstDate = group.startDate || plan.startDate || ''
+        const dayRows = DAYS.map((day, offset) => {
+          const date = iso(nextDate(weekMonday, offset))
+          const regular = (group.days || []).includes(day) ? 1 : 0
+          const extras = (group.extraSlots || []).filter(slot => slot.date === date).length
+          const exceptions = [...(plan.schoolClosures || []).filter(event => !event.classNames || event.classNames.includes(group.name)), ...(group.schoolClosures || [])].filter(event => event?.startDate && date >= event.startDate && date <= (event.endDate || event.startDate))
+          const cancelled = (group.cancelledDates || []).includes(date)
+          const halfCancelled = exceptions.reduce((n, event) => n + (event.type === 'Halvdag' ? Math.max(1, Number(event.cancelledLessons) || 1) : 0), 0)
+          const reasons = []
+          if (firstDate && date < firstDate) reasons.push('före startdatum')
+          if (!regular && !extras) reasons.push('ingen lektionsdag')
+          if (cancelled) reasons.push('inställt datum')
+          if (exceptions.some(event => event.type !== 'Halvdag')) reasons.push('ledigt: ' + exceptions.filter(event => event.type !== 'Halvdag').map(event => event.type || event.name || 'Skolledigt').join(', '))
+          if (halfCancelled) reasons.push('halvdag: ' + halfCancelled + ' inställd(a) lektionsplats(er)')
+          if (!reasons.length) reasons.push('schemalagd dag')
+          return {date, day, slots:regular + extras, reasons:reasons.join('; ')}
+        })
+        return <div key={weekStart} style={{marginBottom:12}}><strong>Vecka {week.weekNumber || weekStart} ({weekStart}–{weekEnd}): {scheduled.length} lektioner</strong>
+          {scheduled.length === 0 && <p>Ingen lektion placerad. Kontrollera dagarna nedan.</p>}
+          <ul>{dayRows.map(row => <li key={row.date}>{row.day} {row.date}: {row.slots} planerad(e) plats(er) – {row.reasons}</li>)}</ul>
+        </div>
+      })}
+    </details>}
     {unscheduledGroups.length>0 && <p role="alert" className="class-mini-warning">Välj lektionsdagar för {unscheduledGroups.map(g=>g.name).join(', ')} via Schema.</p>}
     {showClassMenu && group && <div className="class-mini-panel">
       <div className="class-mini-panel-title"><strong>{group.name} · Lektionsdagar</strong><button type="button" className="secondary" onClick={()=>setShowClassMenu(false)} aria-label="Stäng schema">✕</button></div>
