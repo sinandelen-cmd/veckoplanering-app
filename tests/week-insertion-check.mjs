@@ -313,4 +313,60 @@ testWithPlan('W23 publication metadata does not leak to inserted week',(()=>{
   console.log('PASS W27 redo invalidated by new edit (history effect transition emulated)')
 }
 
+
+testWithPlan('W32 two classes remap independently',(()=>{
+  const p=planOf(4)
+  p.classGroups[0].overrides={'1':{text:'A original second'}}
+  p.classGroups[1].overrides={'1':{text:'B original second'}}
+  return p
+})(),['1'],0,(p,b)=>{
+  assert.equal(buildClassSchedule(p,p.classGroups[0])[2].override?.text,'A original second')
+  assert.equal(buildClassSchedule(p,p.classGroups[1])[2].override?.text,'B original second')
+  assert.equal(buildClassSchedule(p,p.classGroups[0])[1].override,null)
+  assert.equal(buildClassSchedule(p,p.classGroups[1])[1].override,null)
+  assert.deepEqual(b.classGroups[0].overrides,{'1':{text:'A original second'}})
+})
+testWithPlan('W32 overrides before insertion stay in place',(()=>{
+  const p=planOf(3)
+  p.classGroups[0].overrides={'0':{text:'Before insertion'}}
+  return p
+})(),['1'],0,p=>{
+  assert.equal(buildClassSchedule(p,p.classGroups[0])[0].override?.text,'Before insertion')
+  assert.deepEqual(p.classGroups[0].overrides,{'0':{text:'Before insertion'}})
+})
+testWithPlan('W32 legacy nonnumeric override keys are preserved',(()=>{
+  const p=planOf(3)
+  p.classGroups[0].overrides={'legacy-2025':{text:'Legacy'},'1':{text:'Second lesson'}}
+  return p
+})(),['1'],0,p=>{
+  assert.deepEqual(p.classGroups[0].overrides['legacy-2025'],{text:'Legacy'})
+  assert.equal(buildClassSchedule(p,p.classGroups[0])[2].override?.text,'Second lesson')
+})
+testWithPlan('W32 legacy out-of-range index is preserved',(()=>{
+  const p=planOf(3)
+  p.classGroups[0].overrides={'999':{text:'Orphan'}}
+  return p
+})(),['1'],0,p=>assert.deepEqual(p.classGroups[0].overrides['999'],{text:'Orphan'}))
+testWithPlan('W33 cancelled class day keeps later override on original lesson',(()=>{
+  const p=planOf(5)
+  p.classGroups[0].cancelledDates=['2026-01-12']
+  p.classGroups[0].overrides={'1':{text:'Originally Jan 19'}}
+  return p
+})(),['1'],0,(p,b)=>{
+  const before=buildClassSchedule(b,b.classGroups[0])
+  const after=buildClassSchedule(p,p.classGroups[0])
+  const old=before.find(item=>item.override?.text==='Originally Jan 19')
+  const moved=after.find(item=>item.override?.text==='Originally Jan 19')
+  assert.equal(old.lesson.id,moved.lesson.id)
+  assert.equal(moved.weekStart,'2026-01-26')
+})
+testWithPlan('W25 undo snapshot restores original class override indices',(()=>{
+  const p=planOf(3)
+  p.classGroups[0].overrides={'1':{text:'Original'}}
+  return p
+})(),['1'],0,(p,b)=>{
+  assert.deepEqual(JSON.parse(JSON.stringify(b)).classGroups[0].overrides,{'1':{text:'Original'}})
+  assert.deepEqual(p.classGroups[0].overrides,{'2':{text:'Original'}})
+})
+
 console.log('Actual insertion function: '+passed+' synthetic checks passed (not browser or integration tests)')
