@@ -2748,16 +2748,15 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
   const changeLessons = next => onChange?.({ lessons: next, ...(entryType === 'dag' ? { daysCustomized: true } : {}) })
   const changeLesson = (i, next) => changeLessons(lessons.map((lesson, index) => index === i ? next : lesson))
   const normalizeLessonOrder = items => items.map((lesson, index) => ({ ...lesson, name: `Lektion ${index + 1}` }))
-  const moveLesson = (index, direction) => {
+  const moveAssessment = (index, direction) => {
     const target = index + direction
-    if (target < 0 || target >= lessons.length) return
-    const next = [...lessons]
-    const sourceDay = next[index].day
-    const targetDay = next[target].day
-    ;[next[index], next[target]] = [next[target], next[index]]
-    next[index] = { ...next[index], day: sourceDay }
-    next[target] = { ...next[target], day: targetDay }
-    changeLessons(normalizeLessonOrder(next))
+    if (target < 0 || target >= lessons.length || !lessons[index]?.assessment || lessons[target]?.assessment) return
+    const next = lessons.map(lesson => ({...lesson}))
+    // Move only the assessment. Every ordinary moment, its pages, tasks
+    // and links stays with its lesson; no content is swapped or deleted.
+    next[target].assessment = next[index].assessment
+    next[index].assessment = null
+    changeLessons(next)
   }
   return <div className="lessons">
     {lessons.map((lesson, i) => ({ lesson, i })).sort((a, b) => editable ? a.i - b.i : (WEEKDAYS.indexOf(a.lesson.day || a.lesson.name) + 5) % 5 - (WEEKDAYS.indexOf(b.lesson.day || b.lesson.name) + 5) % 5).map(({ lesson, i }) => <section className="lesson" key={i}>
@@ -2774,7 +2773,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
             return <>{showDay && <span>{dayLabel}</span>}{showDay && showLesson && ' · '}{showLesson && <span>{name}</span>}{lesson.assessment && <> · <span className="lesson-heading-assessment">{lesson.assessment.type === 'Egen benämning' ? (lesson.assessment.customType || 'Prov') : (lesson.assessment.type || 'Prov')}</span></>}{lessonDayDate(week.weekStart, day) && <span className="lesson-day-date"> · {lessonDayDate(week.weekStart, day)}</span>}</>
           })()}
         </h4>}
-        {editable && entryType !== 'dag' && <div className="lesson-reorder-controls"><button type="button" disabled={i === 0} aria-label={`Flytta lektion ${i + 1} uppåt`} onClick={() => moveLesson(i, -1)}>↑ Flytta upp</button><button type="button" disabled={i === lessons.length - 1} aria-label={`Flytta lektion ${i + 1} nedåt`} onClick={() => moveLesson(i, 1)}>↓ Flytta ned</button></div>}
+        {editable && !!lesson.assessment && <div className="lesson-reorder-controls"><button type="button" disabled={i === 0 || !!lessons[i-1]?.assessment} aria-label={`Flytta prov från lektion ${i + 1} uppåt`} onClick={() => moveAssessment(i, -1)}>↑ Prov</button><button type="button" disabled={i === lessons.length - 1 || !!lessons[i+1]?.assessment} aria-label={`Flytta prov från lektion ${i + 1} nedåt`} onClick={() => moveAssessment(i, 1)}>↓ Prov</button></div>}
         {editable && <button type="button" className="remove-small" onClick={() => { if (!(lesson.topics || []).some(topic => topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm(entryType === 'dag' ? 'Ta bort dagen och allt innehåll i den?' : 'Ta bort lektionen och allt innehåll i den?')) changeLessons(entryType === 'dag' ? lessons.filter((_, index) => index !== i) : normalizeLessonOrder(lessons.filter((_, index) => index !== i))) }}>× Ta bort {entryType === 'dag' ? 'dag' : 'lektion'}</button>}
       </div>
       {lesson.assessment && <div className="lesson-assessment-card" role="note">
