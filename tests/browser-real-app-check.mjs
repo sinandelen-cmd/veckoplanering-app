@@ -46,6 +46,7 @@ try {
  assert.ok(requests.includes('/auth/v1/token'),'Real App login must call isolated Auth API')
  await page.getByText('Kontrollerar lärarbehörighet…').waitFor({state:'hidden',timeout:15000})
  assert.ok(requests.includes('/rest/v1/teacher_access'),'Real App must verify isolated teacher access')
+ for(let i=0;i<50&&!requests.includes('/rest/v1/veckoplanering');i++)await page.waitForTimeout(100)
  assert.ok(requests.includes('/rest/v1/veckoplanering'),'Real App must fetch isolated teacher plans')
  assert.equal(requests.some(s=>s.startsWith('BLOCKED EXTERNAL')),false,'App must not call external URLs')
  console.log('PASS Chromium real App.jsx login and teacher access, strictly isolated HTTP mocks; no real GoTrue/PostgREST')
