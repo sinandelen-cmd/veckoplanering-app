@@ -25,6 +25,11 @@ try {
  assert.equal(await page.locator('#student-week-2026-10-19').getByText('Moment 1').count(),1)
  assert.equal(await page.locator('#student-week-2026-10-19').getByText('Moment 4').count(),1)
  console.log('PASS real StudentView 8C: half-day retains content')
+ // 8E: three consecutive moments from separate base lessons appear on Monday.
+ await switchClass('8E')
+ const classWeek=page.locator('#student-week-2026-10-19')
+ for(const name of ['Moment 1','Moment 2','Moment 3','Moment 4']) assert.equal(await classWeek.getByText(name,{exact:true}).count(),1)
+ console.log('PASS real StudentView 8E: 3 Monday moments and 2 Thursday moments across base lesson boundaries')
  // 8D: study day moves first lesson to Tuesday, retaining all source content.
  await switchClass('8D')
  assert.equal(await page.locator('#student-week-2026-10-19').getByText('Moment 1').count(),1)
