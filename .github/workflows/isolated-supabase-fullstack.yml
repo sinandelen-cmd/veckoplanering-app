@@ -3,6 +3,9 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+concurrency:
+  group: isolated-supabase-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   fullstack:
     runs-on: ubuntu-latest
