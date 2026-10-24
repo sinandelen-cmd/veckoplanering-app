@@ -64,6 +64,18 @@ const longClosure = build(base, group('A', [{
 assert.deepEqual(dates(longClosure), ['2026-10-26','2026-10-27','2026-10-28','2026-10-29'])
 assert.deepEqual(names(longClosure), names(normal))
 
+// Two meetings on one day: morning and afternoon cancellations retain the original slot.
+for (const [cancelledFrom, expectedSlot] of [['start', 2], ['end', 1]]) {
+  const twoSlots = group('A', [closure('Halvdag', '2026-10-19', {
+    cancelledLessons: 1, cancelledFrom
+  })])
+  twoSlots.extraSlots = [{date:'2026-10-19'}]
+  const rows = build(base, twoSlots)
+  assert.equal(rows[0].date, '2026-10-19')
+  assert.equal(rows[0].slot, expectedSlot)
+  assert.deepEqual(names(rows), names(normal))
+}
+
 // The 104-week safety horizon must terminate when a class has no scheduled weekdays.
 const empty = build(base, {name:'C', days:[], schoolClosures:[]})
 assert.equal(empty.length, 0)
