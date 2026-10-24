@@ -40,6 +40,22 @@ jobs:
           echo "::add-mask::$ANON_KEY"
       - name: Real GoTrue Auth, PostgREST, owner RLS and public RPC contract
         run: node tests/local-supabase-fullstack-check.mjs
+      - name: Install browser test runner and Chromium
+        run: |
+          npm ci
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Start real App.jsx against disposable local Supabase
+        run: |
+          VITE_SUPABASE_URL="$ISOLATED_SUPABASE_URL" VITE_SUPABASE_ANON_KEY="$ISOLATED_SUPABASE_ANON_KEY" npm run dev -- --host 127.0.0.1 --port 4177 > /tmp/isolated-fullstack-app.log 2>&1 &
+          for i in $(seq 1 50); do
+            if curl -fsS http://127.0.0.1:4177/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/isolated-fullstack-app.log
+          exit 1
+      - name: Real Chromium teacher login and public student RPC end-to-end
+        run: node tests/browser-local-supabase-fullstack-check.mjs
       - name: Stop isolated Supabase stack
         if: always()
         run: npx --yes supabase@2.81.3 stop --no-backup || true
