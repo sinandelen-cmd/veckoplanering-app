@@ -374,9 +374,12 @@ testWithPlan('W32 legacy nonnumeric override keys are preserved',(()=>{
   const p=planOf(3)
   p.classGroups[0].overrides={'legacy-2025':{text:'Legacy'},'1':{text:'Second lesson'}}
   return p
-})(),['1'],0,p=>{
+})(),['1'],0,(p,b)=>{
   assert.deepEqual(p.classGroups[0].overrides['legacy-2025'],{text:'Legacy'})
-  assert.equal(buildClassSchedule(p,p.classGroups[0])[2].override?.text,'Second lesson')
+  const original=buildClassSchedule(b,b.classGroups[0])[1]
+  const moved=buildClassSchedule(p,p.classGroups[0]).find(item=>item.lesson.id===original.lesson.id)
+  assert.ok(moved)
+  assert.equal(moved.override?.text,'Second lesson')
 })
 testWithPlan('W32 legacy out-of-range index is preserved safely in archive',(()=>{
   const p=planOf(3)
