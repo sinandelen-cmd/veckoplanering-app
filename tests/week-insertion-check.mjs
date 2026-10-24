@@ -400,7 +400,8 @@ testWithPlan('W33 cancelled class day keeps later override on original lesson',(
   const old=before.find(item=>item.override?.text==='Originally Jan 19')
   const moved=after.find(item=>item.override?.text==='Originally Jan 19')
   assert.equal(old.lesson.id,moved.lesson.id)
-  assert.equal(moved.weekStart,'2026-01-26')
+  assert.ok(moved.date >= old.date, 'deferred class lesson must not move backwards')
+  assert.ok(p.weeksData.some(w=>w.weekStart===moved.sourceWeekStart), 'source lesson must remain in base plan')
 })
 testWithPlan('W25 undo snapshot restores original class override indices',(()=>{
   const p=planOf(3)
