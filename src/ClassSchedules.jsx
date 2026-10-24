@@ -73,8 +73,9 @@ export function remapClassOverridesAfterInsertion(previous, next, insertAfterInd
       remapped[String(targetItem.lessonNumber - 1)] = value
     }
     for (const [key, value] of unresolved) {
-      if (!Object.hasOwn(remapped, key)) { remapped[key] = value; continue }
-      // Preserve the old value without assigning it to a different lesson.
+      // Always archive unmatched numeric ordinals: an orphan index that is not
+      // colliding today may become a valid lesson after later insertions.
+      // Preserve its data without silently applying it to the wrong lesson.
       let legacyKey = 'legacy-unmapped:' + key
       let suffix = 1
       while (Object.hasOwn(remapped, legacyKey)) legacyKey = 'legacy-unmapped:' + key + ':' + suffix++
