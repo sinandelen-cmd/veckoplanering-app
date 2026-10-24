@@ -898,7 +898,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
       {renderStudentChapterGroups(activeStudentGroups)}
     </section>
   </main>
-  {false && printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">
+  {printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">
     {Array.from({ length: printGroups.length }, (_, index) => <StudentView key={index} plan={plan} preview={preview} printPage={index} printWeekStart={singlePrintWeek} />)}
   </div>}
 </>
