@@ -99,7 +99,25 @@ try {
 
  await page.getByText(/8A börjar 2026-11-02/).waitFor()
  assert.equal((await read('8A-schedule'))[0].date,'2026-11-02')
- await page.getByRole('button',{name:/Använd grundplaneringens startdatum för 8A/}).click()
+ // Merely switching between class tabs must never change either saved start date.
+ const beforeSwitch=await read('teacher-plan')
+ await page.getByRole('button',{name:'8B',exact:true}).click()
+ await page.getByRole('button',{name:'8A',exact:true}).click()
+ assert.deepEqual(await read('teacher-plan'),beforeSwitch)
+ assert.equal((await read('8A-schedule'))[0].date,'2026-11-02')
+ console.log('PASS teacher: switching 8A/8B preserves all saved class start dates')
+ // The alignment action must require explicit consent; cancel must preserve data.
+ const alignButton=page.getByRole('button',{name:/Använd grundplaneringens startdatum för 8A/})
+ page.once('dialog',async dialog=>{
+   assert.match(dialog.message(),/8A.*2026-11-02.*2026-10-19/)
+   await dialog.dismiss()
+ })
+ await alignButton.click()
+ assert.deepEqual(await read('teacher-plan'),beforeSwitch)
+ assert.equal((await read('8A-schedule'))[0].date,'2026-11-02')
+ console.log('PASS teacher: cancelled start-date confirmation never modifies plan')
+ page.once('dialog',dialog=>dialog.accept())
+ await alignButton.click()
  assert.equal((await read('8A-schedule'))[0].date,'2026-10-19')
  console.log('PASS teacher: delayed class start explained and manually aligned without changing source')
 }finally{await browser.close()}
