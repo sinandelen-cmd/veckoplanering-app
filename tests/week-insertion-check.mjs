@@ -103,6 +103,23 @@ const buildClassSchedule = new Function('DAYS','iso','monday','nextDate',classBu
   assert.equal(b[0].time,'08:00')
 }
 
+
+ // Regression: half-day morning/afternoon cancellation preserves surviving slot times.
+{
+  const p = {weeksData:[{weekStart:'2026-10-05',weekNumber:41,lessons:[{id:'A',topics:[]},{id:'B',topics:[]}]}]}
+  const base = {name:'9A',days:['Måndag'],extraSlots:[{date:'2026-10-05'}],lessonTimes:{'Måndag':['08:00','13:00']}}
+  const event = {type:'Halvdag',startDate:'2026-10-05',endDate:'2026-10-05',cancelledLessons:1}
+  const morning = buildClassSchedule(p,{...base,schoolClosures:[{...event,cancelledFrom:'start'}]})
+  const afternoon = buildClassSchedule(p,{...base,schoolClosures:[{...event,cancelledFrom:'end'}]})
+  assert.equal(morning[0].date,'2026-10-05')
+  assert.equal(morning[0].slot,2)
+  assert.equal(morning[0].time,'13:00')
+  assert.equal(afternoon[0].slot,1)
+  assert.equal(afternoon[0].time,'08:00')
+  assert.deepEqual(morning.map(x=>x.lesson.id),['A','B'])
+  assert.deepEqual(afternoon.map(x=>x.lesson.id),['A','B'])
+}
+
 // Regression: class-specific closures must defer, never discard, source lessons.
 {
   const lessons = ['A','B','C','D'].map(id => ({id,name:id,topics:[]}))
