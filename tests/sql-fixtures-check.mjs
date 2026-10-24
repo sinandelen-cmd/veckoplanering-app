@@ -30,3 +30,13 @@ assert.equal((publicationFixture.replace(/^--.*$/gm,'').match(/;/g)||[]).length,
 assert.doesNotMatch(publicationFixture,/\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE|GRANT|REVOKE)\b/i)
 assert.match(publicationFixture,/IS NOT DISTINCT FROM/i)
 console.log('SQL fixture structure OK: published JSONB snapshots')
+
+const transactionFixture=readFileSync('tests/sql/isolated-publication-transaction.sql','utf8')
+assert.match(transactionFixture,/\bBEGIN\s*;/i)
+assert.match(transactionFixture,/CREATE\s+TEMP\s+TABLE/i)
+assert.match(transactionFixture,/ON\s+COMMIT\s+DROP/i)
+assert.match(transactionFixture,/\bROLLBACK\s*;/i)
+assert.doesNotMatch(transactionFixture,/\b(COMMIT|TRUNCATE|DROP\s+TABLE|CREATE\s+SCHEMA|GRANT|REVOKE)\s*;/i)
+assert.match(transactionFixture,/user_id='wrong-teacher'/)
+assert.match(transactionFixture,/user_id='teacher-1'/)
+console.log('SQL transaction fixture structure OK: ephemeral table, owner predicate, rollback')
