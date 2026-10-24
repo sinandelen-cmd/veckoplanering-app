@@ -57,6 +57,28 @@ assert.equal(publish.status,200)
 const visible=await api('/rest/v1/rpc/get_public_annual_plan','POST','',{slug_value:'isolated-public-a'})
 assert.equal(visible.status,200,JSON.stringify(visible.data))
 assert.deepEqual(JSON.parse(visible.data[0].published_content).weeksData.map(w=>w.title),['Visible','No hideDate'])
+// Exercise the actual production RPC's auto-release, latest-week count, Stockholm date and closure filtering.
+const now=new Date()
+const iso=d=>d.toISOString().slice(0,10)
+const monday=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()))
+monday.setUTCDate(monday.getUTCDate()-((monday.getUTCDay()+6)%7))
+const shifted=n=>{const d=new Date(monday);d.setUTCDate(d.getUTCDate()+n*7);return iso(d)}
+const dynamic={kind:'arsplanering-v2',title:'Isolated auto release',autoReleaseWeeks:true,visibleWeekCount:2,
+ weeksData:[-3,-2,-1,0,1,2].map((n,i)=>({weekStart:shifted(n),title:'Auto '+i,lessons:[{name:'Week '+i}]})),
+ schoolClosures:[{name:'old closure',startDate:'2020-01-01',endDate:'2020-01-03'},{name:'current closure',startDate:shifted(0),endDate:shifted(0)}]}
+const autoRow=await api('/rest/v1/veckoplanering','POST',a.access_token,{user_id:a.user.id,title:'Auto release',content:'{}',published:true,public_slug:'isolated-auto-release',published_content:dynamic})
+assert.equal(autoRow.status,201,JSON.stringify(autoRow.data).slice(0,250))
+const auto=await api('/rest/v1/rpc/get_public_annual_plan','POST','',{slug_value:'isolated-auto-release'})
+assert.equal(auto.status,200,JSON.stringify(auto.data).slice(0,250))
+const autoDoc=JSON.parse(auto.data[0].published_content)
+assert.deepEqual(autoDoc.weeksData.map(w=>w.title),['Auto 3','Auto 4'],'Production RPC should return newest two eligible weeks, never future weeks')
+assert.deepEqual(autoDoc.schoolClosures.map(w=>w.name),['current closure'],'Closures must follow visible weeks')
+const futureOnly={...dynamic,weeksData:[{weekStart:shifted(3),title:'Not yet released'}],schoolClosures:[]}
+const futureRow=await api('/rest/v1/veckoplanering','POST',a.access_token,{user_id:a.user.id,title:'Future',content:'{}',published:true,public_slug:'isolated-future-only',published_content:futureOnly})
+assert.equal(futureRow.status,201)
+const future=await api('/rest/v1/rpc/get_public_annual_plan','POST','',{slug_value:'isolated-future-only'})
+assert.deepEqual(JSON.parse(future.data[0].published_content).weeksData,[],'Future weeks not yet released')
+
 const missing=await api('/rest/v1/rpc/get_public_annual_plan','POST','',{slug_value:'not-present'})
 assert.deepEqual(missing.data,[])
 const noSteal=await api('/rest/v1/veckoplanering?id=eq.'+rowId,'PATCH',a.access_token,{user_id:b.user.id})
@@ -65,4 +87,4 @@ const unpublish=await api('/rest/v1/veckoplanering?id=eq.'+rowId,'PATCH',a.acces
 assert.equal(unpublish.status,200)
 const after=await api('/rest/v1/rpc/get_public_annual_plan','POST','',{slug_value:'isolated-public-a'})
 assert.deepEqual(after.data,[],'Unpublished snapshot must be hidden immediately')
-console.log('PASS local fullstack: GoTrue signup/login x2, teacher access, PostgREST ownership RLS, no direct anon read, RPC draft/publish/hidden/expired/missing/unpublish, owner reassignment denied')
+console.log('PASS local fullstack: GoTrue signup/login x2, teacher access, PostgREST ownership RLS, no direct anon read, real production RPC draft/publish/hidden/expired/auto-release/latest-two/closures/future/missing/unpublish, owner reassignment denied')
