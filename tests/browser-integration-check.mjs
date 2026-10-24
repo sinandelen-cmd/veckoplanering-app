@@ -18,6 +18,7 @@ try{
  await page.getByRole('button',{name:'Test: ångra'}).click()
  assert.equal(await page.getByTestId('override-index').textContent(),'1')
  assert.equal(await page.getByTestId('week-count').textContent(),'3')
+ await page.getByRole('status').filter({hasText:'äldre klassanpassning'}).waitFor()
  await page.getByRole('button',{name:'Test: gör om'}).click()
  assert.equal(await page.getByTestId('override-index').textContent(),'2')
  await page.getByRole('button',{name:'8B',exact:true}).click()
