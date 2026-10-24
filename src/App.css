@@ -3920,3 +3920,11 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .lesson-quick-actions .quick-action-link{color:#377ed4}
 .lesson-quick-actions .quick-action-moment{color:#25966c}
 .lesson-quick-actions .quick-action-exam{color:#d34c5a}
+
+/* Historical chapters retain their chapter colors and their original weeks. */
+.student-history-folder{margin:0 0 36px;display:block;width:100%}
+.student-history-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;padding:17px 20px;border:1px solid var(--border,#d6dde8);border-radius:14px;background:var(--surface,#f4f6fa);font-weight:700;list-style:none}
+.student-history-heading::-webkit-details-marker{display:none}
+.student-history-chapters{padding:20px 0 0 16px;display:flex;flex-direction:column;gap:36px}
+.student-history-chapters .student-chapter-section{margin-bottom:0}
+@media print{.student-history-folder{display:contents}.student-history-chapters{display:contents}}
