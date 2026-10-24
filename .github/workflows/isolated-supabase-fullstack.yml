@@ -36,8 +36,9 @@ jobs:
         run: |
           # Public registry rate limits are external and transient. Retry only
           # on the disposable runner, never log in to any external registry.
+          # Bound each startup attempt so a stalled Docker pull cannot block all retries.
           for attempt in 1 2 3; do
-            if npx --yes supabase@2.81.3 start --exclude realtime,storage-api,imgproxy,studio,postgres-meta,edge-runtime,logflare,vector,supavisor,mailpit; then
+            if timeout --signal=TERM --kill-after=30s 8m npx --yes supabase@2.81.3 start --exclude realtime,storage-api,imgproxy,studio,postgres-meta,edge-runtime,logflare,vector,supavisor,mailpit; then
               exit 0
             fi
             if [ "$attempt" -eq 3 ]; then
