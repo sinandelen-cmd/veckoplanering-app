@@ -170,6 +170,15 @@ const PLAN_THEMES = [
   { id: 'lilac', name: 'Lavendel', light: '#f8f2ff', soft: '#ebddff', accent: '#79569c', ink: '#573c78' },
   { id: 'mint', name: 'Mint', light: '#effbf4', soft: '#d6f3e2', accent: '#347a65', ink: '#285b4e' },
   { id: 'peach', name: 'Persika', light: '#fff4e9', soft: '#ffe5cf', accent: '#a56842', ink: '#774a31' },
+  { id: 'coral', name: 'Korall', light: '#fff1ed', soft: '#ffddd4', accent: '#a65345', ink: '#743b33' },
+  { id: 'sage', name: 'Salvia', light: '#f2f8ed', soft: '#e0edd5', accent: '#597b4b', ink: '#405d37' },
+  { id: 'ocean', name: 'Havsblå', light: '#edf8fa', soft: '#d1ebf0', accent: '#367d8c', ink: '#285b67' },
+  { id: 'plum', name: 'Plommon', light: '#faf0f7', soft: '#f0dceb', accent: '#87577c', ink: '#623d5a' },
+  { id: 'sand', name: 'Sand', light: '#fcf8ee', soft: '#f2e8cf', accent: '#8b7044', ink: '#645131' },
+  { id: 'forest', name: 'Skogsgrön', light: '#edf7f1', soft: '#d6eadc', accent: '#387452', ink: '#28543b' },
+  { id: 'ice', name: 'Isblå', light: '#f0faff', soft: '#dbeffa', accent: '#477d9c', ink: '#335b73' },
+  { id: 'apricot', name: 'Aprikos', light: '#fff7ed', soft: '#ffe9d2', accent: '#a76d36', ink: '#77502c' },
+  { id: 'berry', name: 'Bär', light: '#fff0f7', soft: '#f8dbe9', accent: '#a04c75', ink: '#713651' },
 ]
 function planTheme(plan, fallback = '') {
   const named = PLAN_THEMES.find(theme => theme.id === plan?.themeId)
