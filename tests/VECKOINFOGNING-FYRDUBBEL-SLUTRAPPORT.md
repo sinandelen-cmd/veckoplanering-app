@@ -41,3 +41,16 @@ Rekommenderad separat implementering: inför stabila lektionsnycklar och explici
 Av åtta definierade kvalitetsdelar är sex klara på test-/analysnivå. Två kvar: (1) robust bakåtkompatibel klassanpassning + webbläsartester och (2) fullständig publicerings-/säkerhetsgranskning med godkännande. **6/8 = 75 %.** Detta är en planeringsindikator, inte ett bevis på att 75 % av alla möjliga testfall passerat.
 
 Tidsbedömning: minst en ytterligare större arbetsgrupp för klassidentitetsdesign och webbläsartestmiljö, plus en slutgranskning. Ingen tillförlitlig minutprognos finns utan produktbeslut och integrationstestmiljö.
+
+## Kompletterande slutgranskning – äldre data och verkliga kodvägar
+
+- GitHub Actions för `c78c6d2` avslutades med **success**, inklusive `verify` och isolerade SQL-regressioner.
+- `tests/week-insertion-check.mjs` har utökats med verklig `insertBlankWeekAfter`, `buildClassSchedule` och `remapClassOverridesAfterInsertion` i samma syntetiska testflöde.
+- Nya scenarier täcker två klassers oberoende överstyrningar, anpassningar före infogningen, äldre icke-numeriska nycklar, index utanför schemat, inställd klassdag och återställning av ursprunglig snapshot.
+- Dessa tester verifierar bakåtkompatibel omnumrering i minnet; de verifierar inte en faktisk Supabase-publicering, nätverksanrop, React-livscykel eller användarinteraktion i webbläsare.
+- Granskningen av `sanitizeForStudents` visar att publicerad data bygger på separat sanerat planeringsinnehåll. Detta är kodgranskning, inte ett fullständigt publiceringsintegrationstest.
+- **Kvarstående edge case:** när en tidigare klassanpassning saknar matchande lektion lämnas nyckeln kvar. Det skyddar mot databortfall, men kan innebära att en framtida ändring av klassens schema återanvänder samma index. Beslut om arkivering/identifiering krävs före produktionsgodkännande.
+- Senaste utökade CI-körningen måste bli grön innan denna arbetsgrupp räknas som godkänd.
+- PR #5 förblir draft; ingen merge, produktionsändring eller publicering.
+
+**Framsteg:** 7/8 definierade delar har automatiska kontroller och kodgranskning. 1/8 återstår: fullständig gränssnitts-/publiceringsintegration samt beslut om historiska överstyrningar. 87,5 % är planeringsstatus, inte uppmätt täckningsgrad. Tid kvar kan inte anges exakt; bedömningen är minst en större arbetsgrupp för integration och beslut.
