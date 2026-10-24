@@ -854,7 +854,16 @@ export function StudentView({ plan, error, preview = false, printPage = null, pr
           {printPage !== null && studentMonthInfo(week.weekStart) && <div className="student-month-info" style={{ backgroundColor: studentMonthInfo(week.weekStart).color }}><strong>{studentMonthInfo(week.weekStart).name}</strong><span>{studentMonthInfo(week.weekStart).weeks}</span></div>}
         </div>
         {!/^Vecka\s+\d+$/i.test(week.title || '') && week.title?.trim() && <h3>{week.title}</h3>}
-        <div className="week-content">{week.content || (!week.pages?.length && !week.assignments?.length && !week.links?.length && !week.lessons?.some(lesson => lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.length || topic.assignments?.length || topic.links?.length)) ? 'Ingen planering angiven ännu.' : '')}</div>
+        <div className="week-content">{week.content || (!week.pages?.length && !week.assignments?.length && !week.links?.length && !week.lessons?.some(lesson => lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.length || topic.assignments?.length || topic.links?.length)) ? (selectedClass ? (() => {
+          const weekEnd = toIsoDate(new Date(new Date(week.weekStart + 'T12:00:00').getTime() + 6 * 86400000))
+          const start = selectedClass.startDate || plan.startDate || ''
+          if (start && weekEnd < start) return selectedClass.name + ' börjar ' + start + '. Inga lektioner före klassens startdatum.'
+          if (!(selectedClass.days || []).length && !(selectedClass.extraSlots || []).length) return 'Inga lektionsdagar är valda för ' + selectedClass.name + '. Kontrollera klassens schema.'
+          const nextLesson = classLessons.find(item => item.date > weekEnd)
+          const inWeekClosures = [...(plan.schoolClosures || []).filter(item => !item.classNames || item.classNames.includes(selectedClass.name)), ...(selectedClass.schoolClosures || [])].filter(item => item.startDate <= weekEnd && (item.endDate || item.startDate) >= week.weekStart)
+          if (inWeekClosures.length) return 'Inga lektioner denna vecka för ' + selectedClass.name + '. Registrerad ledighet: ' + [...new Set(inWeekClosures.map(item => item.type || item.name || 'Skolledigt'))].join(', ') + '.' + (nextLesson ? ' Nästa lektion: ' + nextLesson.date + '.' : '')
+          return 'Inga schemalagda lektioner denna vecka för ' + selectedClass.name + '.' + (nextLesson ? ' Nästa lektion: ' + nextLesson.date + '.' : ' Kontrollera klassens lektionsdagar och startdatum.')
+        })() : 'Ingen planering angiven ännu.') : '')}</div>
         <ImportantDatesForWeek week={week} plan={plan} />
         <LessonDetails week={week} entryType={plan.entryType || 'lektion'} lessonDisplay="dag-och-lektion" />
         <WeekDetails week={week} />
