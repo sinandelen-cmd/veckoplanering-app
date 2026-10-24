@@ -35,7 +35,7 @@ jobs:
           cp tests/sql/local-supabase-fullstack-fixture.sql "$(find supabase/migrations -type f -name '*isolated_fullstack_fixture.sql' | head -1)"
           test -s "$(find supabase/migrations -type f -name '*isolated_fullstack_fixture.sql' | head -1)"
       - name: Pre-pull isolated Supabase images from Docker Hub mirror
-        timeout-minutes: 8
+        timeout-minutes: 12
         run: |
           # The public ECR registry sometimes rejects anonymous CI pulls with
           # "toomanyrequests: Data limit exceeded". Pull equivalent tagged
