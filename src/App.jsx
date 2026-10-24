@@ -1402,12 +1402,19 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   }
 
   function insertBlankWeekAfter(index) {
+    const current = displayWeeks(plan)
+    if (index < 0 || index >= current.length - 1 || current.length >= 52) {
+      setStatus('Det går inte att infoga en vecka här.')
+      return
+    }
+    const nextDate = addWeeks(current[index].weekStart, 1)
+    const previewWeek = makeWeeks({ ...plan, startDate: nextDate, startWeek: calendarWeekNumber(nextDate), weeks: 1 }, 1)[0]
+    const count = previewWeek?.lessons?.length || 0
+    if (!count) { setStatus('Kunde inte skapa lektioner för den nya veckan.'); return }
     const choice = window.prompt('Typ av ny vecka:\n1 = Vanlig vecka\n2 = Träna inför prov\n3 = Provträning + prov', '1')
     if (choice === null) return
     if (!['1', '2', '3'].includes(choice.trim())) { setStatus('Välj 1, 2 eller 3.'); return }
     const mode = choice.trim()
-    const current = displayWeeks(plan)
-    const count = current[index]?.lessons?.length || Math.max(1, Number(plan.lessonsPerWeek) || 3)
     let examIndex = -1
     let examTitle = 'Prov'
     if (mode === '3') {
