@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 
 // Safe offline guard: only SELECT/CTE fixtures, never DDL/DML or network access.
-for (const file of ['tests/sql/automatic-week-release-regression.sql', 'tests/sql/future-week-release-regression.sql']) {
+for (const file of ['tests/sql/automatic-week-release-regression.sql', 'tests/sql/future-week-release-regression.sql', 'tests/sql/hide-date-boundary-regression.sql']) {
   const sql = readFileSync(file, 'utf8')
   const withoutComments = sql.replace(/^--.*$/gm, '').trim()
   assert.match(withoutComments, /^WITH\s/i, file + ' must start with a read-only CTE')
