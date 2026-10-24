@@ -854,7 +854,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
       {studentChapterWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
         {printPage !== null && week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== studentChapterWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
-        <details className="student-week-accordion" defaultOpen={printPage !== null || week.weekStart === (jumpStudentWeek?.weekStart || studentChapterWeeks[0]?.weekStart)} key={`${previewClass}-${week.weekStart}`}>
+        <details className="student-week-accordion" defaultOpen={printPage !== null || week.weekStart === studentChapterWeeks[0]?.weekStart} key={`${previewClass}-${week.weekStart}`}>
           <summary className="student-week-summary"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{week.chapter?.trim() || week.title?.trim() || 'Veckoplanering'}</span><span>{studentWeekDateRange(week.weekStart)}</span><span aria-hidden="true">⌄</span></summary>
         <article id={"student-week-" + week.weekStart} className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
 
