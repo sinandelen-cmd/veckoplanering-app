@@ -469,4 +469,21 @@ testWithPlan('W32 hidden week does not consume ordinal override',(()=>{
   assert.equal(moved?.lesson.id,old?.lesson.id)
 })
 
+
+testWithPlan('W32 orphan numeric collision does not overwrite valid lesson override',(()=>{
+  const p=planOf(3)
+  p.classGroups[0].overrides={'2':{text:'Third original'},'3':{text:'Orphan historical'}}
+  return p
+})(),['1'],0,(p,b)=>{
+  const overrides=p.classGroups[0].overrides
+  assert.equal(overrides['3']?.text,'Third original')
+  assert.equal(overrides['legacy-unmapped:3']?.text,'Orphan historical')
+  const before=buildClassSchedule(b,b.classGroups[0]).find(x=>x.override?.text==='Third original')
+  const after=buildClassSchedule(p,p.classGroups[0]).find(x=>x.override?.text==='Third original')
+  assert.equal(before?.lesson.id,after?.lesson.id)
+})
+testWithPlan('W32 noncolliding historical numeric orphan remains unchanged',(()=>{
+  const p=planOf(3);p.classGroups[0].overrides={'99':{text:'Unmapped'}};return p
+})(),['1'],0,p=>assert.deepEqual(p.classGroups[0].overrides,{'99':{text:'Unmapped'}}))
+
 console.log('Actual insertion function: '+passed+' synthetic checks passed (not browser or integration tests)')
