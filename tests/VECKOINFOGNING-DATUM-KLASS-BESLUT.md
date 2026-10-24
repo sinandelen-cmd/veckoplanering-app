@@ -20,3 +20,11 @@
 Arbetsgruppens fyra spår: (1) kontroll av tidigare CI – klart, (2) datumregler – analyserat, beslut kvar, (3) klasschema – testat syntetiskt, beteenderisk kvar, (4) dokumentation – klart. Ny CI efter senaste testcommit måste verifieras separat.
 
 **Ingen exakt tidsprognos är möjlig utan verifierad testmiljö och produktbeslut.** En realistisk plan är ytterligare minst en arbetsgrupp för klassöverstyrningar/React-tester och en för slutgranskning. Detta är arbetsgrupper, inte minuter eller löften om färdigtid.
+
+## Dubbel arbetsgrupp: konkret testutökning och kompatibilitetsanalys
+- CI på `2450715` var röd i `verify/npm run check`, medan `sql-regressions` var grön. Den nya klassens override-assertion jämförde `weekStart`, men insatt vecka upptar samma kalenderdatum som den tidigare veckan. Assertionen ändrades till att jämföra faktiskt lektions-ID före/efter; ingen produktionskod ändrades.
+- Fiktiva klassgrupper använder nu riktiga schemafält. Nya scenarier täcker två klassers veckokoppling, inställda dagar, extra fredagstillfällen, dolda veckor och förskjutet innehåll.
+- Testerna extraherar dessutom de **verkliga** `undoPlan`/`redoPlan`-hanterarna ur `src/App.jsx` och provar flera steg bakåt/framåt. React-livscykeln och webbläsarinteraktioner omfattas fortfarande inte.
+- **Kompatibilitetsrisk:** Befintliga klassanpassningar lagras med index för lektionens ordning. Att tyst skriva om dem vid veckoinfogning är riskabelt när klasser har olika veckodagar, inställda lektioner eller extra tillfällen. Rekommenderad väg: identifiera stabil lektionsidentitet, definiera hur äldre indexnycklar läses, testa flera klassscheman och migrera först efter särskilt beslut. Inga produktionsmigreringar.
+- **Säkerhet:** `publishDate` och `hideDate` är fortfarande kalenderbundna; testet dokumenterar befintligt beteende, inte en godkänd produktregel. Publicerat snapshot ska inte påverkas av utkast före uttrycklig publicering.
+- **CI för de allra senaste testerna:** måste verifieras separat innan arbetet kan kallas grönt.
