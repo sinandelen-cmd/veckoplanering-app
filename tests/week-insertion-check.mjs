@@ -51,4 +51,81 @@ for (const [name,prompts] of [['W08 cancel',[null]],['W09 invalid',['4']],['W10 
 test('W12 single lesson exam',base,['3','1','Prov'],p=>assert.equal(p.weeksData[1].lessons.length,1),1)
 test('W19 new year dates',['2026-12-21','2026-12-28','2027-01-04'],['1'],p=>assert.deepEqual(p.weeksData.map(w=>w.weekStart),['2026-12-21','2026-12-28','2027-01-04','2027-01-11']))
 test('W21 preserve custom title',base,['1'],p=>assert.equal(p.weeksData[2].title,'Vecka '+calendarWeekNumber('2026-10-19')))
+
+function testWithPlan(name, initial, prompts, index, expected) {
+  let plan = structuredClone(initial)
+  const before = structuredClone(plan)
+  const answers = [...prompts]
+  let promptCalls = 0
+  const fn = insert(displayWeeks, addWeeks, calendarWeekNumber, makeWeeks, plan,
+    { prompt: () => { promptCalls++; return answers.shift() } },
+    updater => { plan = updater(plan) }, () => {})
+  fn(index)
+  expected(plan, before, promptCalls)
+  passed++
+  console.log('PASS ' + name)
+}
+const consecutive = (start, count) => Array.from({length:count}, (_,i)=>week(addWeeks(start,i),'original-'+i))
+const planOf = (count, start='2026-01-05') => ({
+  weeksData:consecutive(start,count), weeks:count, lessonsPerWeek:3,
+  classGroups:[{id:'class-a',name:'A',schedule:[{day:'monday',lesson:1}]},{id:'class-b',name:'B',schedule:[{day:'friday',lesson:2}]}]
+})
+testWithPlan('W17 insert 52nd week',planOf(51),['1'],0,(p,b)=>{
+  assert.equal(p.weeks,52)
+  assert.equal(p.weeksData.length,52)
+  assert.equal(new Set(p.weeksData.map(w=>w.weekStart)).size,52)
+  assert.deepEqual(p.classGroups,b.classGroups)
+})
+testWithPlan('W18 reject insertion at 52-week limit',planOf(52),['1'],0,(p,b,calls)=>{
+  assert.deepEqual(p,b)
+  assert.equal(calls,0)
+})
+testWithPlan('W16 reject last index',planOf(3),['1'],2,(p,b,calls)=>{
+  assert.deepEqual(p,b)
+  assert.equal(calls,0)
+})
+testWithPlan('W16 reject negative index',planOf(3),['1'],-1,(p,b,calls)=>{
+  assert.deepEqual(p,b)
+  assert.equal(calls,0)
+})
+testWithPlan('W20 ISO year boundary',planOf(3,'2026-12-21'),['1'],0,p=>{
+  assert.deepEqual(p.weeksData.map(w=>w.weekNumber),[52,53,53,1])
+  assert.deepEqual(p.weeksData.map(w=>w.weekStart),['2026-12-21','2026-12-28','2027-01-04','2027-01-11'])
+})
+testWithPlan('W21 custom title remains unchanged',(()=>{
+  const p=planOf(3);p.weeksData[1].title='Eget tema';return p
+})(),['1'],0,p=>assert.equal(p.weeksData[2].title,'Eget tema'))
+testWithPlan('W22 lesson contents and metadata preserved',(()=>{
+  const p=planOf(3)
+  p.weeksData[1].lessons[0]={id:'special',topics:[{name:'Algebra',pages:['42'],assignments:['A'],links:['https://example.org']}],assessment:{type:'Prov',title:'Gammalt prov'}}
+  p.weeksData[1].notes='Bevara anteckning'
+  return p
+})(),['2'],0,(p,b)=>{
+  assert.deepEqual(p.weeksData[2].lessons,b.weeksData[1].lessons)
+  assert.equal(p.weeksData[2].notes,'Bevara anteckning')
+  assert.deepEqual(p.classGroups,b.classGroups)
+})
+testWithPlan('W32 class group metadata unchanged',planOf(3),['3','2','Prov'],0,(p,b)=>{
+  assert.deepEqual(p.classGroups,b.classGroups)
+  assert.equal(p.weeksData[1].lessons[1].assessment.type,'Prov')
+})
+// The React undo/redo hooks are not mounted here. Verify the full-snapshot
+// contract with synthetic data; browser behavior remains unverified.
+{
+  const before=planOf(3)
+  let after
+  const fn=insert(displayWeeks,addWeeks,calendarWeekNumber,makeWeeks,before,
+    {prompt:()=> '1'},updater=>{after=updater(before)},()=>{})
+  fn(0)
+  const history={past:[JSON.stringify(before)],current:JSON.stringify(after),future:[]}
+  history.future.unshift(history.current)
+  history.current=history.past.pop()
+  assert.deepEqual(JSON.parse(history.current),before)
+  history.past.push(history.current)
+  history.current=history.future.shift()
+  assert.deepEqual(JSON.parse(history.current),after)
+  passed++
+  console.log('PASS W25-W26 synthetic snapshot undo/redo contract (not React UI)')
+}
+
 console.log('Actual insertion function: '+passed+' synthetic checks passed (not browser or integration tests)')
