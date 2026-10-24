@@ -277,4 +277,32 @@ testWithPlan('W23 publication metadata does not leak to inserted week',(()=>{
   assert.equal(p.weeksData[2].hideDate,'2026-02-15')
 })
 
+
+{
+  const undoStart=source.indexOf('  const undoPlan = () => {')
+  const redoEnd=source.indexOf('  const savedPlanRef =',undoStart)
+  const handlers=source.slice(undoStart,redoEnd)
+  const first=planOf(3)
+  const next=structuredClone(first);next.weeksData[1].title='Ny rubrik'
+  const historyRef={current:{past:[JSON.stringify(first)],current:JSON.stringify(next),future:[]}}
+  const historySkipRef={current:false}
+  let plan=next
+  const {undoPlan,redoPlan}=new Function('historyRef','historySkipRef','setPlan','setHistoryVersion',handlers+'\nreturn {undoPlan,redoPlan}')(
+    historyRef,historySkipRef,value=>{plan=value},()=>{})
+  undoPlan()
+  assert.deepEqual(plan,first)
+  assert.equal(historyRef.current.future.length,1)
+  // Emulate the useEffect new-edit transition: new edits invalidate redo.
+  historySkipRef.current=false
+  const edited=structuredClone(first);edited.weeksData[0].title='Annan ändring'
+  historyRef.current.past.push(historyRef.current.current)
+  historyRef.current.current=JSON.stringify(edited)
+  historyRef.current.future=[]
+  redoPlan()
+  assert.deepEqual(plan,first)
+  assert.equal(historyRef.current.future.length,0)
+  passed++
+  console.log('PASS W27 redo invalidated by new edit (history effect transition emulated)')
+}
+
 console.log('Actual insertion function: '+passed+' synthetic checks passed (not browser or integration tests)')
