@@ -114,8 +114,7 @@ select jsonb_set(
  where (c.closure->>'startDate') <= ((w.week->>'weekStart')::date+6)::text
  and (c.closure->>'endDate') >= (w.week->>'weekStart'))),'[]'::jsonb)
 )::text from assembled a;
-$function$
-
+$function$;
 
 REVOKE ALL ON FUNCTION public.get_public_annual_plan(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_public_annual_plan(text) TO anon,authenticated;
