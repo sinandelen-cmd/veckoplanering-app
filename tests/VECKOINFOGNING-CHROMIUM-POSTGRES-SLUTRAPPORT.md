@@ -37,3 +37,10 @@ Datum: 2026-10-24. Endast feature-grenen `feature/provtraning-infogad-vecka`, dr
 ## Kvalitetsstatus
 
 7/8 delar klara på tidigare verifierad nivå, 1/8 återstår för fullständig app-/publiceringsintegration. 87,5 % av den definierade åttadelade kvalitetssäkringsplanen, inte en uppskattning av total testtäckning. Bedömning: minst en stor arbetsgrupp för att slutföra, stabilisera och eventuellt bygga riktig isolerad auth/publiceringsintegration; fler om CI visar fel. Ingen minutgaranti.
+
+## Utfall efter verkliga Chromium-körningar
+
+- Första browser-körningen visade att schemaveckan är hopfälld tills den klickas upp. Testet rättades.
+- Nästa browser-körning tog sig förbi veckoinfogning och fixture-ångra/gör om men misslyckades vid klassbyte, eftersom produktionskomponenten avsiktligt stänger panelen för enskilda ändringar när en ny klass väljs. Testet öppnar nu panelen igen (`1ebda81`).
+- SQL-jobbet och ordinarie `verify` är **gröna** på `3e0fdd0` (run `40086348217`). Den fullständiga browser-körningen för senaste teständringen måste fortfarande verifieras.
+- Browser-testets historik är en **fixture-implementation**, inte ett test av produktionsappens React-history-effekter. Kvarvarande sista kvalitetsdel får inte markeras färdig enbart på grund av browser-fixturen.
