@@ -21,3 +21,11 @@ for file in tests/sql/automatic-week-release-regression.sql tests/sql/future-wee
       if (failed) exit 1
     }'
 done
+
+# The temporary-table test deliberately uses DDL/DML only inside this ephemeral
+# PostgreSQL 16 CI service; it rolls back and never uses Supabase credentials.
+echo "Running isolated publication storage integration"
+output=$(psql -X -v ON_ERROR_STOP=1 -At -f tests/sql/isolated-publication-storage-integration.sql)
+printf '%s\n' "$output"
+test "$(printf '%s\n' "$output" | grep -c '^PASS:')" -eq 2
+if printf '%s\n' "$output" | grep -q '^FAIL:'; then exit 1; fi
