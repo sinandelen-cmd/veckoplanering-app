@@ -89,7 +89,7 @@ testWithPlan('W16 reject negative index',planOf(3),['1'],-1,(p,b,calls)=>{
   assert.equal(calls,0)
 })
 testWithPlan('W20 ISO year boundary',planOf(3,'2026-12-21'),['1'],0,p=>{
-  assert.deepEqual(p.weeksData.map(w=>w.weekNumber),[52,53,53,1])
+  assert.deepEqual(p.weeksData.map(w=>w.weekNumber),[52,53,1,2])
   assert.deepEqual(p.weeksData.map(w=>w.weekStart),['2026-12-21','2026-12-28','2027-01-04','2027-01-11'])
 })
 testWithPlan('W21 custom title remains unchanged',(()=>{
