@@ -1,7 +1,7 @@
 -- Draft for review and isolated tests. Do not apply to production without approval.
 -- The plan owner remains veckoplanering.user_id; collaborators cannot delegate access.
 create table if not exists public.plan_collaborators (
-  plan_id uuid not null references public.veckoplanering(id) on delete cascade,
+  plan_id bigint not null references public.veckoplanering(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
   invited_by uuid not null references auth.users(id),
   created_at timestamptz not null default now(),
