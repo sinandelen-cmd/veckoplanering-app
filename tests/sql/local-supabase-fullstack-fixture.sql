@@ -41,7 +41,7 @@ REVOKE ALL ON public.teacher_access, public.veckoplanering FROM anon;
 GRANT SELECT ON public.teacher_access TO authenticated;
 GRANT SELECT,INSERT,UPDATE,DELETE ON public.veckoplanering TO authenticated;
 CREATE OR REPLACE FUNCTION public.get_public_annual_plan(slug_value text)
-RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER
+RETURNS TABLE(published_content text) LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
 AS $function$
  SELECT jsonb_set(p.published_content,'{weeksData}',
@@ -65,7 +65,7 @@ AS $function$
            <= current_date
          )
        )
-   ),'[]'::jsonb))
+   ),'[]'::jsonb))::text
  FROM public.veckoplanering p
  WHERE p.public_slug=slug_value AND p.published IS TRUE
    AND p.published_content IS NOT NULL
