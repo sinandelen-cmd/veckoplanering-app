@@ -831,7 +831,11 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   const visibleWeeks = printPage === null
     ? studentWeeks
     : (printWeekStart ? studentWeeks.filter(week => week.weekStart === printWeekStart) : (printGroups[printPage]?.weeks || []))
-  const studentChapterWeeks = printPage === null ? [...visibleWeeks].sort((a,b) => {
+  const [showEarlierStudentWeeks, setShowEarlierStudentWeeks] = useState(false)
+  const earlierStudentWeeks = printPage === null ? visibleWeeks.filter(week => week.weekStart < currentStudentWeekStart) : []
+  const chapterVisibleWeeks = printPage === null && !showEarlierStudentWeeks && visibleWeeks.some(week => week.weekStart >= currentStudentWeekStart)
+    ? visibleWeeks.filter(week => week.weekStart >= currentStudentWeekStart) : visibleWeeks
+  const studentChapterWeeks = printPage === null ? [...chapterVisibleWeeks].sort((a,b) => {
     const priority = w => w.weekStart === currentStudentWeekStart ? 0 : w.weekStart > currentStudentWeekStart ? 1 : 2
     return priority(a)-priority(b) || (priority(a) === 2 ? b.weekStart.localeCompare(a.weekStart) : a.weekStart.localeCompare(b.weekStart))
   }) : visibleWeeks
@@ -846,6 +850,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
       <h1 style={{ fontSize: 'clamp(2.6rem, 5vw, 4.5rem)', fontWeight: 900, lineHeight: 1.12, margin: '8px 0 24px' }}>{plan.title}</h1>
     </header>}
     {studentWeeks.length === 0 && <p className="card empty" role="status">{plan.autoReleaseWeeks ? "Ingen vecka är publicerad för elever ännu. Nästa vecka visas automatiskt när dess måndag börjar." : "Det finns inga synliga veckor i den här planeringen ännu."}</p>}
+    {printPage === null && earlierStudentWeeks.length > 0 && visibleWeeks.some(week => week.weekStart >= currentStudentWeekStart) && <button type="button" className="secondary" aria-expanded={showEarlierStudentWeeks} onClick={() => setShowEarlierStudentWeeks(value => !value)}>{showEarlierStudentWeeks ? 'Dölj tidigare veckor' : 'Visa tidigare veckor (' + earlierStudentWeeks.length + ')'}</button>}
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
       {studentChapterWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
         {printPage !== null && week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== studentChapterWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
