@@ -46,13 +46,14 @@ export function buildClassSchedule(plan, group) {
       const dateKey = iso(nextDate(monday(start), offset))
       const day = DAYS[offset]
       if ((firstDate && dateKey < firstDate) || cancelled.has(dateKey)) continue
-      const closure = closures.find(event => event?.startDate && dateKey >= event.startDate && dateKey <= (event.endDate || event.startDate))
-      if (closure && closure.type !== 'Halvdag') continue
+      const dayClosures = closures.filter(event => event?.startDate && dateKey >= event.startDate && dateKey <= (event.endDate || event.startDate))
+      if (dayClosures.some(event => event.type !== 'Halvdag')) continue
       // momentsPerDay controls topics within ONE lesson, never the number of lessons.
       // Otherwise a class with extra topics consumes multiple base lessons on the same day.
       const regularCount = days.includes(day) ? 1 : 0
       const scheduledCount = regularCount + extraSlots.filter(slot => slot.date === dateKey).length
-      const count = closure?.type === 'Halvdag' ? Math.max(0, scheduledCount - Math.max(1, Number(closure.cancelledLessons) || 1)) : scheduledCount
+      const cancelledCount = dayClosures.reduce((total, event) => total + (event.type === 'Halvdag' ? Math.max(1, Number(event.cancelledLessons) || 1) : 0), 0)
+      const count = Math.max(0, scheduledCount - cancelledCount)
       for (let n = 0; n < count; n++) slots.push({date: dateKey, day, slot: n + 1, time: group.lessonTimes?.[day]?.[n] || ''})
     }
     for (const slot of slots) {
