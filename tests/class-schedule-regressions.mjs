@@ -50,7 +50,7 @@ for(const count of [1,2,3,4]){
  assert.equal(rows[0].lesson.topics.length,count)
 }
 const mixed=build(demoPlan,{name:'Test Mix',days:['Måndag','Tisdag','Torsdag','Fredag'],momentsPerDay:{Måndag:1,Tisdag:2,Torsdag:3,Fredag:4}})
-assert.deepEqual(mixed.slice(0,4).map(row=>row.lesson.topics.length),[1,2,3,4])
+assert.deepEqual(Array.from(mixed.slice(0,4),row=>row.lesson.topics.length),[1,2,3,4])
 assert.deepEqual(mixed.flatMap(row=>Array.from(row.lesson.topics,t=>t.name)),Array.from({length:12},(_,i)=>'Moment '+(i+1)))
 assert.equal(JSON.stringify(demoPlan),demoOriginal)
 console.log('PASS isolated demo classes: 1, 2, 3, 4 and mixed moments preserve order and source data')
