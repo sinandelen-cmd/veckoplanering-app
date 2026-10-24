@@ -1,5 +1,6 @@
 function capitalizeFirstSwedish(value) { return String(value || '').replace(/^(\s*)([a-zåäö])/i, (_, spaces, letter) => spaces + letter.toLocaleUpperCase('sv-SE')) }
 import UpdateNotices from './UpdateNotices.jsx'
+import { usePlanHistory } from './usePlanHistory.js'
 import { groupStudentWeeksForPrint } from './printGroups.js'
 import { Component, Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
@@ -10,7 +11,7 @@ import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url'
 import { supabase } from './supabase'
 import './App.css'
 import Navigation from './Navigation.jsx'
-import ClassSchedules, { buildClassSchedule } from './ClassSchedules.jsx'
+import ClassSchedules, { buildClassSchedule, remapClassOverridesAfterInsertion } from './ClassSchedules.jsx'
 import { MUNICIPALITIES_BY_COUNTY } from './swedishMunicipalities.js'
 import { NATIONAL_EXAMS_2026_27, NATIONAL_EXAM_PERIODS_2026_27 } from './nationalExams.js'
 
@@ -169,6 +170,15 @@ const PLAN_THEMES = [
   { id: 'lilac', name: 'Lavendel', light: '#f8f2ff', soft: '#ebddff', accent: '#79569c', ink: '#573c78' },
   { id: 'mint', name: 'Mint', light: '#effbf4', soft: '#d6f3e2', accent: '#347a65', ink: '#285b4e' },
   { id: 'peach', name: 'Persika', light: '#fff4e9', soft: '#ffe5cf', accent: '#a56842', ink: '#774a31' },
+  { id: 'coral', name: 'Korall', light: '#fff1ed', soft: '#ffddd4', accent: '#a65345', ink: '#743b33' },
+  { id: 'sage', name: 'Salvia', light: '#f2f8ed', soft: '#e0edd5', accent: '#597b4b', ink: '#405d37' },
+  { id: 'ocean', name: 'Havsblå', light: '#edf8fa', soft: '#d1ebf0', accent: '#367d8c', ink: '#285b67' },
+  { id: 'plum', name: 'Plommon', light: '#faf0f7', soft: '#f0dceb', accent: '#87577c', ink: '#623d5a' },
+  { id: 'sand', name: 'Sand', light: '#fcf8ee', soft: '#f2e8cf', accent: '#8b7044', ink: '#645131' },
+  { id: 'forest', name: 'Skogsgrön', light: '#edf7f1', soft: '#d6eadc', accent: '#387452', ink: '#28543b' },
+  { id: 'ice', name: 'Isblå', light: '#f0faff', soft: '#dbeffa', accent: '#477d9c', ink: '#335b73' },
+  { id: 'apricot', name: 'Aprikos', light: '#fff7ed', soft: '#ffe9d2', accent: '#a76d36', ink: '#77502c' },
+  { id: 'berry', name: 'Bär', light: '#fff0f7', soft: '#f8dbe9', accent: '#a04c75', ink: '#713651' },
 ]
 function planTheme(plan, fallback = '') {
   const named = PLAN_THEMES.find(theme => theme.id === plan?.themeId)
@@ -548,11 +558,11 @@ function sanitizeForStudents(plan) {
     subject: String(plan?.subject || ''),
     className: String(plan?.className || ''),
     startDate: String(plan?.startDate || ''),
-    classGroups: Array.isArray(plan?.classGroups) ? plan.classGroups.filter(g=>g && typeof g.name==='string').map(g=>({name:g.name.slice(0,80),startDate:String(g.startDate || plan.startDate || ''),days:Array.isArray(g.days)?g.days.filter(d=>['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].includes(d)):[],extraSlots:Array.isArray(g.extraSlots)?g.extraSlots.filter(item=>item && /^\d{4}-\d{2}-\d{2}$/.test(item.date || '')).map(item=>({date:item.date})):[],cancelledDates:Array.isArray(g.cancelledDates)?g.cancelledDates.filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)):[],lessonTimes:g.lessonTimes && typeof g.lessonTimes==='object'?g.lessonTimes:{},overrides:g.overrides && typeof g.overrides==='object'?g.overrides:{}})) : [],
+    classGroups: Array.isArray(plan?.classGroups) ? plan.classGroups.filter(g=>g && typeof g.name==='string').map(g=>({name:g.name.slice(0,80),themeId: String(g.themeId || ''),startDate:String(g.startDate || plan.startDate || ''),days:Array.isArray(g.days)?g.days.filter(d=>['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].includes(d)):[],extraSlots:Array.isArray(g.extraSlots)?g.extraSlots.filter(item=>item && /^\d{4}-\d{2}-\d{2}$/.test(item.date || '')).map(item=>({date:item.date})):[],cancelledDates:Array.isArray(g.cancelledDates)?g.cancelledDates.filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)):[],lessonTimes:g.lessonTimes && typeof g.lessonTimes==='object'?structuredClone(g.lessonTimes):{},momentsPerDay:g.momentsPerDay && typeof g.momentsPerDay==='object'?structuredClone(g.momentsPerDay):{},schoolClosures:Array.isArray(g.schoolClosures)?g.schoolClosures.filter(item=>validSchoolClosure({...item,name:item.name||item.type})).map(item=>({name:String(item.name||item.type),type:String(item.type||item.name),startDate:item.startDate,endDate:item.endDate,cancelledLessons:Math.max(1,Number(item.cancelledLessons)||1)})):[],overrides:g.overrides && typeof g.overrides==='object'?Object.fromEntries(Object.entries(g.overrides).filter(([key])=>!key.startsWith('legacy-unmapped:')).map(([key,value])=>[key,structuredClone(value)])):{}})) : [],
     schoolYear: String(plan?.schoolYear || ''),
     grade: String(plan?.grade || ''),
     schoolForm: String(plan?.schoolForm || ''),
-    schoolClosures: Array.isArray(plan?.schoolClosures) ? plan.schoolClosures.filter(item => validSchoolClosure(item) && sourceWeeks.some(week => { if (!week || week.hidden || !/^\d{4}-\d{2}-\d{2}$/.test(week.weekStart || '')) return false; const monday = new Date(week.weekStart + 'T12:00:00'); monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7)); const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6); return item.startDate <= toIsoDate(sunday) && item.endDate >= toIsoDate(monday) })).map(item => ({ name: item.name, startDate: item.startDate, endDate: item.endDate, verified: Boolean(item.verified) })) : [],
+    schoolClosures: Array.isArray(plan?.schoolClosures) ? plan.schoolClosures.filter(item => validSchoolClosure(item) && sourceWeeks.some(week => { if (!week || week.hidden || !/^\d{4}-\d{2}-\d{2}$/.test(week.weekStart || '')) return false; const monday = new Date(week.weekStart + 'T12:00:00'); monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7)); const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6); return item.startDate <= toIsoDate(sunday) && item.endDate >= toIsoDate(monday) })).map(item => ({ name: item.name, type: item.type || item.name, startDate: item.startDate, endDate: item.endDate, verified: Boolean(item.verified), cancelledLessons:Math.max(1,Number(item.cancelledLessons)||1), classNames:Array.isArray(item.classNames)?item.classNames.filter(name=>typeof name==='string'):undefined })) : [],
     published: true,
     autoReleaseWeeks: plan?.autoReleaseWeeks === true,
     visibleWeekCount: Math.max(1, Math.min(12, Number(plan?.visibleWeekCount) || 2)),
@@ -642,7 +652,7 @@ function chapterTone(chapter) {
   const value = String(chapter || '').trim().toLocaleLowerCase('sv-SE')
   let hash = 0
   for (const char of value) hash = (hash * 31 + char.codePointAt(0)) >>> 0
-  return hash % 4
+  return hash % 8
 }
 
 function studentWeekDateRange(dateString) {
@@ -723,7 +733,7 @@ function a4DemoPlan(plan) {
   return { ...plan, title: 'A4-TEST – INTE SPARAD', studentLayout: 'grid', weeksData }
 }
 
-function ImportantDatesForWeek({ week, plan }) {
+function ImportantDatesForWeek({ week, plan, selectedClass = null }) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(week?.weekStart || '')) return null
   const monday = new Date(week.weekStart + 'T12:00:00')
   monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
@@ -732,11 +742,12 @@ function ImportantDatesForWeek({ week, plan }) {
     date.setDate(monday.getDate() + index)
     return { date: toIsoDate(date), day: ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag'][index] }
   })
-  const closures = (Array.isArray(plan.schoolClosures) ? plan.schoolClosures : []).filter(validSchoolClosure)
+  const sharedClosures = (Array.isArray(plan.schoolClosures) ? plan.schoolClosures : []).filter(item => !item.classNames || (selectedClass && item.classNames.includes(selectedClass.name)))
+  const closures = [...sharedClosures, ...(selectedClass?.schoolClosures || [])].filter(item => validSchoolClosure({ ...item, name: item.name || item.type }))
   const exams = []
   const entries = dates.flatMap(({ date, day }) => {
-    const events = closures.filter(item => item.startDate <= date && item.endDate >= date)
-      .map(item => ({ name: item.name, kind: /studiedag/i.test(item.name) ? 'study' : 'holiday', verified: item.verified }))
+    const events = closures.filter(item => item.startDate <= date && (item.endDate || item.startDate) >= date)
+      .map(item => ({ name: item.name || item.type, kind: /studiedag/i.test(item.name || item.type || '') ? 'study' : item.type === 'Halvdag' ? 'halfday' : 'holiday', verified: item.verified !== false, cancelledLessons: item.type === 'Halvdag' ? Math.max(1, Number(item.cancelledLessons) || 1) : 0 }))
     
     events.push(...exams.filter(item => item.date === date).map(item => ({ name: 'NP – ' + item.subject + ', delprov ' + item.part, kind: 'exam', verified: true })))
     return events.map(event => ({ ...event, date, day }))
@@ -746,7 +757,7 @@ function ImportantDatesForWeek({ week, plan }) {
     <h4>📅 Viktiga datum</h4>
     {entries.map((item, index) => <div className={`student-important-date student-important-date-${item.kind}`} key={item.date + item.name + index}>
       <strong>{item.day} <small>{Number(item.date.slice(8))}/{Number(item.date.slice(5, 7))}</small></strong>
-      <span>{item.kind === 'exam' ? '📝' : item.kind === 'study' ? '📘' : '🌼'} {item.name}{!item.verified && <small> · Kontrollera datum</small>}</span>
+      <span>{item.kind === 'exam' ? '📝' : item.kind === 'study' ? '📘' : item.kind === 'halfday' ? '🕛' : '🌼'} {item.name}{item.kind === 'halfday' ? ' · '+item.cancelledLessons+' inställd(a) lektion(er)' : ''}{!item.verified && <small> · Kontrollera datum</small>}</span>
     </div>)}
   </div>
 }
@@ -769,7 +780,11 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   const classWeekTimeline = sourceClassWeeks.length ? (() => {
     const byDate = new Map(sourceClassWeeks.map(week=>[week.weekStart,week]))
     const timeline = []
-    for(let date=sourceClassWeeks[0].weekStart, end=sourceClassWeeks[sourceClassWeeks.length-1].weekStart;date<=end && timeline.length<110;date=addWeeks(date,1)){
+    // A class can finish later than the base plan when its timetable or closures delay lessons.
+    // Include those future weeks without modifying or deleting any source lesson.
+    const finalScheduledWeek = classLessons.length ? mondayOf(classLessons[classLessons.length-1].date) : sourceClassWeeks[sourceClassWeeks.length-1].weekStart
+    const end = finalScheduledWeek > sourceClassWeeks[sourceClassWeeks.length-1].weekStart ? finalScheduledWeek : sourceClassWeeks[sourceClassWeeks.length-1].weekStart
+    for(let date=sourceClassWeeks[0].weekStart;date<=end && timeline.length<110;date=addWeeks(date,1)){
       timeline.push(byDate.get(date)||{weekStart:date,weekNumber:calendarWeekNumber(date),title:'Vecka '+calendarWeekNumber(date),lessons:[],content:''})
     }
     return timeline
@@ -830,20 +845,28 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   const visibleWeeks = printPage === null
     ? studentWeeks
     : (printWeekStart ? studentWeeks.filter(week => week.weekStart === printWeekStart) : (printGroups[printPage]?.weeks || []))
-  const pageWeekLabel = studentWeekPageLabel(visibleWeeks)
-  if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
-  if (!preview && requestedClass && plan && !selectedClass) return <main className="shell"><section className="card"><h2>Klassen hittades inte</h2><p>Kontrollera elevlänken med din lärare.</p></section></main>
-  const previewClassSelector = preview && !hideSelector && plan?.classGroups?.length>0 && <div className="student-preview-classbar"><div className="student-preview-class-buttons"><button type="button" className={!previewClass?'active':''} onClick={()=>setPreviewClass('')}>📘 Grundplanering</button>{plan.classGroups.map(g=><button key={g.name} type="button" className={previewClass===g.name?'active':''} onClick={()=>setPreviewClass(g.name)}>🏫 {g.name}</button>)}</div><button type="button" className="student-class-copy-link" aria-label={linkCopied ? "Elevlänken kopierad" : "Kopiera elevlänk för "+(previewClass || "grundplaneringen")} title={linkCopied ? "Elevlänken kopierad" : "Kopiera elevlänk för "+(previewClass || "grundplaneringen")} disabled={!plan?.published||!plan?.publicSlug} onClick={async()=>{const url=window.location.origin+'/elev/'+encodeURIComponent(plan.publicSlug)+(previewClass?'?klass='+encodeURIComponent(previewClass):'');try{await navigator.clipboard.writeText(url);setLinkCopied(true)}catch{window.prompt('Kopiera elevlänk',url)}}}><span aria-hidden="true">{linkCopied?'✓':'🔗'}</span></button></div>
-  if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
-  return <>{previewClassSelector}<main style={planThemeStyle(plan)} className={`shell student-shell ${printPage === null ? "student-screen-view" : "student-print-page"} ${printPage !== null && visibleWeeks.length === 1 ? "student-print-spacious" : ""}`}>
-    {printPage === null && <div className="student-print-action"><button type="button" className="secondary" onClick={() => window.print()}>🖨️ Skriv ut elevvyn</button></div>}
-    {!preview && <header className="student-header student-header-simple">
-      <h1 style={{ fontSize: 'clamp(2.6rem, 5vw, 4.5rem)', fontWeight: 900, lineHeight: 1.12, margin: '8px 0 24px' }}>{plan.title}</h1>
-    </header>}
-    {studentWeeks.length === 0 && <p className="card empty" role="status">{plan.autoReleaseWeeks ? "Ingen vecka är publicerad för elever ännu. Nästa vecka visas automatiskt när dess måndag börjar." : "Det finns inga synliga veckor i den här planeringen ännu."}</p>}
-    <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
-      {visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
-        {week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
+  const [showEarlierStudentWeeks, setShowEarlierStudentWeeks] = useState(false)
+  const earlierStudentWeeks = printPage === null ? visibleWeeks.filter(week => week.weekStart < currentStudentWeekStart) : []
+  // Archive completed chapters without detaching their weeks.
+  const studentChapterWeeks = [...visibleWeeks].sort((a,b) => a.weekStart.localeCompare(b.weekStart))
+  const [studentAllWeeksOpen, setStudentAllWeeksOpen] = useState(false)
+  const [studentExpandVersion, setStudentExpandVersion] = useState(0)
+  const studentChapterGroups = studentChapterWeeks.reduce((groups, week) => {
+    const chapter = String(week.chapter || '').trim()
+    const last = groups[groups.length - 1]
+    if (last && last.chapter === chapter) last.weeks.push(week)
+    else groups.push({chapter, weeks:[week]})
+    return groups
+  }, [])
+  const archivedStudentGroups = printPage === null ? studentChapterGroups.filter(group => group.weeks.every(week => week.weekStart < currentStudentWeekStart)) : []
+  const activeStudentGroups = printPage === null ? studentChapterGroups.filter(group => group.weeks.some(week => week.weekStart >= currentStudentWeekStart)) : studentChapterGroups
+  const archivedStudentWeeks = archivedStudentGroups.reduce((total, group) => total + group.weeks.length, 0)
+  const renderStudentChapterGroups = (groups, historical = false) => (groups.map((group, groupIndex) => <details className="student-chapter-section" key={`${previewClass}-${groupIndex}-${group.chapter}-${studentExpandVersion}`} open={printPage !== null || studentAllWeeksOpen || groupIndex === 0 && !historical}>
+        <summary className={`student-chapter-heading chapter-tone-${chapterTone(group.chapter || 'Planering')}`}><span>📖 {group.chapter || 'Veckoplanering'}</span><span className="student-chapter-count">{group.weeks.length} {group.weeks.length === 1 ? 'vecka' : 'veckor'}　⌄</span></summary>
+        {group.weeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
+        
+        <details className="student-week-accordion" open={printPage !== null || studentAllWeeksOpen || (groupIndex === 0 && index === 0 && !historical)} key={`${previewClass}-${week.weekStart}-${studentExpandVersion}`}>
+          <summary className="student-week-summary"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{week.chapter?.trim() || week.title?.trim() || 'Veckoplanering'}</span><span>{studentWeekDateRange(week.weekStart)}</span><span aria-hidden="true">⌄</span></summary>
         <article id={"student-week-" + week.weekStart} className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
 
         <div className="week-top student-week-top">
@@ -852,13 +875,31 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
         </div>
         {!/^Vecka\s+\d+$/i.test(week.title || '') && week.title?.trim() && <h3>{week.title}</h3>}
         <div className="week-content">{week.content || (!week.pages?.length && !week.assignments?.length && !week.links?.length && !week.lessons?.some(lesson => lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.length || topic.assignments?.length || topic.links?.length)) ? 'Ingen planering angiven ännu.' : '')}</div>
-        <ImportantDatesForWeek week={week} plan={plan} />
+        <ImportantDatesForWeek week={week} plan={plan} selectedClass={selectedClass} />
         <LessonDetails week={week} entryType={plan.entryType || 'lektion'} lessonDisplay="dag-och-lektion" />
         <WeekDetails week={week} />
-      </article></div>)}
+      </article></details></div>)}</details>))
+  const pageWeekLabel = studentWeekPageLabel(visibleWeeks)
+  if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
+  if (!preview && requestedClass && plan && !selectedClass) return <main className="shell"><section className="card"><h2>Klassen hittades inte</h2><p>Kontrollera elevlänken med din lärare.</p></section></main>
+  const previewClassSelector = preview && !hideSelector && plan?.classGroups?.length>0 && <div className="student-preview-classbar"><div className="student-preview-class-buttons"><button type="button" className={!previewClass?'active':''} onClick={()=>setPreviewClass('')}>📘 Grundplanering</button>{plan.classGroups.map(g=><button key={g.name} type="button" className={previewClass===g.name?'active':''} onClick={()=>setPreviewClass(g.name)}>🏫 {g.name}</button>)}</div><button type="button" className="student-class-copy-link" aria-label={linkCopied ? "Elevlänken kopierad" : "Kopiera elevlänk för "+(previewClass || "grundplaneringen")} title={linkCopied ? "Elevlänken kopierad" : "Kopiera elevlänk för "+(previewClass || "grundplaneringen")} disabled={!plan?.published||!plan?.publicSlug} onClick={async()=>{const url=window.location.origin+'/elev/'+encodeURIComponent(plan.publicSlug)+(previewClass?'?klass='+encodeURIComponent(previewClass):'');try{await navigator.clipboard.writeText(url);setLinkCopied(true)}catch{window.prompt('Kopiera elevlänk',url)}}}><span aria-hidden="true">{linkCopied?'✓':'🔗'}</span></button></div>
+  if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
+  return <>{previewClassSelector}<main style={planThemeStyle(selectedClass?.themeId ? {...plan,themeId:selectedClass.themeId} : plan)} className={`shell student-shell ${printPage === null ? "student-screen-view" : "student-print-page"} ${printPage !== null && visibleWeeks.length === 1 ? "student-print-spacious" : ""}`}>
+    {printPage === null && <div className="student-print-action"><button type="button" className="secondary" onClick={() => window.print()}>🖨️ Skriv ut elevvyn</button></div>}
+    {!preview && <header className="student-header student-header-simple">
+      <h1 style={{ fontSize: 'clamp(2.6rem, 5vw, 4.5rem)', fontWeight: 900, lineHeight: 1.12, margin: '8px 0 24px' }}>{plan.title}</h1>
+    </header>}
+    {studentWeeks.length === 0 && <p className="card empty" role="status">{plan.autoReleaseWeeks ? "Ingen vecka är publicerad för elever ännu. Nästa vecka visas automatiskt när dess måndag börjar." : "Det finns inga synliga veckor i den här planeringen ännu."}</p>}
+    {printPage === null && studentChapterWeeks.length > 1 && <button type="button" className="secondary student-all-weeks-toggle" onClick={() => { setStudentAllWeeksOpen(value => !value); setStudentExpandVersion(value => value + 1) }}>{studentAllWeeksOpen ? 'Dölj alla veckor utom den första' : 'Visa alla veckor'}</button>}
+    <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
+      {printPage === null && archivedStudentGroups.length > 0 && <details className="student-history-folder" open={showEarlierStudentWeeks}>
+        <summary className="student-history-heading" onClick={event => { event.preventDefault(); setShowEarlierStudentWeeks(value => !value) }}><span>📁 Tidigare veckor</span><span>{archivedStudentGroups.length} kapitel · {archivedStudentWeeks} veckor　⌄</span></summary>
+        <div className="student-history-chapters">{renderStudentChapterGroups(archivedStudentGroups, true)}</div>
+      </details>}
+      {renderStudentChapterGroups(activeStudentGroups)}
     </section>
   </main>
-  {false && printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">
+  {printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">
     {Array.from({ length: printGroups.length }, (_, index) => <StudentView key={index} plan={plan} preview={preview} printPage={index} printWeekStart={singlePrintWeek} />)}
   </div>}
 </>
@@ -896,13 +937,19 @@ function nationalExamsForPlan(plan) {
   return NATIONAL_EXAMS_2026_27.filter(item => item.grade === grade && matchesSubject(item))
 }
 
-function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnFirstWeek = false, embedded = false, onOpen, onClose, onUpdateWeek, onSetAllVisibility, onAddWeek, onDeleteWeek, onUndo, canUndo = false, onSave, isDirty, busy, saveStatus, onBackToPrevious, entryType = 'lektion', classGroups = [], classPlan = null, publicSlug = '', onChangeClassGroups, onImportFile, fileImportState = {phase:'idle',message:''} }) {
+function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnFirstWeek = false, embedded = false, onOpen, onClose, onUpdateWeek, onSetAllVisibility, onAddWeek, onDeleteWeek, onUndo, canUndo = false, onSave, isDirty, busy, saveStatus, onBackToPrevious, entryType = 'lektion', classGroups = [], classPlan = null, publicSlug = '', onChangeClassGroups, onChangeSchoolClosures, onImportFile, fileImportState = {phase:'idle',message:''} }) {
   // Årsöversikt i nio veckor per sida, tre kolumner och tre rader.
   const [selectedWeekIndex, setSelectedWeekIndex] = useState(null)
   const [overviewPage, setOverviewPage] = useState(0)
   const [selectedLessonIndex, setSelectedLessonIndex] = useState(null)
   const [selectedCalendarClass, setSelectedCalendarClass] = useState('')
   const [showQuickClassMatrix,setShowQuickClassMatrix] = useState(false)
+  const [showClosureEditor,setShowClosureEditor] = useState(false)
+  const [closureKind,setClosureKind] = useState('Studiedag')
+  const [closureFrom,setClosureFrom] = useState('')
+  const [closureTo,setClosureTo] = useState('')
+  const [closureCancelled,setClosureCancelled] = useState(1)
+  const [closureCancelledFrom,setClosureCancelledFrom] = useState('end')
   const [newQuickClassName,setNewQuickClassName] = useState('')
   const [quickClassDays,setQuickClassDays] = useState(['Måndag','Onsdag'])
   const quickDays=['Måndag','Tisdag','Onsdag','Torsdag','Fredag']
@@ -917,6 +964,8 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
     onChangeClassGroups?.(classGroups.map(g=>g.name!==className?g:{...g,days:g.days?.includes(day)?g.days.filter(d=>d!==day):[...(g.days||[]),day]}))
   }
   const activeCalendarGroup = classGroups.find(g=>g.name===selectedCalendarClass)
+  const relevantClosures = activeCalendarGroup ? [...schoolClosures.filter(item=>!item.classNames || item.classNames.includes(activeCalendarGroup.name)), ...(activeCalendarGroup.schoolClosures || [])] : schoolClosures
+  const visibleClassClosures = activeCalendarGroup ? [...schoolClosures.filter(item=>!item.classNames||item.classNames.includes(activeCalendarGroup.name)),...(activeCalendarGroup.schoolClosures||[])] : schoolClosures
   const activeCalendarSchedule = activeCalendarGroup ? buildClassSchedule({...classPlan,weeksData:weeks},activeCalendarGroup) : []
   const orderedWeeks = [...weeks].filter(week => week && /^\d{4}-\d{2}-\d{2}$/.test(week.weekStart || '')).sort((a, b) => a.weekStart.localeCompare(b.weekStart))
   const selectedWeek = selectedWeekIndex === null ? null : orderedWeeks[selectedWeekIndex]
@@ -955,7 +1004,9 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
       <div className="calendar-zoom-controls calendar-zoom-controls-left">{selectedWeek && <button type="button" className="secondary calendar-return-overview" onClick={() => { setSelectedLessonIndex(null); setSelectedWeekIndex(null); setOverviewPage(0) }}>✕ Stäng veckan – visa hela Kalendervy</button>}</div>
     </div>
     {<div className="calendar-class-picker"><div className="calendar-class-buttons"><div className="calendar-class-chip"><button type="button" className={!selectedCalendarClass?'active':''} onClick={()=>setSelectedCalendarClass('')}>📘 Grundplanering</button><button type="button" className="calendar-chip-action" title="Arkivera grundplanering" aria-label="Arkivera grundplanering" onClick={()=>{setSelectedCalendarClass('');window.alert('Arkivera grundplaneringen med arkivikonen vid kursen under Mina planeringar.')}}>▤</button></div>{classGroups.filter(g=>!g.archived).map(g=><div key={g.name} className="calendar-class-chip"><button type="button" className={selectedCalendarClass===g.name?'active':''} onClick={()=>setSelectedCalendarClass(g.name)}>🏫 {g.name}</button><button type="button" className="calendar-chip-action" title={g.archived?'Återställ klass':'Arkivera klass'} aria-label={(g.archived?'Återställ ':'Arkivera ')+g.name} onClick={()=>{onChangeClassGroups?.(classGroups.map(item=>item.name===g.name?{...item,archived:!item.archived}:item));if(selectedCalendarClass===g.name)setSelectedCalendarClass('')}}>{g.archived?'↶':'▤'}</button><button type="button" className="calendar-chip-action calendar-chip-delete" title={'Radera '+g.name} aria-label={'Radera '+g.name} onClick={()=>{if(!window.confirm('Radera klassen '+g.name+' från planeringen?'))return;onChangeClassGroups?.(classGroups.filter(item=>item.name!==g.name));if(selectedCalendarClass===g.name)setSelectedCalendarClass('')}}>×</button></div>)}</div><button type="button" className="calendar-add-class-toggle" aria-expanded={showQuickClassMatrix} onClick={()=>setShowQuickClassMatrix(v=>!v)}>+ Klass</button><label className={`calendar-upload-file ${fileImportState.phase === "loading" ? "is-loading" : ""}`} title="Ladda upp planeringsfil">{fileImportState.phase === "loading" ? "◌ Läser fil…" : "↥ Ladda upp fil"}<input type="file" accept=".xlsx,.xls,.docx,.doc,.pdf,.txt,.csv,.png,.jpg,.jpeg,.webp" onChange={event=>{const file=event.target.files?.[0];event.target.value='';if(file && fileImportState.phase !== "loading")onImportFile?.(file)}} disabled={fileImportState.phase === "loading"} /></label>{fileImportState.phase !== "idle" && <span className={`calendar-import-feedback ${fileImportState.phase}`} role="status" aria-live="polite">{fileImportState.phase === "loading" ? "◌ " : fileImportState.phase === "success" ? "✓ " : "⚠ "}{fileImportState.message}</span>}<button type="button" className="student-class-copy-link" aria-label="Kopiera elevlänk för vald klass" title="Kopiera elevlänk för vald klass" disabled={!publicSlug} onClick={async()=>{const url=window.location.origin+'/elev/'+encodeURIComponent(publicSlug)+(activeCalendarGroup?'?klass='+encodeURIComponent(activeCalendarGroup.name):'');try{await navigator.clipboard.writeText(url)}catch{window.prompt('Kopiera elevlänk',url)}}}>🔗</button></div>}
+    <section className="calendar-closure-tools"><button type="button" className="secondary" aria-expanded={showClosureEditor} onClick={()=>setShowClosureEditor(value=>!value)}>📅 {showClosureEditor?'Dölj lediga dagar':'Studiedag / halvdag / lov'}</button>{showClosureEditor && <div className="calendar-quick-matrix"><h3>Lediga dagar – {activeCalendarGroup?.name || 'alla klasser'}</h3><p>Moment bevaras och flyttas automatiskt till nästa schemalagda lektion för varje klass.</p><div className="form-grid"><label>Typ<select value={closureKind} onChange={event=>setClosureKind(event.target.value)}>{['Studiedag','Halvdag','Lov','Helgdag','Inställd lektion','Annan ledighet'].map(kind=><option key={kind}>{kind}</option>)}</select></label><label>Från<input type="date" value={closureFrom} onChange={event=>{setClosureFrom(event.target.value);if(!closureTo||closureTo<event.target.value)setClosureTo(event.target.value)}}/></label><label>Till<input type="date" min={closureFrom} value={closureTo} onChange={event=>setClosureTo(event.target.value)}/></label>{closureKind==='Halvdag' && <label>Antal inställda lektioner<input type="number" min="1" max="20" value={closureCancelled} onChange={event=>setClosureCancelled(Math.max(1,Math.min(20,Number(event.target.value)||1)))}/></label>}{closureKind==='Halvdag' && <label>Vilka lektioner ställs in?<select value={closureCancelledFrom} onChange={event=>setClosureCancelledFrom(event.target.value)}><option value="end">Dagens sista lektioner (eftermiddag)</option><option value="start">Dagens första lektioner (förmiddag)</option></select></label>}</div><button type="button" className="primary" disabled={!closureFrom || (closureTo&&closureTo<closureFrom)} onClick={()=>{const item={id:crypto.randomUUID(),name:closureKind,type:closureKind,startDate:closureFrom,endDate:closureTo||closureFrom,verified:true,cancelledLessons:closureKind==='Halvdag'?closureCancelled:0,cancelledFrom:closureKind==='Halvdag'?closureCancelledFrom:undefined};if(activeCalendarGroup)onChangeClassGroups?.(classGroups.map(group=>group.name===activeCalendarGroup.name?{...group,schoolClosures:[...(group.schoolClosures||[]),item]}:group));else onChangeSchoolClosures?.([...schoolClosures,item]);setClosureFrom('');setClosureTo('')}}>+ Lägg till</button>{relevantClosures.map(item=><div key={item.id} className="class-closure-item"><span><strong>{item.type||item.name}</strong> · {item.startDate}–{item.endDate}{item.type==='Halvdag'?' · '+(item.cancelledLessons||1)+' inställda lektioner':''}</span><button type="button" className="secondary" onClick={()=>{if(activeCalendarGroup && (activeCalendarGroup.schoolClosures||[]).some(v=>v.id===item.id))onChangeClassGroups?.(classGroups.map(group=>group.name===activeCalendarGroup.name?{...group,schoolClosures:(group.schoolClosures||[]).filter(v=>v.id!==item.id)}:group));else onChangeSchoolClosures?.(schoolClosures.filter(v=>v.id!==item.id))}}>Ta bort</button></div>)}</div>}</section>
     {showQuickClassMatrix && <div className="calendar-quick-matrix"><div className="calendar-quick-header"><strong>Klassernas lektionsdagar</strong><button type="button" className="calendar-quick-close" onClick={()=>setShowQuickClassMatrix(false)}>✕ Stäng</button></div><div className="calendar-quick-add"><label htmlFor="calendar-new-class">Ny klass</label><input id="calendar-new-class" placeholder="T.ex. EK26A" value={newQuickClassName} onChange={e=>setNewQuickClassName(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addQuickClass()}}}/><button type="button" onClick={addQuickClass} disabled={!newQuickClassName.trim()||classGroups.some(g=>g.name.toLocaleLowerCase('sv')===newQuickClassName.trim().toLocaleLowerCase('sv'))}>+ Lägg till</button></div><p>Markera vilka dagar klassen har lektioner. Inga klockslag behövs.</p><div className="calendar-quick-matrix-scroll"><table><thead><tr><th>Klass</th>{quickDays.map(day=><th key={day}>{day.slice(0,3)}</th>)}</tr></thead><tbody>{classGroups.map(g=><tr key={g.name}><th>{g.name}</th>{quickDays.map(day=><td key={day}><input type="checkbox" aria-label={g.name+' '+day} checked={g.days?.includes(day)||false} onChange={()=>toggleQuickDay(g.name,day)}/>{g.days?.includes(day)&&<div className="calendar-day-moments"><button type="button" aria-label={'Minska moment '+g.name+' '+day} disabled={(g.momentsPerDay?.[day]||1)<=1} onClick={()=>onChangeClassGroups?.(classGroups.map(item=>item.name===g.name?{...item,momentsPerDay:{...item.momentsPerDay,[day]:Math.max(1,(item.momentsPerDay?.[day]||1)-1)}}:item))}>−</button><span>{g.momentsPerDay?.[day]||1}</span><button type="button" aria-label={'Öka moment '+g.name+' '+day} onClick={()=>onChangeClassGroups?.(classGroups.map(item=>item.name===g.name?{...item,momentsPerDay:{...item.momentsPerDay,[day]:(item.momentsPerDay?.[day]||1)+1}}:item))}>+</button></div>}</td>)}</tr>)}<tr><th>Ny klass</th>{quickDays.map(day=><td key={day}><input type="checkbox" aria-label={'Ny klass '+day} checked={quickClassDays.includes(day)} onChange={()=>setQuickClassDays(prev=>prev.includes(day)?prev.filter(d=>d!==day):[...prev,day])}/></td>)}</tr></tbody></table></div></div>}
+    {activeCalendarGroup && visibleClassClosures.length>0 && <div className="calendar-quick-matrix" aria-label="Lediga dagar för vald klass"><strong>📅 Lediga dagar som påverkar {activeCalendarGroup.name}</strong>{visibleClassClosures.filter(item=>item.startDate&&item.endDate).map(item=><p key={item.id||item.startDate+item.name}>🟠 {item.type||item.name} · {item.startDate}–{item.endDate}</p>)}</div>}
     {activeCalendarGroup && <section className="calendar-selected-class-cards"><StudentView key={activeCalendarGroup.name} plan={{...sanitizeForStudents({...classPlan,weeksData:weeks}),classGroups:[activeCalendarGroup]}} preview initialClass={activeCalendarGroup.name} hideSelector /></section>}
     {!activeCalendarGroup && <>
     {selectedWeek ? <div className="calendar-week-detail" style={{ backgroundColor: weekColor(selectedWeek.weekStart) }}>
@@ -1222,6 +1273,9 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [editingClassView,setEditingClassView] = useState('')
   const [plan, setPlan] = useState(emptyPlan())
   const [plans, setPlans] = useState([])
+  const [colleagueEmail, setColleagueEmail] = useState('')
+  const [planColleagues, setPlanColleagues] = useState([])
+  const [sharingBusy, setSharingBusy] = useState(false)
   const [showArchive, setShowArchive] = useState(false)
   const [planSearch, setPlanSearch] = useState("")
   const [libraryYear, setLibraryYear] = useState('alla')
@@ -1279,42 +1333,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const initialPlansLoadedRef = useRef(false)
   const latestPlanRef = useRef(plan)
   useEffect(() => { latestPlanRef.current = plan }, [plan])
-  const historyRef = useRef({ past: [], current: JSON.stringify(plan), future: [] })
-  const historySkipRef = useRef(false)
-  const [historyVersion, setHistoryVersion] = useState(0)
-  useEffect(() => {
-    const next = JSON.stringify(plan)
-    const history = historyRef.current
-    if (next === history.current) return
-    if (historySkipRef.current) {
-      historySkipRef.current = false
-      history.current = next
-      return
-    }
-    history.past.push(history.current)
-    if (history.past.length > 60) history.past.shift()
-    history.current = next
-    history.future = []
-    setHistoryVersion(v => v + 1)
-  }, [plan])
-  const undoPlan = () => {
-    const h = historyRef.current
-    if (!h.past.length) return
-    h.future.unshift(h.current)
-    h.current = h.past.pop()
-    historySkipRef.current = true
-    setPlan(JSON.parse(h.current))
-    setHistoryVersion(v => v + 1)
-  }
-  const redoPlan = () => {
-    const h = historyRef.current
-    if (!h.future.length) return
-    h.past.push(h.current)
-    h.current = h.future.shift()
-    historySkipRef.current = true
-    setPlan(JSON.parse(h.current))
-    setHistoryVersion(v => v + 1)
-  }
+  const { undoPlan, redoPlan, historyVersion, historyRef, historySkipRef } = usePlanHistory(plan, setPlan)
   const savedPlanRef = useRef(JSON.stringify(plan))
   const [, setSavedRevision] = useState(0)
   const isDirty = JSON.stringify(plan) !== savedPlanRef.current
@@ -1347,8 +1366,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
 
   async function loadPlans() {
     const { data, error } = await supabase.from('veckoplanering')
-      .select('id,title,content,week_start,created_at,updated_at,subject,school_year,class_name,start_date,weeks,published,public_slug')
-      .eq('user_id', session.user.id).order('created_at', { ascending: false })
+      .select('id,user_id,title,content,week_start,created_at,updated_at,subject,school_year,class_name,start_date,weeks,published,public_slug')
+      .order('created_at', { ascending: false })
     if (error) {
       setStatus(`Kunde inte hämta planeringar: ${error.message}`)
       return false
@@ -1377,6 +1396,37 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     return true
   }
 
+  const selectedPlanRow = plans.find(row => String(row.id) === String(selectedId))
+  const isSelectedPlanOwner = !selectedId || selectedPlanRow?.user_id === session.user.id
+
+  async function loadPlanColleagues(planId) {
+    if (!planId || !plans.some(row => String(row.id) === String(planId) && row.user_id === session.user.id)) {
+      setPlanColleagues([])
+      return
+    }
+    const { data, error } = await supabase.from('plan_collaborators').select('user_id,created_at').eq('plan_id', planId)
+    if (error) setStatus('Kunde inte läsa delningen: ' + error.message)
+    else setPlanColleagues(data || [])
+  }
+  useEffect(() => { loadPlanColleagues(selectedId) }, [selectedId, plans])
+
+  async function inviteColleague() {
+    if (!selectedId || !isSelectedPlanOwner || !colleagueEmail.trim() || sharingBusy) return
+    setSharingBusy(true)
+    const { error } = await supabase.rpc('invite_plan_colleague', { p_plan_id: selectedId, p_email: colleagueEmail.trim() })
+    if (error) setStatus('Kunde inte bjuda in: ' + error.message)
+    else { setStatus('Kollegan har nu redigerings- och publiceringsbehörighet.'); setColleagueEmail(''); await loadPlanColleagues(selectedId) }
+    setSharingBusy(false)
+  }
+  async function revokeColleague(userId) {
+    if (!selectedId || !isSelectedPlanOwner || sharingBusy || !window.confirm('Ta bort kollegans tillgång till denna planering?')) return
+    setSharingBusy(true)
+    const { error } = await supabase.rpc('revoke_plan_colleague', { p_plan_id: selectedId, p_user_id: userId })
+    if (error) setStatus('Kunde inte ta bort delningen: ' + error.message)
+    else { setStatus('Delningen är borttagen.'); await loadPlanColleagues(selectedId) }
+    setSharingBusy(false)
+  }
+
   useEffect(() => { loadPlans() }, [])
 
   function shiftAllWeeks(index, target) {
@@ -1402,20 +1452,59 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   }
 
   function insertBlankWeekAfter(index) {
+    const current = displayWeeks(plan)
+    if (index < 0 || index >= current.length - 1 || current.length >= 52) {
+      setStatus('Det går inte att infoga en vecka här.')
+      return
+    }
+    const nextDate = addWeeks(current[index].weekStart, 1)
+    const previewWeek = makeWeeks({ ...plan, startDate: nextDate, startWeek: calendarWeekNumber(nextDate), weeks: 1 }, 1)[0]
+    const count = previewWeek?.lessons?.length || 0
+    if (!count) { setStatus('Kunde inte skapa lektioner för den nya veckan.'); return }
+    const choice = window.prompt('Typ av ny vecka:\n1 = Vanlig vecka\n2 = Träna inför prov\n3 = Provträning + prov', '1')
+    if (choice === null) return
+    if (!['1', '2', '3'].includes(choice.trim())) { setStatus('Välj 1, 2 eller 3.'); return }
+    const mode = choice.trim()
+    let examIndex = -1
+    let examTitle = 'Prov'
+    if (mode === '3') {
+      const input = window.prompt(`Vilken lektion ska vara prov? (1–${count})`, String(count))
+      if (input === null) return
+      const selected = Number(input.trim())
+      if (!Number.isInteger(selected) || selected < 1 || selected > count) {
+        setStatus(`Välj ett lektionsnummer mellan 1 och ${count}.`)
+        return
+      }
+      examIndex = selected - 1
+      const title = window.prompt('Namn på provet', 'Prov')
+      if (title === null) return
+      examTitle = title.trim() || 'Prov'
+    }
     setPlan(previous => {
-      const existing=displayWeeks(previous)
-      if(index<0||index>=existing.length-1||existing.length>=52)return previous
-      const nextDate=addWeeks(existing[index].weekStart,1)
-      const blank=makeWeeks({...previous,startDate:nextDate,startWeek:calendarWeekNumber(nextDate),weeks:1},1)[0]
-      const following=existing.slice(index+1).map(week=>{
-        const weekStart=addWeeks(week.weekStart,1)
-        const weekNumber=calendarWeekNumber(weekStart)
-        return {...week,weekStart,weekNumber,title:!week.title||/^Vecka\s+\d+$/i.test(week.title)?'Vecka '+weekNumber:week.title}
+      const existing = displayWeeks(previous)
+      if (index < 0 || index >= existing.length - 1 || existing.length >= 52) return previous
+      const nextDate = addWeeks(existing[index].weekStart, 1)
+      const blank = makeWeeks({ ...previous, startDate: nextDate, startWeek: calendarWeekNumber(nextDate), weeks: 1 }, 1)[0]
+      const lessons = blank.lessons.map((lesson, i) => {
+        if (mode === '1' || (mode === '3' && i > examIndex)) return lesson
+        if (mode === '3' && i === examIndex) {
+          return { ...lesson, assessment: { type: 'Prov', customType: '', title: examTitle }, topics: [{ name: examTitle, pages: [], assignments: [], links: [] }] }
+        }
+        return { ...lesson, topics: [{ name: 'Träna inför prov', pages: [], assignments: [], links: [] }] }
       })
-      const weeksData=[...existing.slice(0,index+1),blank,...following]
-      return {...previous,weeks:weeksData.length,weeksData}
+      const inserted = { ...blank, lessons, ...(mode === '1' ? {} : { weekActivity: mode === '2' ? 'provtraning' : 'provtraning-prov' }) }
+      const following = existing.slice(index + 1).map(week => {
+        const weekStart = addWeeks(week.weekStart, 1)
+        const weekNumber = calendarWeekNumber(weekStart)
+        return { ...week, weekStart, weekNumber, title: !week.title || /^Vecka\s+\d+$/i.test(week.title) ? 'Vecka ' + weekNumber : week.title }
+      })
+      const weeksData = [...existing.slice(0, index + 1), inserted, ...following]
+      const updated = { ...previous, weeks: weeksData.length, weeksData }
+      return Array.isArray(previous.classGroups)
+        ? { ...updated, classGroups: remapClassOverridesAfterInsertion({ ...previous, weeksData: existing }, updated, index) }
+        : updated
     })
-    setStatus('Tom vecka infogad. Efterföljande veckor har flyttats framåt.')
+    setStatus('Vecka infogad med valt innehåll. Efterföljande veckor har flyttats framåt.')
   }
 
   function updateWeek(index, changes) {
@@ -1509,7 +1598,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       let databaseSlug = ''
       if (selectedId) {
         const { data: existing, error: lookupError } = await supabase.from('veckoplanering')
-          .select('published,public_slug').eq('id', selectedId).eq('user_id', session.user.id).single()
+          .select('published,public_slug,user_id').eq('id', selectedId).single()
         if (lookupError) {
           setStatus(`Kunde inte kontrollera publiceringsstatus: ${lookupError.message}`)
           setBusy(false)
@@ -1523,7 +1612,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       const payload = { kind: 'arsplanering-v2', ...plan, themeId: plan.themeId || planTheme(plan, selectedId).id, weeksData: weeks, published: publish || keepPublished, publicSlug: slug }
       const publishedPayload = publish ? sanitizeForStudents(payload) : null
       const row = {
-        user_id: session.user.id,
+        ...(selectedId ? {} : { user_id: session.user.id }),
         title: plan.title,
         week_start: plan.startDate,
         content: JSON.stringify(payload),
@@ -1536,7 +1625,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         updated_at: new Date().toISOString(),
       }
       const query = selectedId
-        ? supabase.from('veckoplanering').update(row).eq('id', selectedId).eq('user_id', session.user.id).select('id').single()
+        ? supabase.from('veckoplanering').update(row).eq('id', selectedId).select('id').single()
         : supabase.from('veckoplanering').insert(row).select('id').single()
       const { data, error } = await query
       if (error) setStatus(`Kunde inte spara: ${error.message}`)
@@ -2006,7 +2095,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     </div>}
 
     
-    {selectedId && !calendarOpen && teacherTab === "arsplan" && <div id="kopplade-klasser"><ClassSchedules plan={{...plan,weeksData:weeks}} publicSlug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} /></div>}
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && <div id="kopplade-klasser"><ClassSchedules themes={PLAN_THEMES} plan={{...plan,weeksData:weeks}} publicSlug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} /></div>}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && Array.isArray(plan.classGroups) && plan.classGroups.length>0 && <div className="student-preview-classbar editing-class-picker"><div className="student-preview-class-buttons"><button type="button" className={!editingClassView?'active':''} onClick={()=>setEditingClassView('')}>📘 Grundplanering</button>{plan.classGroups.map(g=><button type="button" key={g.name} className={editingClassView===g.name?'active':''} onClick={()=>setEditingClassView(g.name)}>🏫 {g.name}</button>)}</div><button type="button" className="student-class-copy-link" aria-label="Kopiera elevlänk för vald klass" title="Kopiera elevlänk för vald klass" disabled={!plan.published||!plan.publicSlug} onClick={async()=>{const url=window.location.origin+'/elev/'+encodeURIComponent(plan.publicSlug)+(editingClassView?'?klass='+encodeURIComponent(editingClassView):'');try{await navigator.clipboard.writeText(url);setStatus('Elevlänken för '+(editingClassView||'grundplaneringen')+' har kopierats.')}catch{window.prompt('Kopiera elevlänk',url)}}}>🔗</button></div>}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && plan.classGroups?.some(g=>g.name===editingClassView) && <section className="editing-selected-class-weekly"><StudentView key={editingClassView} plan={{...sanitizeForStudents({...plan,weeksData:weeks}),classGroups:[plan.classGroups.find(g=>g.name===editingClassView)],published:plan.published,publicSlug:plan.publicSlug}} preview initialClass={editingClassView} hideSelector /></section>}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline" style={editingClassView && plan.classGroups?.some(g=>g.name===editingClassView)?{display:"none"}:undefined}>
@@ -2049,7 +2138,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
                 const remaining = current.filter((_, i) => i !== index)
                 return { ...p, weeks: remaining.length, weeksData: remaining, startWeek: Number(remaining[0]?.weekNumber) || p.startWeek }
               })
-            }}>× Ta bort vecka</button></div>
+            }}>× Ta bort vecka</button><div className="week-history-actions" role="group" aria-label="Ångra eller gör om ändringar"><button type="button" className="week-history-icon" onClick={undoPlan} disabled={busy || historyRef.current.past.length === 0} aria-label="Ångra ändring" title="Ångra senaste ändring">↶</button><button type="button" className="week-history-icon" onClick={redoPlan} disabled={busy || historyRef.current.future.length === 0} aria-label="Gör om ändring" title="Gör om senaste ändring">↷</button></div></div>
           <label className="chapter-editor">Kapitel / tema (valfritt)<input value={week.chapter || ''} placeholder="Exempel: Kapitel 5 – Taluppfattning" onChange={e => updateWeek(index, { chapter: e.target.value })} /></label>
           {!/^Vecka\s+\d+$/i.test(week.title || '') && <input className="week-title" aria-label="Egen veckorubrik" value={week.title || ''} onChange={e => updateWeek(index, { title: e.target.value })} />}
           <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />
@@ -2088,7 +2177,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       const nextDate = addWeeks(latest.weekStart, 1)
       const newWeek = makeWeeks({ ...p, startDate: nextDate, startWeek: calendarWeekNumber(nextDate), weeks: 1 }, 1)[0]
       return { ...p, weeks: existing.length + 1, weeksData: [...existing, newWeek] }
-    })} onUndo={undoPlan} canUndo={historyRef.current.past.length > 0} onDeleteWeek={weekStart => { if (busy || weeks.length <= 1) return; const week = weeks.find(item => item.weekStart === weekStart); if (!week) return; if (!window.confirm(`Vill du radera vecka ${calendarWeekNumber(weekStart) ?? week.weekNumber} och allt innehåll i den? Ändringen sparas först när du väljer Spara ändringar.`)) return; setPlan(p => { const remaining = displayWeeks(p).filter(item => item.weekStart !== weekStart); return remaining.length ? { ...p, weeks: remaining.length, weeksData: remaining } : p }) }} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} classGroups={plan.classGroups || []} onChangeClassGroups={groups=>setPlan(previous=>({...previous,classGroups:groups}))} classPlan={plan} publicSlug={plan.published ? plan.publicSlug || "" : ""} /></div>}
+    })} onUndo={undoPlan} canUndo={historyRef.current.past.length > 0} onDeleteWeek={weekStart => { if (busy || weeks.length <= 1) return; const week = weeks.find(item => item.weekStart === weekStart); if (!week) return; if (!window.confirm(`Vill du radera vecka ${calendarWeekNumber(weekStart) ?? week.weekNumber} och allt innehåll i den? Ändringen sparas först när du väljer Spara ändringar.`)) return; setPlan(p => { const remaining = displayWeeks(p).filter(item => item.weekStart !== weekStart); return remaining.length ? { ...p, weeks: remaining.length, weeksData: remaining } : p }) }} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} classGroups={plan.classGroups || []} onChangeClassGroups={groups=>setPlan(previous=>({...previous,classGroups:groups}))} classPlan={plan} onChangeSchoolClosures={closures=>setPlan(previous=>({...previous,schoolClosures:closures}))} publicSlug={plan.published ? plan.publicSlug || "" : ""} /></div>}
 
     <div className={`teacher-tab-panel ${simpleSetup ? "simple-setup-active" : ""}`} id="panel-lararvy" role="tabpanel" aria-labelledby="tab-lararvy" hidden={teacherTab !== "arsplan" && teacherTab !== "new"}>
     {simpleSetup && <section className="card simple-setup-card" aria-label="Skapa ny planering">
@@ -2275,6 +2364,14 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       </div>}
     </section>
 
+    {selectedId && teacherTab === 'arsplan' && <section className="card" aria-label="Dela planering med kollega" style={{marginBottom:16}}>
+      <h3>👥 Dela planering</h3>
+      {isSelectedPlanOwner ? <>
+        <p className="muted">Bjud in en godkänd lärarkollega. Kollegan loggar in med sitt eget konto och kan redigera och publicera, men inte dela vidare.</p>
+        <div className="button-row"><input type="email" aria-label="Kollegans e-postadress" placeholder="Kollegans e-postadress" value={colleagueEmail} onChange={event => setColleagueEmail(event.target.value)} /><button type="button" className="secondary" disabled={sharingBusy || !colleagueEmail.trim()} onClick={inviteColleague}>Bjud in</button></div>
+        {planColleagues.map(colleague => <div className="button-row" key={colleague.user_id}><span>Kollega · {colleague.user_id.slice(0,8)}… · Kan redigera och publicera</span><button type="button" className="secondary" disabled={sharingBusy} onClick={() => revokeColleague(colleague.user_id)}>Ta bort delning</button></div>)}
+      </> : <p className="muted">Du är medredigerare och kan spara och publicera. Endast ägaren kan ändra delningen.</p>}
+    </section>}
     <div className="button-row" aria-label="Spara planering"><button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara ändringar</button><span className="autosave-info">Publiceras automatiskt när det finns innehåll</span></div>
     <div className="week-overview-toolbar" aria-label="Årskalender och zoom"><strong>Veckor i planeringen <span className="week-count-badge">{weeks.length} {weeks.length === 1 ? "vecka" : "veckor"}</span></strong><button type="button" className="primary" onClick={() => {
         setCalendarOpen(true)
@@ -2699,6 +2796,13 @@ function lessonDayDate(weekStart, lessonName) {
   date.setDate(date.getDate() - ((date.getDay() + 6) % 7) + index)
   return formatDate(toIsoDate(date))
 }
+function momentLabelWithoutChapter(value, chapter) {
+  const label = String(value || '')
+  const prefix = String(chapter || '').trim()
+  if (!prefix) return label
+  const escaped = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return label.replace(new RegExp('^\\s*' + escaped + '\\s*[-–—:|]\\s*', 'i'), '')
+}
 function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 'bara-lektion' }) {
   const lessons = Array.isArray(week?.lessons) ? week.lessons : []
   const editable = typeof onChange === 'function'
@@ -2707,16 +2811,15 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
   const changeLessons = next => onChange?.({ lessons: next, ...(entryType === 'dag' ? { daysCustomized: true } : {}) })
   const changeLesson = (i, next) => changeLessons(lessons.map((lesson, index) => index === i ? next : lesson))
   const normalizeLessonOrder = items => items.map((lesson, index) => ({ ...lesson, name: `Lektion ${index + 1}` }))
-  const moveLesson = (index, direction) => {
+  const moveAssessment = (index, direction) => {
     const target = index + direction
-    if (target < 0 || target >= lessons.length) return
-    const next = [...lessons]
-    const sourceDay = next[index].day
-    const targetDay = next[target].day
-    ;[next[index], next[target]] = [next[target], next[index]]
-    next[index] = { ...next[index], day: sourceDay }
-    next[target] = { ...next[target], day: targetDay }
-    changeLessons(normalizeLessonOrder(next))
+    if (target < 0 || target >= lessons.length || !lessons[index]?.assessment || lessons[target]?.assessment) return
+    const next = lessons.map(lesson => ({...lesson}))
+    // Move only the assessment. Every ordinary moment, its pages, tasks
+    // and links stays with its lesson; no content is swapped or deleted.
+    next[target].assessment = next[index].assessment
+    next[index].assessment = null
+    changeLessons(next)
   }
   return <div className="lessons">
     {lessons.map((lesson, i) => ({ lesson, i })).sort((a, b) => editable ? a.i - b.i : (WEEKDAYS.indexOf(a.lesson.day || a.lesson.name) + 5) % 5 - (WEEKDAYS.indexOf(b.lesson.day || b.lesson.name) + 5) % 5).map(({ lesson, i }) => <section className="lesson" key={i}>
@@ -2733,7 +2836,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
             return <>{showDay && <span>{dayLabel}</span>}{showDay && showLesson && ' · '}{showLesson && <span>{name}</span>}{lesson.assessment && <> · <span className="lesson-heading-assessment">{lesson.assessment.type === 'Egen benämning' ? (lesson.assessment.customType || 'Prov') : (lesson.assessment.type || 'Prov')}</span></>}{lessonDayDate(week.weekStart, day) && <span className="lesson-day-date"> · {lessonDayDate(week.weekStart, day)}</span>}</>
           })()}
         </h4>}
-        {editable && entryType !== 'dag' && <div className="lesson-reorder-controls"><button type="button" disabled={i === 0} aria-label={`Flytta lektion ${i + 1} uppåt`} onClick={() => moveLesson(i, -1)}>↑ Flytta upp</button><button type="button" disabled={i === lessons.length - 1} aria-label={`Flytta lektion ${i + 1} nedåt`} onClick={() => moveLesson(i, 1)}>↓ Flytta ned</button></div>}
+        {editable && !!lesson.assessment && <div className="lesson-reorder-controls"><button type="button" disabled={i === 0 || !!lessons[i-1]?.assessment} aria-label={`Flytta prov från lektion ${i + 1} uppåt`} onClick={() => moveAssessment(i, -1)}>↑ Prov</button><button type="button" disabled={i === lessons.length - 1 || !!lessons[i+1]?.assessment} aria-label={`Flytta prov från lektion ${i + 1} nedåt`} onClick={() => moveAssessment(i, 1)}>↓ Prov</button></div>}
         {editable && <button type="button" className="remove-small" onClick={() => { if (!(lesson.topics || []).some(topic => topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm(entryType === 'dag' ? 'Ta bort dagen och allt innehåll i den?' : 'Ta bort lektionen och allt innehåll i den?')) changeLessons(entryType === 'dag' ? lessons.filter((_, index) => index !== i) : normalizeLessonOrder(lessons.filter((_, index) => index !== i))) }}>× Ta bort {entryType === 'dag' ? 'dag' : 'lektion'}</button>}
       </div>
       {lesson.assessment && <div className="lesson-assessment-card" role="note">
@@ -2746,7 +2849,17 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
           <button type="button" onClick={()=>changeLesson(i,{...lesson,assessment:null})}>Ta bort provmarkering</button>
         </div> : <><div>{lesson.assessment.title}</div>{lesson.assessment.description && <p>{lesson.assessment.description}</p>}</>}
       </div>}
-      {editable && !lesson.assessment && <button type="button" className="lesson-add-assessment" onClick={()=>updateAssessment(i,{type:'Prov',title:'',description:''})}>+ Infoga prov/test</button>}
+      {editable && <div className="lesson-quick-actions" aria-label="Lägg till i lektionen">
+        <button type="button" onClick={() => {
+          const topics = [...(lesson.topics || [])]
+          if (!topics.length) topics.push({name:'',pages:[],assignments:[],links:[]})
+          const index = topics.length - 1
+          topics[index] = {...topics[index], links:[...(topics[index].links || []), {label:'',url:''}]}
+          changeLesson(i, {...lesson,topics})
+        }}><span className="quick-action-link" aria-hidden="true">↗</span> Länk</button>
+        <button type="button" onClick={() => changeLesson(i, {...lesson,topics:[...(lesson.topics || []),{name:'',pages:[],assignments:[],links:[]}]})}><span className="quick-action-moment" aria-hidden="true">⊕</span> Moment</button>
+        <button type="button" disabled={!!lesson.assessment} onClick={()=>updateAssessment(i,{type:'Prov',title:'',description:''})}><span className="quick-action-exam" aria-hidden="true">☑</span> Prov</button>
+      </div>}
       {(lesson.topics || []).map((topic, j) => ({ topic, j })).filter(({ topic }) => (editable || topic.classMomentPlaceholder || topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || '')))).map(({ topic, j }) => {
         const updateTopic = next => changeLesson(i, { ...lesson, topics: (lesson.topics || []).map((item, index) => index === j ? next : item) })
         const pages = Array.isArray(topic.pages) ? topic.pages : []
@@ -2756,7 +2869,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
         const rows = editable ? Math.max(1, pages.length, assignments.length) : Math.max(lastFilledRow(pages), lastFilledRow(assignments))
         return <div className="topic" key={j}>
           <div className={`topic-grid ${topic.hidePages ? "without-pages" : ""} ${topic.hideAssignments ? "without-assignments" : ""}`}>
-            <div className="topic-name">{editable ? <textarea aria-label="Momentets namn" placeholder="Exempel: Procent – tryck Enter för ny rad" rows={Math.max(2, String(topic.name || '').split('\n').length)} value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong className="topic-name-display">{topic.name || 'Moment'}</strong>}</div>
+            <div className="topic-name">{editable ? <textarea aria-label="Momentets namn" placeholder="Exempel: Procent – tryck Enter för ny rad" rows={Math.max(2, String(topic.name || '').split('\n').length)} value={momentLabelWithoutChapter(topic.name, week?.chapter)} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong className="topic-name-display">{momentLabelWithoutChapter(topic.name, week?.chapter) || 'Moment'}</strong>}</div>
             {['pages', 'assignments'].filter(field => !topic[field === 'pages' ? 'hidePages' : 'hideAssignments']).map(field => <div className={`topic-column ${field}`} key={field}>
               <div className="topic-fixed-heading"><h5>{field === 'pages' ? 'Sida' : 'Uppgift'}</h5>{editable && <button type="button" className="remove-small remove-topic-column" title={`Ta bort hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan`} aria-label={`Ta bort hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan`} onClick={() => { if ((field === 'pages' ? pages : assignments).some(value => String(value).trim()) && !window.confirm(`Dölj hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan? Innehållet sparas och kan visas igen.`)) return; updateTopic({ ...topic, [field === 'pages' ? 'hidePages' : 'hideAssignments']: true }) }}>× Ta bort ruta</button>}</div>
               {Array.from({ length: rows }, (_, row) => <div className="topic-cell" key={row}>
@@ -2787,7 +2900,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
           {editable && <button type="button" className="remove-small" onClick={() => { if (!(topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm('Ta bort momentet och allt innehåll?')) changeLesson(i, { ...lesson, topics: (lesson.topics || []).filter((_, index) => index !== j) }) }}>× Ta bort moment</button>}
         </div>
       })}
-      {editable && <button type="button" className="secondary" onClick={() => changeLesson(i, { ...lesson, topics: [...(lesson.topics || []), { name: '', pages: [], assignments: [], links: [] }] })}>+ Moment</button>}
+
     </section>)}
     {editable && (entryType !== 'dag' || WEEKDAYS.some(day => !lessons.some(lesson => lesson.name === day))) && <button type="button" className="secondary" onClick={() => {
       if (entryType === 'dag') {

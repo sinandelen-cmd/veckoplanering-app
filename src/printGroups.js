@@ -1,4 +1,4 @@
-// Sidgruppering för elevutskrift. Uppskattar innehållsmängd, inte fysisk A4-höjd.
+// Elevutskrift: högst två veckor per A4. Innehållsrika veckor får egen sida så att text inte kapas.
 export function groupStudentWeeksForPrint(studentWeeks) {
   const groups = []
   for (const week of studentWeeks) {
@@ -14,7 +14,7 @@ export function groupStudentWeeksForPrint(studentWeeks) {
     const weight = textLength > 1100 || contentBlocks > 16 ? 4 :
       textLength > 500 || contentBlocks > 8 ? 2 : 1
     const last = groups[groups.length - 1]
-    if (!last || last.weight + weight > 4 || last.weeks.length >= 4) groups.push({ weeks: [week], weight })
+    if (!last || last.weeks.length >= 2 || last.weight + weight > 4) groups.push({ weeks: [week], weight })
     else { last.weeks.push(week); last.weight += weight }
   }
   return groups

@@ -1,0 +1,80 @@
+# Independent, fast feedback. Fullstack Supabase runs in its own workflow.
+name: Snabbkontroll (kod, SQL, Chromium)
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run check
+      - run: npm run build
+  sql-regressions:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Run synthetic SQL cases against isolated PostgreSQL
+        run: bash tests/run-isolated-sql.sh
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Install isolated Playwright runner (no lockfile change)
+        run: npm install --no-save --package-lock=false playwright@1.56.1
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start isolated Vite fixture
+        run: |
+          npm run dev -- --host 127.0.0.1 --port 4175 > /tmp/veckoplanering-browser.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:4175/tests/browser-fixture.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/veckoplanering-browser.log
+          exit 1
+      - name: Run real Chromium interactions against fixture only
+        run: node tests/browser-integration-check.mjs
+
+      - name: Start actual App.jsx with localhost-only Supabase endpoint
+        env:
+          VITE_SUPABASE_URL: http://127.0.0.1:4199
+          VITE_SUPABASE_ANON_KEY: isolated-test-key-not-production
+        run: |
+          npm run dev -- --host 127.0.0.1 --port 4176 > /tmp/veckoplanering-real-app.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:4176/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/veckoplanering-real-app.log
+          exit 1
+      - name: Real App.jsx Chromium login and teacher access against isolated HTTP mocks
+        run: node tests/browser-real-app-check.mjs

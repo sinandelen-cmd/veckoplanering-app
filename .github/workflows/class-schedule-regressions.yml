@@ -1,0 +1,19 @@
+name: Class schedule regression checks (isolated)
+on:
+  push:
+    branches:
+      - test/class-schedule-regressions-20261024
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  class-schedule:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run real class scheduling regression tests
+        run: node tests/class-schedule-regressions.mjs

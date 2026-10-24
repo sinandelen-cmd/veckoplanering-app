@@ -1,0 +1,54 @@
+name: Isolated Supabase image registry probe
+on:
+  push:
+    branches:
+      - test/class-schedule-regressions-20261024
+    paths:
+      - '.github/workflows/supabase-registry-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Discover exact image references from pinned Supabase CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          # CLI image references are discovered from the installed binary rather
+          # than guessed from current Docker Compose or from latest image tags.
+          npm install --no-save --package-lock=false supabase@2.81.3
+          cli_bin="$(find node_modules/supabase -type f -name supabase -perm /111 | head -1)"
+          test -n "$cli_bin"
+          "$cli_bin" --version
+          strings "$cli_bin" | grep -Eo 'public\.ecr\.aws/supabase/(postgres|gotrue|postgrest|kong):[A-Za-z0-9._-]+' | sort -u > /tmp/cli-image-candidates.txt || true
+          echo "CLI image candidates (not yet validated against runtime):"
+          cat /tmp/cli-image-candidates.txt
+          if [ ! -s /tmp/cli-image-candidates.txt ]; then
+            echo "::warning title=No pinned images extracted::The CLI binary may construct image references dynamically. Do not infer tags."
+          fi
+      - name: Probe image manifests without downloading or retagging
+        shell: bash
+        run: |
+          set -u
+          {
+            printf '%s\n' 'public.ecr.aws/supabase/postgres:17.6.1.095'
+            cat /tmp/cli-image-candidates.txt
+          } | sort -u | while IFS= read -r image; do
+            echo "::group::Checking exact manifest $image"
+            for candidate in "$image" "${image/public.ecr.aws\/supabase\//docker.io\/supabase\/}"; do
+              if timeout 35s docker manifest inspect "$candidate" >/dev/null 2>&1; then
+                echo "AVAILABLE: $candidate"
+              else
+                echo "::warning title=Manifest not confirmed::Could not verify $candidate (missing tag, rate limit or network error)."
+              fi
+            done
+            echo "::endgroup::"
+          done
+          echo "Probe only: no Supabase start, database connection, image pull, or production deployment."

@@ -1,0 +1,28 @@
+name: Isolated changed-file security audit
+on:
+  push:
+    branches: [test/class-schedule-regressions-20261024]
+    paths:
+      - '.github/workflows/isolated-security-audit.yml'
+      - 'tests/isolated-security-audit.mjs'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Scan changed files without exposing matched values
+        env:
+          AUDIT_BASE: 'f75c4759c19a355c4b00986d1000625de68130a8'
+        run: node tests/isolated-security-audit.mjs
