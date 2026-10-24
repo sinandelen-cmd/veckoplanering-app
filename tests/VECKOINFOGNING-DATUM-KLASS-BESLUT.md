@@ -28,3 +28,11 @@ Arbetsgruppens fyra spår: (1) kontroll av tidigare CI – klart, (2) datumregle
 - **Kompatibilitetsrisk:** Befintliga klassanpassningar lagras med index för lektionens ordning. Att tyst skriva om dem vid veckoinfogning är riskabelt när klasser har olika veckodagar, inställda lektioner eller extra tillfällen. Rekommenderad väg: identifiera stabil lektionsidentitet, definiera hur äldre indexnycklar läses, testa flera klassscheman och migrera först efter särskilt beslut. Inga produktionsmigreringar.
 - **Säkerhet:** `publishDate` och `hideDate` är fortfarande kalenderbundna; testet dokumenterar befintligt beteende, inte en godkänd produktregel. Publicerat snapshot ska inte påverkas av utkast före uttrycklig publicering.
 - **CI för de allra senaste testerna:** måste verifieras separat innan arbetet kan kallas grönt.
+
+## Ny implementering på feature-grenen: remappning av klassanpassningar
+- `src/ClassSchedules.jsx` exporterar `remapClassOverridesAfterInsertion(previous,next,index)`. Den bygger före/efter-scheman med samma `buildClassSchedule` som elev- och lärarvyn och flyttar numeriska `overrides`-nycklar till det nya ordningsnumret för samma ursprungliga vecka och lektionsposition.
+- `src/App.jsx` anropar remappningen atomärt i samma `setPlan`-uppdatering som infogar veckan. Planeringar utan `classGroups` får ingen ny tom egenskap.
+- Befintligt format (ordningsindex som strängar) bevaras; ingen databasändring eller massmigrering. Icke-numeriska äldre nycklar lämnas orörda.
+- Regressionsfallet för en klassanpassning som låg på lektion 2 före infogning kräver nu att den ligger på ursprungslektionen efter infogning och inte på den nyinfogade veckan.
+- **Begränsning:** Om ett gammalt override-index inte kan matchas mot schemat behålls dess nyckel. Detta kan ge tvetydighet för felaktiga eller historiska data. Kollisionsfall och fullständiga UI-/publiceringstester kräver vidare verifiering före merge.
+- GitHub Actions måste bli gröna för den nya implementationen; mellanliggande commits hade röda tester eftersom testhärvan inte först stödde den nya helpern. Rätta och verifiera innan slutgodkännande.
