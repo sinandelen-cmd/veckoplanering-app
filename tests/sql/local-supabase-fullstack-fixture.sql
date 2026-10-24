@@ -40,7 +40,7 @@ CREATE POLICY teacher_plans_delete ON public.veckoplanering FOR DELETE TO authen
 REVOKE ALL ON public.teacher_access, public.veckoplanering FROM anon;
 GRANT SELECT ON public.teacher_access TO authenticated;
 GRANT SELECT,INSERT,UPDATE,DELETE ON public.veckoplanering TO authenticated;
--- EXACT read-only production function with only NULL hideDate predicate patched in this disposable fixture.
+-- Exact production RPC from read-only snapshot, ONLY hideDate NULL fix in disposable local fixture.
 CREATE OR REPLACE FUNCTION public.get_public_annual_plan(slug_value text)
  RETURNS TABLE(published_content text)
  LANGUAGE sql
@@ -64,7 +64,7 @@ with source as (
  and (not coalesce((s.doc->>'autoReleaseWeeks')::boolean,false)
       or (case when (w.week->>'publishDate') ~ '^\d{4}-\d{2}-\d{2}$' then (w.week->>'publishDate')::date
              else date_trunc('week',(w.week->>'weekStart')::date::timestamp)::date end) <= s.today)
- and (not coalesce((w.week->>'hideDate') ~ '^\d{4}-\d{2}-\d{2}
+ and (not coalesce((w.week->>'hideDate') ~ '^\d{4}-\d{2}-\d{2}$'),false) or (w.week->>'hideDate')::date > s.today)
 ), chosen as (
  select e.* from eligible e
  where not coalesce((e.doc->>'autoReleaseWeeks')::boolean,false)
@@ -88,33 +88,5 @@ select jsonb_set(
  and (c.closure->>'endDate') >= (w.week->>'weekStart'))),'[]'::jsonb)
 )::text from assembled a;
 $function$;
-
-REVOKE ALL ON FUNCTION public.get_public_annual_plan(text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.get_public_annual_plan(text) TO anon,authenticated;
-,false) or (w.week->>'hideDate')::date > s.today)
-), chosen as (
- select e.* from eligible e
- where not coalesce((e.doc->>'autoReleaseWeeks')::boolean,false)
- or e.ordinality in (
-   select z.ordinality from eligible z
-   order by z.release_day desc,z.ordinality desc
-   limit greatest(1,least(12,coalesce(nullif(e.doc->>'visibleWeekCount','')::integer,2)))
- )
-), assembled as (
- select s.doc,
-   coalesce((select jsonb_agg(c.week order by c.ordinality) from chosen c),'[]'::jsonb) as shown
- from source s
-)
-select jsonb_set(
- jsonb_set(a.doc,'{weeksData}',a.shown),
- '{schoolClosures}',
- coalesce((select jsonb_agg(c.closure order by c.ordinality)
- from jsonb_array_elements(case when jsonb_typeof(a.doc->'schoolClosures')='array' then a.doc->'schoolClosures' else '[]'::jsonb end) with ordinality as c(closure,ordinality)
- where exists (select 1 from jsonb_array_elements(a.shown) as w(week)
- where (c.closure->>'startDate') <= ((w.week->>'weekStart')::date+6)::text
- and (c.closure->>'endDate') >= (w.week->>'weekStart'))),'[]'::jsonb)
-)::text from assembled a;
-$function$;
-
 REVOKE ALL ON FUNCTION public.get_public_annual_plan(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_public_annual_plan(text) TO anon,authenticated;
