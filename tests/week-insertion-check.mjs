@@ -189,4 +189,54 @@ testWithPlan('W34 class override index stays unchanged',(()=>{const p=planOf(3);
   assert.notEqual(before[1].lesson.id,after[1].lesson.id)
 })
 
+
+testWithPlan('W32 class B Friday slots follow shifted weeks',planOf(4),['2'],0,p=>{
+  const items=buildClassSchedule(p,p.classGroups[1])
+  assert.ok(items.some(item=>item.date==='2026-01-16' && item.weekStart==='2026-01-12'))
+  assert.ok(items.some(item=>item.date==='2026-01-23' && item.weekStart==='2026-01-19'))
+  assert.ok(items.every(item=>item.day==='Fredag'))
+})
+testWithPlan('W33 class B extra slot remains calendar-based',planOf(7),['1'],0,p=>{
+  const items=buildClassSchedule(p,p.classGroups[1])
+  assert.equal(items.filter(item=>item.date==='2026-02-13').length,2)
+})
+testWithPlan('W32 hidden source week produces no class lessons',(()=>{
+  const p=planOf(3)
+  p.weeksData[1].hidden=true
+  return p
+})(),['1'],0,p=>{
+  const a=buildClassSchedule(p,p.classGroups[0])
+  assert.ok(!a.some(item=>item.weekStart===p.weeksData[2].weekStart))
+})
+{
+  // Verify actual undo/redo handlers, without mounting React.
+  const undoStart=source.indexOf('  const undoPlan = () => {')
+  const redoEnd=source.indexOf('  const savedPlanRef =',undoStart)
+  assert.ok(undoStart>=0 && redoEnd>undoStart)
+  const handlers=source.slice(undoStart,redoEnd)
+  const first=planOf(3)
+  const second=structuredClone(first)
+  second.weeksData[1].title='Redigerad'
+  const third=structuredClone(second)
+  third.weeksData[2].title='Nästa ändring'
+  const historyRef={current:{past:[JSON.stringify(first),JSON.stringify(second)],current:JSON.stringify(third),future:[]}}
+  const historySkipRef={current:false}
+  let plan=third
+  let changes=0
+  const {undoPlan,redoPlan}=new Function('historyRef','historySkipRef','setPlan','setHistoryVersion',handlers+'\nreturn {undoPlan,redoPlan}')(
+    historyRef,historySkipRef,next=>{plan=next},callback=>{changes=callback(changes)})
+  undoPlan()
+  assert.deepEqual(plan,second)
+  undoPlan()
+  assert.deepEqual(plan,first)
+  redoPlan()
+  assert.deepEqual(plan,second)
+  redoPlan()
+  assert.deepEqual(plan,third)
+  assert.equal(changes,4)
+  assert.equal(historySkipRef.current,true)
+  passed++
+  console.log('PASS W25-W28 actual undo/redo handlers (without React lifecycle)')
+}
+
 console.log('Actual insertion function: '+passed+' synthetic checks passed (not browser or integration tests)')
