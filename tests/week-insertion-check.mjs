@@ -288,9 +288,11 @@ testWithPlan('W23 publication metadata does not leak to inserted week',(()=>{
 
 
 {
-  const undoStart=source.indexOf('  const undoPlan = () => {')
-  const redoEnd=source.indexOf('  const savedPlanRef =',undoStart)
-  const handlers=source.slice(undoStart,redoEnd)
+  const historySource=fs.readFileSync(new URL('../src/usePlanHistory.js',import.meta.url),'utf8')
+  const undoStart=historySource.indexOf('  const undoPlan = () => {')
+  const redoEnd=historySource.indexOf('  return { undoPlan, redoPlan,',undoStart)
+  assert.ok(undoStart>=0 && redoEnd>undoStart)
+  const handlers=historySource.slice(undoStart,redoEnd)
   const first=planOf(3)
   const next=structuredClone(first);next.weeksData[1].title='Ny rubrik'
   const historyRef={current:{past:[JSON.stringify(first)],current:JSON.stringify(next),future:[]}}
