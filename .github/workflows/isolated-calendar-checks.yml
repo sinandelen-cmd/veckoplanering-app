@@ -44,3 +44,5 @@ jobs:
 
       - name: Chromium actual teacher ClassSchedules integration
         run: node tests/calendar-real-teacher-chromium.mjs
+      - name: Chromium five-class moment demo desktop and mobile
+        run: node tests/moment-demo-chromium.mjs
