@@ -54,11 +54,11 @@ const buildClassSchedule = new Function('DAYS','iso','monday','nextDate',classBu
   assert.equal(sb[1].date,'2026-10-07')
   const half = buildClassSchedule(p,{days:['Måndag'],momentsPerDay:{Måndag:2},schoolClosures:[{type:'Halvdag',startDate:'2026-10-05',cancelledLessons:1}]})
   assert.deepEqual(half.map(x=>x.lesson.id),['A','B','C','D'])
-  assert.deepEqual(half.map(x=>x.date),['2026-10-05','2026-10-12','2026-10-12','2026-10-19'])
+  assert.deepEqual(half.map(x=>x.date),['2026-10-12','2026-10-19','2026-10-26','2026-11-02'])
   const holiday = buildClassSchedule(p,{days:['Måndag'],schoolClosures:[{type:'Lov',startDate:'2026-10-05',endDate:'2026-10-16'}]})
   assert.deepEqual(holiday.map(x=>x.lesson.id),['A','B','C','D'])
   assert.equal(holiday[0].date,'2026-10-19')
-  console.log('PASS class closures preserve lesson queue, overrides and daily counts')
+  console.log('PASS class closures preserve lesson queue and overrides; multiple topics do not consume extra lessons')
 }
 const remapStart = classSource.indexOf('export function remapClassOverridesAfterInsertion(')
 const remapEnd = classSource.indexOf('\nexport default function ClassSchedules', remapStart)
