@@ -27,17 +27,13 @@ export function buildClassSchedule(plan, group) {
     lesson, sourceIndex, sourceWeekStart: week.weekStart,
     sourceWeekNumber: week.weekNumber, sourceWeekTitle: week.title
   })))
-  // A class may work on a different number of moments per lesson. Keep the
-  // complete topic objects (including pages, assignments and links) intact.
-  // The source lesson list is never modified.
-  const momentQueue = queue.flatMap(source => {
-    const topics = Array.isArray(source.lesson?.topics) ? source.lesson.topics : []
-    return topics.length ? topics.map(topic => ({...source, topic})) : [{...source, topic:null}]
-  })
-  const variableMoments = Object.values(group.momentsPerDay || {}).some(value => Number(value) > 1)
-  const scheduledQueue = variableMoments ? momentQueue : queue
+  // Each class advances through the same source lessons, but can split a
+  // source lesson's moments across multiple class meetings. Never merge
+  // moments from unrelated source lessons or drop their attached resources.
+  const scheduledQueue = queue
   const results = []
   let cursor = 0
+  let topicOffset = 0
   const lastWeekStart = weeks[weeks.length - 1].weekStart
   // Continue into future calendar weeks if closures delayed unfinished lessons.
   // Bound the horizon so an unscheduled class cannot cause an infinite loop.
@@ -64,15 +60,18 @@ export function buildClassSchedule(plan, group) {
       if (!source) break
       const lessonNumber = cursor + 1
       const requestedMoments = Math.max(1, Math.min(20, Number(group.momentsPerDay?.[slot.day]) || 1))
-      const selectedMoments = variableMoments ? scheduledQueue.slice(cursor, cursor + requestedMoments) : []
-      const scheduledLesson = variableMoments
-        ? {...source.lesson, topics: selectedMoments.filter(item => item.topic !== null).map(item => item.topic)}
-        : source.lesson
+      const topics = Array.isArray(source.lesson?.topics) ? source.lesson.topics : []
+      const selectedTopics = topics.slice(topicOffset, topicOffset + requestedMoments)
+      const scheduledLesson = {...source.lesson, topics: selectedTopics}
       results.push({...slot, lesson: scheduledLesson, weekNumber: source.sourceWeekNumber,
         weekTitle: source.sourceWeekTitle, weekStart: start, sourceWeekStart: source.sourceWeekStart,
         index: source.sourceIndex, lessonNumber,
         override: group.overrides?.[String(cursor)] || null})
-      cursor += variableMoments ? selectedMoments.length : 1
+      topicOffset += selectedTopics.length
+      if (!topics.length || topicOffset >= topics.length) {
+        cursor++
+        topicOffset = 0
+      }
     }
   }
   return results
