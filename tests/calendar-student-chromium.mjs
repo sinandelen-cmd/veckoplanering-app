@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict'
+import {chromium} from 'playwright'
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']})
+try {
+ const page=await browser.newPage()
+ await page.route('**/*',route=>{const u=new URL(route.request().url());return ['127.0.0.1','localhost'].includes(u.hostname)?route.continue():route.abort('blockedbyclient')})
+ await page.goto('http://127.0.0.1:4177/tests/calendar-student-fixture.html')
+ const names=async()=>page.getByTestId('student-lesson').allTextContents()
+ assert.equal(await page.getByTestId('selected-class').textContent(),'8A')
+ assert.equal(await page.getByTestId('last-date').textContent(),'2026-10-29')
+ assert.equal((await names()).length,4)
+ assert.ok((await names())[0].includes('2026-10-26'))
+ await page.getByRole('button',{name:'8B'}).click()
+ assert.ok((await names())[0].includes('2026-10-19'))
+ assert.equal(await page.getByTestId('last-date').textContent(),'2026-10-22')
+ await page.getByRole('button',{name:'8C'}).click()
+ assert.ok((await names())[0].includes('2026-10-19'))
+ assert.ok((await names())[0].includes('13:10'))
+ assert.equal((await page.getByTestId('slot').first().textContent()).trim(),'2')
+ await page.getByRole('button',{name:'8D'}).click()
+ assert.ok((await names())[0].includes('2026-10-20'))
+ assert.equal((await names()).length,4)
+ assert.equal(await page.getByTestId('source-count').textContent(),'Grundplanering: 4 lektioner')
+ console.log('PASS isolated Chromium class student fixture: holiday, study day, half day, class isolation and delayed week')
+} finally {await browser.close()}
