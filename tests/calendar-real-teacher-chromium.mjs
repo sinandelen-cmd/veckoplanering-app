@@ -74,7 +74,7 @@ try {
  await diagnostics.locator('summary').click()
  assert.deepEqual(await read('teacher-plan'),beforeDiagnostics)
  assert.equal((await read('8A-schedule'))[0].date,'2026-11-02')
- await diagnostics.getByTestId('class-start-date-comparison').getByText(/Första lektionen ligger 2 kalendervecka/).waitFor()
+ await diagnostics.getByTestId('class-start-date-comparison').getByText(/Första lektionen ligger i klassens startvecka/).waitFor()
  console.log('PASS teacher: opening and closing diagnostics never changes delayed start date or lessons')
  // Mobile Safari-like touch viewport: tapping the summary must never activate the adjacent start-date action.
  const mobile=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true})
