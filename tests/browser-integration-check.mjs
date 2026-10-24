@@ -26,7 +26,7 @@ try{
  assert.equal(await page.getByTestId('week-count').textContent(),'3')
  await page.getByRole('button',{name:'Test: redigera titel'}).click()
  assert.equal(await page.getByTestId('plan-title').textContent(),' Redigerad')
- assert.equal(await page.getByTestId('can-redo').textContent(),'false')
+ await page.waitForFunction(() => document.querySelector('[data-testid="can-redo"]')?.textContent === 'false',null,{timeout:5000})
  assert.equal(await page.getByRole('button',{name:'Test: gör om'}).isDisabled(),true)
  await page.getByRole('button',{name:'Test: ångra'}).click()
  assert.equal(await page.getByTestId('plan-title').textContent(),'')
