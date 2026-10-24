@@ -63,20 +63,36 @@ export function buildClassSchedule(plan, group) {
     for (const slot of slots) {
       const source = scheduledQueue[cursor]
       if (!source) break
-      const lessonNumber = cursor + 1
+      const lessonNumber = results.length + 1
       const requestedMoments = Math.max(1, Math.min(20, Number(group.momentsPerDay?.[slot.day]) || 1))
-      const topics = Array.isArray(source.lesson?.topics) ? source.lesson.topics : []
-      const selectedTopics = topics.slice(topicOffset, topicOffset + requestedMoments)
+      const selectedTopics = []
+      // A class meeting consumes the next N moments across source lesson
+      // boundaries. Each topic object (pages, assignments, etc.) is preserved.
+      // Empty source lessons still represent one meeting, so they cannot
+      // silently disappear or stall the queue.
+      while (cursor < scheduledQueue.length && selectedTopics.length < requestedMoments) {
+        const current = scheduledQueue[cursor]
+        const topics = Array.isArray(current.lesson?.topics) ? current.lesson.topics : []
+        if (!topics.length) {
+          if (!selectedTopics.length) {
+            cursor++
+            break
+          }
+          break
+        }
+        const remaining = requestedMoments - selectedTopics.length
+        selectedTopics.push(...topics.slice(topicOffset, topicOffset + remaining))
+        topicOffset += Math.min(remaining, topics.length - topicOffset)
+        if (topicOffset >= topics.length) {
+          cursor++
+          topicOffset = 0
+        }
+      }
       const scheduledLesson = {...source.lesson, topics: selectedTopics}
       results.push({...slot, lesson: scheduledLesson, weekNumber: source.sourceWeekNumber,
         weekTitle: source.sourceWeekTitle, weekStart: start, sourceWeekStart: source.sourceWeekStart,
         index: source.sourceIndex, lessonNumber,
-        override: group.overrides?.[String(cursor)] || null})
-      topicOffset += selectedTopics.length
-      if (!topics.length || topicOffset >= topics.length) {
-        cursor++
-        topicOffset = 0
-      }
+        override: group.overrides?.[String(lessonNumber - 1)] || null})
     }
   }
   return results
