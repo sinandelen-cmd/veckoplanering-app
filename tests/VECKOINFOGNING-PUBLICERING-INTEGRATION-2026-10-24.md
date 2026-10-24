@@ -41,3 +41,10 @@ Datum: 2026-10-24. Endast `feature/provtraning-infogad-vecka`, draft PR #5.
 5. Release kräver användarens uttryckliga godkännande; ingen produktion, publicering eller merge.
 
 **Status:** 7/8 kvalitetsdelar på verifierad tidigare nivå, 1/8 kvar (87,5 %). De nya isolerade publiceringstesterna minskar risken men ersätter inte den sista fulla integrationen. **Tidsbedömning:** minst en större arbetsgrupp för riktig isolerad Supabase-RPC/RLS och inloggad App.jsx-browserintegration, potentiellt fler om infrastrukturen eller buggar kräver det.
+
+## CI-resultat bekräftade
+
+- Commit `bcacebb`: ordinarie GitHub Actions `40088245843` **success** (verify + isolerade SQL-regressioner, inklusive temporär publiceringstransaktion).
+- Samma commit: Chromium `40088245854` **success** (verklig React-history-hook, klasskomponent, veckoinfogning och interaktioner).
+- Publiceringshandler-testet ingår i `npm run check` sedan `acb56c9` och har passerat i `40088245843`.
+- Dokumentationscommiten efter dessa körningar ändrar inte testkod; dess egen CI bör kontrolleras separat innan PR merge.
