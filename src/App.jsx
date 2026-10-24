@@ -1402,20 +1402,49 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   }
 
   function insertBlankWeekAfter(index) {
+    const choice = window.prompt('Typ av ny vecka:\n1 = Vanlig vecka\n2 = Träna inför prov\n3 = Provträning + prov', '1')
+    if (choice === null) return
+    if (!['1', '2', '3'].includes(choice.trim())) { setStatus('Välj 1, 2 eller 3.'); return }
+    const mode = choice.trim()
+    const current = displayWeeks(plan)
+    const count = current[index]?.lessons?.length || Math.max(1, Number(plan.lessonsPerWeek) || 3)
+    let examIndex = -1
+    let examTitle = 'Prov'
+    if (mode === '3') {
+      const input = window.prompt(`Vilken lektion ska vara prov? (1–${count})`, String(count))
+      if (input === null) return
+      const selected = Number(input.trim())
+      if (!Number.isInteger(selected) || selected < 1 || selected > count) {
+        setStatus(`Välj ett lektionsnummer mellan 1 och ${count}.`)
+        return
+      }
+      examIndex = selected - 1
+      const title = window.prompt('Namn på provet', 'Prov')
+      if (title === null) return
+      examTitle = title.trim() || 'Prov'
+    }
     setPlan(previous => {
-      const existing=displayWeeks(previous)
-      if(index<0||index>=existing.length-1||existing.length>=52)return previous
-      const nextDate=addWeeks(existing[index].weekStart,1)
-      const blank=makeWeeks({...previous,startDate:nextDate,startWeek:calendarWeekNumber(nextDate),weeks:1},1)[0]
-      const following=existing.slice(index+1).map(week=>{
-        const weekStart=addWeeks(week.weekStart,1)
-        const weekNumber=calendarWeekNumber(weekStart)
-        return {...week,weekStart,weekNumber,title:!week.title||/^Vecka\s+\d+$/i.test(week.title)?'Vecka '+weekNumber:week.title}
+      const existing = displayWeeks(previous)
+      if (index < 0 || index >= existing.length - 1 || existing.length >= 52) return previous
+      const nextDate = addWeeks(existing[index].weekStart, 1)
+      const blank = makeWeeks({ ...previous, startDate: nextDate, startWeek: calendarWeekNumber(nextDate), weeks: 1 }, 1)[0]
+      const lessons = blank.lessons.map((lesson, i) => {
+        if (mode === '1' || (mode === '3' && i > examIndex)) return lesson
+        if (mode === '3' && i === examIndex) {
+          return { ...lesson, assessment: { type: 'Prov', customType: '', title: examTitle }, topics: [{ name: examTitle, pages: [], assignments: [], links: [] }] }
+        }
+        return { ...lesson, topics: [{ name: 'Träna inför prov', pages: [], assignments: [], links: [] }] }
       })
-      const weeksData=[...existing.slice(0,index+1),blank,...following]
-      return {...previous,weeks:weeksData.length,weeksData}
+      const inserted = { ...blank, lessons, ...(mode === '1' ? {} : { weekActivity: mode === '2' ? 'provtraning' : 'provtraning-prov' }) }
+      const following = existing.slice(index + 1).map(week => {
+        const weekStart = addWeeks(week.weekStart, 1)
+        const weekNumber = calendarWeekNumber(weekStart)
+        return { ...week, weekStart, weekNumber, title: !week.title || /^Vecka\\s+\\d+$/i.test(week.title) ? 'Vecka ' + weekNumber : week.title }
+      })
+      const weeksData = [...existing.slice(0, index + 1), inserted, ...following]
+      return { ...previous, weeks: weeksData.length, weeksData }
     })
-    setStatus('Tom vecka infogad. Efterföljande veckor har flyttats framåt.')
+    setStatus('Vecka infogad med valt innehåll. Efterföljande veckor har flyttats framåt.')
   }
 
   function updateWeek(index, changes) {
