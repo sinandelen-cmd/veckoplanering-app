@@ -40,7 +40,7 @@ try{
  assert.equal(created.status,201,'Create teacher UI draft '+await created.text().catch(()=>'')) 
  await page.getByRole('button',{name:/Mina planeringar/}).click()
  await page.getByRole('button',{name:/Grundskola \(/}).click()
- await page.getByRole('button',{name:/Matematik \(/}).click()
+ await page.getByRole('button',{name:/Matematik/,exact:false}).filter({has:page.locator('.folder-chevron')}).click()
  await page.getByRole('button',{name:/Isolerad UI-plan/}).click()
  await page.getByRole('tab',{name:/Lärarvy/}).click()
  const editor=page.locator('.week-card textarea').first()
