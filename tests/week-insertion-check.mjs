@@ -180,7 +180,7 @@ testWithPlan('W33 cancelled class day stays cancelled',planOf(6),['1'],0,(p)=>{
   assert.ok(!a.some(item=>item.date==='2026-02-02'))
   assert.ok(a.some(item=>item.date==='2026-01-12'))
 })
-testWithPlan('W34 class override index stays unchanged',planOf(3),['1'],0,(p,b)=>{
+testWithPlan('W34 class override index stays unchanged',(()=>{const p=planOf(3);p.classGroups[0].overrides={'1':{text:'Special'}};return p})(),['1'],0,(p,b)=>{
   assert.deepEqual(p.classGroups[0].overrides,b.classGroups[0].overrides)
   const before=buildClassSchedule(b,b.classGroups[0])
   const after=buildClassSchedule(p,p.classGroups[0])
