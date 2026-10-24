@@ -742,7 +742,7 @@ function ImportantDatesForWeek({ week, plan, selectedClass = null }) {
     date.setDate(monday.getDate() + index)
     return { date: toIsoDate(date), day: ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag'][index] }
   })
-  const sharedClosures = (Array.isArray(plan.schoolClosures) ? plan.schoolClosures : []).filter(item => !item.classNames || !selectedClass || item.classNames.includes(selectedClass.name))
+  const sharedClosures = (Array.isArray(plan.schoolClosures) ? plan.schoolClosures : []).filter(item => !item.classNames || (selectedClass && item.classNames.includes(selectedClass.name)))
   const closures = [...sharedClosures, ...(selectedClass?.schoolClosures || [])].filter(item => validSchoolClosure({ ...item, name: item.name || item.type }))
   const exams = []
   const entries = dates.flatMap(({ date, day }) => {
