@@ -1,0 +1,90 @@
+name: Isolerad Supabase fullstack (Auth PostgREST RLS RPC)
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: isolated-supabase-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  fullstack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install PostgreSQL client
+        run: sudo apt-get update -qq && sudo apt-get install -y postgresql-client
+      - name: Discover pinned Supabase CLI commands
+        run: |
+          npx --yes supabase@2.81.3 --version
+          npx --yes supabase@2.81.3 init --help
+          npx --yes supabase@2.81.3 migration new --help
+          npx --yes supabase@2.81.3 start --help
+      - name: Create isolated local Supabase project and fixture migration
+        run: |
+          # Existing production migrations are NOT suitable for this minimal fixture.
+          # Move them aside ONLY inside this disposable checkout.
+          if [ -d supabase ]; then mv supabase /tmp/isolated-original-supabase-migrations; fi
+          npx --yes supabase@2.81.3 init --force
+          npx --yes supabase@2.81.3 migration new isolated_fullstack_fixture
+          cp tests/sql/local-supabase-fullstack-fixture.sql "$(find supabase/migrations -type f -name '*isolated_fullstack_fixture.sql' | head -1)"
+          test -s "$(find supabase/migrations -type f -name '*isolated_fullstack_fixture.sql' | head -1)"
+      - name: Start disposable Docker Supabase fullstack (never linked to production)
+        run: |
+          # This disposable runner must never authenticate to a container registry.
+          # Capture startup output and fail immediately on external registry quotas.
+          set -o pipefail
+          for attempt in 1 2; do
+            log_file="$(mktemp)"
+            echo "Starting isolated Supabase (attempt $attempt of 2)"
+            if timeout --signal=TERM --kill-after=15s 4m npx --yes supabase@2.81.3 start --exclude realtime,storage-api,imgproxy,studio,postgres-meta,edge-runtime,logflare,vector,supavisor,mailpit 2>&1 | tee "$log_file"; then
+              rm -f "$log_file"
+              exit 0
+            fi
+            if grep -Eiq 'toomanyrequests|Data limit exceeded|rate.?limit|pull rate limit|429 Too Many Requests' "$log_file"; then
+              echo "::error title=External Docker registry quota::Container images could not be downloaded due to registry rate/data limits. This is an external CI infrastructure failure; app and database tests were not reached."
+              rm -f "$log_file"
+              exit 1
+            fi
+            rm -f "$log_file"
+            if [ "$attempt" -eq 2 ]; then
+              echo "::error title=Isolated Supabase startup failed::The disposable Docker stack did not start after two bounded attempts. Review startup logs above."
+              exit 1
+            fi
+            npx --yes supabase@2.81.3 stop --no-backup || true
+            sleep 15
+          done
+      - name: Capture local-only API endpoint and ephemeral anon key
+        run: |
+          npx --yes supabase@2.81.3 status -o env > /tmp/isolated-supabase-status.env
+          API_URL="$(sed -n 's/^API_URL=//p' /tmp/isolated-supabase-status.env | tr -d '"')"
+          ANON_KEY="$(sed -n 's/^ANON_KEY=//p' /tmp/isolated-supabase-status.env | tr -d '"')"
+          test -n "$API_URL" && test -n "$ANON_KEY"
+          case "$API_URL" in http://127.0.0.1:*|http://localhost:*) ;; *) echo "Unsafe external API URL" >&2; exit 1 ;; esac
+          echo "ISOLATED_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "ISOLATED_SUPABASE_ANON_KEY=$ANON_KEY" >> "$GITHUB_ENV"
+          echo "::add-mask::$ANON_KEY"
+      - name: Real GoTrue Auth, PostgREST, owner RLS and public RPC contract
+        run: node tests/local-supabase-fullstack-check.mjs
+      - name: Install browser test runner and Chromium
+        run: |
+          npm ci
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Start real App.jsx against disposable local Supabase
+        run: |
+          VITE_SUPABASE_URL="$ISOLATED_SUPABASE_URL" VITE_SUPABASE_ANON_KEY="$ISOLATED_SUPABASE_ANON_KEY" npm run dev -- --host 127.0.0.1 --port 4177 > /tmp/isolated-fullstack-app.log 2>&1 &
+          for i in $(seq 1 50); do
+            if curl -fsS http://127.0.0.1:4177/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/isolated-fullstack-app.log
+          exit 1
+      - name: Real Chromium teacher login and public student RPC end-to-end
+        run: node tests/browser-local-supabase-fullstack-check.mjs
+      - name: Stop isolated Supabase stack
+        if: always()
+        run: npx --yes supabase@2.81.3 stop --no-backup || true

@@ -3870,3 +3870,22 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .class-closure-fields input,.class-closure-fields select{width:100%;min-width:0;box-sizing:border-box;border:1px solid #b9d6d1;border-radius:7px;padding:8px;background:#fff}
 .class-closure-item{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 0;border-top:1px solid #d8e6e2}
 .class-closure-item button{border:0;background:transparent;color:#b12b38;cursor:pointer;font-weight:650}
+
+/* Diskreta historikknappar längst till höger i veckans rubrikrad. */
+.week-history-actions { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; }
+.week-history-icon { width: 32px; height: 32px; min-width: 32px; padding: 0; border: 1px solid var(--plan-soft, #d9e4dc); border-radius: 9px; background: var(--plan-light, #f6faf7); color: var(--plan-ink, #285b4e); font-size: 23px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.week-history-icon:hover:not(:disabled) { background: var(--plan-soft, #e1efe6); }
+.week-history-icon:focus-visible { outline: 2px solid var(--plan-accent, #347a65); outline-offset: 2px; }
+.week-history-icon:disabled { opacity: .35; cursor: not-allowed; }
+
+/* Elevens veckokapitel: aktuell vecka öppnas, övriga kan fällas ut vid klick. */
+.student-week-accordion { margin: 0 0 12px; border: 1px solid var(--line, #d8dce4); border-radius: 14px; overflow: hidden; background: var(--surface, #fff); }
+.student-week-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; cursor: pointer; padding: 14px 18px; list-style: none; }
+.student-week-summary::-webkit-details-marker { display: none; }
+.student-week-summary strong { font-size: 1.1rem; }
+.student-week-summary span:nth-child(2) { flex: 1 1 160px; font-weight: 600; }
+.student-week-summary span:last-child { font-size: 1.3rem; transition: transform .2s; }
+.student-week-accordion[open] > .student-week-summary span:last-child { transform: rotate(180deg); }
+.student-week-summary:focus-visible { outline: 3px solid #2563eb; outline-offset: -3px; }
+.student-week-accordion > .student-week-card { margin: 0; border-radius: 0; }
+@media print { .student-week-summary { display: none !important; } .student-week-accordion { border: 0; break-inside: avoid; } .student-week-accordion > .student-week-card { display: block !important; } }

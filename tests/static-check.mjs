@@ -374,3 +374,17 @@ assert.match(approvalSql, /approved teachers delete/)
 assert.match(app, /access !== 'approved'/)
 assert.match(app, /admin_review_teacher_request/)
 assert.match(app, /admin_list_teacher_accounts/, 'Administratören ska kunna lista lärarkonton')
+
+
+// Regression: infogad provvecka ska valideras innan dialoger visas och
+// lektionsvalet ska baseras på den NYA veckan, inte föregående vecka.
+const insertWeekSource = app.split('function insertBlankWeekAfter(index) {')[1]?.split('\n  function updateWeek(')[0]
+assert.ok(insertWeekSource, 'Funktionen för att infoga vecka måste finnas')
+assert.ok(insertWeekSource.indexOf('current.length >= 52') < insertWeekSource.indexOf('window.prompt('), 'Kontrollera maxantal veckor före dialog')
+assert.match(insertWeekSource, /const count = previewWeek\?\.lessons\?\.length \|\| 0/)
+assert.match(insertWeekSource, /Number\.isInteger\(selected\)/)
+assert.match(insertWeekSource, /selected > count/)
+assert.match(insertWeekSource, /if \(choice === null\) return/)
+assert.match(insertWeekSource, /if \(input === null\) return/)
+assert.match(insertWeekSource, /if \(title === null\) return/)
+assert.match(insertWeekSource, /\/\^Vecka\\s\+\\d\+\$\/i\.test\(week\.title\)/)
