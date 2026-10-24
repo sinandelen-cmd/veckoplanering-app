@@ -26,7 +26,7 @@ for (const [file, expectedCases] of fixtures) {
 const publicationFixture = readFileSync('tests/sql/published-jsonb-snapshot-regression.sql','utf8')
 assert.match(publicationFixture.trim(),/^--[^\n]*\nWITH\s/i)
 assert.equal((publicationFixture.match(/^ \('/gm)||[]).length,4,'Four publication JSONB cases required')
-assert.equal((publicationFixture.match(/;/g)||[]).length,1)
+assert.equal((publicationFixture.replace(/^--.*$/gm,'').match(/;/g)||[]).length,1)
 assert.doesNotMatch(publicationFixture,/\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE|GRANT|REVOKE)\b/i)
 assert.match(publicationFixture,/IS NOT DISTINCT FROM/i)
 console.log('SQL fixture structure OK: published JSONB snapshots')
