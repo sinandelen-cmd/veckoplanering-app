@@ -779,7 +779,11 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   const classWeekTimeline = sourceClassWeeks.length ? (() => {
     const byDate = new Map(sourceClassWeeks.map(week=>[week.weekStart,week]))
     const timeline = []
-    for(let date=sourceClassWeeks[0].weekStart, end=sourceClassWeeks[sourceClassWeeks.length-1].weekStart;date<=end && timeline.length<110;date=addWeeks(date,1)){
+    // A class can finish later than the base plan when its timetable or closures delay lessons.
+    // Include those future weeks without modifying or deleting any source lesson.
+    const finalScheduledWeek = classLessons.length ? mondayOf(classLessons[classLessons.length-1].date) : sourceClassWeeks[sourceClassWeeks.length-1].weekStart
+    const end = finalScheduledWeek > sourceClassWeeks[sourceClassWeeks.length-1].weekStart ? finalScheduledWeek : sourceClassWeeks[sourceClassWeeks.length-1].weekStart
+    for(let date=sourceClassWeeks[0].weekStart;date<=end && timeline.length<110;date=addWeeks(date,1)){
       timeline.push(byDate.get(date)||{weekStart:date,weekNumber:calendarWeekNumber(date),title:'Vecka '+calendarWeekNumber(date),lessons:[],content:''})
     }
     return timeline
