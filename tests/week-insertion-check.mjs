@@ -409,4 +409,37 @@ testWithPlan('W23 publication metadata unchanged after undo snapshot',(()=>{
   assert.equal(b.classGroups[0].overrides['1'].text,'Original')
 })
 
+
+{
+  // Execute the real student-publication sanitizer on an isolated draft snapshot.
+  const from=source.indexOf('function sanitizeForStudents(plan) {')
+  const to=source.indexOf('\nfunction resourceInfo(',from)
+  assert.ok(from>=0 && to>from)
+  const sanitizer=new Function('displayWeeks','makeWeeks','validSchoolClosure','toIsoDate','resourceInfo',
+    source.slice(from,to)+'\nreturn sanitizeForStudents')(
+      displayWeeks,makeWeeks,()=>false,d=>d.toISOString().slice(0,10),()=>null)
+  const draft=planOf(3)
+  draft.weeksData[0].hidden=true
+  draft.weeksData[1].publishDate='2026-01-12'
+  draft.weeksData[1].hideDate='2026-02-01'
+  draft.classGroups[0].overrides={'1':{text:'Teacher note'}}
+  draft.privateTeacherOnly='secret'
+  const published=sanitizer(draft)
+  assert.equal(published.published,true)
+  assert.equal(published.weeksData.length,2)
+  assert.equal(published.weeksData[0].weekStart,'2026-01-12')
+  assert.equal(published.weeksData[0].publishDate,'2026-01-12')
+  assert.equal(published.weeksData[0].hideDate,'2026-02-01')
+  assert.equal(Object.hasOwn(published,'privateTeacherOnly'),false)
+  const frozenPublished=JSON.stringify(published)
+  draft.weeksData[1].title='Unpublished draft edit'
+  draft.classGroups[0].overrides['1'].text='Changed draft'
+  assert.equal(JSON.stringify(published),frozenPublished)
+  assert.equal(published.classGroups[0].overrides['1'].text,'Teacher note')
+  const republished=sanitizer(draft)
+  assert.notEqual(JSON.stringify(republished),frozenPublished)
+  passed++
+  console.log('PASS W30-W31 actual student sanitizer snapshot stays unchanged until explicit resanitization')
+}
+
 console.log('Actual insertion function: '+passed+' synthetic checks passed (not browser or integration tests)')
