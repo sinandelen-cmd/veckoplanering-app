@@ -46,3 +46,9 @@ Datum 2026-10-24. Feature-gren `feature/provtraning-infogad-vecka`; PR #5 förbl
 - Ordinarie CI med isolerade PostgreSQL-transactionstester: **success** på `626df6d` (run `40087428933`).
 - Browser-CI med ofixad skip-flagga: **failure** på `46861a7`; det är en reproducerad regression, inte godkänt test.
 - Den faktiska rättningen är commit `fe309ad`. Dess nya Chromium-körning måste slutföras innan browser-regressionen får status grön.
+
+## Verifiering av faktiskt publiceringspayload
+
+Ytterligare kodvägstest `d0d71a5` exekverar den faktiska `publicationFields` från `App.jsx` tillsammans med `sanitizeForStudents`. Testet kontrollerar serialiserat `published_content`, `public_slug`, bevarande av tidigare publiceringsfält när `keepPublished` är sant, nollställning vid avpublicering och ny snapshot-sträng efter uttrycklig återpublicering. Detta är fortfarande ett isolerat funktionstest, inte en autentiserad Supabase-integration.
+
+**Bekräftad PostgreSQL-körning:** `40087489502` (success) körde temp-tabell, INSERT, UPDATE, båda PASS-fallen och ROLLBACK utan produktionsanslutning. Chromium efter skip-flaggefixen behöver fortfarande grön slutstatus.
