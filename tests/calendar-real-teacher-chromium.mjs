@@ -46,4 +46,18 @@ try {
  assert.equal(after.classGroups[0].schoolClosures.length,0)
  assert.equal(after.classGroups[1].schoolClosures.length,1)
  console.log('PASS teacher: original lesson content and class data preserved')
+ 
+ // Select 8B from the student-facing picker and verify the schedule editor follows.
+ await page.getByRole('button',{name:'Elevvy 8B'}).click()
+ assert.equal(await page.getByTestId('active-class').textContent(),'8B')
+ assert.equal(await page.getByRole('button',{name:'8B',exact:true}).getAttribute('aria-pressed'),'true')
+ await page.getByRole('button',{name:'8A',exact:true}).click()
+ assert.equal(await page.getByTestId('active-class').textContent(),'8A')
+ console.log('PASS teacher: class selection stays synchronized in both directions')
+ await page.getByRole('button',{name:'Testa senare startdatum'}).click()
+ await page.getByText(/8A börjar 2026-11-02/).waitFor()
+ assert.equal((await read('8A-schedule'))[0].date,'2026-11-02')
+ await page.getByRole('button',{name:/Använd grundplaneringens startdatum för 8A/}).click()
+ assert.equal((await read('8A-schedule'))[0].date,'2026-10-19')
+ console.log('PASS teacher: delayed class start explained and manually aligned without changing source')
 }finally{await browser.close()}
