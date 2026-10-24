@@ -2702,6 +2702,8 @@ function lessonDayDate(weekStart, lessonName) {
 function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 'bara-lektion' }) {
   const lessons = Array.isArray(week?.lessons) ? week.lessons : []
   const editable = typeof onChange === 'function'
+  const assessmentTypes = ['Prov','Test','Examination','Nationellt prov (NP)','Diagnos','Läxförhör','Egen benämning']
+  const updateAssessment = (index, changes) => changeLesson(index, { ...lessons[index], assessment: {...(lessons[index].assessment || {}), ...changes} })
   const changeLessons = next => onChange?.({ lessons: next, ...(entryType === 'dag' ? { daysCustomized: true } : {}) })
   const changeLesson = (i, next) => changeLessons(lessons.map((lesson, index) => index === i ? next : lesson))
   const normalizeLessonOrder = items => items.map((lesson, index) => ({ ...lesson, name: `Lektion ${index + 1}` }))
@@ -2734,6 +2736,17 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
         {editable && entryType !== 'dag' && <div className="lesson-reorder-controls"><button type="button" disabled={i === 0} aria-label={`Flytta lektion ${i + 1} uppåt`} onClick={() => moveLesson(i, -1)}>↑ Flytta upp</button><button type="button" disabled={i === lessons.length - 1} aria-label={`Flytta lektion ${i + 1} nedåt`} onClick={() => moveLesson(i, 1)}>↓ Flytta ned</button></div>}
         {editable && <button type="button" className="remove-small" onClick={() => { if (!(lesson.topics || []).some(topic => topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm(entryType === 'dag' ? 'Ta bort dagen och allt innehåll i den?' : 'Ta bort lektionen och allt innehåll i den?')) changeLessons(entryType === 'dag' ? lessons.filter((_, index) => index !== i) : normalizeLessonOrder(lessons.filter((_, index) => index !== i))) }}>× Ta bort {entryType === 'dag' ? 'dag' : 'lektion'}</button>}
       </div>
+      {lesson.assessment && <div className="lesson-assessment-card" role="note">
+        <strong>📝 {lesson.assessment.type === 'Egen benämning' ? (lesson.assessment.customType || 'Prov/test') : (lesson.assessment.type || 'Prov')}</strong>
+        {editable ? <div className="lesson-assessment-fields">
+          <select aria-label="Typ av prov" value={lesson.assessment.type || 'Prov'} onChange={e=>updateAssessment(i,{type:e.target.value})}>{assessmentTypes.map(type=><option key={type}>{type}</option>)}</select>
+          {lesson.assessment.type === 'Egen benämning' && <input aria-label="Egen provtyp" placeholder="Skriv egen benämning" value={lesson.assessment.customType||''} onChange={e=>updateAssessment(i,{customType:e.target.value})}/>}
+          <input aria-label="Provets rubrik" placeholder="Rubrik för provet" value={lesson.assessment.title||''} onChange={e=>updateAssessment(i,{title:e.target.value})}/>
+          <textarea aria-label="Information om provet" placeholder="Information till eleverna" value={lesson.assessment.description||''} onChange={e=>updateAssessment(i,{description:e.target.value})}/>
+          <button type="button" onClick={()=>changeLesson(i,{...lesson,assessment:null})}>Ta bort provmarkering</button>
+        </div> : <><div>{lesson.assessment.title}</div>{lesson.assessment.description && <p>{lesson.assessment.description}</p>}</>}
+      </div>}
+      {editable && !lesson.assessment && <button type="button" className="lesson-add-assessment" onClick={()=>updateAssessment(i,{type:'Prov',title:'',description:''})}>+ Infoga prov/test</button>}
       {(lesson.topics || []).map((topic, j) => ({ topic, j })).filter(({ topic }) => (editable || topic.classMomentPlaceholder || topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || '')))).map(({ topic, j }) => {
         const updateTopic = next => changeLesson(i, { ...lesson, topics: (lesson.topics || []).map((item, index) => index === j ? next : item) })
         const pages = Array.isArray(topic.pages) ? topic.pages : []
