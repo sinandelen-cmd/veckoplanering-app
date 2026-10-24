@@ -20,6 +20,26 @@ const closure = (type, date, other = {}) => ({type, startDate: date, endDate: da
 const dates = rows => Array.from(rows, row => row.date)
 const names = rows => Array.from(rows, row => row.lesson.name)
 
+// Missing saved source weeks must not become missing teaching weeks.
+// Lessons remain in source order and the saved plan is never modified.
+const sparsePlan = {
+  startDate:'2026-10-12',
+  weeksData:[
+    {weekStart:'2026-10-12',weekNumber:42,lessons:Array.from({length:4},(_,i)=>({name:'42-'+i,topics:[{name:'42-'+i}]}))},
+    {weekStart:'2026-11-02',weekNumber:45,lessons:Array.from({length:8},(_,i)=>({name:'45-'+i,topics:[{name:'45-'+i}]}))}
+  ],
+  schoolClosures:[]
+}
+const sparseSnapshot = JSON.stringify(sparsePlan)
+const sparse8A = build(sparsePlan,{name:'8A',startDate:'2026-10-12',days:['Måndag','Tisdag','Torsdag','Fredag']})
+const sparse8C = build(sparsePlan,{name:'8C',startDate:'2026-10-12',days:['Måndag','Tisdag','Onsdag']})
+assert.deepEqual(dates(sparse8A).slice(0,8),['2026-10-12','2026-10-13','2026-10-15','2026-10-16','2026-10-19','2026-10-20','2026-10-22','2026-10-23'])
+assert.deepEqual(dates(sparse8C).slice(0,6),['2026-10-12','2026-10-13','2026-10-14','2026-10-19','2026-10-20','2026-10-21'])
+assert.equal(sparse8A.some(item=>item.date.startsWith('2026-10-26')),true)
+assert.deepEqual(names(sparse8A),['42-0','42-1','42-2','42-3',...Array.from({length:8},(_,i)=>'45-'+i)])
+assert.equal(JSON.stringify(sparsePlan),sparseSnapshot)
+console.log('PASS sparse source weeks: 8A and 8C fill calendar weeks 43–44 without changing saved data')
+
 const normal = build(base, group('A'))
 assert.deepEqual(dates(normal), ['2026-10-19','2026-10-20','2026-10-21','2026-10-22'])
 assert.deepEqual(names(normal), ['Lesson 1','Lesson 2','Lesson 3','Lesson 4'])
