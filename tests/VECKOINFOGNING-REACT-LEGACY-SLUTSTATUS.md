@@ -18,7 +18,7 @@ Datum: 2026-10-24. Feature-gren och draft PR #5. Ingen produktion, publicering e
 12. Verifierat grön CI för remappningsrättningen `c2ac590`.
 13. Verifierat grön CI för nya kollisionsregressioner `12d3949`.
 14. Skapat ett React SSR-integrationstest med Vites faktiska JSX-transformering och `react-dom/server`.
-15. Testat att faktisk klasskomponent kan rendera en klassanpassning efter infogning.
+15. Testat att faktisk klasskomponent kan serverrenderas efter infogning; klassanpassningens datakoppling verifieras i verklig schemabyggare. Själva schemapanelen är initialt hopfälld i SSR.
 16. Testat att två klassers scheman förblir oberoende i samma React-integration.
 17. Kopplat React SSR-testet till `npm run check` och GitHub Actions.
 18. Kontrollerat att ingen ny databas-/produktionsmigrering behövs.
@@ -28,7 +28,7 @@ Datum: 2026-10-24. Feature-gren och draft PR #5. Ingen produktion, publicering e
 ## Verifierat och inte verifierat
 
 - GitHub Actions: tidigare snapshot- och kollisionstester är gröna. Kontrollera separat slutstatus för den nya React SSR-körningen.
-- React SSR-testet använder faktisk komponentkod och Vite, inte en webbläsare med klick och händelser.
+- React SSR-testet använder faktisk komponentkod och Vite och kontrollerar att klassernas knappar renderas. Schemapanelen är initialt hopfälld; texten för en override syns därför inte i första SSR-vyn. Klassens override-data kontrolleras separat med verkliga schemabyggaren. Detta är inte en webbläsare med klick och händelser.
 - Publiceringssnapshot-testet använder verklig `sanitizeForStudents` och kontrollerar kopior av nästlade objekt, men anropar inte Supabase.
 - Ångra/gör om har kodvägsbaserade tester, inte React-state-livscykel eller browser-automation.
 - Äldre felaktiga index bevaras för att undvika databortfall. Nycklar under `legacy-unmapped:` kräver ett framtida UI-/produktbeslut om manuell återkoppling.
@@ -37,3 +37,6 @@ Datum: 2026-10-24. Feature-gren och draft PR #5. Ingen produktion, publicering e
 ## Status
 
 7/8 delar (87,5 %) på kvalitetssäkringsplanen. En sista del återstår: fullständig webbläsar-/Supabase-integration och release-godkännande. Bedömning: minst en större arbetsgrupp, eventuellt fler om en testmiljö måste etableras eller nya fel hittas.
+
+## CI-korrigering
+Första React SSR-körningen på `7e60fbc` föll eftersom testet felaktigt krävde att en override-text skulle synas i den initialt hopfällda panelen. Koden var inte orsaken; testassertionen anpassades till faktiskt första renderingsläge i `ae3db91`. Senaste CI måste bekräftas innan detta kan räknas som godkänt.
