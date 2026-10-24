@@ -46,12 +46,12 @@ const demoOriginal=JSON.stringify(demoPlan)
 for(const count of [1,2,3,4]){
  const rows=build(demoPlan,{name:'Test '+count,days:['Måndag','Tisdag','Torsdag','Fredag'],momentsPerDay:{Måndag:count,Tisdag:count,Torsdag:count,Fredag:count}})
  assert.equal(rows.length,Math.ceil(12/count))
- assert.deepEqual(rows.flatMap(row=>Array.from(row.lesson.topics,t=>t.name)),Array.from({length:12},(_,i)=>'Moment '+(i+1)))
+ assert.deepEqual(Array.from(rows).flatMap(row=>Array.from(row.lesson.topics,t=>t.name)),Array.from({length:12},(_,i)=>'Moment '+(i+1)))
  assert.equal(rows[0].lesson.topics.length,count)
 }
 const mixed=build(demoPlan,{name:'Test Mix',days:['Måndag','Tisdag','Torsdag','Fredag'],momentsPerDay:{Måndag:1,Tisdag:2,Torsdag:3,Fredag:4}})
 assert.deepEqual(Array.from(mixed.slice(0,4),row=>row.lesson.topics.length),[1,2,3,4])
-assert.deepEqual(mixed.flatMap(row=>Array.from(row.lesson.topics,t=>t.name)),Array.from({length:12},(_,i)=>'Moment '+(i+1)))
+assert.deepEqual(Array.from(mixed).flatMap(row=>Array.from(row.lesson.topics,t=>t.name)),Array.from({length:12},(_,i)=>'Moment '+(i+1)))
 assert.equal(JSON.stringify(demoPlan),demoOriginal)
 console.log('PASS isolated demo classes: 1, 2, 3, 4 and mixed moments preserve order and source data')
 
