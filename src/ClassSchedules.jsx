@@ -134,7 +134,7 @@ export function remapClassOverridesAfterInsertion(previous, next, insertAfterInd
   })
 }
 
-export default function ClassSchedules({ plan, onChange, publicSlug = "", themes = [] }) {
+export default function ClassSchedules({ plan, onChange, publicSlug = "", themes = [], selectedClassName = "", onSelectClass }) {
   const groups = Array.isArray(plan.classGroups) ? plan.classGroups : []
   const [name, setName] = React.useState('')
   const [addingClass, setAddingClass] = React.useState(false)
@@ -157,12 +157,14 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", themes
   const [cancelledLessons, setCancelledLessons] = React.useState(1)
   const [cancelledFrom, setCancelledFrom] = React.useState('end')
   const [archiveTargets, setArchiveTargets] = React.useState({})
-  const group = groups[selected]
+  const controlledIndex = groups.findIndex(g => g.name === selectedClassName)
+  const activeIndex = onSelectClass ? controlledIndex : selected
+  const group = groups[activeIndex]
   const lessonsPerWeek = group => (group.days || []).length
   const schedule = React.useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
   const archivedOverrideEntries = Object.entries(group?.overrides || {}).filter(([key]) => key.startsWith('legacy-unmapped:'))
   const archivedOverrideCount = archivedOverrideEntries.length
-  const updateGroup = changes => onChange({ ...plan, classGroups: groups.map((g, i) => i === selected ? { ...g, ...changes } : g) })
+  const updateGroup = changes => onChange({ ...plan, classGroups: groups.map((g, i) => i === activeIndex ? { ...g, ...changes } : g) })
   const restoreArchivedOverride = (key, target) => {
     if (!group || !/^(0|[1-9]\d*)$/.test(target) || !schedule[Number(target)]) return
     if (Object.hasOwn(group.overrides || {}, target)) return
@@ -186,7 +188,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", themes
   const addClass = () => {
     if (!name.trim() || groups.some(g => g.name.toLocaleLowerCase('sv') === name.trim().toLocaleLowerCase('sv'))) return
     onChange({ ...plan, classGroups: [...groups, { name: name.trim(), days: [...days], startDate: plan.startDate, cancelledDates: [], overrides: {} }] })
-    setSelected(groups.length); setName('')
+    setSelected(groups.length); onSelectClass?.(name.trim()); setName('')
   }
   const grouped = schedule.reduce((result, item) => {
     const weekStart = iso(monday(item.date))
@@ -211,8 +213,8 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", themes
     </div>}
     <div className="class-mini-row">
       <strong className="class-mini-label">Klasser</strong>
-      <div className="class-mini-chips">{groups.map((g,i)=><button type="button" key={i} className={'class-mini-chip'+(selected===i?' active':'')} aria-pressed={selected===i} onClick={()=>{setSelected(i);setCompare(false);setShowClassDetails(false)}}>{g.name}</button>)}
-        {groups.length>0 && <button type="button" className="class-mini-add" onClick={()=>{if(!window.confirm('Ta bort klassen '+groups[selected]?.name+'?'))return;onChange({...plan,classGroups:groups.filter((_,i)=>i!==selected)});setSelected(0)}}>− Ta bort klass</button>}
+      <div className="class-mini-chips">{groups.map((g,i)=><button type="button" key={i} className={'class-mini-chip'+(activeIndex===i?' active':'')} aria-pressed={activeIndex===i} onClick={()=>{setSelected(i);onSelectClass?.(g.name);setCompare(false);setShowClassDetails(false)}}>{g.name}</button>)}
+        {groups.length>0 && <button type="button" className="class-mini-add" onClick={()=>{if(!window.confirm('Ta bort klassen '+groups[activeIndex]?.name+'?'))return;onChange({...plan,classGroups:groups.filter((_,i)=>i!==activeIndex)});setSelected(0);onSelectClass?.(groups.find((_,i)=>i!==activeIndex)?.name || '')}}>− Ta bort klass</button>}
         <button type="button" className="class-mini-add" onClick={()=>setAddingClass(v=>!v)} aria-expanded={addingClass}>+ Klass</button>
       </div>
       <button type="button" className="class-mini-schema" disabled={!groups.length} aria-expanded={showClassMenu} onClick={()=>{setShowClassMenu(v=>!v);setCompare(false);setShowClassDetails(false)}}>▦ Schema</button>
@@ -225,6 +227,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", themes
       <p className="muted">{(group.days||[]).length} lektioner per vecka. Ändringarna sparas med planeringen.</p>
       <button type="button" className="secondary" onClick={()=>{setShowClassDetails(v=>!v);setCompare(false)}}>{showClassDetails?'Dölj klassens ändringar':'Visa klassens ändringar'}</button>
     </div>}
+    {group && group.startDate && plan.weeksData?.[0]?.weekStart && group.startDate > plan.weeksData[0].weekStart && <p role="status" className="class-mini-warning">{group.name} börjar {group.startDate}, medan Grundplanering börjar {plan.weeksData[0].weekStart}. Därför visas inga lektioner före klassens startdatum. <button type="button" className="secondary" onClick={()=>updateGroup({startDate:plan.weeksData[0].weekStart})}>Använd grundplaneringens startdatum för {group.name}</button></p>}
     {group && <div className="class-closure-section">
       <button type="button" className="secondary" aria-expanded={showClosures} onClick={()=>setShowClosures(v=>!v)}>📅 {showClosures?'Dölj':'Lägg till'} studiedag / halvdag / lov</button>
       {showClosures && <div className="class-closure-editor">
