@@ -36,7 +36,7 @@ assert.match(app, /function isoWeekYear\(dateString\)/)
 assert.match(app, /weekStart \|\| `number-\$\{other\.weekNumber\}`/)
 assert.match(app, /\.sort\(\(a, b\) => \(a\.weekStart \|\| ''\)\.localeCompare\(b\.weekStart \|\| ''\)\)/)
 assert.match(app, /const keepPublished = !publish && databasePublished/)
-assert.match(app, /\.select\('published,public_slug'\)/)
+assert.match(app, /\.select\('published,public_slug,user_id'\)/)
 assert.match(app, /publishedPayload = publish \? sanitizeForStudents\(payload\) : null/)
 assert.match(app, /JSON\.stringify\(latestPlanRef\.current\) === savedPlanRef\.current/)
 // Draft saves must not overwrite the snapshot students currently see.
