@@ -1450,7 +1450,9 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       })
       const weeksData = [...existing.slice(0, index + 1), inserted, ...following]
       const updated = { ...previous, weeks: weeksData.length, weeksData }
-      return { ...updated, classGroups: remapClassOverridesAfterInsertion({ ...previous, weeksData: existing }, updated, index) }
+      return Array.isArray(previous.classGroups)
+        ? { ...updated, classGroups: remapClassOverridesAfterInsertion({ ...previous, weeksData: existing }, updated, index) }
+        : updated
     })
     setStatus('Vecka infogad med valt innehåll. Efterföljande veckor har flyttats framåt.')
   }
