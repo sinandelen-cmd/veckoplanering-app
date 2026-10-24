@@ -25,6 +25,9 @@ jobs:
           npx --yes supabase@2.81.3 start --help
       - name: Create isolated local Supabase project and fixture migration
         run: |
+          # Existing production migrations are NOT suitable for this minimal fixture.
+          # Move them aside ONLY inside this disposable checkout.
+          if [ -d supabase ]; then mv supabase /tmp/isolated-original-supabase-migrations; fi
           npx --yes supabase@2.81.3 init --force
           npx --yes supabase@2.81.3 migration new isolated_fullstack_fixture
           cp tests/sql/local-supabase-fullstack-fixture.sql "$(find supabase/migrations -type f -name '*isolated_fullstack_fixture.sql' | head -1)"
