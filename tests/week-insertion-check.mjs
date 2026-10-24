@@ -500,7 +500,7 @@ testWithPlan('W32 orphan numeric collision does not overwrite valid lesson overr
   const after=buildClassSchedule(p,p.classGroups[0]).find(x=>x.override?.text==='Third original')
   assert.equal(before?.lesson.id,after?.lesson.id)
 })
-testWithPlan('W32 noncolliding historical numeric orphan remains unchanged',(()=>{
+testWithPlan('W32 noncolliding historical numeric orphan is safely archived',(()=>{
   const p=planOf(3);p.classGroups[0].overrides={'99':{text:'Unmapped'}};return p
 })(),['1'],0,p=>assert.deepEqual(p.classGroups[0].overrides,{'legacy-unmapped:99':{text:'Unmapped'}}))
 
