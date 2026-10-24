@@ -3877,3 +3877,15 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .week-history-icon:hover:not(:disabled) { background: var(--plan-soft, #e1efe6); }
 .week-history-icon:focus-visible { outline: 2px solid var(--plan-accent, #347a65); outline-offset: 2px; }
 .week-history-icon:disabled { opacity: .35; cursor: not-allowed; }
+
+/* Elevens veckokapitel: aktuell vecka öppnas, övriga kan fällas ut vid klick. */
+.student-week-accordion { margin: 0 0 12px; border: 1px solid var(--line, #d8dce4); border-radius: 14px; overflow: hidden; background: var(--surface, #fff); }
+.student-week-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; cursor: pointer; padding: 14px 18px; list-style: none; }
+.student-week-summary::-webkit-details-marker { display: none; }
+.student-week-summary strong { font-size: 1.1rem; }
+.student-week-summary span:nth-child(2) { flex: 1 1 160px; font-weight: 600; }
+.student-week-summary span:last-child { font-size: 1.3rem; transition: transform .2s; }
+.student-week-accordion[open] > .student-week-summary span:last-child { transform: rotate(180deg); }
+.student-week-summary:focus-visible { outline: 3px solid #2563eb; outline-offset: -3px; }
+.student-week-accordion > .student-week-card { margin: 0; border-radius: 0; }
+@media print { .student-week-summary { display: none !important; } .student-week-accordion { border: 0; break-inside: avoid; } .student-week-accordion > .student-week-card { display: block !important; } }
