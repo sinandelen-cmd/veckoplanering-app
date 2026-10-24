@@ -10,7 +10,7 @@ import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url'
 import { supabase } from './supabase'
 import './App.css'
 import Navigation from './Navigation.jsx'
-import ClassSchedules, { buildClassSchedule } from './ClassSchedules.jsx'
+import ClassSchedules, { buildClassSchedule, remapClassOverridesAfterInsertion } from './ClassSchedules.jsx'
 import { MUNICIPALITIES_BY_COUNTY } from './swedishMunicipalities.js'
 import { NATIONAL_EXAMS_2026_27, NATIONAL_EXAM_PERIODS_2026_27 } from './nationalExams.js'
 
@@ -1449,7 +1449,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         return { ...week, weekStart, weekNumber, title: !week.title || /^Vecka\s+\d+$/i.test(week.title) ? 'Vecka ' + weekNumber : week.title }
       })
       const weeksData = [...existing.slice(0, index + 1), inserted, ...following]
-      return { ...previous, weeks: weeksData.length, weeksData }
+      const updated = { ...previous, weeks: weeksData.length, weeksData }
+      return { ...updated, classGroups: remapClassOverridesAfterInsertion({ ...previous, weeksData: existing }, updated, index) }
     })
     setStatus('Vecka infogad med valt innehåll. Efterföljande veckor har flyttats framåt.')
   }
