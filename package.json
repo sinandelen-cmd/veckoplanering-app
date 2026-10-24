@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "check": "node tests/static-check.mjs && node tests/sql-fixtures-check.mjs && node tests/week-insertion-check.mjs && node tests/react-integration-check.mjs"
+    "check": "node tests/static-check.mjs && node tests/sql-fixtures-check.mjs && node tests/week-insertion-check.mjs && node tests/react-integration-check.mjs && node tests/publish-handler-check.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
