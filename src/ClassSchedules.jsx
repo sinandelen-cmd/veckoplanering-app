@@ -19,6 +19,7 @@ export function buildClassSchedule(plan, group) {
   const days = Array.isArray(group.days) ? group.days : []
   const extraSlots = Array.isArray(group.extraSlots) ? group.extraSlots : []
   const cancelled = new Set(Array.isArray(group.cancelledDates) ? group.cancelledDates : [])
+  const closures = Array.isArray(group.schoolClosures) ? group.schoolClosures : []
   const firstDate = group.startDate || plan.startDate || ''
   let lessonNumber = 0
   // Varje klass använder innehållet från rätt grundvecka.
@@ -33,7 +34,10 @@ export function buildClassSchedule(plan, group) {
       const dateKey = iso(date)
       const day = DAYS[offset]
       if ((firstDate && dateKey < firstDate) || cancelled.has(dateKey)) continue
-      const count = days.filter(d => d === day).length + extraSlots.filter(slot => slot.date === dateKey).length
+      const closure = closures.find(event => dateKey >= event.startDate && dateKey <= (event.endDate || event.startDate))
+      if (closure && closure.type !== 'Halvdag') continue
+      const scheduledCount = days.filter(d => d === day).length + extraSlots.filter(slot => slot.date === dateKey).length
+      const count = closure?.type === 'Halvdag' ? Math.max(0,scheduledCount - Math.max(1,Number(closure.cancelledLessons)||1)) : scheduledCount
       for (let n = 0; n < count; n++) slots.push({date:dateKey,day,slot:n+1,time:group.lessonTimes?.[day]?.[n] || ''})
     }
     return slots.map((slot, index) => {
@@ -59,6 +63,11 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
   const [selectedComparisonWeek, setComparisonWeek] = React.useState(0)
   const [editing, setEditing] = React.useState(null)
   const [editText, setEditText] = React.useState('')
+  const [showClosures, setShowClosures] = React.useState(false)
+  const [closureType, setClosureType] = React.useState('Studiedag')
+  const [closureStart, setClosureStart] = React.useState('')
+  const [closureEnd, setClosureEnd] = React.useState('')
+  const [closureNote, setClosureNote] = React.useState('')
   const group = groups[selected]
   const lessonsPerWeek = group => (group.days || []).length
   const schedule = React.useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
@@ -107,6 +116,21 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
       <div className="class-mini-days">{DAYS.map((day,i)=><div key={day} className={'class-mini-day'+((group.days||[]).includes(day)?' checked':'')} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:5}}><label style={{display:'flex',flexDirection:'column',alignItems:'center',gap:5,cursor:'pointer'}}><span>{DAY_SHORT[i]}</span><input type="checkbox" aria-label={group.name+' '+day} checked={(group.days||[]).includes(day)} onChange={e=>updateGroup({days:e.target.checked?[...(group.days||[]),day].sort((x,y)=>DAYS.indexOf(x)-DAYS.indexOf(y)):(group.days||[]).filter(d=>d!==day)})}/></label>{(group.days||[]).includes(day)&&<div style={{display:'flex',alignItems:'center',gap:3,fontSize:12}}><button type="button" aria-label={'Minska moment '+day} disabled={(group.momentsPerDay?.[day]||1)<=1} onClick={()=>updateGroup({momentsPerDay:{...group.momentsPerDay,[day]:Math.max(1,(group.momentsPerDay?.[day]||1)-1)}})} style={{padding:'1px 4px',minWidth:18}}>−</button><strong>{group.momentsPerDay?.[day]||1}</strong><button type="button" aria-label={'Öka moment '+day} onClick={()=>updateGroup({momentsPerDay:{...group.momentsPerDay,[day]:(group.momentsPerDay?.[day]||1)+1}})} style={{padding:'1px 4px',minWidth:18}}>+</button></div>}</div>)}</div>
       <p className="muted">{(group.days||[]).length} lektioner per vecka. Ändringarna sparas med planeringen.</p>
       <button type="button" className="secondary" onClick={()=>{setShowClassDetails(v=>!v);setCompare(false)}}>{showClassDetails?'Dölj klassens ändringar':'Visa klassens ändringar'}</button>
+    </div>}
+    {group && <div className="class-closure-section">
+      <button type="button" className="secondary" aria-expanded={showClosures} onClick={()=>setShowClosures(v=>!v)}>📅 {showClosures?'Dölj':'Lägg till'} studiedag / halvdag / lov</button>
+      {showClosures && <div className="class-closure-editor">
+        <strong>Lediga dagar för {group.name}</strong>
+        <p className="muted">Datum påverkar bara denna klass. Grundplaneringens moment och innehåll raderas inte.</p>
+        <div className="class-closure-fields">
+          <label>Typ<select value={closureType} onChange={e=>setClosureType(e.target.value)}>{['Studiedag','Halvdag','Lov','Helgdag','Inställd lektion','Annan ledighet'].map(t=><option key={t}>{t}</option>)}</select></label>
+          <label>Från datum<input type="date" value={closureStart} onChange={e=>{setClosureStart(e.target.value);if(!closureEnd||closureEnd<e.target.value)setClosureEnd(e.target.value)}}/></label>
+          <label>Till datum<input type="date" value={closureEnd} min={closureStart} onChange={e=>setClosureEnd(e.target.value)}/></label>
+          <label>Anteckning<input value={closureNote} placeholder="Valfri information" onChange={e=>setClosureNote(e.target.value)}/></label>
+        </div>
+        <button type="button" disabled={!closureStart || (closureEnd && closureEnd<closureStart)} onClick={()=>{updateGroup({schoolClosures:[...(group.schoolClosures||[]),{id:Date.now().toString(36),type:closureType,startDate:closureStart,endDate:closureEnd||closureStart,note:closureNote,cancelledLessons:1}]});setClosureStart('');setClosureEnd('');setClosureNote('')}}>+ Lägg till</button>
+        {(group.schoolClosures||[]).map(event=><div className="class-closure-item" key={event.id}><span><strong>{event.type}</strong> · {event.startDate}{event.endDate!==event.startDate?' – '+event.endDate:''}{event.note?' · '+event.note:''}</span><button type="button" aria-label={'Ta bort '+event.type+' '+event.startDate} onClick={()=>updateGroup({schoolClosures:(group.schoolClosures||[]).filter(e=>e.id!==event.id)})}>Ta bort</button></div>)}
+      </div>}
     </div>}
     {showClassMenu && groups.length > 0 && <div style={{display:"flex",gap:10,flexWrap:"wrap",margin:"12px 0"}}>
       <button type="button" className="secondary" aria-expanded={compare} onClick={()=>{setCompare(v=>!v);setShowAll(false)}}>{compare?"▾ Dölj klassernas veckor":"▸ Visa klassernas veckor"}</button>
