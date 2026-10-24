@@ -20,8 +20,10 @@ try {
  await diagnostics.getByText(/Startdatum:/).waitFor()
  await diagnostics.getByText(/Måndag 2026-10-19: 1 planerad/).waitFor()
  await diagnostics.getByText(/Torsdag 2026-10-22: 1 planerad.*schemalagd dag/).waitFor()
+ await diagnostics.getByText(/Vecka 44 \(2026-10-26/).waitFor()
+ await diagnostics.getByText(/Veckan saknas i Grundplaneringens sparade veckounderlag/).first().waitFor()
  assert.deepEqual(await read('teacher-plan'),base)
- console.log('PASS teacher: read-only weekly diagnostics shows class days without changing plan')
+ console.log('PASS teacher: read-only weekly diagnostics shows missing calendar weeks and class days without changing plan')
  const add=async(type,start,end=start)=>{
    const toggle=page.getByRole('button',{name:/studiedag \/ halvdag \/ lov/})
    if((await toggle.getAttribute('aria-expanded'))!=='true')await toggle.click()
