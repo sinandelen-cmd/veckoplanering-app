@@ -434,8 +434,10 @@ testWithPlan('W23 publication metadata unchanged after undo snapshot',(()=>{
   const frozenPublished=JSON.stringify(published)
   draft.weeksData[1].title='Unpublished draft edit'
   draft.classGroups[0].overrides['1'].text='Changed draft'
+  draft.classGroups[1].lessonTimes.Fredag[0]='12:30'
   assert.equal(JSON.stringify(published),frozenPublished)
   assert.equal(published.classGroups[0].overrides['1'].text,'Teacher note')
+  assert.equal(published.classGroups[1].lessonTimes.Fredag[0],'10:15')
   const republished=sanitizer(draft)
   assert.notEqual(JSON.stringify(republished),frozenPublished)
   passed++
