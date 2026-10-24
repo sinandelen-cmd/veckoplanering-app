@@ -85,7 +85,7 @@ export function remapClassOverridesAfterInsertion(previous, next, insertAfterInd
   })
 }
 
-export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
+export default function ClassSchedules({ plan, onChange, publicSlug = "", themes = [] }) {
   const groups = Array.isArray(plan.classGroups) ? plan.classGroups : []
   const [name, setName] = React.useState('')
   const [addingClass, setAddingClass] = React.useState(false)
@@ -150,6 +150,14 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
   const unscheduledGroups = groups.filter(g => !(g.days || []).length)
   return <section className="card" aria-label="Kopplade klasser">
     <div className="class-schedule-intro"><div><h2>Klasser och schema</h2><p className="muted">Samma planering för flera klasser – varje klass följer sitt eget schema.</p></div><details className="class-schedule-help"><summary>ⓘ Så fungerar det</summary><p>Skriv lektionsinnehållet en gång. Lägg sedan till dina klasser och välj deras lektionsdagar. Alla klasser följer samma innehåll i rätt ordning, men i sin egen takt.</p><p>Exempel: 8A har lektioner måndag, onsdag och fredag medan 8B har tisdag och torsdag.</p></details></div>
+    {group && themes.length > 0 && <div style={{display:'flex',alignItems:'center',gap:12,flexWrap:'wrap',marginBottom:12}}>
+      <label htmlFor="class-theme-select"><strong>Färgtema för {group.name}</strong></label>
+      <select id="class-theme-select" aria-label={`Färgtema för ${group.name}`} value={group.themeId || ''} onChange={event=>updateGroup({themeId:event.target.value})}>
+        <option value="">Samma som grundplaneringen</option>
+        {themes.map(theme=><option key={theme.id} value={theme.id}>{theme.name}</option>)}
+      </select>
+      <span aria-hidden="true" style={{width:28,height:28,borderRadius:'50%',background:themes.find(theme=>theme.id===(group.themeId || plan.themeId))?.accent || '#64748b',border:'1px solid #aaa'}} />
+    </div>}
     <div className="class-mini-row">
       <strong className="class-mini-label">Klasser</strong>
       <div className="class-mini-chips">{groups.map((g,i)=><button type="button" key={i} className={'class-mini-chip'+(selected===i?' active':'')} aria-pressed={selected===i} onClick={()=>{setSelected(i);setCompare(false);setShowClassDetails(false)}}>{g.name}</button>)}
