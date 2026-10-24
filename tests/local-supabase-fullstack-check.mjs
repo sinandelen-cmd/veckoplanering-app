@@ -71,7 +71,7 @@ assert.equal(autoRow.status,201,JSON.stringify(autoRow.data).slice(0,250))
 const auto=await api('/rest/v1/rpc/get_public_annual_plan','POST','',{slug_value:'isolated-auto-release'})
 assert.equal(auto.status,200,JSON.stringify(auto.data).slice(0,250))
 const autoDoc=JSON.parse(auto.data[0].published_content)
-assert.deepEqual(autoDoc.weeksData.map(w=>w.title),['Auto 3','Auto 4'],'Production RPC should return newest two eligible weeks, never future weeks')
+assert.deepEqual(autoDoc.weeksData.map(w=>w.title),['Auto 2','Auto 3'],'Production RPC should return the current and previous eligible week, never the future Auto 4')
 assert.deepEqual(autoDoc.schoolClosures.map(w=>w.name),['current closure'],'Closures must follow visible weeks')
 const futureOnly={...dynamic,weeksData:[{weekStart:shifted(3),title:'Not yet released'}],schoolClosures:[]}
 const futureRow=await api('/rest/v1/veckoplanering','POST',a.access_token,{user_id:a.user.id,title:'Future',content:'{}',published:true,public_slug:'isolated-future-only',published_content:futureOnly})
