@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict'
+import {chromium} from 'playwright'
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']})
+try{
+ const page=await browser.newPage()
+ await page.goto('http://127.0.0.1:4175/tests/browser-fixture.html')
+ await page.getByRole('button',{name:'▦ Schema'}).click()
+ await page.getByRole('button',{name:/Visa enskilda ändringar/}).click()
+ await page.getByText('Anpassad ursprungslektion').first().waitFor()
+ assert.equal(await page.getByTestId('override-index').textContent(),'1')
+ await page.getByRole('button',{name:'Test: infoga vecka'}).click()
+ assert.equal(await page.getByTestId('override-index').textContent(),'2')
+ assert.equal(await page.getByTestId('week-count').textContent(),'4')
+ await page.getByText('Anpassad ursprungslektion').first().waitFor()
+ await page.getByRole('button',{name:'Test: ångra'}).click()
+ assert.equal(await page.getByTestId('override-index').textContent(),'1')
+ assert.equal(await page.getByTestId('week-count').textContent(),'3')
+ await page.getByRole('button',{name:'Test: gör om'}).click()
+ assert.equal(await page.getByTestId('override-index').textContent(),'2')
+ await page.getByRole('button',{name:'8B',exact:true}).click()
+ await page.getByText('Klass B ursprung').first().waitFor()
+ console.log('PASS Chromium: real ClassSchedules click interactions, insertion remapping and fixture undo/redo')
+}finally{await browser.close()}
