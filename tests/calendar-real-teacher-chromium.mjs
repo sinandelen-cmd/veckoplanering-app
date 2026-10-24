@@ -64,7 +64,15 @@ try {
  await page.getByRole('button',{name:'8A',exact:true}).click()
  assert.equal(await page.getByTestId('active-class').textContent(),'8A')
  console.log('PASS teacher: class selection stays synchronized in both directions')
+ // Opening diagnostics for a class with a delayed start must not align dates.
  await page.getByRole('button',{name:'Testa senare startdatum'}).click()
+ const beforeDiagnostics=await read('teacher-plan')
+ await diagnostics.locator('summary').click()
+ await diagnostics.locator('summary').click()
+ assert.deepEqual(await read('teacher-plan'),beforeDiagnostics)
+ assert.equal((await read('8A-schedule'))[0].date,'2026-11-02')
+ console.log('PASS teacher: opening and closing diagnostics never changes delayed start date or lessons')
+
  await page.getByText(/8A börjar 2026-11-02/).waitFor()
  assert.equal((await read('8A-schedule'))[0].date,'2026-11-02')
  await page.getByRole('button',{name:/Använd grundplaneringens startdatum för 8A/}).click()
