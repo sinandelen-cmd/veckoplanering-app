@@ -11,6 +11,7 @@ create index if not exists plan_collaborators_user_idx on public.plan_collaborat
 alter table public.plan_collaborators enable row level security;
 revoke all on public.plan_collaborators from anon, authenticated;
 grant select on public.plan_collaborators to authenticated;
+-- Invitations and revocations are RPC-only; no direct INSERT/DELETE grants.
 
 -- Membership lookup is intentionally private to prevent RLS recursion.
 create schema if not exists private;
