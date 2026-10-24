@@ -1,0 +1,45 @@
+name: Isolerad Supabase fullstack (Auth PostgREST RLS RPC)
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  fullstack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install PostgreSQL client
+        run: sudo apt-get update -qq && sudo apt-get install -y postgresql-client
+      - name: Discover pinned Supabase CLI commands
+        run: |
+          npx --yes supabase@2.81.3 --version
+          npx --yes supabase@2.81.3 init --help
+          npx --yes supabase@2.81.3 migration new --help
+          npx --yes supabase@2.81.3 start --help
+      - name: Create isolated local Supabase project and fixture migration
+        run: |
+          npx --yes supabase@2.81.3 init --force
+          npx --yes supabase@2.81.3 migration new isolated_fullstack_fixture
+          cp tests/sql/local-supabase-fullstack-fixture.sql "$(find supabase/migrations -type f -name '*isolated_fullstack_fixture.sql' | head -1)"
+          test -s "$(find supabase/migrations -type f -name '*isolated_fullstack_fixture.sql' | head -1)"
+      - name: Start disposable Docker Supabase fullstack (never linked to production)
+        run: npx --yes supabase@2.81.3 start
+      - name: Capture local-only API endpoint and ephemeral anon key
+        run: |
+          npx --yes supabase@2.81.3 status -o env > /tmp/isolated-supabase-status.env
+          API_URL="$(sed -n 's/^API_URL=//p' /tmp/isolated-supabase-status.env | tr -d '"')"
+          ANON_KEY="$(sed -n 's/^ANON_KEY=//p' /tmp/isolated-supabase-status.env | tr -d '"')"
+          test -n "$API_URL" && test -n "$ANON_KEY"
+          case "$API_URL" in http://127.0.0.1:*|http://localhost:*) ;; *) echo "Unsafe external API URL" >&2; exit 1 ;; esac
+          echo "ISOLATED_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "ISOLATED_SUPABASE_ANON_KEY=$ANON_KEY" >> "$GITHUB_ENV"
+          echo "::add-mask::$ANON_KEY"
+      - name: Real GoTrue Auth, PostgREST, owner RLS and public RPC contract
+        run: node tests/local-supabase-fullstack-check.mjs
+      - name: Stop isolated Supabase stack
+        if: always()
+        run: npx --yes supabase@2.81.3 stop --no-backup || true
