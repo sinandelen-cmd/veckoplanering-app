@@ -23,3 +23,16 @@ Datum: 2026-10-24. Allt på feature-grenen och draft PR #5. **Ingen produktions�
 ## Status
 
 Det tidigare paketet 7/8 (87,5 %) avsåg den definierade kvalitetssäkringsplanen, inte fullständig produktionsparitet. Slutpaketet kan bara räknas som färdigt när aktuella CI-körningar är gröna och återstående begränsningar uttryckligen godtas.
+
+## Verifierad CI-slutkörning
+
+Commit `405a8f8` (dokumentationsändring, samma testkod):
+- Ordinarie verify och PostgreSQL-regressioner: **SUCCESS**, [GitHub Actions 40089855998](https://github.com/sinandelen-cmd/veckoplanering-app/actions/runs/40089855998).
+- Isolerad Chromium-fixture, inklusive manuell arkivåterkoppling och ångra/gör om: **SUCCESS**, [GitHub Actions 40089855960](https://github.com/sinandelen-cmd/veckoplanering-app/actions/runs/40089855960).
+- **Riktig lokal Supabase CLI/Docker-fullstack: SUCCESS**, [GitHub Actions 40089856001](https://github.com/sinandelen-cmd/veckoplanering-app/actions/runs/40089856001). Loggen visar att lokal migration kördes, följt av:
+  - `PASS local fullstack: GoTrue signup/login x2, teacher access, PostgREST ownership RLS, no direct anon read, RPC draft/publish/hidden/expired/missing/unpublish, owner reassignment denied`.
+  - `PASS real Chromium App.jsx + real local GoTrue login + PostgREST teacher RLS + anonymous public student RPC + hidden week + nonexistent link`.
+
+**Den isolerade verifieringsplanens åtta paket är nu genomförda (8/8, 100 %)**, med uttrycklig begränsning: detta är inte samma sak som 100 % produktionsparitet eller godkänd driftsättning. Produktionens exakta RPC, hela databasschemat och en fullständig interaktiv redigera→publicera-resa i webbläsaren har inte återspelats. Publicerings-/avpubliceringsvägen är däremot testad via verklig lokal PostgREST och elevvyn via verklig App.jsx/Chromium.
+
+**Driftsättningsbeslut: EJ GODKÄNT.** Ingen produktion har ändrats.
