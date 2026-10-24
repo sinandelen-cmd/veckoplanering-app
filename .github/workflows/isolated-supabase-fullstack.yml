@@ -33,32 +33,26 @@ jobs:
           cp tests/sql/local-supabase-fullstack-fixture.sql "$(find supabase/migrations -type f -name '*isolated_fullstack_fixture.sql' | head -1)"
           test -s "$(find supabase/migrations -type f -name '*isolated_fullstack_fixture.sql' | head -1)"
       - name: Start disposable Docker Supabase fullstack (never linked to production)
+        timeout-minutes: 6
         run: |
-          # A fresh GitHub runner can hit the shared public ECR download quota.
-          # Allow one bounded recovery attempt only for that external failure.
+          # Bound startup and report the actual Docker failure instead of waiting
+          # through another multi-minute registry retry.
           set -o pipefail
-          for attempt in 1 2; do
-            log_file="$(mktemp)"
-            echo "Starting isolated Supabase (attempt $attempt/2, max 4 minutes)"
-            if timeout --signal=TERM --kill-after=15s 4m npx --yes supabase@2.81.3 start --exclude realtime,storage-api,imgproxy,studio,postgres-meta,edge-runtime,logflare,vector,supavisor,mailpit 2>&1 | tee "$log_file"; then
-              rm -f "$log_file"
-              exit 0
-            fi
-            if grep -Eiq 'toomanyrequests|Data limit exceeded|rate.?limit|pull rate limit|429 Too Many Requests' "$log_file"; then
-              rm -f "$log_file"
-              if [ "$attempt" -eq 1 ]; then
-                echo "::warning title=External registry quota::Waiting 60 seconds before one final retry."
-                timeout --signal=TERM --kill-after=10s 45s npx --yes supabase@2.81.3 stop --no-backup || true
-                sleep 60
-                continue
-              fi
-              echo "::error title=External Docker registry quota::Both bounded attempts were blocked by registry limits. Database and application tests were not reached."
-              exit 1
-            fi
+          log_file="$(mktemp)"
+          echo "Starting isolated Supabase (hard limit: 4 minutes)"
+          if timeout --signal=TERM --kill-after=15s 4m npx --yes supabase@2.81.3 start --exclude realtime,storage-api,imgproxy,studio,postgres-meta,edge-runtime,logflare,vector,supavisor,mailpit 2>&1 | tee "$log_file"; then
             rm -f "$log_file"
-            echo "::error title=Isolated Supabase startup failed::Startup failed or timed out for a reason other than registry quota."
-            exit 1
-          done
+            exit 0
+          fi
+          if grep -Eiq 'toomanyrequests|Data limit exceeded|rate.?limit|pull rate limit|429 Too Many Requests' "$log_file"; then
+            echo "::error title=External Docker registry quota::Image download was blocked by the public registry. No application tests were run."
+          else
+            echo "::error title=Isolated Supabase startup failed::See the startup output above for the Docker/Supabase error."
+          fi
+          echo "Docker containers after failed startup:"
+          timeout 10s docker ps -a --format 'table {{.Names}}\t{{.Status}}' || true
+          rm -f "$log_file"
+          exit 1
       - name: Capture local-only API endpoint and ephemeral anon key
         run: |
           npx --yes supabase@2.81.3 status -o env > /tmp/isolated-supabase-status.env
