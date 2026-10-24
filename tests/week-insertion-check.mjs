@@ -37,6 +37,29 @@ const monday = value => {const d=new Date(value+'T12:00:00');d.setDate(d.getDate
 const nextDate = (start,offset)=>{const d=new Date(start);d.setDate(d.getDate()+offset);return d}
 const buildClassSchedule = new Function('DAYS','iso','monday','nextDate',classBuilder+'\nreturn buildClassSchedule')(DAYS,iso,monday,nextDate)
 
+// Regression: class-specific closures must defer, never discard, source lessons.
+{
+  const lessons = ['A','B','C','D'].map(id => ({id,name:id,topics:[]}))
+  const p = {weeksData:[
+    {weekStart:'2026-10-05',weekNumber:41,lessons:lessons.slice(0,2)},
+    {weekStart:'2026-10-12',weekNumber:42,lessons:lessons.slice(2)}
+  ]}
+  const a = {days:['Måndag','Onsdag'],schoolClosures:[{type:'Studiedag',startDate:'2026-10-07',endDate:'2026-10-07'}],overrides:{'1':{text:'Own B'}}}
+  const b = {days:['Måndag','Onsdag']}
+  const sa = buildClassSchedule(p,a)
+  const sb = buildClassSchedule(p,b)
+  assert.deepEqual(sa.map(x=>x.lesson.id),['A','B','C','D'])
+  assert.deepEqual(sa.map(x=>x.date),['2026-10-05','2026-10-12','2026-10-14','2026-10-19'])
+  assert.equal(sa[1].override.text,'Own B')
+  assert.equal(sb[1].date,'2026-10-07')
+  const half = buildClassSchedule(p,{days:['Måndag'],momentsPerDay:{Måndag:2},schoolClosures:[{type:'Halvdag',startDate:'2026-10-05',cancelledLessons:1}]})
+  assert.deepEqual(half.map(x=>x.lesson.id),['A','B','C','D'])
+  assert.deepEqual(half.map(x=>x.date),['2026-10-05','2026-10-12','2026-10-12','2026-10-19'])
+  const holiday = buildClassSchedule(p,{days:['Måndag'],schoolClosures:[{type:'Lov',startDate:'2026-10-05',endDate:'2026-10-16'}]})
+  assert.deepEqual(holiday.map(x=>x.lesson.id),['A','B','C','D'])
+  assert.equal(holiday[0].date,'2026-10-19')
+  console.log('PASS class closures preserve lesson queue, overrides and daily counts')
+}
 const remapStart = classSource.indexOf('export function remapClassOverridesAfterInsertion(')
 const remapEnd = classSource.indexOf('\nexport default function ClassSchedules', remapStart)
 assert.ok(remapStart>=0 && remapEnd>remapStart)
