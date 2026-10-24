@@ -29,3 +29,16 @@ output=$(psql -X -v ON_ERROR_STOP=1 -At -f tests/sql/isolated-publication-storag
 printf '%s\n' "$output"
 test "$(printf '%s\n' "$output" | grep -c '^PASS:')" -eq 2
 if printf '%s\n' "$output" | grep -q '^FAIL:'; then exit 1; fi
+
+# This file uses DML only inside a temporary table and a rolled-back
+# transaction on the ephemeral GitHub Actions PostgreSQL service.
+echo "Running ephemeral PostgreSQL publication transaction checks"
+psql -X -v ON_ERROR_STOP=1 -At -f tests/sql/isolated-publication-transaction.sql | awk -F'|' '
+  NF == 4 {
+    count++
+    if ($4 != "t") { print "FAILED: " $0 > "/dev/stderr"; failed=1 }
+  }
+  END {
+    if (count != 1 || failed) { print "Isolated transaction assertion missing or failed" > "/dev/stderr"; exit 1 }
+    print "Checked 1 isolated publication transaction case"
+  }'
