@@ -60,7 +60,7 @@ export function remapClassOverridesAfterInsertion(previous, next, insertAfterInd
     const newByWeekAndSlot = new Map(newSchedule.map(item => [item.weekStart + ':' + item.index, item]))
     const remapped = {}
     for (const [key, value] of Object.entries(overrides)) {
-      if (!/^(0|[1-9]\\d*)$/.test(key)) { remapped[key] = value; continue }
+      if (!/^(0|[1-9]\d*)$/.test(key)) { remapped[key] = value; continue }
       const oldItem = oldSchedule[Number(key)]
       if (!oldItem) { remapped[key] = value; continue }
       const oldWeekIndex = beforeWeeks.findIndex(week => week.weekStart === oldItem.weekStart)
