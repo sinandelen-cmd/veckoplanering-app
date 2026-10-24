@@ -72,6 +72,26 @@ try {
  assert.deepEqual(await read('teacher-plan'),beforeDiagnostics)
  assert.equal((await read('8A-schedule'))[0].date,'2026-11-02')
  console.log('PASS teacher: opening and closing diagnostics never changes delayed start date or lessons')
+ // Mobile Safari-like touch viewport: tapping the summary must never activate the adjacent start-date action.
+ const mobile=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true})
+ try {
+   await mobile.route('**/*',route=>['127.0.0.1','localhost'].includes(new URL(route.request().url()).hostname)?route.continue():route.abort('blockedbyclient'))
+   await mobile.goto('http://127.0.0.1:4177/tests/calendar-real-teacher-fixture.html')
+   await mobile.getByRole('heading',{name:'Klasser och schema'}).waitFor()
+   await mobile.getByRole('button',{name:'Testa senare startdatum'}).click()
+   const mobileRead=async id=>JSON.parse(await mobile.getByTestId(id).textContent())
+   const mobileBefore=await mobileRead('teacher-plan')
+   const mobileDiagnostics=mobile.getByTestId('class-week-diagnostics')
+   const mobileSummary=mobileDiagnostics.locator('summary')
+   await mobileSummary.tap()
+   assert.equal(await mobileDiagnostics.evaluate(element=>element.open),true)
+   await mobileSummary.tap()
+   assert.equal(await mobileDiagnostics.evaluate(element=>element.open),false)
+   assert.deepEqual(await mobileRead('teacher-plan'),mobileBefore)
+   assert.equal((await mobileRead('8A-schedule'))[0].date,'2026-11-02')
+   console.log('PASS mobile touch: diagnostic summary opens and closes without aligning start date')
+ } finally { await mobile.close() }
+
 
  await page.getByText(/8A börjar 2026-11-02/).waitFor()
  assert.equal((await read('8A-schedule'))[0].date,'2026-11-02')
