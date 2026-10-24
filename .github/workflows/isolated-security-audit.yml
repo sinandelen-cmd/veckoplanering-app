@@ -5,6 +5,8 @@ on:
     paths:
       - '.github/workflows/isolated-security-audit.yml'
       - 'tests/isolated-security-audit.mjs'
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
@@ -22,5 +24,5 @@ jobs:
           node-version: '22'
       - name: Scan changed files without exposing matched values
         env:
-          AUDIT_BASE: '633e55c949e8ca9e950c08be7f7165cbb7ea81ad'
+          AUDIT_BASE: 'f75c4759c19a355c4b00986d1000625de68130a8'
         run: node tests/isolated-security-audit.mjs
