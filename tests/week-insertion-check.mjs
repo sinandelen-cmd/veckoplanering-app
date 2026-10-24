@@ -442,4 +442,29 @@ testWithPlan('W23 publication metadata unchanged after undo snapshot',(()=>{
   console.log('PASS W30-W31 actual student sanitizer snapshot stays unchanged until explicit resanitization')
 }
 
+
+testWithPlan('W32 several overrides preserve individual lesson identities',(()=>{
+  const p=planOf(5)
+  p.classGroups[0].overrides={'0':{text:'First'},'1':{text:'Second'},'2':{text:'Third'}}
+  return p
+})(),['1'],0,(p,b)=>{
+  const before=buildClassSchedule(b,b.classGroups[0])
+  const after=buildClassSchedule(p,p.classGroups[0])
+  for(const label of ['First','Second','Third']){
+    const original=before.find(x=>x.override?.text===label)
+    const shifted=after.find(x=>x.override?.text===label)
+    assert.equal(shifted?.lesson.id,original?.lesson.id)
+  }
+})
+testWithPlan('W32 hidden week does not consume ordinal override',(()=>{
+  const p=planOf(5)
+  p.weeksData[1].hidden=true
+  p.classGroups[0].overrides={'1':{text:'Visible third week'}}
+  return p
+})(),['1'],0,(p,b)=>{
+  const old=buildClassSchedule(b,b.classGroups[0]).find(x=>x.override?.text==='Visible third week')
+  const moved=buildClassSchedule(p,p.classGroups[0]).find(x=>x.override?.text==='Visible third week')
+  assert.equal(moved?.lesson.id,old?.lesson.id)
+})
+
 console.log('Actual insertion function: '+passed+' synthetic checks passed (not browser or integration tests)')
