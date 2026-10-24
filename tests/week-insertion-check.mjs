@@ -239,4 +239,42 @@ testWithPlan('W32 hidden source week produces no class lessons',(()=>{
   console.log('PASS W25-W28 actual undo/redo handlers (without React lifecycle)')
 }
 
+
+testWithPlan('W06 custom exam title',planOf(3),['3','2','Algebra delprov'],0,p=>{
+  assert.equal(p.weeksData[1].lessons[1].assessment.title,'Algebra delprov')
+  assert.equal(p.weeksData[1].lessons[1].topics[0].name,'Algebra delprov')
+})
+testWithPlan('W13 no lessons refuses insertion',{...planOf(3),lessonsPerWeek:0},[],0,(p,b,calls)=>{
+  assert.deepEqual(p,b)
+  assert.equal(calls,0)
+})
+testWithPlan('W22 preserve custom week fields',(()=>{
+  const p=planOf(3);p.weeksData[1].chapter='Funktioner';p.weeksData[1].links=['https://example.org/lesson'];p.weeksData[1].keepVisibleExtra=true;return p
+})(),['1'],0,(p,b)=>{
+  assert.equal(p.weeksData[2].chapter,b.weeksData[1].chapter)
+  assert.deepEqual(p.weeksData[2].links,b.weeksData[1].links)
+  assert.equal(p.weeksData[2].keepVisibleExtra,true)
+})
+testWithPlan('W32 two classes retain different schedules',planOf(4),['1'],0,p=>{
+  const a=buildClassSchedule(p,p.classGroups[0]);const b=buildClassSchedule(p,p.classGroups[1])
+  assert.ok(a.every(x=>x.day==='Måndag'))
+  assert.ok(b.every(x=>x.day==='Fredag'))
+  assert.ok(a.some(x=>x.weekStart===p.weeksData[1].weekStart))
+  assert.ok(b.some(x=>x.weekStart===p.weeksData[1].weekStart))
+})
+testWithPlan('W33 class holiday removes affected lessons',(()=>{
+  const p=planOf(4);p.classGroups[0].schoolClosures=[{startDate:'2026-01-12',endDate:'2026-01-12',type:'Studiedag'}];return p
+})(),['1'],0,p=>assert.ok(!buildClassSchedule(p,p.classGroups[0]).some(x=>x.date==='2026-01-12')))
+testWithPlan('W33 half day reduces extra slots',(()=>{
+  const p=planOf(7);p.classGroups[1].schoolClosures=[{startDate:'2026-02-13',endDate:'2026-02-13',type:'Halvdag',cancelledLessons:1}];return p
+})(),['1'],0,p=>assert.equal(buildClassSchedule(p,p.classGroups[1]).filter(x=>x.date==='2026-02-13').length,1))
+testWithPlan('W23 publication metadata does not leak to inserted week',(()=>{
+  const p=planOf(3);p.weeksData[1].publishDate='2026-01-15';p.weeksData[1].hideDate='2026-02-15';return p
+})(),['3','1','Prov'],0,p=>{
+  assert.equal(p.weeksData[1].publishDate,undefined)
+  assert.equal(p.weeksData[1].hideDate,undefined)
+  assert.equal(p.weeksData[2].publishDate,'2026-01-15')
+  assert.equal(p.weeksData[2].hideDate,'2026-02-15')
+})
+
 console.log('Actual insertion function: '+passed+' synthetic checks passed (not browser or integration tests)')
