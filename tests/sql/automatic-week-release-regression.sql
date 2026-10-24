@@ -18,7 +18,14 @@ WITH fixtures (scenario, week_start, publish_date, hide_date, hidden, auto_relea
         ELSE date_trunc('week', week_start::date::timestamp)::date
       END <= DATE '2026-10-24'
     ))
-    AND (NOT (hide_date ~ '^\d{4}-\d{2}-\d{2}$')
+    AND (NOT coalesce(hide_date ~ '^\d{4}-\d{2}-\d{2}
+      OR hide_date::date > DATE '2026-10-24') AS actual_visible
+  FROM fixtures
+)
+SELECT scenario, expected_visible, actual_visible,
+       actual_visible IS NOT DISTINCT FROM expected_visible AS passed
+FROM results ORDER BY scenario;
+, false)
       OR hide_date::date > DATE '2026-10-24') AS actual_visible
   FROM fixtures
 )
