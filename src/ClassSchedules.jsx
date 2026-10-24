@@ -70,7 +70,7 @@ export function remapClassOverridesAfterInsertion(previous, next, insertAfterInd
     const overrides = group.overrides || {}
     const oldSchedule = buildClassSchedule(previous, group)
     const newSchedule = buildClassSchedule(next, group)
-    const newByWeekAndSlot = new Map(newSchedule.map(item => [item.weekStart + ':' + item.index, item]))
+    const newByWeekAndSlot = new Map(newSchedule.map(item => [item.sourceWeekStart + ':' + item.index, item]))
     const remapped = {}
     const unresolved = []
     // Prioritize matched lessons. Never let an orphaned historical index overwrite
@@ -78,7 +78,7 @@ export function remapClassOverridesAfterInsertion(previous, next, insertAfterInd
     for (const [key, value] of Object.entries(overrides)) {
       if (!/^(0|[1-9]\d*)$/.test(key)) { remapped[key] = value; continue }
       const oldItem = oldSchedule[Number(key)]
-      const oldWeekIndex = oldItem ? beforeWeeks.findIndex(week => week.weekStart === oldItem.weekStart) : -1
+      const oldWeekIndex = oldItem ? beforeWeeks.findIndex(week => week.weekStart === oldItem.sourceWeekStart) : -1
       const targetIndex = oldWeekIndex + (oldWeekIndex > insertAfterIndex ? 1 : 0)
       const targetWeek = oldWeekIndex >= 0 ? afterWeeks[targetIndex] : null
       const targetItem = targetWeek && newByWeekAndSlot.get(targetWeek.weekStart + ':' + oldItem.index)
