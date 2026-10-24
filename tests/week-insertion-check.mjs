@@ -65,6 +65,23 @@ const buildClassSchedule = new Function('DAYS','iso','monday','nextDate',classBu
   assert.equal(buildClassSchedule(overlapping,overlappingGroup)[0].date,'2026-10-07')
 }
 
+
+ // Regression: a half-day never loses topics, linked resources or class overrides.
+{
+  const topic = name => ({name,pages:['42'],assignments:['Uppgift '+name],links:['https://example.org/'+name]})
+  const p = {weeksData:[{weekStart:'2026-10-05',weekNumber:41,lessons:[
+    {id:'A',topics:[topic('alfa'),topic('beta')]},
+    {id:'B',topics:[topic('gamma')]}
+  ]}]}
+  const group = {name:'7A',days:['Måndag','Onsdag'],momentsPerDay:{'Måndag':1,'Onsdag':1},overrides:{'1':{text:'Klassens kommentar'}},
+    schoolClosures:[{type:'Halvdag',startDate:'2026-10-05',endDate:'2026-10-05',cancelledLessons:1}]}
+  const schedule = buildClassSchedule(p,group)
+  assert.deepEqual(schedule.flatMap(item=>item.lesson.topics.map(t=>t.name)),['alfa','beta','gamma'])
+  assert.deepEqual(schedule.flatMap(item=>item.lesson.topics.flatMap(t=>t.links)),['https://example.org/alfa','https://example.org/beta','https://example.org/gamma'])
+  assert.equal(schedule[0].date,'2026-10-07')
+  assert.equal(schedule.find(item=>item.lesson.id==='B')?.override?.text,'Klassens kommentar')
+}
+
 // Regression: class-specific closures must defer, never discard, source lessons.
 {
   const lessons = ['A','B','C','D'].map(id => ({id,name:id,topics:[]}))
