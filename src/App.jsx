@@ -846,12 +846,8 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     : (printWeekStart ? studentWeeks.filter(week => week.weekStart === printWeekStart) : (printGroups[printPage]?.weeks || []))
   const [showEarlierStudentWeeks, setShowEarlierStudentWeeks] = useState(false)
   const earlierStudentWeeks = printPage === null ? visibleWeeks.filter(week => week.weekStart < currentStudentWeekStart) : []
-  const chapterVisibleWeeks = printPage === null && !showEarlierStudentWeeks && visibleWeeks.some(week => week.weekStart >= currentStudentWeekStart)
-    ? visibleWeeks.filter(week => week.weekStart >= currentStudentWeekStart) : visibleWeeks
-  const studentChapterWeeks = printPage === null ? [...chapterVisibleWeeks].sort((a,b) => {
-    const priority = w => w.weekStart === currentStudentWeekStart ? 0 : w.weekStart > currentStudentWeekStart ? 1 : 2
-    return priority(a)-priority(b) || (priority(a) === 2 ? b.weekStart.localeCompare(a.weekStart) : a.weekStart.localeCompare(b.weekStart))
-  }) : visibleWeeks
+  // Archive completed chapters without detaching their weeks.
+  const studentChapterWeeks = [...visibleWeeks].sort((a,b) => a.weekStart.localeCompare(b.weekStart))
   const [studentAllWeeksOpen, setStudentAllWeeksOpen] = useState(false)
   const [studentExpandVersion, setStudentExpandVersion] = useState(0)
   const studentChapterGroups = studentChapterWeeks.reduce((groups, week) => {
@@ -861,25 +857,14 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     else groups.push({chapter, weeks:[week]})
     return groups
   }, [])
-  const pageWeekLabel = studentWeekPageLabel(visibleWeeks)
-  if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
-  if (!preview && requestedClass && plan && !selectedClass) return <main className="shell"><section className="card"><h2>Klassen hittades inte</h2><p>Kontrollera elevlänken med din lärare.</p></section></main>
-  const previewClassSelector = preview && !hideSelector && plan?.classGroups?.length>0 && <div className="student-preview-classbar"><div className="student-preview-class-buttons"><button type="button" className={!previewClass?'active':''} onClick={()=>setPreviewClass('')}>📘 Grundplanering</button>{plan.classGroups.map(g=><button key={g.name} type="button" className={previewClass===g.name?'active':''} onClick={()=>setPreviewClass(g.name)}>🏫 {g.name}</button>)}</div><button type="button" className="student-class-copy-link" aria-label={linkCopied ? "Elevlänken kopierad" : "Kopiera elevlänk för "+(previewClass || "grundplaneringen")} title={linkCopied ? "Elevlänken kopierad" : "Kopiera elevlänk för "+(previewClass || "grundplaneringen")} disabled={!plan?.published||!plan?.publicSlug} onClick={async()=>{const url=window.location.origin+'/elev/'+encodeURIComponent(plan.publicSlug)+(previewClass?'?klass='+encodeURIComponent(previewClass):'');try{await navigator.clipboard.writeText(url);setLinkCopied(true)}catch{window.prompt('Kopiera elevlänk',url)}}}><span aria-hidden="true">{linkCopied?'✓':'🔗'}</span></button></div>
-  if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
-  return <>{previewClassSelector}<main style={planThemeStyle(selectedClass?.themeId ? {...plan,themeId:selectedClass.themeId} : plan)} className={`shell student-shell ${printPage === null ? "student-screen-view" : "student-print-page"} ${printPage !== null && visibleWeeks.length === 1 ? "student-print-spacious" : ""}`}>
-    {printPage === null && <div className="student-print-action"><button type="button" className="secondary" onClick={() => window.print()}>🖨️ Skriv ut elevvyn</button></div>}
-    {!preview && <header className="student-header student-header-simple">
-      <h1 style={{ fontSize: 'clamp(2.6rem, 5vw, 4.5rem)', fontWeight: 900, lineHeight: 1.12, margin: '8px 0 24px' }}>{plan.title}</h1>
-    </header>}
-    {studentWeeks.length === 0 && <p className="card empty" role="status">{plan.autoReleaseWeeks ? "Ingen vecka är publicerad för elever ännu. Nästa vecka visas automatiskt när dess måndag börjar." : "Det finns inga synliga veckor i den här planeringen ännu."}</p>}
-    {printPage === null && earlierStudentWeeks.length > 0 && visibleWeeks.some(week => week.weekStart >= currentStudentWeekStart) && <button type="button" className="secondary" aria-expanded={showEarlierStudentWeeks} onClick={() => setShowEarlierStudentWeeks(value => !value)}>{showEarlierStudentWeeks ? 'Dölj tidigare veckor' : 'Visa tidigare veckor (' + earlierStudentWeeks.length + ')'}</button>}
-    {printPage === null && studentChapterWeeks.length > 1 && <button type="button" className="secondary student-all-weeks-toggle" onClick={() => { setStudentAllWeeksOpen(value => !value); setStudentExpandVersion(value => value + 1) }}>{studentAllWeeksOpen ? 'Dölj alla veckor utom den första' : 'Visa alla veckor'}</button>}
-    <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
-      {studentChapterGroups.map((group, groupIndex) => <details className="student-chapter-section" key={`${previewClass}-${groupIndex}-${group.chapter}-${studentExpandVersion}`} open={printPage !== null || studentAllWeeksOpen || groupIndex === 0}>
+  const archivedStudentGroups = printPage === null ? studentChapterGroups.filter(group => group.weeks.every(week => week.weekStart < currentStudentWeekStart)) : []
+  const activeStudentGroups = printPage === null ? studentChapterGroups.filter(group => group.weeks.some(week => week.weekStart >= currentStudentWeekStart)) : studentChapterGroups
+  const archivedStudentWeeks = archivedStudentGroups.reduce((total, group) => total + group.weeks.length, 0)
+  const renderStudentChapterGroups = (groups, historical = false) => (groups.map((group, groupIndex) => <details className="student-chapter-section" key={`${previewClass}-${groupIndex}-${group.chapter}-${studentExpandVersion}`} open={printPage !== null || studentAllWeeksOpen || groupIndex === 0 && !historical}>
         <summary className={`student-chapter-heading chapter-tone-${chapterTone(group.chapter || 'Planering')}`}><span>📖 {group.chapter || 'Veckoplanering'}</span><span className="student-chapter-count">{group.weeks.length} {group.weeks.length === 1 ? 'vecka' : 'veckor'}　⌄</span></summary>
         {group.weeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
         
-        <details className="student-week-accordion" open={printPage !== null || studentAllWeeksOpen || (groupIndex === 0 && index === 0)} key={`${previewClass}-${week.weekStart}-${studentExpandVersion}`}>
+        <details className="student-week-accordion" open={printPage !== null || studentAllWeeksOpen || (groupIndex === 0 && index === 0 && !historical)} key={`${previewClass}-${week.weekStart}-${studentExpandVersion}`}>
           <summary className="student-week-summary"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{week.chapter?.trim() || week.title?.trim() || 'Veckoplanering'}</span><span>{studentWeekDateRange(week.weekStart)}</span><span aria-hidden="true">⌄</span></summary>
         <article id={"student-week-" + week.weekStart} className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
 
@@ -892,7 +877,25 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
         <ImportantDatesForWeek week={week} plan={plan} />
         <LessonDetails week={week} entryType={plan.entryType || 'lektion'} lessonDisplay="dag-och-lektion" />
         <WeekDetails week={week} />
-      </article></details></div>)}</details>)}
+      </article></details></div>)}</details>))
+  const pageWeekLabel = studentWeekPageLabel(visibleWeeks)
+  if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
+  if (!preview && requestedClass && plan && !selectedClass) return <main className="shell"><section className="card"><h2>Klassen hittades inte</h2><p>Kontrollera elevlänken med din lärare.</p></section></main>
+  const previewClassSelector = preview && !hideSelector && plan?.classGroups?.length>0 && <div className="student-preview-classbar"><div className="student-preview-class-buttons"><button type="button" className={!previewClass?'active':''} onClick={()=>setPreviewClass('')}>📘 Grundplanering</button>{plan.classGroups.map(g=><button key={g.name} type="button" className={previewClass===g.name?'active':''} onClick={()=>setPreviewClass(g.name)}>🏫 {g.name}</button>)}</div><button type="button" className="student-class-copy-link" aria-label={linkCopied ? "Elevlänken kopierad" : "Kopiera elevlänk för "+(previewClass || "grundplaneringen")} title={linkCopied ? "Elevlänken kopierad" : "Kopiera elevlänk för "+(previewClass || "grundplaneringen")} disabled={!plan?.published||!plan?.publicSlug} onClick={async()=>{const url=window.location.origin+'/elev/'+encodeURIComponent(plan.publicSlug)+(previewClass?'?klass='+encodeURIComponent(previewClass):'');try{await navigator.clipboard.writeText(url);setLinkCopied(true)}catch{window.prompt('Kopiera elevlänk',url)}}}><span aria-hidden="true">{linkCopied?'✓':'🔗'}</span></button></div>
+  if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
+  return <>{previewClassSelector}<main style={planThemeStyle(selectedClass?.themeId ? {...plan,themeId:selectedClass.themeId} : plan)} className={`shell student-shell ${printPage === null ? "student-screen-view" : "student-print-page"} ${printPage !== null && visibleWeeks.length === 1 ? "student-print-spacious" : ""}`}>
+    {printPage === null && <div className="student-print-action"><button type="button" className="secondary" onClick={() => window.print()}>🖨️ Skriv ut elevvyn</button></div>}
+    {!preview && <header className="student-header student-header-simple">
+      <h1 style={{ fontSize: 'clamp(2.6rem, 5vw, 4.5rem)', fontWeight: 900, lineHeight: 1.12, margin: '8px 0 24px' }}>{plan.title}</h1>
+    </header>}
+    {studentWeeks.length === 0 && <p className="card empty" role="status">{plan.autoReleaseWeeks ? "Ingen vecka är publicerad för elever ännu. Nästa vecka visas automatiskt när dess måndag börjar." : "Det finns inga synliga veckor i den här planeringen ännu."}</p>}
+    {printPage === null && studentChapterWeeks.length > 1 && <button type="button" className="secondary student-all-weeks-toggle" onClick={() => { setStudentAllWeeksOpen(value => !value); setStudentExpandVersion(value => value + 1) }}>{studentAllWeeksOpen ? 'Dölj alla veckor utom den första' : 'Visa alla veckor'}</button>}
+    <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
+      {printPage === null && archivedStudentGroups.length > 0 && <details className="student-history-folder" open={showEarlierStudentWeeks}>
+        <summary className="student-history-heading" onClick={event => { event.preventDefault(); setShowEarlierStudentWeeks(value => !value) }}><span>📁 Tidigare veckor</span><span>{archivedStudentGroups.length} kapitel · {archivedStudentWeeks} veckor　⌄</span></summary>
+        <div className="student-history-chapters">{renderStudentChapterGroups(archivedStudentGroups, true)}</div>
+      </details>}
+      {renderStudentChapterGroups(activeStudentGroups)}
     </section>
   </main>
   {false && printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">
