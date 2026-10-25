@@ -2765,7 +2765,7 @@ function lessonDayDate(weekStart, lessonName) {
   return formatDate(toIsoDate(date))
 }
 function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 'bara-lektion', lockLessons = false }) {
-function MomentActionIcon({kind}) {
+  function MomentActionIcon({kind}) {
   const paths={link:'M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2',exam:'M9 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3M9 3h6v4H9zM8 12h8M8 16h5',plus:'M12 5v14M5 12h14',remove:'M6 6l12 12M18 6 6 18',pair:'M4 3h10v14H4zM14 7h6v14H10v-4M7 10h4M9 8v4'};
   return <svg className="moment-action-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[kind] || paths.plus}/></svg>
 }
