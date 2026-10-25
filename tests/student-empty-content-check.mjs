@@ -52,7 +52,7 @@ assert.match(both,/Visa din lösning/)
 assert.match(both,/data-detail-count="2"/)
 const linkOnly = render(LessonDetails,{week:week([lesson({topics:[topic({links:[{url:'https://example.org/material.pdf',label:'Läs materialet'}]})]})])})
 assert.match(linkOnly,/Läs materialet/)
-assert.match(linkOnly,/https:\/\/example.org\/material.pdf/)
+assert.ok(linkOnly.includes('https://example.org/material.pdf'))
 assert.doesNotMatch(linkOnly,/<h5>/)
 assert.equal(render(LessonDetails,{week:week([lesson({topics:[topic({hidePages:true,pages:['12']})]})])}),'')
 
