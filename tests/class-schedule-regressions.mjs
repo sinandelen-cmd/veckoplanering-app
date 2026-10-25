@@ -269,3 +269,26 @@ assert.equal(aligned[0].date,'2026-10-12')
 assert.equal(startPlan.weeksData[0].lessons[0].topics[0].name,'A')
 
 console.log('Class scheduling regression checks: OK')
+
+
+// Legacy saved-plan compatibility: older records may lack classGroups,
+// schoolClosures, momentsPerDay, overrides, and even a lessons array.
+// The schedule must remain deterministic and must not mutate stored data.
+const legacyPlans = [
+ {startDate:'2026-10-19',weeksData:[{weekStart:'2026-10-19',weekNumber:43,lessons:[{name:'Äldre lektion 1',topics:[{name:'Äldre moment 1'}]},{name:'Äldre lektion 2',topics:[{name:'Äldre moment 2'}]}]}]},
+ {startDate:'2026-10-19',weeksData:[{weekStart:'2026-10-19',weekNumber:43,lessons:[{name:'Äldre lektion utan topics'}]}]},
+ {startDate:'2026-10-19',weeksData:[{weekStart:'2026-10-19',weekNumber:43}]}
+]
+for (const [index, legacy] of legacyPlans.entries()) {
+ const snapshot=JSON.stringify(legacy)
+ const classA={name:'8A',days:['Måndag','Onsdag']}
+ const classB={name:'8B',days:['Tisdag','Torsdag']}
+ const a=build(legacy,classA)
+ const b=build(legacy,classB)
+ assert.equal(a.length,(legacy.weeksData[0].lessons||[]).length)
+ assert.equal(b.length,a.length)
+ assert.notEqual(a[0]?.date,b[0]?.date)
+ assert.equal(JSON.stringify(legacy),snapshot,'Legacy saved plan was mutated')
+ assert.deepEqual(dates(build(legacy,classA)),dates(a),'Legacy scheduling changed between reads')
+ console.log('PASS legacy plan '+(index+1)+': missing optional fields, independent classes, immutable source')
+}
