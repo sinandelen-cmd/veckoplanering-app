@@ -4082,3 +4082,15 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .lesson-reorder-controls{display:inline-flex;align-items:center;gap:4px}
 .lesson-reorder-controls button{border:0!important;background:transparent!important;box-shadow:none!important;color:var(--plan-accent,#346c62);font-size:21px;padding:4px 7px;min-width:30px;min-height:30px}
 .lesson-move-label{font-size:11px;color:var(--plan-ink,#557064);font-weight:500}
+
+/* Direct left-click actions; no editor dropdown or context menu is shown. */
+.inline-editing .lesson-menu-action,.inline-editing .link-menu-control,.inline-editing .link-edit-direct{
+ display:inline-flex!important;align-items:center;justify-content:center;background:transparent!important;border:0!important;box-shadow:none!important;
+ padding:4px;min-width:28px;min-height:28px;color:#267a86;line-height:1
+}
+.inline-editing .lesson-menu-action[aria-label^="Ta bort"],.inline-editing .link-menu-control[aria-label="Ta bort länk"]{color:#b63e51}
+.inline-editing .lesson-insert-direct{color:#398455;float:right;clear:both;margin-top:6px}
+.inline-editing .lesson{display:flow-root}
+.inline-editing>.secondary{background:transparent;color:#398455;box-shadow:none}
+.inline-editing .topic-edit-actions button[aria-label^="Flytta"]{font-size:21px;min-width:28px;padding:3px 5px;color:#597a9a}
+.inline-editing .link-edit-direct .moment-action-icon{width:17px;height:17px}

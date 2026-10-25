@@ -2766,29 +2766,10 @@ function lessonDayDate(weekStart, lessonName) {
 }
 function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 'bara-lektion', lockLessons = false }) {
   function MomentActionIcon({kind}) {
-  const paths={hide:'M3 3l18 18M10.5 10.5a2 2 0 0 0 3 3M9.5 5.3A11 11 0 0 1 12 5c6 0 10 7 10 7a18 18 0 0 1-3 3.6M6 6.2A19 19 0 0 0 2 12s4 7 10 7a12 12 0 0 0 5-1.2',link:'M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2',exam:'M9 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3M9 3h6v4H9zM8 12h8M8 16h5',plus:'M12 5v14M5 12h14',remove:'M6 6l12 12M18 6 6 18',pair:'M4 3h10v14H4zM14 7h6v14H10v-4M7 10h4M9 8v4'};
+  const paths={edit:'M4 16 15 5l4 4L8 20H4zM14 6l4 4',hide:'M3 3l18 18M10.5 10.5a2 2 0 0 0 3 3M9.5 5.3A11 11 0 0 1 12 5c6 0 10 7 10 7a18 18 0 0 1-3 3.6M6 6.2A19 19 0 0 0 2 12s4 7 10 7a12 12 0 0 0 5-1.2',link:'M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2',exam:'M9 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3M9 3h6v4H9zM8 12h8M8 16h5',plus:'M12 5v14M5 12h14',remove:'M6 6l12 12M18 6 6 18',pair:'M4 3h10v14H4zM14 7h6v14H10v-4M7 10h4M9 8v4'};
   return <svg className="moment-action-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[kind] || paths.plus}/></svg>
 }
 
-  const [contextMenu,setContextMenu]=useState(null)
-  const openContextMenu=(event,scope)=>{
-    if(typeof onChange!=='function')return
-    event.preventDefault();event.stopPropagation()
-    const topic=event.target.closest('.topic')
-    const row=event.target.closest('.topic-cell')
-    const column=event.target.closest('.topic-column')
-    const linkRow=event.target.closest('.topic-link')
-    let buttons
-    if(linkRow){
-      buttons=[...linkRow.querySelectorAll('button'),topic?.querySelector('[aria-label="Lägg till länk"]')]
-    } else if(topic && (row || column)){
-      buttons=[topic.querySelector('[aria-label="Lägg till Sida och Uppgift"]'),...(row?row.querySelectorAll('button'):column.querySelectorAll('button'))]
-    } else {
-      buttons=[...scope.querySelectorAll('button')].filter(b=>!b.classList.contains('context-trigger') && (b.classList.contains('moment-action') || b.classList.contains('lesson-menu-action') || b.closest('.topic-edit-actions')))
-    }
-    const actions=[...new Map(buttons.filter(Boolean).filter(b=>!b.disabled).map(b=>[b.getAttribute('aria-label')||b.title||b.textContent.trim(),b])).entries()]
-    setContextMenu({x:Math.max(8,Math.min(event.clientX,window.innerWidth-250)),y:Math.max(8,Math.min(event.clientY,window.innerHeight-360)),actions})
-  }
   const handleFieldTab=event=>{
     if(typeof onChange!=='function'||event.key!=='Tab'||event.ctrlKey||event.altKey||event.metaKey)return
     const selector='.topic-name textarea, .topic-cell input'
@@ -2817,9 +2798,9 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
     next[target] = { ...next[target], day: targetDay }
     changeLessons(normalizeLessonOrder(next))
   }
-  return <div className={editable?"lessons context-editing":"lessons"} onKeyDown={handleFieldTab}>
-    {lessons.map((lesson, i) => ({ lesson, i })).filter(({ lesson }) => editable || hasStudentLessonContent(lesson)).sort((a, b) => editable ? a.i - b.i : (WEEKDAYS.indexOf(a.lesson.day || a.lesson.name) + 5) % 5 - (WEEKDAYS.indexOf(b.lesson.day || b.lesson.name) + 5) % 5).map(({ lesson, i }) => <section className="lesson" key={i} onContextMenu={e=>openContextMenu(e,e.currentTarget)}>
-      <div className="lesson-heading">{editable && <button type="button" className="context-trigger" title="Lektionens meny" aria-label="Lektionens meny" onClick={e=>openContextMenu(e,e.currentTarget.closest(".lesson"))}>⋮</button>}
+  return <div className={editable?"lessons inline-editing":"lessons"} onKeyDown={handleFieldTab}>
+    {lessons.map((lesson, i) => ({ lesson, i })).filter(({ lesson }) => editable || hasStudentLessonContent(lesson)).sort((a, b) => editable ? a.i - b.i : (WEEKDAYS.indexOf(a.lesson.day || a.lesson.name) + 5) % 5 - (WEEKDAYS.indexOf(b.lesson.day || b.lesson.name) + 5) % 5).map(({ lesson, i }) => <section className="lesson" key={i}>
+      <div className="lesson-heading">
         {editable ? <div className="lesson-edit-heading" style={{ '--lesson-day-color': DAY_COLORS[Math.max(0, WEEKDAYS.indexOf(entryType === 'dag' ? lesson.name : lesson.day)) % DAY_COLORS.length] }}>
           <span className="lesson-number-inline">{entryType === 'dag' ? (lesson.name || WEEKDAYS[i]) : (lesson.day || 'Välj dag')} · {entryType === 'dag' ? `Lektion ${i + 1}` : `Lektion ${i + 1}`}{lessonDayDate(week.weekStart, entryType === 'dag' ? lesson.name : lesson.day) ? ` · ${lessonDayDate(week.weekStart, entryType === 'dag' ? lesson.name : lesson.day)}` : ''}</span>
         </div> : <h4>
@@ -2833,9 +2814,9 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
           })()}
         </h4>}
         {editable && !lockLessons && entryType !== 'dag' && <div className="lesson-reorder-controls"><button type="button" disabled={i === 0} aria-label={`Flytta lektion ${i + 1} uppåt`} onClick={() => moveLesson(i, -1)}>↑</button><span className="lesson-move-label">Flytta</span><button type="button" disabled={i === lessons.length - 1} aria-label={`Flytta lektion ${i + 1} nedåt`} onClick={() => moveLesson(i, 1)}>↓</button></div>}
-        {editable && !lockLessons && <button type="button" className="remove-small lesson-menu-action" aria-label={entryType === "dag" ? "Ta bort dag" : "Ta bort lektion"} onClick={() => { if (!lesson.assessment && !(lesson.topics || []).some(topic => topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm(entryType === 'dag' ? 'Ta bort dagen och allt innehåll i den?' : 'Ta bort lektionen och allt innehåll i den?')) changeLessons(entryType === 'dag' ? lessons.filter((_, index) => index !== i) : normalizeLessonOrder(lessons.filter((_, index) => index !== i))) }}>× Ta bort {entryType === 'dag' ? 'dag' : 'lektion'}</button>}
+        {editable && !lockLessons && <button type="button" className="remove-small lesson-menu-action" aria-label={entryType === "dag" ? "Ta bort dag" : "Ta bort lektion"} onClick={() => { if (!lesson.assessment && !(lesson.topics || []).some(topic => topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm(entryType === 'dag' ? 'Ta bort dagen och allt innehåll i den?' : 'Ta bort lektionen och allt innehåll i den?')) changeLessons(entryType === 'dag' ? lessons.filter((_, index) => index !== i) : normalizeLessonOrder(lessons.filter((_, index) => index !== i))) }}><MomentActionIcon kind="remove"/></button>}
       </div>
-      {editable && !lockLessons && entryType!=='dag' && <button type="button" className="lesson-menu-action" aria-label="Lägg till lektion efter denna" onClick={()=>{const next=[...lessons];next.splice(i+1,0,{name:'Lektion',day:lesson.day||'Måndag',topics:[{name:'',pages:[],assignments:[],links:[]}]});changeLessons(normalizeLessonOrder(next))}}>Lägg till lektion efter denna</button>}
+
       {lesson.assessment && <div className="lesson-assessment-card" role="note">
         <strong>📝 {lesson.assessment.type === 'Egen benämning' ? (lesson.assessment.customType || 'Prov/test') : (lesson.assessment.type || 'Prov')}</strong>
         {editable ? <div className="lesson-assessment-fields">
@@ -2863,7 +2844,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
         }
         const lastFilledRow = values => values.reduce((last, value, index) => String(value ?? '').trim() ? index + 1 : last, 0)
         const rows = editable ? Math.max(1, pages.length, assignments.length) : Math.max(1, lastFilledRow(pages), lastFilledRow(assignments))
-        return <div className="topic" data-editable={editable || undefined} key={j} tabIndex={editable?0:undefined} onContextMenu={e=>openContextMenu(e,e.currentTarget)} onKeyDown={e=>{if(e.shiftKey&&e.key==="F10"){const r=e.currentTarget.getBoundingClientRect();openContextMenu({preventDefault:()=>e.preventDefault(),stopPropagation:()=>e.stopPropagation(),target:e.currentTarget,clientX:r.left+10,clientY:r.top+10},e.currentTarget)}}}>
+        return <div className="topic" data-editable={editable || undefined} key={j}>
           <div className={`topic-grid ${editable ? '' : 'topic-grid-readonly'} ${visibleFields.includes('pages') ? '' : 'without-pages'} ${visibleFields.includes('assignments') ? '' : 'without-assignments'}`} data-detail-count={visibleFields.length}>
             <div className="topic-name">{editable ? <textarea aria-label="Momentets namn" placeholder="Exempel: Procent – tryck Enter för ny rad" rows={Math.max(2, String(topic.name || '').split('\n').length)} value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong className="topic-name-display">{hasDisplayValue(topic.name) ? topic.name : 'Moment'}</strong>}</div>
             {visibleFields.map(field => <div className={`topic-column ${field}`} key={field}>
@@ -2897,7 +2878,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
                 {editing && <><input aria-label="Länkens namn" placeholder="Namn" value={label} onChange={e => changeLink({url,label:e.target.value,editing:true})}/><input aria-label="Länkadress" placeholder="https://..." value={url} onChange={e=>changeLink({url:e.target.value,label,editing:true})}/>
                   <button type="button" className="link-confirm" title="Bekräfta länk" aria-label="Bekräfta länk" disabled={!info || !label.trim()} onClick={()=>changeLink({url:url.trim(),label:label.trim(),editing:false})}><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></button></>}
                 {info && !editing && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon" aria-hidden="true"/>{label || info.label}<span className="print-resource-url">{url}</span></a>}
-                {editable && !editing && <button type="button" className="link-menu-control" aria-label="Redigera länk" onClick={()=>changeLink({url,label,editing:true})}>Redigera länk</button>}
+                {editable && !editing && <button type="button" className="link-edit-direct" title="Redigera länk" aria-label="Redigera länk" onClick={()=>changeLink({url,label,editing:true})}><MomentActionIcon kind="edit"/></button>}
                 {editable && <button type="button" className="remove-small link-menu-control" aria-label="Ta bort länk" onClick={()=>{if(hasDisplayValue(url)&&!window.confirm('Ta bort länken? Du kan ångra ändringen.'))return;updateTopic({...topic,links:links.filter((_,index)=>index!==k)})}}>×</button>}
               </div>
             })}
@@ -2908,6 +2889,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
         </div>
       })}
       {editable && !(lesson.topics || []).length && <button type="button" className="secondary moment-action" onClick={() => changeLesson(i, { ...lesson, topics: [...(lesson.topics || []), { name: '', pages: [], assignments: [], links: [] }] })} title="Lägg till moment" aria-label="Lägg till moment"><MomentActionIcon kind="plus"/></button>}
+      {editable && !lockLessons && entryType!=='dag' && <button type="button" className="lesson-menu-action lesson-insert-direct" title="Lägg till lektion efter denna" aria-label="Lägg till lektion efter denna" onClick={()=>{const next=[...lessons];next.splice(i+1,0,{name:'Lektion',day:lesson.day||'Måndag',topics:[{name:'',pages:[],assignments:[],links:[]}]});changeLessons(normalizeLessonOrder(next))}}><MomentActionIcon kind="plus"/></button>}
     </section>)}
     {editable && !lockLessons && (entryType !== 'dag' || WEEKDAYS.some(day => !lessons.some(lesson => lesson.name === day))) && <button type="button" className="secondary" onClick={() => {
       if (entryType === 'dag') {
@@ -2924,8 +2906,8 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
         const nextDay = WEEKDAYS[(lastDayIndex + 1) % WEEKDAYS.length]
         changeLessons(normalizeLessonOrder([...lessons, { name: `Lektion ${lessons.length + 1}`, day: nextDay, topics: [] }]))
       }
-    }}>{entryType === 'dag' ? `+ Lägg tillbaka ${WEEKDAYS.find(day => !lessons.some(lesson => lesson.name === day)) || 'dag'}` : '+ Lägg till lektion'}</button>}
-    {contextMenu && <div className="moment-menu-backdrop" onMouseDown={()=>setContextMenu(null)} onContextMenu={e=>{e.preventDefault();setContextMenu(null)}}><div role="menu" aria-label="Planeringsmeny" className="moment-context-menu" style={{left:contextMenu.x,top:contextMenu.y}} onMouseDown={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key==="Escape")setContextMenu(null)}}>{contextMenu.actions.map(([label,button])=><button type="button" role="menuitem" key={label} onClick={()=>{setContextMenu(null);button.click()}}>{label}</button>)}<button type="button" role="menuitem" onClick={()=>setContextMenu(null)}>Stäng menyn</button></div></div>}
+    }} title="Lägg till lektion" aria-label="Lägg till lektion"><MomentActionIcon kind="plus"/></button>}
+
   </div>
 }
 
