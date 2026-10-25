@@ -3993,3 +3993,5 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  .lesson .topic-cell input{flex:1 1 100%;width:100%;min-width:0}
  .lesson .topic-cell button{margin-left:auto;flex:none}
 }
+
+@media(max-width:640px){.student-shell .student-week-identity .calendar-month-corner{margin-left:0!important;margin-right:0!important;align-self:flex-start}}
