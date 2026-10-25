@@ -19,36 +19,127 @@ export function buildClassSchedule(plan, group) {
   const days = Array.isArray(group.days) ? group.days : []
   const extraSlots = Array.isArray(group.extraSlots) ? group.extraSlots : []
   const cancelled = new Set(Array.isArray(group.cancelledDates) ? group.cancelledDates : [])
-  const closures = Array.isArray(group.schoolClosures) ? group.schoolClosures : []
+  const closures = [...(Array.isArray(plan.schoolClosures) ? plan.schoolClosures.filter(event => !event.classNames || event.classNames.includes(group.name)) : []), ...(Array.isArray(group.schoolClosures) ? group.schoolClosures : [])]
+  const weeks = (plan.weeksData || []).filter(week => week?.weekStart && !week.hidden)
+  if (!weeks.length) return []
   const firstDate = group.startDate || plan.startDate || ''
-  let lessonNumber = 0
-  // Varje klass använder innehållet från rätt grundvecka.
-  // Lektioner från en vecka flyttas aldrig automatiskt till nästa vecka.
-  return (plan.weeksData || []).flatMap(week => {
-    if (!week?.weekStart || week.hidden) return []
-    const source = Array.isArray(week.lessons) ? week.lessons : []
-    const mondayDate = monday(week.weekStart)
+  const queue = weeks.flatMap(week => (Array.isArray(week.lessons) ? week.lessons : []).map((lesson, sourceIndex) => ({
+    lesson, sourceIndex, sourceWeekStart: week.weekStart,
+    sourceWeekNumber: week.weekNumber, sourceWeekTitle: week.title
+  })))
+  // Each class advances through the same source lessons, but can split a
+  // source lesson's moments across multiple class meetings. Never merge
+  // moments from unrelated source lessons or drop their attached resources.
+  const scheduledQueue = queue
+  const results = []
+  let cursor = 0
+  let topicOffset = 0
+  // The saved source weeks may have gaps (e.g. week 42 followed by week 45).
+  // Lessons form an ordered queue, but teaching slots must follow real calendar
+  // weeks rather than jumping directly to the next saved source week.
+  const calendarStarts = weeks.map(week => iso(monday(week.weekStart))).sort()
+  const firstWeekStart = calendarStarts[0]
+  const lastWeekStart = calendarStarts[calendarStarts.length - 1]
+  const sourceWeekSpan = Math.round((monday(lastWeekStart) - monday(firstWeekStart)) / (7 * 86400000)) + 1
+  // Continue into future calendar weeks if closures delayed unfinished lessons.
+  // Bound the horizon so an unscheduled class cannot cause an infinite loop.
+  for (let weekOffset = 0; weekOffset < sourceWeekSpan + 104; weekOffset++) {
+    if (cursor >= scheduledQueue.length) break
+    const start = iso(nextDate(monday(firstWeekStart), weekOffset * 7))
     const slots = []
     for (let offset = 0; offset < 5; offset++) {
-      const date = nextDate(mondayDate, offset)
-      const dateKey = iso(date)
+      const dateKey = iso(nextDate(monday(start), offset))
       const day = DAYS[offset]
       if ((firstDate && dateKey < firstDate) || cancelled.has(dateKey)) continue
-      const closure = closures.find(event => dateKey >= event.startDate && dateKey <= (event.endDate || event.startDate))
-      if (closure && closure.type !== 'Halvdag') continue
-      const scheduledCount = days.filter(d => d === day).length + extraSlots.filter(slot => slot.date === dateKey).length
-      const count = closure?.type === 'Halvdag' ? Math.max(0,scheduledCount - Math.max(1,Number(closure.cancelledLessons)||1)) : scheduledCount
-      for (let n = 0; n < count; n++) slots.push({date:dateKey,day,slot:n+1,time:group.lessonTimes?.[day]?.[n] || ''})
+      const dayClosures = closures.filter(event => event?.startDate && dateKey >= event.startDate && dateKey <= (event.endDate || event.startDate))
+      if (dayClosures.some(event => event.type !== 'Halvdag')) continue
+      // momentsPerDay controls topics within ONE lesson, never the number of lessons.
+      // Otherwise a class with extra topics consumes multiple base lessons on the same day.
+      const regularCount = days.includes(day) ? 1 : 0
+      const scheduledCount = regularCount + extraSlots.filter(slot => slot.date === dateKey).length
+      const cancelledCount = dayClosures.reduce((total, event) => total + (event.type === 'Halvdag' ? Math.max(1, Number(event.cancelledLessons) || 1) : 0), 0)
+      // Keep the original slot number and time when the first lessons of a
+      // half-day are cancelled; otherwise the remaining lesson moves to the wrong time.
+      const cancelFromStart = dayClosures.some(event => event.type === 'Halvdag' && event.cancelledFrom === 'start')
+      const firstRemaining = cancelFromStart ? Math.min(scheduledCount, cancelledCount) : 0
+      const lastRemaining = cancelFromStart ? scheduledCount : Math.max(0, scheduledCount - cancelledCount)
+      for (let n = firstRemaining; n < lastRemaining; n++) slots.push({date: dateKey, day, slot: n + 1, time: group.lessonTimes?.[day]?.[n] || ''})
     }
-    return slots.map((slot, index) => {
-      const lesson = source[index] || {name:'Lektion '+(index+1),topics:[]}
-      lessonNumber++
-      return {...slot,lesson,weekNumber:week.weekNumber,weekTitle:week.title,weekStart:week.weekStart,index,lessonNumber,override:group.overrides?.[String(lessonNumber-1)] || null}
-    })
+    for (const slot of slots) {
+      const source = scheduledQueue[cursor]
+      if (!source) break
+      const lessonNumber = results.length + 1
+      const requestedMoments = Math.max(1, Math.min(20, Number(group.momentsPerDay?.[slot.day]) || 1))
+      const selectedTopics = []
+      // A class meeting consumes the next N moments across source lesson
+      // boundaries. Each topic object (pages, assignments, etc.) is preserved.
+      // Empty source lessons still represent one meeting, so they cannot
+      // silently disappear or stall the queue.
+      while (cursor < scheduledQueue.length && selectedTopics.length < requestedMoments) {
+        const current = scheduledQueue[cursor]
+        const topics = Array.isArray(current.lesson?.topics) ? current.lesson.topics : []
+        if (!topics.length) {
+          if (!selectedTopics.length) {
+            cursor++
+            break
+          }
+          break
+        }
+        const remaining = requestedMoments - selectedTopics.length
+        selectedTopics.push(...topics.slice(topicOffset, topicOffset + remaining))
+        topicOffset += Math.min(remaining, topics.length - topicOffset)
+        if (topicOffset >= topics.length) {
+          cursor++
+          topicOffset = 0
+        }
+      }
+      const scheduledLesson = {...source.lesson, topics: selectedTopics}
+      results.push({...slot, lesson: scheduledLesson, weekNumber: source.sourceWeekNumber,
+        weekTitle: source.sourceWeekTitle, weekStart: start, sourceWeekStart: source.sourceWeekStart,
+        index: source.sourceIndex, lessonNumber,
+        override: group.overrides?.[String(lessonNumber - 1)] || null})
+    }
+  }
+  return results
+}
+
+export function remapClassOverridesAfterInsertion(previous, next, insertAfterIndex) {
+  const groups = Array.isArray(previous.classGroups) ? previous.classGroups : []
+  const beforeWeeks = previous.weeksData || []
+  const afterWeeks = next.weeksData || []
+  return groups.map(group => {
+    const overrides = group.overrides || {}
+    const oldSchedule = buildClassSchedule(previous, group)
+    const newSchedule = buildClassSchedule(next, group)
+    const newByWeekAndSlot = new Map(newSchedule.map(item => [item.sourceWeekStart + ':' + item.index, item]))
+    const remapped = {}
+    const unresolved = []
+    // Prioritize matched lessons. Never let an orphaned historical index overwrite
+    // a valid override that moved to that same index after insertion.
+    for (const [key, value] of Object.entries(overrides)) {
+      if (!/^(0|[1-9]\d*)$/.test(key)) { remapped[key] = value; continue }
+      const oldItem = oldSchedule[Number(key)]
+      const oldWeekIndex = oldItem ? beforeWeeks.findIndex(week => week.weekStart === oldItem.sourceWeekStart) : -1
+      const targetIndex = oldWeekIndex + (oldWeekIndex > insertAfterIndex ? 1 : 0)
+      const targetWeek = oldWeekIndex >= 0 ? afterWeeks[targetIndex] : null
+      const targetItem = targetWeek && newByWeekAndSlot.get(targetWeek.weekStart + ':' + oldItem.index)
+      if (!targetItem) { unresolved.push([key, value]); continue }
+      remapped[String(targetItem.lessonNumber - 1)] = value
+    }
+    for (const [key, value] of unresolved) {
+      // Always archive unmatched numeric ordinals: an orphan index that is not
+      // colliding today may become a valid lesson after later insertions.
+      // Preserve its data without silently applying it to the wrong lesson.
+      let legacyKey = 'legacy-unmapped:' + key
+      let suffix = 1
+      while (Object.hasOwn(remapped, legacyKey)) legacyKey = 'legacy-unmapped:' + key + ':' + suffix++
+      remapped[legacyKey] = value
+    }
+    return { ...group, overrides: remapped }
   })
 }
 
-export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
+export default function ClassSchedules({ plan, onChange, publicSlug = "", themes = [], selectedClassName = "", onSelectClass }) {
   const groups = Array.isArray(plan.classGroups) ? plan.classGroups : []
   const [name, setName] = React.useState('')
   const [addingClass, setAddingClass] = React.useState(false)
@@ -68,10 +159,26 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
   const [closureStart, setClosureStart] = React.useState('')
   const [closureEnd, setClosureEnd] = React.useState('')
   const [closureNote, setClosureNote] = React.useState('')
-  const group = groups[selected]
+  const [cancelledLessons, setCancelledLessons] = React.useState(1)
+  const [cancelledFrom, setCancelledFrom] = React.useState('end')
+  const [archiveTargets, setArchiveTargets] = React.useState({})
+  const controlledIndex = groups.findIndex(g => g.name === selectedClassName)
+  const activeIndex = onSelectClass && controlledIndex >= 0 ? controlledIndex : Math.min(selected, groups.length - 1)
+  const group = groups[activeIndex]
   const lessonsPerWeek = group => (group.days || []).length
   const schedule = React.useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
-  const updateGroup = changes => onChange({ ...plan, classGroups: groups.map((g, i) => i === selected ? { ...g, ...changes } : g) })
+  const archivedOverrideEntries = Object.entries(group?.overrides || {}).filter(([key]) => key.startsWith('legacy-unmapped:'))
+  const archivedOverrideCount = archivedOverrideEntries.length
+  const updateGroup = changes => onChange({ ...plan, classGroups: groups.map((g, i) => i === activeIndex ? { ...g, ...changes } : g) })
+  const restoreArchivedOverride = (key, target) => {
+    if (!group || !/^(0|[1-9]\d*)$/.test(target) || !schedule[Number(target)]) return
+    if (Object.hasOwn(group.overrides || {}, target)) return
+    if (!window.confirm('Återkoppla den arkiverade anpassningen till vald lektion? Kontrollera lektion och innehåll noga.')) return
+    const overrides = { ...group.overrides, [target]: group.overrides[key] }
+    delete overrides[key]
+    updateGroup({ overrides })
+    setArchiveTargets(previous => ({ ...previous, [key]: '' }))
+  }
   // Tidigare schematider bevaras i datat, men behöver inte redigeras i matrisen.
   const setLessonTime = (classIndex, day, slotIndex, value) => {
     onChange({ ...plan, classGroups: groups.map((row, index) => {
@@ -86,7 +193,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
   const addClass = () => {
     if (!name.trim() || groups.some(g => g.name.toLocaleLowerCase('sv') === name.trim().toLocaleLowerCase('sv'))) return
     onChange({ ...plan, classGroups: [...groups, { name: name.trim(), days: [...days], startDate: plan.startDate, cancelledDates: [], overrides: {} }] })
-    setSelected(groups.length); setName('')
+    setSelected(groups.length); onSelectClass?.(name.trim()); setName('')
   }
   const grouped = schedule.reduce((result, item) => {
     const weekStart = iso(monday(item.date))
@@ -101,15 +208,83 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
   const unscheduledGroups = groups.filter(g => !(g.days || []).length)
   return <section className="card" aria-label="Kopplade klasser">
     <div className="class-schedule-intro"><div><h2>Klasser och schema</h2><p className="muted">Samma planering för flera klasser – varje klass följer sitt eget schema.</p></div><details className="class-schedule-help"><summary>ⓘ Så fungerar det</summary><p>Skriv lektionsinnehållet en gång. Lägg sedan till dina klasser och välj deras lektionsdagar. Alla klasser följer samma innehåll i rätt ordning, men i sin egen takt.</p><p>Exempel: 8A har lektioner måndag, onsdag och fredag medan 8B har tisdag och torsdag.</p></details></div>
+    {group && themes.length > 0 && <div style={{display:'flex',alignItems:'center',gap:12,flexWrap:'wrap',marginBottom:12}}>
+      <label htmlFor="class-theme-select"><strong>Färgtema för {group.name}</strong></label>
+      <select id="class-theme-select" aria-label={`Färgtema för ${group.name}`} value={group.themeId || ''} onChange={event=>updateGroup({themeId:event.target.value})}>
+        <option value="">Samma som grundplaneringen</option>
+        {themes.map(theme=><option key={theme.id} value={theme.id}>{theme.name}</option>)}
+      </select>
+      <span aria-hidden="true" style={{width:28,height:28,borderRadius:'50%',background:themes.find(theme=>theme.id===(group.themeId || plan.themeId))?.accent || '#64748b',border:'1px solid #aaa'}} />
+    </div>}
     <div className="class-mini-row">
       <strong className="class-mini-label">Klasser</strong>
-      <div className="class-mini-chips">{groups.map((g,i)=><button type="button" key={i} className={'class-mini-chip'+(selected===i?' active':'')} aria-pressed={selected===i} onClick={()=>{setSelected(i);setCompare(false);setShowClassDetails(false)}}>{g.name}</button>)}
-        {groups.length>0 && <button type="button" className="class-mini-add" onClick={()=>{if(!window.confirm('Ta bort klassen '+groups[selected]?.name+'?'))return;onChange({...plan,classGroups:groups.filter((_,i)=>i!==selected)});setSelected(0)}}>− Ta bort klass</button>}
+      <div className="class-mini-chips">{groups.map((g,i)=><button type="button" key={i} className={'class-mini-chip'+(activeIndex===i?' active':'')} aria-pressed={activeIndex===i} onClick={()=>{setSelected(i);onSelectClass?.(g.name);setCompare(false);setShowClassDetails(false)}}>{g.name}</button>)}
+        {groups.length>0 && <button type="button" className="class-mini-add" onClick={()=>{if(!window.confirm('Ta bort klassen '+groups[activeIndex]?.name+'?'))return;onChange({...plan,classGroups:groups.filter((_,i)=>i!==activeIndex)});setSelected(0);onSelectClass?.(groups.find((_,i)=>i!==activeIndex)?.name || '')}}>− Ta bort klass</button>}
         <button type="button" className="class-mini-add" onClick={()=>setAddingClass(v=>!v)} aria-expanded={addingClass}>+ Klass</button>
       </div>
       <button type="button" className="class-mini-schema" disabled={!groups.length} aria-expanded={showClassMenu} onClick={()=>{setShowClassMenu(v=>!v);setCompare(false);setShowClassDetails(false)}}>▦ Schema</button>
     </div>
     {addingClass && <div className="class-mini-new"><label>Ny klass <input value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addClass();if(name.trim())setAddingClass(false)}}} placeholder="T.ex. EK26A" /></label><button type="button" disabled={!name.trim()||groups.some(g=>g.name.toLocaleLowerCase('sv')===name.trim().toLocaleLowerCase('sv'))} onClick={()=>{addClass();setAddingClass(false);setShowClassMenu(true)}}>Lägg till</button></div>}
+    {group && <details className="class-schedule-help" data-testid="class-week-diagnostics"><summary>🔎 Varför är en klassvecka tom? Visa schemakontroll för {group.name}</summary>
+      <p>Den här kontrollen visar sparade schemadagar och undantag utan att ändra något.</p>
+      <p><strong>Startdatum:</strong> {group.startDate || plan.startDate || 'Saknas'} · <strong>Lektionsdagar:</strong> {(group.days || []).join(', ') || 'Inga valda'}</p>
+      <div role="status" data-testid="class-start-date-comparison" style={{padding:'10px 12px',border:'1px solid #cbd5e1',borderRadius:8,marginBottom:12}}>
+        <strong>Skrivskyddad datumjämförelse för {group.name}</strong>
+        {(() => {
+          const savedStart = group.startDate || plan.startDate || ''
+          const firstLesson = schedule.length ? [...schedule].sort((a,b) => a.date.localeCompare(b.date))[0].date : ''
+          const startWeek = savedStart ? iso(monday(savedStart)) : ''
+          const firstWeek = firstLesson ? iso(monday(firstLesson)) : ''
+          const gapWeeks = savedStart && firstLesson && firstWeek > startWeek
+            ? Math.round((monday(firstLesson) - monday(savedStart)) / (7 * 86400000)) : 0
+          return <p style={{margin:'6px 0 0'}}>
+            Sparat startdatum: <strong>{savedStart || 'Saknas'}</strong>. Första lektionen i beräknad elevvy: <strong>{firstLesson || 'Ingen lektion schemalagd'}</strong>.
+            {!firstLesson ? ' Kontrollera lektionsdagar, grundplaneringens innehåll och undantag nedan.'
+              : firstLesson < savedStart ? ' ⚠️ Avvikelse: en lektion ligger före sparat startdatum.'
+              : gapWeeks > 0 ? ` ⚠️ Första lektionen ligger ${gapWeeks} kalendervecka(or) efter startveckan. Kontrollera veckounderlag, lov och inställda datum nedan.`
+              : ' ✓ Första lektionen ligger i klassens startvecka.'}
+            {' '}Jämförelsen ändrar inga uppgifter.
+          </p>
+        })()}
+      </div>
+      {(() => {
+        const savedWeeks = (plan.weeksData || []).filter(week => week?.weekStart)
+        const savedByMonday = new Map(savedWeeks.map(week => [iso(monday(week.weekStart)), week]))
+        const earliest = savedWeeks.length ? savedWeeks.map(week => iso(monday(week.weekStart))).sort()[0] : iso(monday(plan.startDate))
+        return Array.from({length:8}, (_,index) => {
+        const weekMonday = nextDate(monday(earliest), index * 7)
+        return savedByMonday.get(iso(weekMonday)) || {weekStart:iso(weekMonday), missingSourceWeek:true}
+      }).map(week => {
+        const weekMonday = monday(week.weekStart)
+        const weekStart = iso(weekMonday)
+        const weekEnd = iso(nextDate(weekMonday, 6))
+        const scheduled = schedule.filter(item => item.date >= weekStart && item.date <= weekEnd)
+        const firstDate = group.startDate || plan.startDate || ''
+        const dayRows = DAYS.map((day, offset) => {
+          const date = iso(nextDate(weekMonday, offset))
+          const regular = (group.days || []).includes(day) ? 1 : 0
+          const extras = (group.extraSlots || []).filter(slot => slot.date === date).length
+          const exceptions = [...(plan.schoolClosures || []).filter(event => !event.classNames || event.classNames.includes(group.name)), ...(group.schoolClosures || [])].filter(event => event?.startDate && date >= event.startDate && date <= (event.endDate || event.startDate))
+          const cancelled = (group.cancelledDates || []).includes(date)
+          const halfCancelled = exceptions.reduce((n, event) => n + (event.type === 'Halvdag' ? Math.max(1, Number(event.cancelledLessons) || 1) : 0), 0)
+          const reasons = []
+          if (firstDate && date < firstDate) reasons.push('före startdatum')
+          if (!regular && !extras) reasons.push('ingen lektionsdag')
+          if (cancelled) reasons.push('inställt datum')
+          if (exceptions.some(event => event.type !== 'Halvdag')) reasons.push('ledigt: ' + exceptions.filter(event => event.type !== 'Halvdag').map(event => event.type || event.name || 'Skolledigt').join(', '))
+          if (halfCancelled) reasons.push('halvdag: ' + halfCancelled + ' inställd(a) lektionsplats(er)')
+          if (!reasons.length) reasons.push('schemalagd dag')
+          return {date, day, slots:regular + extras, reasons:reasons.join('; ')}
+        })
+        const weekNumber = (() => { const thursday = nextDate(weekMonday, 3); const firstThursday = new Date(thursday.getFullYear(),0,4,12); const firstMonday = monday(iso(firstThursday)); return 1 + Math.round((weekMonday - firstMonday) / (7 * 86400000)) })()
+        return <div key={weekStart} style={{marginBottom:12}}><strong>Vecka {weekNumber} ({weekStart}–{weekEnd}): {scheduled.length} lektioner</strong>
+          {week.missingSourceWeek && <p role="status">Veckan saknas i Grundplaneringens sparade veckounderlag. Schemalagda dagar visas nedan, men inga lektioner skapas eller flyttas automatiskt.</p>}
+          {!week.missingSourceWeek && week.hidden && <p>Veckan är markerad som dold i Grundplanering.</p>}
+          {scheduled.length === 0 && !week.missingSourceWeek && <p>Ingen lektion placerad. Kontrollera dagarna nedan.</p>}
+          <ul>{dayRows.map(row => <li key={row.date}>{row.day} {row.date}: {row.slots} planerad(e) plats(er) – {row.reasons}</li>)}</ul>
+        </div>
+      })})()}
+    </details>}
     {unscheduledGroups.length>0 && <p role="alert" className="class-mini-warning">Välj lektionsdagar för {unscheduledGroups.map(g=>g.name).join(', ')} via Schema.</p>}
     {showClassMenu && group && <div className="class-mini-panel">
       <div className="class-mini-panel-title"><strong>{group.name} · Lektionsdagar</strong><button type="button" className="secondary" onClick={()=>setShowClassMenu(false)} aria-label="Stäng schema">✕</button></div>
@@ -117,6 +292,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
       <p className="muted">{(group.days||[]).length} lektioner per vecka. Ändringarna sparas med planeringen.</p>
       <button type="button" className="secondary" onClick={()=>{setShowClassDetails(v=>!v);setCompare(false)}}>{showClassDetails?'Dölj klassens ändringar':'Visa klassens ändringar'}</button>
     </div>}
+    {group && group.startDate && plan.weeksData?.[0]?.weekStart && group.startDate > plan.weeksData[0].weekStart && <p role="status" className="class-mini-warning">{group.name} börjar {group.startDate}, medan Grundplanering börjar {plan.weeksData[0].weekStart}. Därför visas inga lektioner före klassens startdatum. <button type="button" className="secondary" onClick={()=>{const nextDate=plan.weeksData[0].weekStart;if(window.confirm(`Ändra startdatum för ${group.name} från ${group.startDate} till ${nextDate}? Klassens lektioner flyttas. Avbryt för att behålla det sparade datumet.`))updateGroup({startDate:nextDate})}}>Använd grundplaneringens startdatum för {group.name}</button></p>}
     {group && <div className="class-closure-section">
       <button type="button" className="secondary" aria-expanded={showClosures} onClick={()=>setShowClosures(v=>!v)}>📅 {showClosures?'Dölj':'Lägg till'} studiedag / halvdag / lov</button>
       {showClosures && <div className="class-closure-editor">
@@ -126,10 +302,11 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
           <label>Typ<select value={closureType} onChange={e=>setClosureType(e.target.value)}>{['Studiedag','Halvdag','Lov','Helgdag','Inställd lektion','Annan ledighet'].map(t=><option key={t}>{t}</option>)}</select></label>
           <label>Från datum<input type="date" value={closureStart} onChange={e=>{setClosureStart(e.target.value);if(!closureEnd||closureEnd<e.target.value)setClosureEnd(e.target.value)}}/></label>
           <label>Till datum<input type="date" value={closureEnd} min={closureStart} onChange={e=>setClosureEnd(e.target.value)}/></label>
+          {closureType === 'Halvdag' && <><label>Antal inställda lektioner<input type="number" min="1" max="20" value={cancelledLessons} onChange={e=>setCancelledLessons(Math.max(1,Math.min(20,Number(e.target.value)||1)))}/></label><label>Vilka lektioner ställs in?<select value={cancelledFrom} onChange={e=>setCancelledFrom(e.target.value)}><option value="end">Dagens sista (eftermiddag)</option><option value="start">Dagens första (förmiddag)</option></select></label></>}
           <label>Anteckning<input value={closureNote} placeholder="Valfri information" onChange={e=>setClosureNote(e.target.value)}/></label>
         </div>
-        <button type="button" disabled={!closureStart || (closureEnd && closureEnd<closureStart)} onClick={()=>{updateGroup({schoolClosures:[...(group.schoolClosures||[]),{id:Date.now().toString(36),type:closureType,startDate:closureStart,endDate:closureEnd||closureStart,note:closureNote,cancelledLessons:1}]});setClosureStart('');setClosureEnd('');setClosureNote('')}}>+ Lägg till</button>
-        {(group.schoolClosures||[]).map(event=><div className="class-closure-item" key={event.id}><span><strong>{event.type}</strong> · {event.startDate}{event.endDate!==event.startDate?' – '+event.endDate:''}{event.note?' · '+event.note:''}</span><button type="button" aria-label={'Ta bort '+event.type+' '+event.startDate} onClick={()=>updateGroup({schoolClosures:(group.schoolClosures||[]).filter(e=>e.id!==event.id)})}>Ta bort</button></div>)}
+        <button type="button" disabled={!closureStart || (closureEnd && closureEnd<closureStart)} onClick={()=>{updateGroup({schoolClosures:[...(group.schoolClosures||[]),{id:Date.now().toString(36),type:closureType,startDate:closureStart,endDate:closureEnd||closureStart,note:closureNote,cancelledLessons:closureType==='Halvdag'?cancelledLessons:0,cancelledFrom:closureType==='Halvdag'?cancelledFrom:undefined}]});setClosureStart('');setClosureEnd('');setClosureNote('')}}>+ Lägg till</button>
+        {(group.schoolClosures||[]).map(event=><div className="class-closure-item" key={event.id}><span><strong>{event.type}</strong> · {event.startDate}{event.endDate!==event.startDate?' – '+event.endDate:''}{event.type==='Halvdag'?' · '+(event.cancelledLessons||1)+' inställd(a) lektion(er)':''}{event.note?' · '+event.note:''}</span><button type="button" aria-label={'Ta bort '+event.type+' '+event.startDate} onClick={()=>updateGroup({schoolClosures:(group.schoolClosures||[]).filter(e=>e.id!==event.id)})}>Ta bort</button></div>)}
       </div>}
     </div>}
     {showClassMenu && groups.length > 0 && <div style={{display:"flex",gap:10,flexWrap:"wrap",margin:"12px 0"}}>
@@ -164,6 +341,20 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
     </div>}
     {showClassMenu && group && !compare && showClassDetails && <>
       <h3>{group.name} – eget lektionsschema</h3>
+      {archivedOverrideCount > 0 && <p role="status" className="muted">{archivedOverrideCount} äldre klassanpassning{archivedOverrideCount === 1 ? '' : 'ar'} har sparats separat eftersom deras ursprungliga lektion inte säkert kan identifieras. De visas inte på någon annan lektion och har inte raderats. Återkoppling kräver manuell granskning.</p>}
+      {archivedOverrideCount > 0 && <section aria-label="Återkoppla arkiverade klassanpassningar">
+        <p className="muted">Välj en lektion manuellt. Befintliga lektionsanpassningar kan inte skrivas över. Bekräftelse krävs.</p>
+        {archivedOverrideEntries.map(([key, value]) => <div key={key} style={{padding:'10px 0',borderBottom:'1px solid #ddd'}}>
+          <p><strong>Arkiverad: {key}</strong> – {String(value?.text || value?.name || 'Anpassning utan text').slice(0,160)}</p>
+          <label>Välj mottagande lektion
+            <select aria-label={'Mottagande lektion för '+key} value={archiveTargets[key] || ''} onChange={event=>setArchiveTargets(previous=>({...previous,[key]:event.target.value}))}>
+              <option value="">Välj lektion…</option>
+              {schedule.filter(item=>!Object.hasOwn(group.overrides || {},String(item.lessonNumber-1))).map(item=><option key={item.lessonNumber} value={String(item.lessonNumber-1)}>{item.date} · Lektion {item.lessonNumber} · {item.lesson?.name || ''}</option>)}
+            </select>
+          </label>
+          <button type="button" className="secondary" disabled={!archiveTargets[key] || Object.hasOwn(group.overrides || {},archiveTargets[key])} onClick={()=>restoreArchivedOverride(key,archiveTargets[key])}>Återkoppla till vald lektion</button>
+        </div>)}
+      </section>}
       <p><strong>{lessonsPerWeek(group)} lektioner per vecka.</strong> Lektionsdagarna visas i matrisen ovan. En klass kan ha fler eller färre lektioner än de andra.</p>
       <label>Startdatum <input type="date" value={group.startDate || plan.startDate || ''} onChange={e => updateGroup({startDate:e.target.value})} /></label>
       <p className="muted">Lektionsdagar och antal lektioner ändras i klassmatrisen ovan. Här hanterar du endast särskilda ändringar för den valda klassen.</p>

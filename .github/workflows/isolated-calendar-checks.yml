@@ -1,0 +1,48 @@
+name: Isolated calendar and class scheduling checks
+on:
+  push:
+    branches:
+      - test/isolated-calendar-from-main-20261024
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  calendar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run class scheduling regressions
+        run: node tests/class-schedule-regressions.mjs
+      - name: Install project dependencies
+        run: npm install --no-audit --no-fund
+      - name: Verify application build
+        run: npm run build
+      - name: Install isolated Playwright runner
+        run: npm install --no-save --package-lock=false playwright@1.56.1
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start local student fixture
+        env:
+          VITE_SUPABASE_URL: http://127.0.0.1:4199
+          VITE_SUPABASE_ANON_KEY: isolated-calendar-test-key
+        run: |
+          npm run dev -- --host 127.0.0.1 --port 4177 > /tmp/isolated-calendar-vite.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:4177/tests/calendar-student-fixture.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/isolated-calendar-vite.log
+          exit 1
+      - name: Chromium class student schedule fixture
+        run: node tests/calendar-student-chromium.mjs
+      - name: Chromium actual StudentView integration
+        run: node tests/calendar-real-student-chromium.mjs
+
+      - name: Chromium actual teacher ClassSchedules integration
+        run: node tests/calendar-real-teacher-chromium.mjs
+      - name: Chromium five-class moment demo desktop and mobile
+        run: node tests/moment-demo-chromium.mjs
