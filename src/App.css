@@ -3911,3 +3911,20 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .topic-edit-actions button {min-width:38px;min-height:38px;padding:6px 10px}
 .class-edit-scope {padding:10px 12px;border:1px solid #b8d7cd;border-radius:10px;background:#eef7f2;color:#285a4d;font-size:.9rem}
 @media(max-width:640px){.topic-edit-actions button{min-height:44px;min-width:44px}}
+
+/* Teacher controls must stay usable on narrow screens and when columns are hidden. */
+.planning-layout.view-teacher .week-card .topic-grid:not(.topic-grid-readonly)[data-detail-count="0"] {grid-template-columns:minmax(0,1fr)}
+.planning-layout.view-teacher .week-card .topic-grid:not(.topic-grid-readonly)[data-detail-count="1"] {grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.topic-name-display {white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:640px){
+  .topic-link {flex-wrap:wrap;width:100%;min-width:0}
+  .topic-link input {flex:1 1 130px;max-width:100%;min-height:44px}
+  .topic-link .resource-chip {max-width:100%;white-space:normal;overflow-wrap:anywhere}
+  .topic .remove-small,.topic .add-detail,.lesson-add-assessment {min-height:44px}
+  .topic-fixed-heading {flex-wrap:wrap}
+}
+@media(max-width:480px){
+  .topic-grid:not(.topic-grid-readonly),
+  .planning-layout.view-teacher .week-card .topic-grid:not(.topic-grid-readonly)[data-detail-count] {grid-template-columns:minmax(0,1fr)}
+  .topic-grid:not(.topic-grid-readonly) .topic-name {grid-column:1/-1}
+}
