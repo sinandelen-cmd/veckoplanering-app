@@ -26,3 +26,6 @@ Testgrenen kontrollerar supports_class_week_release före automatisk klasspublic
 - Ny layout behöver granskas i webbläsaren.
 - Mobilkontroll av hela arbetsflödet återstår.
 - Separat uttryckligt godkännande krävs före ny produktionspublicering.
+
+## Reproducerat publiceringsfel
+Kör `node tests/class-publication-order-check.mjs`. Syntetisk grundplan har fem moment per vecka, medan en klass har en lektion med ett moment per vecka. Den 19 oktober ska klassen se Moment 3 (aktuell vecka) och Moment 2 (föregående). Filtrering av grundveckor före schemaläggning startar i stället på Moment 6. Testet visar korrekt ordning: beräkna hela klasskön först, filtrera därefter de färdiga klassveckorna. Det bekräftar felet och kontraktet för rättningen; det innebär inte att serverfunktionen är rättad eller att mobilflödet är verifierat.
