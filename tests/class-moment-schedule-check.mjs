@@ -112,3 +112,15 @@ for(let size=1;size<=8;size++) for(let perDay=1;perDay<=5;perDay++) {
  }
 }
 console.log('PASS: exhaustive split/merge edits across 40 source sizes and daily allocations, with schedule shifts')
+
+const longTopics=Array.from({length:260},(_,index)=>topic(index+1))
+const longPlan={startDate:'2026-10-12',weeksData:[{weekStart:'2026-10-12',lessons:longTopics.map(value=>({topics:[value]}))}]}
+const slowGroup={name:'Slow',startDate:'2026-10-12',days:['Måndag']}
+assert.deepEqual(build(longPlan,slowGroup).flatMap(item=>item.lesson.topics),longTopics,'A slow class must reach all 260 moments, beyond the former 104-week horizon')
+const delayedGroup={...slowGroup,startDate:'2030-01-07'}
+assert.equal(build(longPlan,delayedGroup).length,260,'A later class start must not silently remove the queue')
+assert.equal(build(longPlan,delayedGroup)[0].date,'2030-01-07')
+const closedGroup={...slowGroup,schoolClosures:[{type:'Lov',startDate:'2026-10-12',endDate:'2029-12-31'}]}
+assert.deepEqual(build(longPlan,closedGroup).flatMap(item=>item.lesson.topics),longTopics,'A long closure must postpone every moment')
+assert.deepEqual(build(longPlan,{...slowGroup,days:[],extraSlots:[]}),[],'A class without teaching slots must terminate')
+console.log('PASS: all 260 moments survive slow pace, distant start and long closure; unscheduled classes terminate')

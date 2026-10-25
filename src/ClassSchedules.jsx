@@ -43,7 +43,14 @@ export function buildClassSchedule(plan, group) {
   const sourceWeekSpan = Math.round((monday(lastWeekStart) - monday(firstWeekStart)) / (7 * 86400000)) + 1
   // Continue into future calendar weeks if closures delayed unfinished lessons.
   // Bound the horizon so an unscheduled class cannot cause an infinite loop.
-  for (let weekOffset = 0; weekOffset < sourceWeekSpan + 104; weekOffset++) {
+  // One topic per meeting is the slowest supported pace. Allow enough real
+  // calendar weeks for every queued topic, including starts/closures far ahead.
+  const queueUnits = queue.reduce((total,item)=>total+Math.max(1,item.lesson?.topics?.length || 0),0)
+  const constraints = [lastWeekStart,firstDate,...closures.map(event=>event.endDate || event.startDate),
+    ...cancelled,...extraSlots.map(slot=>slot.date)].filter(value=>/^\d{4}-\d{2}-\d{2}$/.test(value || ''))
+  const lastConstraintOffset = Math.max(0,...constraints.map(value=>Math.round((monday(value)-monday(firstWeekStart))/(7*86400000))).filter(Number.isFinite))
+  const calendarHorizon = Math.max(sourceWeekSpan,lastConstraintOffset+1)+Math.ceil(queueUnits/Math.max(1,days.length))+2
+  for (let weekOffset = 0; weekOffset < calendarHorizon; weekOffset++) {
     if (cursor >= scheduledQueue.length) break
     const start = iso(nextDate(monday(firstWeekStart), weekOffset * 7))
     const slots = []
