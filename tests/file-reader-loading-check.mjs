@@ -12,7 +12,8 @@ const extract=name=>{
  const next=source.slice(start+1).search(/\n(?:async function |function |let |const |class |export )/)
  return next<0?source.slice(asyncStart):source.slice(asyncStart,start+1+next)
 }
-const functions=['loadSpreadsheet','loadWordReader','extractText','unitsFromWorkbook'].map(extract).join('\n')
+// SSR tests must use Mammoth's browser build: the app's arrayBuffer API is browser-specific.
+const functions=['loadSpreadsheet','loadWordReader','extractText','unitsFromWorkbook'].map(extract).join('\n').replace("import('mammoth')","import('mammoth/mammoth.browser.js')")
 const fixture=`import assert from 'node:assert/strict'
 let XLSX
 let pdfLoads=0
