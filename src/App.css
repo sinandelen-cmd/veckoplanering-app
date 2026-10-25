@@ -4037,3 +4037,16 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .lesson .moment-action[aria-label="Lägg till Sida och Uppgift"]{color:#4c70b6}
 .lesson .moment-action[aria-label="Infoga prov eller test"]{color:#8963a6}
 .lesson .moment-action-remove{color:#b5636b}
+
+/* Each control lives inside the item that it changes. */
+.lesson .topic[data-editable="true"]{position:relative;padding-top:35px;padding-bottom:42px}
+.lesson .topic[data-editable="true"]>.moment-action-remove{position:absolute;top:2px;right:2px}
+.lesson .topic[data-editable="true"]>.moment-add-corner{position:absolute;bottom:2px;right:2px}
+.lesson .topic[data-editable="true"] .topic-cell{position:relative;display:block;min-width:0}
+.lesson .topic[data-editable="true"] .topic-cell input{width:100%;padding-right:34px!important}
+.lesson .topic[data-editable="true"] .topic-cell>.remove-small{
+ position:absolute;right:2px;top:50%;transform:translateY(-50%);
+ display:flex;align-items:center;justify-content:center;width:28px;min-width:28px;
+ height:28px;min-height:28px;padding:0;margin:0;border:0;background:transparent!important;
+ color:#bc3448;font-size:21px;line-height:1;box-shadow:none
+}
