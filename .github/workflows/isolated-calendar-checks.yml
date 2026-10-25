@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - test/isolated-calendar-from-main-20261024
+      - test/integration-candidate-20261025
   workflow_dispatch:
 permissions:
   contents: read
