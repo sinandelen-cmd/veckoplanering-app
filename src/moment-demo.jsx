@@ -31,8 +31,16 @@ function addDays(value,days){
 }
 function App(){
  const [selected,setSelected]=useState(-1)
+ const [closuresByClass,setClosuresByClass]=useState({})
+ const [closureType,setClosureType]=useState('Studiedag')
+ const [closureDate,setClosureDate]=useState('2026-10-19')
+ const [closureEnd,setClosureEnd]=useState('2026-10-23')
  const current=selected<0?null:classes[selected]
- const schedule=current?buildClassSchedule(plan,current):plan.weeksData.flatMap(week=>week.lessons.map((lesson,i)=>({date:addDays(week.weekStart,Math.floor(i/4)*7+(i%4===0?0:i%4===1?1:i%4===2?3:4)),day:dayLabels[new Date(addDays(week.weekStart,Math.floor(i/4)*7+(i%4===0?0:i%4===1?1:i%4===2?3:4))+'T12:00:00Z').getUTCDay()],lessonNumber:i+1,lesson})))
+ const activeClosures=current?(closuresByClass[current.name]||[]):[]
+ const original=current?buildClassSchedule(plan,current):[]
+ const schedule=current?buildClassSchedule(plan,{...current,schoolClosures:activeClosures}):plan.weeksData.flatMap(week=>week.lessons.map((lesson,i)=>({date:addDays(week.weekStart,Math.floor(i/4)*7+(i%4===0?0:i%4===1?1:i%4===2?3:4)),day:dayLabels[new Date(addDays(week.weekStart,Math.floor(i/4)*7+(i%4===0?0:i%4===1?1:i%4===2?3:4))+'T12:00:00Z').getUTCDay()],lessonNumber:i+1,lesson})))
+ const momentNames=rows=>rows.flatMap(row=>row.lesson.topics.map(topic=>topic.name))
+ const preserved=!current||JSON.stringify(momentNames(original))===JSON.stringify(momentNames(schedule))
  const grouped=schedule.reduce((weeks,row)=>{
    const monday=weekMonday(row.date)
    if(!weeks.some(w=>w.start===monday))weeks.push({start:monday,rows:[]})
@@ -51,6 +59,26 @@ function App(){
    <nav aria-label="Välj testklass" style={{display:'flex',gap:8,flexWrap:'wrap'}}>
     {[{name:'Grundplanering'},...classes].map((c,i)=><button type="button" key={c.name} aria-pressed={selected===i-1} onClick={()=>setSelected(i-1)} style={buttonStyle(selected===i-1)}>{c.name}</button>)}
    </nav>
+  </section>
+  <section aria-label="Testa lektionsfria dagar" style={{padding:16,border:'1px solid #bdd4cd',borderRadius:12,marginBottom:16,background:'#f4faf8'}}>
+   <h2 style={{margin:'0 0 8px',fontSize:'1.1rem'}}>Testa studiedag, halvdag eller lov</h2>
+   <p style={{margin:'0 0 12px'}}>Välj en testklass ovan och lägg till ett undantag. Jämför originalets datum med den nya fördelningen. Ändringarna finns bara på denna sida och sparas inte.</p>
+   {!current?<p role="status">Välj Test 1–4 eller Test Mix för att prova lektionsfria dagar. Grundplaneringen förblir oförändrad.</p>:<>
+    <div style={{display:'flex',gap:10,flexWrap:'wrap',alignItems:'end',marginBottom:12}}>
+     <label style={{display:'grid',gap:5}}>Typ<select aria-label="Typ av lektionsfri dag" value={closureType} onChange={e=>setClosureType(e.target.value)} style={{padding:10}}><option>Studiedag</option><option>Halvdag</option><option>Lov</option></select></label>
+     <label style={{display:'grid',gap:5}}>Från datum<input aria-label="Från datum" type="date" value={closureDate} onChange={e=>setClosureDate(e.target.value)} style={{padding:10}} /></label>
+     {closureType==='Lov'&&<label style={{display:'grid',gap:5}}>Till datum<input aria-label="Till datum" type="date" min={closureDate} value={closureEnd} onChange={e=>setClosureEnd(e.target.value)} style={{padding:10}} /></label>}
+     <button type="button" style={buttonStyle(false)} disabled={!closureDate||(closureType==='Lov'&&closureEnd<closureDate)} onClick={()=>setClosuresByClass(previous=>({...previous,[current.name]:[...(previous[current.name]||[]),{type:closureType,startDate:closureDate,endDate:closureType==='Lov'?closureEnd:closureDate,...(closureType==='Halvdag'?{cancelledLessons:1}:{} )}]}))}>Lägg till för {current.name}</button>
+     <button type="button" style={buttonStyle(false)} onClick={()=>setClosuresByClass(previous=>({...previous,[current.name]:[]}))}>Återställ {current.name}</button>
+    </div>
+    <div data-testid="demo-closures">{activeClosures.length?activeClosures.map((event,i)=><div key={i} style={{padding:'7px 0'}}>{event.type}: {event.startDate}{event.endDate!==event.startDate?' – '+event.endDate:''} <button type="button" aria-label={'Ta bort undantag '+(i+1)} onClick={()=>setClosuresByClass(previous=>({...previous,[current.name]:(previous[current.name]||[]).filter((_,j)=>i!==j)}))}>Ta bort</button></div>):'Inga lektionsfria dagar tillagda.'}</div>
+    <div data-testid="demo-integrity" role="status" style={{marginTop:12,padding:12,background:preserved?'#e3f5e9':'#ffebeb',borderRadius:8}}>{preserved?'Alla 12 moment bevaras i rätt ordning.':'Varning: moment saknas eller har ändrat ordning.'} Grundplaneringen ändras inte.</div>
+    <div data-testid="demo-comparison" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,280px),1fr))',gap:12,marginTop:12}}>
+     <div style={{padding:12,background:'white',borderRadius:10}}><strong>Före – {current.name}</strong><ol>{original.map((row,i)=><li key={i}>{formatDate(row.date)} · {row.lesson.topics.map(t=>t.name).join(', ')}</li>)}</ol></div>
+     <div style={{padding:12,background:'white',borderRadius:10}}><strong>Efter – {current.name}</strong><ol>{schedule.map((row,i)=><li key={i}>{formatDate(row.date)} · {row.lesson.topics.map(t=>t.name).join(', ')}</li>)}</ol></div>
+    </div>
+    <p data-testid="demo-isolation" role="status">Undantagen gäller endast {current.name}. Övriga testklassers scheman beräknas oberoende.</p>
+   </>}
   </section>
   <section aria-label="Sammanfattning" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,180px),1fr))',gap:10,marginBottom:16}}>
    <div style={{padding:14,background:'#edf4fc',borderRadius:12}}><strong>Grundplanering</strong><div>12 ursprungliga moment</div></div>
