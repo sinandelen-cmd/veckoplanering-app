@@ -4077,3 +4077,8 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .link-plus-mark{font-size:18px;font-weight:700;line-height:1}
 .insert-week-between{padding:8px 0!important}
 .insert-week-between button{background:transparent;color:var(--plan-accent,#486e61);font-size:12px;padding:5px 10px;border:1px dashed #c1d2c8;opacity:.85}
+
+.lesson-menu-action{display:none!important}
+.lesson-reorder-controls{display:inline-flex;align-items:center;gap:4px}
+.lesson-reorder-controls button{border:0!important;background:transparent!important;box-shadow:none!important;color:var(--plan-accent,#346c62);font-size:21px;padding:4px 7px;min-width:30px;min-height:30px}
+.lesson-move-label{font-size:11px;color:var(--plan-ink,#557064);font-weight:500}
