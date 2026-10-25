@@ -3870,3 +3870,30 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .class-closure-fields input,.class-closure-fields select{width:100%;min-width:0;box-sizing:border-box;border:1px solid #b9d6d1;border-radius:7px;padding:8px;background:#fff}
 .class-closure-item{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 0;border-top:1px solid #d8e6e2}
 .class-closure-item button{border:0;background:transparent;color:#b12b38;cursor:pointer;font-weight:650}
+
+/* Elevvyn visar bara ifyllda fält; lärarens redigeringsrutor finns kvar. */
+.student-title { font-size:clamp(1.7rem,4vw,3rem); font-weight:900; line-height:1.15; margin:8px 0 12px; overflow-wrap:anywhere; }
+.student-screen-view .student-header-simple { margin-bottom:12px; }
+.topic-grid-readonly { min-width:0; }
+.topic-grid-readonly .topic-name { min-width:0; overflow-wrap:anywhere; }
+.topic-grid-readonly[data-detail-count="0"] { grid-template-columns:minmax(0,1fr); }
+.topic-grid-readonly[data-detail-count="1"] { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); }
+.topic-grid-readonly[data-detail-count="2"] { grid-template-columns:minmax(0,1.3fr) repeat(2,minmax(0,1fr)); }
+.week-detail-grid[data-single-column="true"] { grid-template-columns:minmax(0,1fr); }
+.week-detail-column.pages { background:#fff0f0; }
+.week-detail-column.assignments { background:#edf4ff; }
+.week-detail-column.assignments h4 { color:#175cd3; }
+.student-screen-view .student-week-empty { padding:12px 16px; }
+.student-screen-view .student-week-empty .student-week-identity { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 14px; }
+.student-screen-view .student-week-empty .student-week-identity strong { font-size:1.15rem; }
+.student-screen-view .student-week-empty .calendar-month-corner { display:none; }
+.student-screen-view .student-week-empty .week-content { background:transparent; font-weight:500; margin-top:6px; }
+.student-screen-view .lessons:empty, .student-screen-view .week-details:empty { display:none; }
+@media(max-width:640px) {
+  .topic-grid-readonly[data-detail-count="1"] { grid-template-columns:minmax(0,1fr); }
+  .topic-grid-readonly[data-detail-count="2"] { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .topic-grid-readonly .topic-name { grid-column:1/-1; }
+  .student-screen-view .student-header-simple { margin-bottom:4px; }
+  .student-screen-view .student-title { margin:8px 0; }
+  .student-screen-view .chapter-heading { margin-top:10px; }
+}

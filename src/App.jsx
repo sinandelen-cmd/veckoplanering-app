@@ -601,6 +601,26 @@ function resourceInfo(url) {
   } catch { return null }
 }
 
+// Gemensamma innehållskontroller för elevvyn. Ändrar aldrig sparade data.
+function hasDisplayValue(value) {
+  return String(value ?? '').trim().length > 0
+}
+function hasStudentTopicContent(topic) {
+  return Boolean(topic && (hasDisplayValue(topic.name)
+    || (!topic.hidePages && topic.pages?.some(hasDisplayValue))
+    || (!topic.hideAssignments && topic.assignments?.some(hasDisplayValue))
+    || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || ''))))
+}
+function hasStudentLessonContent(lesson) {
+  return Boolean(lesson && (lesson.assessment || lesson.topics?.some(hasStudentTopicContent)))
+}
+function hasStudentWeekContent(week) {
+  return Boolean(week && (hasDisplayValue(week.content)
+    || week.pages?.some(hasDisplayValue) || week.assignments?.some(hasDisplayValue)
+    || week.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || ''))
+    || week.lessons?.some(hasStudentLessonContent)))
+}
+
 function buildSlug(plan) {
   const suffix = crypto.randomUUID().slice(0, 8)
   return `${slugify(plan.title)}-${slugify(plan.subject || 'amne')}-${slugify(plan.className || 'alla')}-${slugify(plan.schoolYear || 'arsplan')}-${suffix}`
@@ -838,20 +858,20 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   return <>{previewClassSelector}<main style={planThemeStyle(plan)} className={`shell student-shell ${printPage === null ? "student-screen-view" : "student-print-page"} ${printPage !== null && visibleWeeks.length === 1 ? "student-print-spacious" : ""}`}>
     {printPage === null && <div className="student-print-action"><button type="button" className="secondary" onClick={() => window.print()}>🖨️ Skriv ut elevvyn</button></div>}
     {!preview && <header className="student-header student-header-simple">
-      <h1 style={{ fontSize: 'clamp(2.6rem, 5vw, 4.5rem)', fontWeight: 900, lineHeight: 1.12, margin: '8px 0 24px' }}>{plan.title}</h1>
+      <h1 className="student-title">{plan.title}</h1>
     </header>}
     {studentWeeks.length === 0 && <p className="card empty" role="status">{plan.autoReleaseWeeks ? "Ingen vecka är publicerad för elever ännu. Nästa vecka visas automatiskt när dess måndag börjar." : "Det finns inga synliga veckor i den här planeringen ännu."}</p>}
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
       {visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
         {week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
-        <article id={"student-week-" + week.weekStart} className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
+        <article id={"student-week-" + week.weekStart} className={`week-card student-week-card${hasStudentWeekContent(week) ? '' : ' student-week-empty'}`} style={studentWeekStyle(week.weekStart)}>
 
         <div className="week-top student-week-top">
           <div className="student-week-identity"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span className="calendar-month-corner calendar-tile-month">{weekMonthLabel(week.weekStart)}</span><span>{studentWeekDateRange(week.weekStart)}</span></div>
           {printPage !== null && studentMonthInfo(week.weekStart) && <div className="student-month-info" style={{ backgroundColor: studentMonthInfo(week.weekStart).color }}><strong>{studentMonthInfo(week.weekStart).name}</strong><span>{studentMonthInfo(week.weekStart).weeks}</span></div>}
         </div>
         {!/^Vecka\s+\d+$/i.test(week.title || '') && week.title?.trim() && <h3>{week.title}</h3>}
-        <div className="week-content">{week.content || (!week.pages?.length && !week.assignments?.length && !week.links?.length && !week.lessons?.some(lesson => lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.length || topic.assignments?.length || topic.links?.length)) ? 'Ingen planering angiven ännu.' : '')}</div>
+        {(hasDisplayValue(week.content) || !hasStudentWeekContent(week)) && <div className="week-content">{hasDisplayValue(week.content) ? week.content : 'Ingen planering angiven ännu.'}</div>}
         <ImportantDatesForWeek week={week} plan={plan} />
         <LessonDetails week={week} entryType={plan.entryType || 'lektion'} lessonDisplay="dag-och-lektion" />
         <WeekDetails week={week} />
@@ -2658,12 +2678,12 @@ class AppErrorBoundary extends Component {
 export default function App() { return <AppErrorBoundary><AnnualApp /></AppErrorBoundary> }
 
 function WeekDetails({ week, onChange }) {
-  const pages = Array.isArray(week.pages) ? week.pages : []
-  const assignments = Array.isArray(week.assignments) ? week.assignments : []
-  const links = Array.isArray(week.links) ? week.links : []
   const editable = typeof onChange === 'function'
+  const pages = (Array.isArray(week.pages) ? week.pages : []).filter(value => editable || hasDisplayValue(value))
+  const assignments = (Array.isArray(week.assignments) ? week.assignments : []).filter(value => editable || hasDisplayValue(value))
+  const links = (Array.isArray(week.links) ? week.links : []).filter(url => editable || resourceInfo(url))
   const updateList = (field, value) => onChange({ [field]: value })
-  const listEditor = (field, entries, title, placeholder) => <div className="week-detail-column">
+  const listEditor = (field, entries, title, placeholder) => (editable || entries.length > 0) && <div className={`week-detail-column ${field}`}>
     <h4>{title}</h4>
     {entries.map((entry, index) => editable
       ? <div className="week-detail-entry" key={index}><input aria-label={`${title} ${index + 1}`} value={entry} placeholder={placeholder} onChange={e => updateList(field, entries.map((item, i) => i === index ? e.target.value : item))} /><button type="button" className="remove-small" aria-label={`Ta bort ${title.toLowerCase()} ${index + 1}`} onClick={() => updateList(field, entries.filter((_, i) => i !== index))}>×</button></div>
@@ -2671,7 +2691,7 @@ function WeekDetails({ week, onChange }) {
     {editable && <button type="button" className="add-detail" onClick={() => updateList(field, [...entries, ''])}>+ Lägg till {field === 'pages' ? 'sida' : 'uppgift'}</button>}
   </div>
   return <div className="week-details">
-    {(editable || pages.length > 0 || assignments.length > 0) && <div className="week-detail-grid">
+    {(editable || pages.length > 0 || assignments.length > 0) && <div className="week-detail-grid" data-single-column={!editable && (!pages.length || !assignments.length) ? 'true' : undefined}>
       {listEditor('pages', pages, 'Sidor', 'Ex. Sidan 12–15')}
       {listEditor('assignments', assignments, 'Uppgifter', 'Ex. Uppgift 1–8')}
     </div>}
@@ -2702,6 +2722,7 @@ function lessonDayDate(weekStart, lessonName) {
 function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 'bara-lektion' }) {
   const lessons = Array.isArray(week?.lessons) ? week.lessons : []
   const editable = typeof onChange === 'function'
+  if (!editable && !lessons.some(hasStudentLessonContent)) return null
   const assessmentTypes = ['Prov','Test','Examination','Nationellt prov (NP)','Diagnos','Läxförhör','Egen benämning']
   const updateAssessment = (index, changes) => changeLesson(index, { ...lessons[index], assessment: {...(lessons[index].assessment || {}), ...changes} })
   const changeLessons = next => onChange?.({ lessons: next, ...(entryType === 'dag' ? { daysCustomized: true } : {}) })
@@ -2719,7 +2740,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
     changeLessons(normalizeLessonOrder(next))
   }
   return <div className="lessons">
-    {lessons.map((lesson, i) => ({ lesson, i })).sort((a, b) => editable ? a.i - b.i : (WEEKDAYS.indexOf(a.lesson.day || a.lesson.name) + 5) % 5 - (WEEKDAYS.indexOf(b.lesson.day || b.lesson.name) + 5) % 5).map(({ lesson, i }) => <section className="lesson" key={i}>
+    {lessons.map((lesson, i) => ({ lesson, i })).filter(({ lesson }) => editable || hasStudentLessonContent(lesson)).sort((a, b) => editable ? a.i - b.i : (WEEKDAYS.indexOf(a.lesson.day || a.lesson.name) + 5) % 5 - (WEEKDAYS.indexOf(b.lesson.day || b.lesson.name) + 5) % 5).map(({ lesson, i }) => <section className="lesson" key={i}>
       <div className="lesson-heading">
         {editable ? <div className="lesson-edit-heading" style={{ '--lesson-day-color': DAY_COLORS[Math.max(0, WEEKDAYS.indexOf(entryType === 'dag' ? lesson.name : lesson.day)) % DAY_COLORS.length] }}>
           <span className="lesson-number-inline">{entryType === 'dag' ? (lesson.name || WEEKDAYS[i]) : (lesson.day || 'Välj dag')} · {entryType === 'dag' ? `Lektion ${i + 1}` : `Lektion ${i + 1}`}{lessonDayDate(week.weekStart, entryType === 'dag' ? lesson.name : lesson.day) ? ` · ${lessonDayDate(week.weekStart, entryType === 'dag' ? lesson.name : lesson.day)}` : ''}</span>
@@ -2747,17 +2768,19 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
         </div> : <><div>{lesson.assessment.title}</div>{lesson.assessment.description && <p>{lesson.assessment.description}</p>}</>}
       </div>}
       {editable && !lesson.assessment && <button type="button" className="lesson-add-assessment" onClick={()=>updateAssessment(i,{type:'Prov',title:'',description:''})}>+ Infoga prov/test</button>}
-      {(lesson.topics || []).map((topic, j) => ({ topic, j })).filter(({ topic }) => (editable || topic.name?.trim() || topic.pages?.some(value => String(value ?? '').trim()) || topic.assignments?.some(value => String(value ?? '').trim()) || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || '')))).map(({ topic, j }) => {
+      {(lesson.topics || []).map((topic, j) => ({ topic, j })).filter(({ topic }) => editable || hasStudentTopicContent(topic)).map(({ topic, j }) => {
         const updateTopic = next => changeLesson(i, { ...lesson, topics: (lesson.topics || []).map((item, index) => index === j ? next : item) })
         const pages = Array.isArray(topic.pages) ? topic.pages : []
         const assignments = Array.isArray(topic.assignments) ? topic.assignments : []
         const links = Array.isArray(topic.links) ? topic.links : []
+        const visibleFields = ['pages', 'assignments'].filter(field => !topic[field === 'pages' ? 'hidePages' : 'hideAssignments'] && (editable || (field === 'pages' ? pages : assignments).some(hasDisplayValue)))
+        const visibleLinks = links.map((link, k) => ({ link, k })).filter(({ link }) => editable || resourceInfo(typeof link === 'string' ? link : link?.url || ''))
         const lastFilledRow = values => values.reduce((last, value, index) => String(value ?? '').trim() ? index + 1 : last, 0)
         const rows = editable ? Math.max(1, pages.length, assignments.length) : Math.max(lastFilledRow(pages), lastFilledRow(assignments))
         return <div className="topic" key={j}>
-          <div className={`topic-grid ${topic.hidePages ? "without-pages" : ""} ${topic.hideAssignments ? "without-assignments" : ""}`}>
-            <div className="topic-name">{editable ? <textarea aria-label="Momentets namn" placeholder="Exempel: Procent – tryck Enter för ny rad" rows={Math.max(2, String(topic.name || '').split('\n').length)} value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong className="topic-name-display">{topic.name || 'Moment'}</strong>}</div>
-            {['pages', 'assignments'].filter(field => !topic[field === 'pages' ? 'hidePages' : 'hideAssignments']).map(field => <div className={`topic-column ${field}`} key={field}>
+          <div className={`topic-grid ${editable ? '' : 'topic-grid-readonly'} ${visibleFields.includes('pages') ? '' : 'without-pages'} ${visibleFields.includes('assignments') ? '' : 'without-assignments'}`} data-detail-count={visibleFields.length}>
+            <div className="topic-name">{editable ? <textarea aria-label="Momentets namn" placeholder="Exempel: Procent – tryck Enter för ny rad" rows={Math.max(2, String(topic.name || '').split('\n').length)} value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong className="topic-name-display">{hasDisplayValue(topic.name) ? topic.name : 'Moment'}</strong>}</div>
+            {visibleFields.map(field => <div className={`topic-column ${field}`} key={field}>
               <div className="topic-fixed-heading"><h5>{field === 'pages' ? 'Sida' : 'Uppgift'}</h5>{editable && <button type="button" className="remove-small remove-topic-column" title={`Ta bort hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan`} aria-label={`Ta bort hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan`} onClick={() => { if ((field === 'pages' ? pages : assignments).some(value => String(value).trim()) && !window.confirm(`Dölj hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan? Innehållet sparas och kan visas igen.`)) return; updateTopic({ ...topic, [field === 'pages' ? 'hidePages' : 'hideAssignments']: true }) }}>× Ta bort ruta</button>}</div>
               {Array.from({ length: rows }, (_, row) => <div className="topic-cell" key={row}>
                 {editable ? <><input aria-label={`${(field === 'pages' ? topic.pagesLabel : topic.assignmentsLabel)?.trim() || (field === 'pages' ? 'Sida' : 'Uppgift')} rad ${row + 1}`} value={(field === 'pages' ? pages : assignments)[row] || ''} onChange={e => {
@@ -2765,13 +2788,13 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
                   while (next.length <= row) next.push('')
                   next[row] = e.target.value
                   updateTopic({ ...topic, [field]: next })
-                }} /><button className="remove-small" type="button" aria-label={`Ta bort ${field === "pages" ? "sida" : "uppgift"} på rad ${row + 1}`} onClick={() => updateTopic({ ...topic, [field]: (field === 'pages' ? pages : assignments).filter((_, index) => index !== row) })}>×</button></> : <span>{(field === 'pages' ? pages : assignments)[row] || ' '}</span>}
+                }} /><button className="remove-small" type="button" aria-label={`Ta bort ${field === "pages" ? "sida" : "uppgift"} på rad ${row + 1}`} onClick={() => updateTopic({ ...topic, [field]: (field === 'pages' ? pages : assignments).filter((_, index) => index !== row) })}>×</button></> : <span>{(field === 'pages' ? pages : assignments)[row] ?? ' '}</span>}
               </div>)}
               {editable && <button type="button" className="add-detail" onClick={() => updateTopic({ ...topic, [field]: [...(field === 'pages' ? pages : assignments), ''] })}>+ {(field === 'pages' ? topic.pagesLabel : topic.assignmentsLabel)?.trim() || (field === 'pages' ? 'Sida' : 'Uppgift')}</button>}
             </div>)}
           </div>
-          <div className="topic-links">
-            {links.map((link, k) => {
+          {(editable || visibleLinks.length > 0) && <div className="topic-links">
+            {visibleLinks.map(({ link, k }) => {
               const url = typeof link === 'string' ? link : link.url || ''
               const label = typeof link === 'string' ? resourceInfo(link)?.label || '' : link.label || ''
               const info = resourceInfo(url)
@@ -2783,7 +2806,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
               </div>
             })}
             {editable && <button type="button" className="add-detail" onClick={() => updateTopic({ ...topic, links: [...links, { label: '', url: '' }] })}>+ Länk</button>}
-          </div>
+          </div>}
           {editable && <button type="button" className="remove-small" onClick={() => { if (!(topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm('Ta bort momentet och allt innehåll?')) changeLesson(i, { ...lesson, topics: (lesson.topics || []).filter((_, index) => index !== j) }) }}>× Ta bort moment</button>}
         </div>
       })}
