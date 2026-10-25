@@ -47,3 +47,6 @@ jobs:
         run: node tests/calendar-real-teacher-chromium.mjs
       - name: Chromium five-class moment demo desktop and mobile
         run: node tests/moment-demo-chromium.mjs
+
+      - name: Chromium two-plan teacher undo redo isolation
+        run: node tests/teacher-history-chromium.mjs
