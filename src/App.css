@@ -4094,3 +4094,9 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .inline-editing>.secondary{background:transparent;color:#398455;box-shadow:none}
 .inline-editing .topic-edit-actions button[aria-label^="Flytta"]{font-size:21px;min-width:28px;padding:3px 5px;color:#597a9a}
 .inline-editing .link-edit-direct .moment-action-icon{width:17px;height:17px}
+
+/* One moment belongs to the whole vertical list of its pages/tasks. */
+.lesson .topic-grid{align-items:stretch}
+.lesson .topic-grid>.topic-name{align-self:center;display:flex;align-items:center;min-width:0}
+.lesson .topic-grid>.topic-name textarea{margin:0;width:100%}
+.lesson .topic-grid>.topic-column{align-self:stretch}

@@ -2118,7 +2118,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             <p className="muted">Använd i första hand momenten under varje lektion. Här kan du även lägga material för hela veckan.</p>
             <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
           </details>
-        </article>{<div className="insert-week-between" style={{display:'flex',justifyContent:'center',padding:'14px 0'}}><button type="button" className="secondary" disabled={weeks.length>=52} onClick={()=>insertBlankWeekAfter(index)}>＋ Infoga vecka efter denna</button></div>}</div>)}
+        </article>{<div className="insert-week-between" style={{display:'flex',justifyContent:'center',padding:'14px 0'}}><button type="button" className="secondary" disabled={weeks.length>=52} onClick={()=>insertBlankWeekAfter(index)}>＋ Vecka</button></div>}</div>)}
       </WeekBoard>
       <div className="button-row week-add-actions">
         <button type="button" className="secondary" disabled={weeks.length >= 52} onClick={() => setPlan(p => {
@@ -2369,7 +2369,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             <p className="muted">Använd i första hand momenten under varje lektion. Här kan du även lägga material för hela veckan.</p>
             <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
           </details>
-        </article>{<div style={{display:'flex',justifyContent:'center',padding:'12px 0'}}><button type="button" className="secondary" disabled={weeks.length>=52} onClick={()=>insertBlankWeekAfter(index)}>＋ Infoga tom vecka här</button></div>}</div>)}
+        </article>{<div style={{display:'flex',justifyContent:'center',padding:'12px 0'}}><button type="button" className="secondary" disabled={weeks.length>=52} onClick={()=>insertBlankWeekAfter(index)}>＋ Vecka</button></div>}</div>)}
       </div>
       <div className="button-row week-add-actions">
         <button type="button" className="secondary" disabled={weeks.length >= 52} onClick={() => setPlan(p => {
@@ -2885,11 +2885,11 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
             {editable && <button type="button" className="add-detail moment-action link-add-always" onClick={() => updateTopic({ ...topic, links: [...links, { label: '', url: '', editing:true }] })} title="Lägg till länk" aria-label="Lägg till länk"><span className="link-plus-mark" aria-hidden="true">+</span><MomentActionIcon kind="link"/></button>}
           </div>}
           {editable && <button type="button" className="remove-small moment-action moment-action-remove" title="Ta bort moment" aria-label="Ta bort moment" onClick={() => { if (!(topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm('Ta bort momentet och allt innehåll?')) changeLesson(i, { ...lesson, topics: (lesson.topics || []).filter((_, index) => index !== j) }) }}><MomentActionIcon kind="remove"/></button>}
-          {editable && <button type="button" className="secondary moment-action moment-add-corner" title="Lägg till moment efter detta" aria-label="Lägg till moment" onClick={()=>{if(lockLessons){changeLesson(i,{...lesson,consumeNextMoment:true});return}const topics=[...(lesson.topics || [])];topics.splice(j+1,0,{name:'',pages:[],assignments:[],links:[]});changeLesson(i,{...lesson,topics})}}><MomentActionIcon kind="plus"/></button>}
+          {editable && <button type="button" className="secondary moment-action moment-add-corner" title="Lägg till moment efter detta" aria-label="Lägg till moment" onClick={()=>{if(lockLessons){changeLesson(i,{...lesson,consumeNextMoment:true});return}const topics=[...(lesson.topics || [])];topics.splice(j+1,0,{name:'',pages:[''],assignments:[''],links:[]});changeLesson(i,{...lesson,topics})}}><MomentActionIcon kind="plus"/></button>}
         </div>
       })}
-      {editable && !(lesson.topics || []).length && <button type="button" className="secondary moment-action" onClick={() => changeLesson(i, { ...lesson, topics: [...(lesson.topics || []), { name: '', pages: [], assignments: [], links: [] }] })} title="Lägg till moment" aria-label="Lägg till moment"><MomentActionIcon kind="plus"/></button>}
-      {editable && !lockLessons && entryType!=='dag' && <button type="button" className="lesson-menu-action lesson-insert-direct" title="Lägg till lektion efter denna" aria-label="Lägg till lektion efter denna" onClick={()=>{const next=[...lessons];next.splice(i+1,0,{name:'Lektion',day:lesson.day||'Måndag',topics:[{name:'',pages:[],assignments:[],links:[]}]});changeLessons(normalizeLessonOrder(next))}}><MomentActionIcon kind="plus"/></button>}
+      {editable && !(lesson.topics || []).length && <button type="button" className="secondary moment-action" onClick={() => changeLesson(i, { ...lesson, topics: [...(lesson.topics || []), { name: '', pages: [''], assignments: [''], links: [] }] })} title="Lägg till moment" aria-label="Lägg till moment"><MomentActionIcon kind="plus"/></button>}
+      {editable && !lockLessons && entryType!=='dag' && <button type="button" className="lesson-menu-action lesson-insert-direct" title="Lägg till lektion efter denna" aria-label="Lägg till lektion efter denna" onClick={()=>{const next=[...lessons];next.splice(i+1,0,{name:'Lektion',day:lesson.day||'Måndag',topics:[{name:'',pages:[''],assignments:[''],links:[]}]});changeLessons(normalizeLessonOrder(next))}}><MomentActionIcon kind="plus"/></button>}
     </section>)}
     {editable && !lockLessons && (entryType !== 'dag' || WEEKDAYS.some(day => !lessons.some(lesson => lesson.name === day))) && <button type="button" className="secondary" onClick={() => {
       if (entryType === 'dag') {
