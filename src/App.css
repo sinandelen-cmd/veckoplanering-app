@@ -3940,3 +3940,20 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .teacher-past-weeks>summary{cursor:pointer;padding:12px;font-weight:700}
 .topic-edit-actions small,.add-detail small,.lesson-add-assessment small{font-size:.75rem}
 .topic-edit-actions button,.topic-links>.add-detail,.lesson-add-assessment{padding:5px 8px}
+
+/* Compact moment tools share one quiet visual style and accessible hit areas. */
+.lesson .moment-action {
+ display:inline-flex;align-items:center;justify-content:center;gap:5px;
+ min-height:36px;min-width:36px;padding:6px 8px;border:1px solid #d4dfda;
+ border-radius:8px;background:transparent;color:#386157;box-shadow:none;
+ vertical-align:middle;line-height:1.15;font-weight:500;
+}
+.lesson .moment-action small {font-size:11px;font-weight:500;line-height:1.15}
+.lesson .moment-action-icon {flex:none;width:16px;height:16px}
+.lesson .moment-action:hover {background:#edf5f0;border-color:#9ab9ac}
+.lesson .moment-action:focus-visible {outline:2px solid #236b77;outline-offset:2px}
+.lesson .moment-action-remove {color:#934c4c;border-color:transparent}
+.lesson .moment-action-remove:hover {background:#fff0ee}
+@media(pointer:coarse),(max-width:640px) {
+ .lesson .moment-action {min-height:44px;min-width:44px}
+}
