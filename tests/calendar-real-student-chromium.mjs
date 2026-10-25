@@ -44,6 +44,21 @@ try {
  await switchClass('8H')
  await page.locator('#student-week-2026-10-19').getByText(/Registrerad ledighet: Lov/).waitFor()
  console.log('PASS real StudentView 8H: empty week explains class holiday')
+ // Combined closures in the actual student UI: 8I starts only after the
+ // study day, half-day cancellation and holiday. Other classes stay intact.
+ await switchClass('8I')
+ const week43=page.locator('#student-week-2026-10-19')
+ const week44=page.locator('#student-week-2026-10-26')
+ assert.equal(await week43.getByText('Moment 1',{exact:true}).count(),0)
+ for(const name of ['Moment 1','Moment 2','Moment 3','Moment 4']){
+   assert.equal(await week44.getByText(name,{exact:true}).count(),1,'8I '+name+' after closures')
+ }
+ const visible=await week44.locator('*').allTextContents()
+ const rendered=visible.join(' ')
+ for(const name of ['Moment 1','Moment 2','Moment 3','Moment 4'])assert.ok(rendered.includes(name))
+ await switchClass('8B')
+ assert.equal(await page.locator('#student-week-2026-10-19').getByText('Moment 1',{exact:true}).count(),1)
+ console.log('PASS real StudentView 8I: mixed moments with study day, half-day and holiday; 8B unaffected')
  assert.deepEqual(pageErrors,[])
  console.log('PASS real StudentView 8D: study day preserves all lessons')
 } finally {await browser.close()}
