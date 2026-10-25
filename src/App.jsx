@@ -3,10 +3,6 @@ import UpdateNotices from './UpdateNotices.jsx'
 import { groupStudentWeeksForPrint } from './printGroups.js'
 import { Component, Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import * as XLSX from 'xlsx'
-import mammoth from 'mammoth'
-import * as pdfjsLib from 'pdfjs-dist'
-import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url'
 import { supabase } from './supabase'
 import './App.css'
 import Navigation from './Navigation.jsx'
@@ -15,7 +11,6 @@ import { MUNICIPALITIES_BY_COUNTY } from './swedishMunicipalities.js'
 import { NATIONAL_EXAMS_2026_27, NATIONAL_EXAM_PERIODS_2026_27 } from './nationalExams.js'
 
 const APP_TITLE = 'Årsplanering'
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker
 const DEFAULT_WEEKS = 1
 const WEEK_COLORS = ['#fffcf5', '#fff9fa', '#fafaff', '#f8fcf9', '#f8fbff', '#fffbf7']
 const DAY_COLORS = ['#fff6f8', '#fffdf3', '#f6f8ff', '#f4fcf7', '#f8f6ff', '#fffaf5', '#f5fbfc']
@@ -401,18 +396,43 @@ async function recognizeImage(source) {
   return text
 }
 
+// Filverktygen behövs först vid import, inte när en elev öppnar sin planering.
+let XLSX
+async function loadSpreadsheet() {
+  if (!XLSX) {
+    const module = await import('xlsx')
+    XLSX = module.default || module
+  }
+  return XLSX
+}
+async function loadWordReader() {
+  const module = await import('mammoth')
+  return module.default || module
+}
+async function loadPdfReader() {
+  const [reader, worker] = await Promise.all([
+    import('pdfjs-dist'),
+    import('pdfjs-dist/build/pdf.worker.mjs?url')
+  ])
+  reader.GlobalWorkerOptions.workerSrc = worker.default
+  return reader
+}
+
 async function extractText(file) {
   const name = file.name.toLowerCase()
   if (name.endsWith('.txt') || name.endsWith('.csv')) return file.text()
   if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
+    await loadSpreadsheet()
     const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array' })
     return workbook.SheetNames.map(sheet => `## ${sheet}\n${XLSX.utils.sheet_to_csv(workbook.Sheets[sheet])}`).join('\n\n')
   }
   if (name.endsWith('.docx')) {
+    const mammoth = await loadWordReader()
     const result = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() })
     return result.value
   }
   if (name.endsWith('.pdf')) {
+    const pdfjsLib = await loadPdfReader()
     const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise
     const pages = []
     for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
@@ -443,8 +463,8 @@ async function extractText(file) {
     if(!result.trim()) throw new Error('Ingen läsbar text hittades i PDF-filen.')
     return result
   }
-  if (/\\.(?:png|jpe?g|webp)$/i.test(name)) return recognizeImage(file)
-  if (/\\.doc$/i.test(name)) throw new Error('Äldre Word-filer (.doc) stöds ännu inte. Spara som .docx för att importera.')
+  if (/[.](?:png|jpe?g|webp)$/i.test(name)) return recognizeImage(file)
+  if (/[.]doc$/i.test(name)) throw new Error('Äldre Word-filer (.doc) stöds ännu inte. Spara som .docx för att importera.')
   throw new Error('Filtypen stöds inte. Använd Excel, DOCX, textbaserad PDF, CSV eller TXT.')
 }
 
@@ -1657,6 +1677,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     if (!file) return
     setBusy(true); setStatus(`Läser ${file.name}...`); setPendingImport(null); setFileImportState({phase:'loading',message:`Läser ${file.name}…`})
     try {
+      if (/[.]xlsx?$/i.test(file.name)) await loadSpreadsheet()
       const chapterWeeks = /[.]xlsx?$/i.test(file.name) ? distributeChapterWorkbook(plan, XLSX.read(await file.arrayBuffer(),{type:'array'})) : null
       const text = chapterWeeks ? '' : await extractText(file)
       const weeksData = chapterWeeks || distributeText(plan,text)
@@ -2784,10 +2805,10 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
         const pages = Array.isArray(topic.pages) ? topic.pages : []
         const assignments = Array.isArray(topic.assignments) ? topic.assignments : []
         const links = Array.isArray(topic.links) ? topic.links : []
-        const visibleFields = ['pages', 'assignments'].filter(field => !topic[field === 'pages' ? 'hidePages' : 'hideAssignments'] && (editable || (field === 'pages' ? pages : assignments).some(hasDisplayValue)))
+        const visibleFields = ['pages', 'assignments'].filter(field => !topic[field === 'pages' ? 'hidePages' : 'hideAssignments'])
         const visibleLinks = links.map((link, k) => ({ link, k })).filter(({ link }) => editable || resourceInfo(typeof link === 'string' ? link : link?.url || ''))
         const lastFilledRow = values => values.reduce((last, value, index) => String(value ?? '').trim() ? index + 1 : last, 0)
-        const rows = editable ? Math.max(1, pages.length, assignments.length) : Math.max(lastFilledRow(pages), lastFilledRow(assignments))
+        const rows = editable ? Math.max(1, pages.length, assignments.length) : Math.max(1, lastFilledRow(pages), lastFilledRow(assignments))
         return <div className="topic" key={j}>
           <div className={`topic-grid ${editable ? '' : 'topic-grid-readonly'} ${visibleFields.includes('pages') ? '' : 'without-pages'} ${visibleFields.includes('assignments') ? '' : 'without-assignments'}`} data-detail-count={visibleFields.length}>
             <div className="topic-name">{editable ? <textarea aria-label="Momentets namn" placeholder="Exempel: Procent – tryck Enter för ny rad" rows={Math.max(2, String(topic.name || '').split('\n').length)} value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong className="topic-name-display">{hasDisplayValue(topic.name) ? topic.name : 'Moment'}</strong>}</div>
@@ -2799,7 +2820,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
                   while (next.length <= row) next.push('')
                   next[row] = e.target.value
                   updateTopic({ ...topic, [field]: next })
-                }} /><button className="remove-small" type="button" aria-label={`Ta bort ${field === "pages" ? "sida" : "uppgift"} på rad ${row + 1}`} onClick={() => updateTopic({ ...topic, [field]: (field === 'pages' ? pages : assignments).filter((_, index) => index !== row) })}>×</button></> : <span>{(field === 'pages' ? pages : assignments)[row] ?? ' '}</span>}
+                }} /><button className="remove-small" type="button" aria-label={`Ta bort ${field === "pages" ? "sida" : "uppgift"} på rad ${row + 1}`} onClick={() => updateTopic({ ...topic, [field]: (field === 'pages' ? pages : assignments).filter((_, index) => index !== row) })}>×</button></> : <span>{hasDisplayValue((field === 'pages' ? pages : assignments)[row]) ? (field === 'pages' ? pages : assignments)[row] : '—'}</span>}
               </div>)}
               {editable && <button type="button" className="add-detail" onClick={() => updateTopic({ ...topic, [field]: [...(field === 'pages' ? pages : assignments), ''] })}>+ {(field === 'pages' ? topic.pagesLabel : topic.assignmentsLabel)?.trim() || (field === 'pages' ? 'Sida' : 'Uppgift')}</button>}
             </div>)}
