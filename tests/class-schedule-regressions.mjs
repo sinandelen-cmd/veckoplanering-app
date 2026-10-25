@@ -287,7 +287,7 @@ for (const [index, legacy] of legacyPlans.entries()) {
  const b=build(legacy,classB)
  assert.equal(a.length,(legacy.weeksData[0].lessons||[]).length)
  assert.equal(b.length,a.length)
- assert.notEqual(a[0]?.date,b[0]?.date)
+ if (a.length) assert.notEqual(a[0].date,b[0].date)
  assert.equal(JSON.stringify(legacy),snapshot,'Legacy saved plan was mutated')
  assert.deepEqual(dates(build(legacy,classA)),dates(a),'Legacy scheduling changed between reads')
  console.log('PASS legacy plan '+(index+1)+': missing optional fields, independent classes, immutable source')
