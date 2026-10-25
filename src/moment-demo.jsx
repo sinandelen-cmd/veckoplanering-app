@@ -34,15 +34,16 @@ function App(){
  const [selected,setSelected]=useState(-1)
  const [closuresByClass,setClosuresByClass]=useState({})
  const [closureType,setClosureType]=useState('Studiedag')
- const [closureDate,setClosureDate]=useState('2026-10-19')
+ const [closureDate,setClosureDate]=useState('2026-10-22')
  const [closureEnd,setClosureEnd]=useState('2026-10-23')
  const [completedThrough,setCompletedThrough]=useState('2026-10-20')
  const [editingIndex,setEditingIndex]=useState(null)
  const [showComparison,setShowComparison]=useState(false)
  const current=selected<0?null:classes[selected]
  const earliestAllowed=addDays(completedThrough,1)
- const invalidDate=!closureDate||closureDate<=completedThrough||(closureType==='Lov'&&closureEnd<closureDate)
+ const invalidDate=!closureDate||closureDate<=completedThrough||(closureType==='Lov'&&(!closureEnd||closureEnd<closureDate))
  const activeClosures=current?(closuresByClass[current.name]||[]):[]
+ const overlapping=activeClosures.flatMap((event,i)=>activeClosures.slice(i+1).filter(other=>event.startDate<=other.endDate&&other.startDate<=event.endDate).map(other=>event.type+' och '+other.type+' överlappar'))
  const original=current?buildClassSchedule(plan,current):[]
  const completedOriginal=current?original.filter(row=>row.date<=completedThrough):[]
  const remainingPlan=current?{...plan,startDate:addDays(completedThrough,1),weeksData:[{...plan.weeksData[0],lessons:plan.weeksData[0].lessons.slice(momentNamesFromRows(completedOriginal).length)}]}:null
@@ -82,11 +83,12 @@ function App(){
      <label style={{display:'grid',gap:5}}>Från datum<input aria-label="Från datum" type="date" min={earliestAllowed} value={closureDate} onChange={e=>setClosureDate(e.target.value)} style={fieldStyle} /></label>
      {closureType==='Lov'&&<label style={{display:'grid',gap:5}}>Till datum<input aria-label="Till datum" type="date" min={closureDate} value={closureEnd} onChange={e=>setClosureEnd(e.target.value)} style={fieldStyle} /></label>}
      <button type="button" style={buttonStyle(false)} disabled={invalidDate} onClick={()=>{setClosuresByClass(previous=>({...previous,[current.name]:[...(previous[current.name]||[]),{type:closureType,startDate:closureDate,endDate:closureType==='Lov'?closureEnd:closureDate,...(closureType==='Halvdag'?{cancelledLessons:1}:{} )}]}));setEditingIndex(null)}}>Lägg till för {current.name}</button>
-     <button type="button" style={buttonStyle(false)} onClick={()=>setClosuresByClass(previous=>({...previous,[current.name]:[]}))}>Återställ {current.name}</button>
+     <button type="button" style={buttonStyle(false)} onClick={()=>{setClosuresByClass(previous=>({...previous,[current.name]:[]}));setEditingIndex(null)}}>Återställ {current.name}</button>
     </div>
     <p data-testid="demo-date-hint" role="status" style={{padding:'10px 12px',borderRadius:8,background:invalidDate?'#fff0dc':'#e7f4ee',color:'#374151'}}>{invalidDate?'Välj ett datum från '+formatDate(earliestAllowed)+'. Tidigare lektioner är redan genomförda och kan inte flyttas.':'Datumet är giltigt. Genomförda lektioner påverkas inte.'}</p>
-    <div data-testid="demo-closures">{activeClosures.length?activeClosures.map((event,i)=><div key={i} style={{padding:'7px 0'}}>{event.type}: {event.startDate}{event.endDate!==event.startDate?' – '+event.endDate:''} <button type="button" aria-label={'Ta bort undantag '+(i+1)} onClick={()=>setClosuresByClass(previous=>({...previous,[current.name]:(previous[current.name]||[]).filter((_,j)=>i!==j)}))}>Ta bort</button> <button type="button" aria-label={'Ändra undantag '+(i+1)} onClick={()=>{setEditingIndex(i);setClosureType(event.type);setClosureDate(event.startDate);setClosureEnd(event.endDate)}}>Ändra</button></div>):'Inga lektionsfria dagar tillagda.'}</div>
-    {editingIndex!==null&&<button type="button" disabled={closureDate<=completedThrough||(closureType==='Lov'&&closureEnd<closureDate)} onClick={()=>{setClosuresByClass(previous=>({...previous,[current.name]:(previous[current.name]||[]).map((event,i)=>i===editingIndex?{type:closureType,startDate:closureDate,endDate:closureType==='Lov'?closureEnd:closureDate,...(closureType==='Halvdag'?{cancelledLessons:1}:{})}:event)}));setEditingIndex(null)}}>Spara ändrat undantag</button>}
+    <div data-testid="demo-closures">{activeClosures.length?activeClosures.map((event,i)=><div key={i} style={{padding:'7px 0'}}>{event.type}: {event.startDate}{event.endDate!==event.startDate?' – '+event.endDate:''} <button type="button" aria-label={'Ta bort undantag '+(i+1)} onClick={()=>{setClosuresByClass(previous=>({...previous,[current.name]:(previous[current.name]||[]).filter((_,j)=>i!==j)}));setEditingIndex(null)}}>Ta bort</button> <button type="button" aria-label={'Ändra undantag '+(i+1)} onClick={()=>{setEditingIndex(i);setClosureType(event.type);setClosureDate(event.startDate);setClosureEnd(event.endDate)}}>Ändra</button></div>):'Inga lektionsfria dagar tillagda.'}</div>
+    <p data-testid="demo-overlap" role="status" style={{padding:'10px 12px',borderRadius:8,background:overlapping.length?'#fff0dc':'#edf5f1'}}>{overlapping.length?'Överlappande undantag: '+overlapping.join('; ')+'. Hela lediga dagar har företräde framför halvdagar.':'Inga överlappande undantag.'}</p>
+    {editingIndex!==null&&<button type="button" disabled={invalidDate} onClick={()=>{setClosuresByClass(previous=>({...previous,[current.name]:(previous[current.name]||[]).map((event,i)=>i===editingIndex?{type:closureType,startDate:closureDate,endDate:closureType==='Lov'?closureEnd:closureDate,...(closureType==='Halvdag'?{cancelledLessons:1}:{})}:event)}));setEditingIndex(null)}}>Spara ändrat undantag</button>}
     <div data-testid="demo-integrity" role="status" style={{marginTop:12,padding:12,background:preserved?'#e3f5e9':'#ffebeb',borderRadius:8}}>{preserved?'Alla 12 moment bevaras i rätt ordning.':'Varning: moment saknas eller har ändrat ordning.'} {completedPreserved?'Genomförda lektioner är oförändrade.':'Varning: genomförda lektioner ändrades.'} Grundplaneringen ändras inte.</div>
     <button type="button" aria-expanded={showComparison} aria-controls="demo-comparison" onClick={()=>setShowComparison(value=>!value)} style={{...buttonStyle(false),width:'100%',marginTop:12}}>{showComparison?'Dölj före/efter-jämförelse':'Visa före/efter-jämförelse'}</button>
     <div id="demo-comparison" data-testid="demo-comparison" hidden={!showComparison} style={{display:showComparison?'grid':'none',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,280px),1fr))',gap:12,marginTop:12}}>
