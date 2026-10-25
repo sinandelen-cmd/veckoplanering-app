@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 63213)
+Total output lines: 2922
+
 function capitalizeFirstSwedish(value) { return String(value || '').replace(/^(\s*)([a-zåäö])/i, (_, spaces, letter) => spaces + letter.toLocaleUpperCase('sv-SE')) }
 import UpdateNotices from './UpdateNotices.jsx'
 import { groupStudentWeeksForPrint } from './printGroups.js'
@@ -563,10 +566,12 @@ function planFromRow(row) {
 
 // Elevkopian innehåller bara fält som faktiskt visas för elever.
 // En spärrlista för teacherNotes räcker inte: andra interna fält kan tillkomma.
-function sanitizeForStudents(plan) {
+function sanitizeForStudents(plan, includeHidden = false) {
   const sourceWeeks = Array.isArray(plan?.weeksData) ? (plan.entryType === 'dag' && plan.weeksData.length ? displayWeeks(plan) : plan.weeksData) : makeWeeks(plan)
   return {
     kind: 'arsplanering-v2',
+    classScheduleResolved: plan?.classScheduleResolved === true,
+    resolvedClassName: String(plan?.resolvedClassName || ''),
     title: String(plan?.title || ''),
     subject: String(plan?.subject || ''),
     className: String(plan?.className || ''),
@@ -597,19 +602,21 @@ function sanitizeForStudents(plan) {
     studentColumns: Math.max(1, Math.min(3, Number(plan?.studentColumns) || 3)),
     studentRows: Math.max(1, Math.min(6, Number(plan?.studentRows) || 2)),
     weeksData: sourceWeeks
-      .filter(week => week && typeof week === 'object' && !week.hidden)
+      .filter(week => week && typeof week === 'object' && (includeHidden || !week.hidden))
       // Filter skapar en ny array: sortering ändrar inte lärarens ursprungliga lista.
       .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || ''))
       .map((week, index) => ({
         weekNumber: Number.isInteger(week.weekNumber) ? week.weekNumber : index + 1,
         weekStart: typeof week.weekStart === 'string' ? week.weekStart : '',
+        ...(includeHidden ? {hidden:week.hidden === true} : {}),
+        calendarEventWeek: week.calendarEventWeek === true,
         autoVisibility: week.autoVisibility === true,
         keepVisibleExtra: week.keepVisibleExtra === true,
         publishDate: /^\d{4}-\d{2}-\d{2}$/.test(week.publishDate || '') ? week.publishDate : '',
         hideDate: /^\d{4}-\d{2}-\d{2}$/.test(week.hideDate || '') ? week.hideDate : '',
         title: typeof week.title === 'string' ? week.title : '',
         chapter: typeof week.chapter === 'string' ? week.chapter.slice(0, 160) : '',
-        lessons: Array.isArray(week.lessons) ? week.lessons.filter(lesson => lesson && typeof lesson === 'object').map(lesson => ({ name: String(lesson.name || ''), day: String(lesson.day || ''), ...(lesson.assessment && typeof lesson.assessment === 'object' ? {assessment:{type:String(lesson.assessment.type||'Prov').slice(0,80),customType:String(lesson.assessment.customType||'').slice(0,80),title:String(lesson.assessment.title||'').slice(0,300),description:String(lesson.assessment.description||'').slice(0,5000)}} : {}), topics: Array.isArray(lesson.topics) ? lesson.topics.filter(topic => topic && typeof topic === 'object').map(topic => ({ name: String(topic.name || ''), pagesLabel: String(topic.pagesLabel || '').slice(0, 60), assignmentsLabel: String(topic.assignmentsLabel || '').slice(0, 60), hidePages: topic.hidePages === true, hideAssignments: topic.hideAssignments === true, pages: Array.isArray(topic.pages) ? topic.pages.map(String) : [], assignments: Array.isArray(topic.assignments) ? topic.assignments.map(String) : [], links: Array.isArray(topic.links) ? topic.links.filter(link => link && link.editing !== true && resourceInfo(typeof link === 'string' ? link : link.url)).map(link => typeof link === 'string' ? { url: link.trim(), label: resourceInfo(link).label } : { url: String(link.url).trim(), label: String(link.label || resourceInfo(link.url).label) }) : [] })) : [] })) : [],
+        lessons: Array.isArray(week.lessons) ? week.lessons.filter(lesson => lesson && typeof lesson === 'object').map(lesson => ({ name: String(lesson.name || ''), day: String(lesson.day || ''), ...(lesson.date ? {date:String(lesson.date)} : {}), ...(lesson.assessment && typeof lesson.assessment === 'object' ? {assessment:{type:String(lesson.assessment.type||'Prov').slice(0,80),customType:String(lesson.assessment.customType||'').slice(0,80),title:String(lesson.assessment.title||'').slice(0,300),description:String(lesson.assessment.description||'').slice(0,5000)}} : {}), topics: Array.isArray(lesson.topics) ? lesson.topics.filter(topic => topic && typeof topic === 'object').map(topic => ({ name: String(topic.name || ''), pagesLabel: String(topic.pagesLabel || '').slice(0, 60), assignmentsLabel: String(topic.assignmentsLabel || '').slice(0, 60), hidePages: topic.hidePages === true, hideAssignments: topic.hideAssignments === true, pages: Array.isArray(topic.pages) ? topic.pages.map(String) : [], assignments: Array.isArray(topic.assignments) ? topic.assignments.map(String) : [], links: Array.isArray(topic.links) ? topic.links.filter(link => link && link.editing !== true && resourceInfo(typeof link === 'string' ? link : link.url)).map(link => typeof link === 'string' ? { url: link.trim(), label: resourceInfo(link).label } : { url: String(link.url).trim(), label: String(link.label || resourceInfo(link.url).label) }) : [] })) : [] })) : [],
         content: typeof week.content === 'string' ? week.content : '',
         pages: Array.isArray(week.pages) ? week.pages.filter(v => typeof v === 'string' && v.trim()).slice(0, 100) : [],
         assignments: Array.isArray(week.assignments) ? week.assignments.filter(v => typeof v === 'string' && v.trim()).slice(0, 100) : [],
@@ -814,7 +821,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   useEffect(()=>{setLinkCopied(false)},[previewClass])
   const requestedClass = new URLSearchParams(window.location.search).get('klass')
   const selectedClass = (preview ? previewClass : requestedClass) && plan?.classGroups?.find(g => g.name === (preview ? previewClass : requestedClass))
-  const classLessons = selectedClass ? buildClassSchedule({...plan,sharedBaseContent:true},selectedClass) : []
+  const classLessons = selectedClass && !plan?.classScheduleResolved ? buildClassSchedule({...plan,sharedBaseContent:true},selectedClass) : []
   // Grundplaneringens veckor är den enda källan för klassernas veckokort.
   // Klassens schema får bara placera lektioner i redan skapade veckor.
   const sourceClassWeeks = (Array.isArray(plan?.weeksData) ? plan.weeksData : [])
@@ -826,7 +833,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     const timeline = []
     const lastScheduledWeek = classLessons.length ? mondayOf(classLessons[classLessons.length - 1].date) : ''
     const end = [sourceClassWeeks[sourceClassWeeks.length-1].weekStart,lastScheduledWeek].sort().at(-1)
-    for(let date=sourceClassWeeks[0].weekStart;date<=end && timeline.length<220;date=addWeeks(date,1)){
+    for(let date=sourceClassWeeks[0].weekStart;date<=end;date=addWeeks(date,1)){
       timeline.push(byDate.get(date)||{weekStart:date,weekNumber:calendarWeekNumber(date),title:'Vecka '+calendarWeekNumber(date),lessons:[],content:''})
     }
     return timeline
@@ -869,7 +876,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
       + (lesson.topics || []).filter(Boolean).reduce((topicSum, topic) => topicSum + String(topic.name || '').length
         + (topic.pages?.length || 0) * 8 + (topic.assignments?.length || 0) * 10
         + (topic.links?.length || 0) * 10, 0), 0))
-  const candidateWeeks=Array.isArray(selectedClass ? classWeeks : plan?.weeksData)?[...(selectedClass ? classWeeks : plan.weeksData)]
+  const candidateWeeks=Array.isArray(selectedClass && !plan?.classScheduleResolved ? classWeeks : plan?.weeksData)?[...(selectedClass && !plan?.classScheduleResolved ? classWeeks : plan.weeksData)]
     .filter(week=>week && week.weekStart)
     .sort((a, b) => weekContentScore(b) - weekContentScore(a))
     .filter((week, index, weeks) => weeks.findIndex(other => (other.weekStart || `number-${other.weekNumber}`) === (week.weekStart || `number-${week.weekNumber}`)) === index)
@@ -1574,230 +1581,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         const { data: existing, error: lookupError } = await supabase.from('veckoplanering')
           .select('published,public_slug').eq('id', selectedId).eq('user_id', session.user.id).single()
         if (lookupError) {
-          setStatus(`Kunde inte kontrollera publiceringsstatus: ${lookupError.message}`)
-          setBusy(false)
-          return
-        }
-        databasePublished = existing.published === true
-        databaseSlug = existing.public_slug || ''
-      }
-      const keepPublished = !publish && databasePublished
-      const slug = publish ? (databaseSlug || buildSlug(plan)) : (databaseSlug || '')
-      const payload = { kind: 'arsplanering-v2', ...plan, themeId: plan.themeId || planTheme(plan, selectedId).id, weeksData: weeks, published: publish || keepPublished, publicSlug: slug }
-      const publishedPayload = publish ? sanitizeForStudents(payload) : null
-      const row = {
-        user_id: session.user.id,
-        title: plan.title,
-        week_start: plan.startDate,
-        content: JSON.stringify(payload),
-        subject: plan.subject,
-        school_year: plan.schoolYear,
-        class_name: plan.className,
-        start_date: plan.startDate,
-        weeks: plan.weeks,
-        ...(publish || !selectedId ? publicationFields(publish, false, slug, publishedPayload) : {}),
-        updated_at: new Date().toISOString(),
-      }
-      const query = selectedId
-        ? supabase.from('veckoplanering').update(row).eq('id', selectedId).eq('user_id', session.user.id).select('id').single()
-        : supabase.from('veckoplanering').insert(row).select('id').single()
-      const { data, error } = await query
-      if (error) setStatus(`Kunde inte spara: ${error.message}`)
-      else {
-        if (simpleSetup) { setSimpleSetup(false); setTeacherTab('arsplan'); setCalendarOpen(false) }
-        setSelectedId(data.id)
-        try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(data.id)) } catch { /* Lagring kan vara blockerad */ }
-        const refreshed = await loadPlans()
-        // Ändringar som gjorts medan nätverksanropet pågick får inte skrivas över.
-        savedPlanRef.current = JSON.stringify(payload)
-        setSavedRevision(revision => revision + 1)
-        const newerEdits = latestPlanRef.current !== plan
-        // Saving metadata is not a user edit and must not consume the next Undo.
-        if (!newerEdits) historySkipRef.current = true
-        setPlan(current => current === plan ? payload : current)
-        const message = !refreshed ? 'Sparad, men listan kunde inte uppdateras. Ladda om för att kontrollera.' : publish
-          ? `Publicerad: ${window.location.origin}/elev/${slug}`
-          : keepPublished
-            ? 'Ändringarna är sparade. Eleverna ser fortfarande den senast publicerade versionen.'
-            : 'Planeringen är sparad.'
-        setStatus(releaseWarning || (newerEdits ? `${message} Nya ändringar i redigeraren är ännu inte sparade.` : message))
-      }
-    } catch (error) {
-      setStatus(`Kunde inte spara: ${error.message || 'Okänt fel'}`)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  // Spara automatiskt enbart redan skapade planeringar som utkast.
-  // Publicerad elevversion påverkas inte förrän läraren väljer Publicera.
-  useEffect(() => {
-    if (!selectedId || simpleSetup || busy || !isDirty || teacherTab === 'new') return undefined
-    const timer = window.setTimeout(() => {
-      if (JSON.stringify(latestPlanRef.current) !== savedPlanRef.current) {
-        void save(true, true)
-      }
-    }, 1400)
-    return () => window.clearTimeout(timer)
-  }, [plan, selectedId, simpleSetup, busy, isDirty, teacherTab])
-
-  async function publishFromList(row) {
-    if (busy) return
-    const source = planFromRow(row)
-    if (!window.confirm(`Publicera "${row.title}" för elever? Den sparade planeringen blir tillgänglig via elevlänken.`)) return
-    setBusy(true)
-    try {
-      if(source.autoReleaseWeeks===true && source.classGroups?.length){const {data:supported,error}=await supabase.rpc('supports_class_week_release');if(error || supported!==true)throw new Error('Klassernas automatiska veckovisning kräver uppdaterat serverstöd. Ingen publicering gjordes.')}
-      const slug = row.public_slug || buildSlug(source)
-      const payload = { ...source, published: true, publicSlug: slug }
-      const { error } = await supabase.from('veckoplanering').update({
-        ...publicationFields(true, false, slug, sanitizeForStudents(payload)),
-        updated_at: new Date().toISOString(),
-      }).eq('id', row.id).eq('user_id', session.user.id).select('id').single()
-      if (error) throw error
-      if (selectedId === row.id) setPlan(p => ({ ...p, published: true, publicSlug: slug }))
-      await loadPlans()
-      setStatus('Planeringen är publicerad för elever.')
-    } catch (error) {
-      setStatus(`Kunde inte publicera: ${error.message || 'Okänt fel'}`)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function unpublish(row) {
-    if (busy) return
-    setBusy(true)
-    try {
-      // Uppdatera endast publiceringsfält; ändra inte planeringens innehåll.
-      const { error } = await supabase.from('veckoplanering').update({
-        published: false,
-        published_content: null,
-        public_slug: null,
-        updated_at: new Date().toISOString(),
-      }).eq('id', row.id).eq('user_id', session.user.id).select('id').single()
-      // En uppdatering som träffar noll rader får inte rapporteras som lyckad.
-      if (error) throw error
-      if (selectedId === row.id) setPlan(p => ({ ...p, published: false, publicSlug: '' }))
-      const refreshed = await loadPlans()
-      setStatus(refreshed ? 'Planeringen är avpublicerad.' : 'Avpublicerad, men listan kunde inte uppdateras. Ladda om för att kontrollera.')
-    } catch (error) {
-      setStatus(`Kunde inte avpublicera: ${error.message || 'Okänt fel'}`)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function importFile(file) {
-    if (!file) return
-    setBusy(true); setStatus(`Läser ${file.name}...`); setPendingImport(null); setFileImportState({phase:'loading',message:`Läser ${file.name}…`})
-    try {
-      if (/[.]xlsx?$/i.test(file.name)) await loadSpreadsheet()
-      const chapterWeeks = /[.]xlsx?$/i.test(file.name) ? distributeChapterWorkbook(plan, XLSX.read(await file.arrayBuffer(),{type:'array'})) : null
-      const text = chapterWeeks ? '' : await extractText(file)
-      const weeksData = chapterWeeks || distributeText(plan,text)
-      setPendingImport({ source: file.name, weeksData, structured: true })
-      setStatus(chapterWeeks ? 'Kapitel och delmoment är fördelade på planeringens lektioner. Granska före import.' : 'Importen är klar för förhandsgranskning. Inget har ersatts ännu.'); setFileImportState({phase:'success',message:`${file.name} är inläst – granska nedan.`})
-    } catch (error) { const message=error.message || 'Importen misslyckades.'; setStatus(message); setFileImportState({phase:'error',message}) }
-    setBusy(false)
-  }
-
-  function distributePastedText() {
-    if (!pasteText.trim()) return setStatus('Klistra in text innan du fördelar den över veckorna.')
-    setPendingImport({ source: 'Inklistrad text', weeksData: distributeText(plan, pasteText) })
-    setStatus('Texten är klar för förhandsgranskning. Inget har ersatts ännu.')
-  }
-
-  function loadPlan(row, className) {
-    if (busy) return
-    if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return
-    try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(row.id)) } catch { /* Lagring kan vara blockerad */ }
-    setOpenedFromLibrary(teacherTab === 'bibliotek')
-    const openedPlan = planFromRow(row)
-    setSimpleSetup(false); setSelectedId(row.id); savedPlanRef.current = JSON.stringify(openedPlan); setSavedRevision(revision => revision + 1); setPlan(openedPlan); setTeacherTab('arsplan'); setCalendarOpen(true); setPreviewStudents(false); setA4Demo(false); setStatus(className ? `Klassen ${className} tillhör grundplaneringen. Öppna klassernas schema nedan.` : 'Planeringen är öppnad i kalendervyn.'); if (className) { setCalendarOpen(false); setTimeout(()=>document.querySelector('[aria-label="Kopplade klasser"]')?.scrollIntoView({behavior:'smooth',block:'start'}),150) } else window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  async function shareWithColleague(event) {
-    event.preventDefault()
-    if (!shareRecipient.trim()) return
-    if (plan.receivedCopy) { setShareMessage('En mottagen kopia får inte delas vidare.'); return }
-    if (selectedId && isDirty) { setShareMessage('Spara dina ändringar innan du delar planeringen.'); return }
-    setBusy(true)
-    setShareMessage('')
-    try {
-      const { data, error } = await supabase.rpc('create_plan_share_invite', {
-        p_plan_id: null, p_recipient_email: shareRecipient.trim(), p_password: '',
-      })
-      if (error) throw error
-      if (typeof data === 'string' && data.startsWith('ERROR:')) throw new Error(data.slice(6))
-      setShareToken(data)
-      setShareMessage('Inbjudan skapad. Skicka engångskoden privat till kollegan. Kollegan får ett eget konto och börjar med en tom planering. Koden gäller i sju dagar.')
-    } catch (error) { setShareMessage('Kunde inte skapa inbjudan: ' + error.message) }
-    finally { setBusy(false) }
-  }
-
-  async function receiveColleagueCopy(event) {
-    event.preventDefault()
-    if (!receivedToken.trim()) return
-    setBusy(true)
-    setShareMessage('')
-    try {
-      const { error } = await supabase.rpc('claim_plan_share_invite', { p_token: receivedToken.trim() })
-      if (error) throw error
-      setReceivedToken('')
-      setShareMessage('Kopian finns nu under Mina planeringar. Den är privat och får inte delas vidare.')
-      await loadPlans()
-    } catch (error) { setShareMessage('Kunde inte ta emot kopian: ' + error.message) }
-    finally { setBusy(false) }
-  }
-
-  async function clonePlan(row) {
-    if (busy) return
-    const source = planFromRow(row)
-    const now = new Date()
-    const year = now.getFullYear()
-    const startYear = now.getMonth() >= 7 ? year : year - 1
-    const schoolYear = libraryYear === 'alla' ? `${startYear}–${startYear + 1}` : libraryYear
-    const targetYear = Number(schoolYear.match(/\d{4}/)?.[0]) || startYear
-    const subject = source.subject || row.subject || ''
-    const className = source.className || row.class_name || ''
-    const title = `${source.title.replace(/(?:\s*[-–—]?\s*kopia(?:\s*\d+)?)$/i, '').trim()} – kopia`
-    const oldStartYear = Number((source.schoolYear || '').match(/\d{4}/)?.[0])
-    const yearShift = Number.isFinite(oldStartYear) ? targetYear - oldStartYear : 0
-    const shiftDate = date => {
-      if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !yearShift) return date
-      const shifted = new Date(date + 'T12:00:00')
-      shifted.setFullYear(shifted.getFullYear() + yearShift)
-      return shifted.toISOString().slice(0, 10)
-    }
-    setBusy(true)
-    try {
-      const clone = { ...source, startDate: shiftDate(source.startDate), weeksData: Array.isArray(source.weeksData) ? source.weeksData.map(week => ({ ...week, weekStart: shiftDate(week.weekStart), publishDate: '', hideDate: '' })) : source.weeksData, themeId: PLAN_THEMES[(PLAN_THEMES.findIndex(theme => theme.id === planTheme(source, row.id).id) + 1) % PLAN_THEMES.length].id, title, subject, className, schoolYear, archived: false, published: false, publicSlug: '', receivedCopy: Boolean(source.receivedCopy) }
-      const { error } = await supabase.from('veckoplanering').insert({
-        user_id: session.user.id, title, week_start: clone.startDate, content: JSON.stringify(clone), subject, class_name: className, school_year: schoolYear,
-        start_date: clone.startDate, weeks: clone.weeks, published: false, public_slug: null, updated_at: new Date().toISOString(),
-      })
-      if (error) throw error
-      const refreshed = await loadPlans()
-      setStatus(refreshed ? 'En ny aktiv planering har skapats som utkast. Originalet finns kvar i arkivet.' : 'Kopian sparades, men listan kunde inte uppdateras. Ladda om för att kontrollera.')
-    } catch (error) {
-      setStatus(`Kunde inte klona: ${error.message || 'Okänt fel'}`)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function setArchived(row, archived) {
-    if (busy) return
-    if (selectedId === row.id && isDirty) {
-      setStatus('Spara eller lämna dina osparade ändringar innan du arkiverar eller återställer planeringen.')
-      return
-    }
-    if (archived && !window.confirm(`Arkivera "${row.title}"? Den sparas och kan återställas när som helst.`)) return
-    setBusy(true)
-    try {
-      const stored = parseContent(row.content)
-      if (!stored || typeof stored !== 'object') throw new Error('Planeringens innehåll kunde inte läsas.')
+       …3213 tokens truncated…inte läsas.')
       const updated = { ...stored, archived }
       const { data, error } = await supabase.from('veckoplanering').update({ content: JSON.stringify(updated), updated_at: new Date().toISOString() })
         .eq('id', row.id).eq('user_id', session.user.id).select('id').single()
@@ -2612,7 +2396,7 @@ function AnnualApp() {
     if (isGymnasiumDemoIndex) { setLoading(false); return undefined }
     if (studentSlug) {
       let active=true
-      const refreshStudent=()=>supabase.rpc('get_public_annual_plan', { slug_value: studentSlug })
+      const refreshStudent=()=>supabase.rpc('get_public_annual_plan_v2', { slug_value: studentSlug, class_value: new URLSearchParams(window.location.search).get('klass') || '' })
         .maybeSingle()
         .then(({ data, error }) => {
           if(!active)return
@@ -2915,3 +2699,4 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
 }
 
 export {LessonDetails,StudentView}
+

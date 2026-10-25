@@ -1,0 +1,39 @@
+name: Class calendar publication safety
+on:
+  push:
+    branches: [hotfix/class-editor-review-20261025]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  publication:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: synthetic-test-only
+          POSTGRES_DB: annual_synthetic_test
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGDATABASE: annual_synthetic_test
+      PGUSER: postgres
+      PGPASSWORD: synthetic-test-only
+      ANNUAL_SQL_TEST_DATABASE: synthetic-only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: node tests/class-calendar-sql-check.mjs
+      - run: npm run check
+      - run: node tests/class-moment-schedule-check.mjs
+      - run: node tests/student-empty-content-check.mjs
+      - run: node tests/plan-history-check.mjs
+      - run: node tests/week-presentation-check.mjs
+      - run: npm run build

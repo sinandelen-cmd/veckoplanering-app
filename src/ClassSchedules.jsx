@@ -20,7 +20,7 @@ export function buildClassSchedule(plan, group) {
   const extraSlots = Array.isArray(group.extraSlots) ? group.extraSlots : []
   const cancelled = new Set(Array.isArray(group.cancelledDates) ? group.cancelledDates : [])
   const closures = [...(Array.isArray(plan.schoolClosures) ? plan.schoolClosures.filter(event => !event.classNames || event.classNames.includes(group.name)) : []), ...(Array.isArray(group.schoolClosures) ? group.schoolClosures : [])]
-  const weeks = (plan.sharedBaseContent === true ? plan.weeksData || [] : Array.isArray(group.weeksData) ? group.weeksData : plan.weeksData || []).filter(week => week?.weekStart && !week.hidden).slice().sort((a,b) => a.weekStart.localeCompare(b.weekStart))
+  const weeks = (plan.sharedBaseContent === true ? plan.weeksData || [] : Array.isArray(group.weeksData) ? group.weeksData : plan.weeksData || []).filter(week => week?.weekStart && (plan.sharedBaseContent === true || !week.hidden)).slice().sort((a,b) => a.weekStart.localeCompare(b.weekStart))
   if (!weeks.length) return []
   const firstDate = group.startDate || plan.startDate || ''
   const queue = weeks.flatMap(week => (Array.isArray(week.lessons) ? week.lessons : []).map((lesson, sourceIndex) => ({
@@ -326,3 +326,4 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", select
     </>}
   </section>
 }
+
