@@ -3982,3 +3982,14 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  .lesson .topic-name-display{font-size:14px;line-height:1.4}
  .teacher-chapter-group{padding:8px}
 }
+
+@media(max-width:640px){
+ .student-shell{width:100%!important;max-width:100%;margin:0!important;padding:0!important}
+ .student-shell .week-card{padding:8px}
+ .student-shell .lesson{margin-left:0;margin-right:0;padding:8px}
+ .student-shell .topic{padding:4px}
+ .lesson .topic-column{padding:4px!important}
+ .lesson .topic-cell{display:flex;flex-wrap:wrap;gap:3px;min-width:0}
+ .lesson .topic-cell input{flex:1 1 100%;width:100%;min-width:0}
+ .lesson .topic-cell button{margin-left:auto;flex:none}
+}
