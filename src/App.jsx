@@ -548,11 +548,20 @@ function sanitizeForStudents(plan) {
     subject: String(plan?.subject || ''),
     className: String(plan?.className || ''),
     startDate: String(plan?.startDate || ''),
-    classGroups: Array.isArray(plan?.classGroups) ? plan.classGroups.filter(g=>g && typeof g.name==='string').map(g=>({name:g.name.slice(0,80),startDate:String(g.startDate || plan.startDate || ''),days:Array.isArray(g.days)?g.days.filter(d=>['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].includes(d)):[],extraSlots:Array.isArray(g.extraSlots)?g.extraSlots.filter(item=>item && /^\d{4}-\d{2}-\d{2}$/.test(item.date || '')).map(item=>({date:item.date})):[],cancelledDates:Array.isArray(g.cancelledDates)?g.cancelledDates.filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)):[],lessonTimes:g.lessonTimes && typeof g.lessonTimes==='object'?g.lessonTimes:{},overrides:g.overrides && typeof g.overrides==='object'?g.overrides:{}})) : [],
+    classGroups: Array.isArray(plan?.classGroups) ? plan.classGroups.filter(g=>g && typeof g.name==='string').map(g=>({
+      name:g.name.slice(0,80), startDate:String(g.startDate || plan.startDate || ''),
+      days:Array.isArray(g.days)?g.days.filter(d=>['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].includes(d)):[],
+      momentsPerDay:Object.fromEntries(['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].map(day=>[day,Math.max(1,Math.min(20,Number(g.momentsPerDay?.[day])||1))])),
+      extraSlots:Array.isArray(g.extraSlots)?g.extraSlots.filter(item=>item && /^\d{4}-\d{2}-\d{2}$/.test(item.date || '')).map(item=>({date:item.date})):[],
+      cancelledDates:Array.isArray(g.cancelledDates)?g.cancelledDates.filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)):[],
+      schoolClosures:Array.isArray(g.schoolClosures)?g.schoolClosures.filter(item=>item && /^\d{4}-\d{2}-\d{2}$/.test(item.startDate || '') && /^\d{4}-\d{2}-\d{2}$/.test(item.endDate || item.startDate || '')).map(item=>({type:String(item.type||'Studiedag'),startDate:item.startDate,endDate:item.endDate||item.startDate,cancelledLessons:Math.max(1,Math.min(20,Number(item.cancelledLessons)||1)),cancelledFrom:item.cancelledFrom==='start'?'start':'end'})):[],
+      lessonTimes:g.lessonTimes && typeof g.lessonTimes==='object'?g.lessonTimes:{},
+      overrides:g.overrides && typeof g.overrides==='object'?g.overrides:{}
+    })) : [],
     schoolYear: String(plan?.schoolYear || ''),
     grade: String(plan?.grade || ''),
     schoolForm: String(plan?.schoolForm || ''),
-    schoolClosures: Array.isArray(plan?.schoolClosures) ? plan.schoolClosures.filter(item => validSchoolClosure(item) && sourceWeeks.some(week => { if (!week || week.hidden || !/^\d{4}-\d{2}-\d{2}$/.test(week.weekStart || '')) return false; const monday = new Date(week.weekStart + 'T12:00:00'); monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7)); const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6); return item.startDate <= toIsoDate(sunday) && item.endDate >= toIsoDate(monday) })).map(item => ({ name: item.name, startDate: item.startDate, endDate: item.endDate, verified: Boolean(item.verified) })) : [],
+    schoolClosures: Array.isArray(plan?.schoolClosures) ? plan.schoolClosures.filter(item => validSchoolClosure(item) && sourceWeeks.some(week => { if (!week || week.hidden || !/^\d{4}-\d{2}-\d{2}$/.test(week.weekStart || '')) return false; const monday = new Date(week.weekStart + 'T12:00:00'); monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7)); const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6); return item.startDate <= toIsoDate(sunday) && item.endDate >= toIsoDate(monday) })).map(item => ({ name: item.name, startDate: item.startDate, endDate: item.endDate, verified: Boolean(item.verified), ...(typeof item.type === 'string' ? {type:item.type.slice(0,80),cancelledLessons:Math.max(1,Math.min(20,Number(item.cancelledLessons)||1)),cancelledFrom:item.cancelledFrom==='start'?'start':'end'} : {}), ...(Array.isArray(item.classNames) ? {classNames:item.classNames.filter(name=>typeof name==='string').map(name=>name.slice(0,80))} : {}) })) : [],
     published: true,
     autoReleaseWeeks: plan?.autoReleaseWeeks === true,
     visibleWeekCount: Math.max(1, Math.min(12, Number(plan?.visibleWeekCount) || 2)),
@@ -575,7 +584,7 @@ function sanitizeForStudents(plan) {
         hideDate: /^\d{4}-\d{2}-\d{2}$/.test(week.hideDate || '') ? week.hideDate : '',
         title: typeof week.title === 'string' ? week.title : '',
         chapter: typeof week.chapter === 'string' ? week.chapter.slice(0, 160) : '',
-        lessons: Array.isArray(week.lessons) ? week.lessons.filter(lesson => lesson && typeof lesson === 'object').map(lesson => ({ name: String(lesson.name || ''), day: String(lesson.day || ''), topics: Array.isArray(lesson.topics) ? lesson.topics.filter(topic => topic && typeof topic === 'object').map(topic => ({ name: String(topic.name || ''), pagesLabel: String(topic.pagesLabel || '').slice(0, 60), assignmentsLabel: String(topic.assignmentsLabel || '').slice(0, 60), pages: Array.isArray(topic.pages) ? topic.pages.map(String) : [], assignments: Array.isArray(topic.assignments) ? topic.assignments.map(String) : [], links: Array.isArray(topic.links) ? topic.links.filter(link => link && resourceInfo(typeof link === 'string' ? link : link.url)).map(link => typeof link === 'string' ? { url: link.trim(), label: resourceInfo(link).label } : { url: String(link.url).trim(), label: String(link.label || resourceInfo(link.url).label) }) : [] })) : [] })) : [],
+        lessons: Array.isArray(week.lessons) ? week.lessons.filter(lesson => lesson && typeof lesson === 'object').map(lesson => ({ name: String(lesson.name || ''), day: String(lesson.day || ''), ...(lesson.assessment && typeof lesson.assessment === 'object' ? {assessment:{type:String(lesson.assessment.type||'Prov').slice(0,80),customType:String(lesson.assessment.customType||'').slice(0,80),title:String(lesson.assessment.title||'').slice(0,300),description:String(lesson.assessment.description||'').slice(0,5000)}} : {}), topics: Array.isArray(lesson.topics) ? lesson.topics.filter(topic => topic && typeof topic === 'object').map(topic => ({ name: String(topic.name || ''), pagesLabel: String(topic.pagesLabel || '').slice(0, 60), assignmentsLabel: String(topic.assignmentsLabel || '').slice(0, 60), hidePages: topic.hidePages === true, hideAssignments: topic.hideAssignments === true, pages: Array.isArray(topic.pages) ? topic.pages.map(String) : [], assignments: Array.isArray(topic.assignments) ? topic.assignments.map(String) : [], links: Array.isArray(topic.links) ? topic.links.filter(link => link && resourceInfo(typeof link === 'string' ? link : link.url)).map(link => typeof link === 'string' ? { url: link.trim(), label: resourceInfo(link).label } : { url: String(link.url).trim(), label: String(link.label || resourceInfo(link.url).label) }) : [] })) : [] })) : [],
         content: typeof week.content === 'string' ? week.content : '',
         pages: Array.isArray(week.pages) ? week.pages.filter(v => typeof v === 'string' && v.trim()).slice(0, 100) : [],
         assignments: Array.isArray(week.assignments) ? week.assignments.filter(v => typeof v === 'string' && v.trim()).slice(0, 100) : [],
@@ -789,7 +798,9 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   const classWeekTimeline = sourceClassWeeks.length ? (() => {
     const byDate = new Map(sourceClassWeeks.map(week=>[week.weekStart,week]))
     const timeline = []
-    for(let date=sourceClassWeeks[0].weekStart, end=sourceClassWeeks[sourceClassWeeks.length-1].weekStart;date<=end && timeline.length<110;date=addWeeks(date,1)){
+    const lastScheduledWeek = classLessons.length ? mondayOf(classLessons[classLessons.length - 1].date) : ''
+    const end = [sourceClassWeeks[sourceClassWeeks.length-1].weekStart,lastScheduledWeek].sort().at(-1)
+    for(let date=sourceClassWeeks[0].weekStart;date<=end && timeline.length<220;date=addWeeks(date,1)){
       timeline.push(byDate.get(date)||{weekStart:date,weekNumber:calendarWeekNumber(date),title:'Vecka '+calendarWeekNumber(date),lessons:[],content:''})
     }
     return timeline
@@ -872,7 +883,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
         </div>
         {!/^Vecka\s+\d+$/i.test(week.title || '') && week.title?.trim() && <h3>{week.title}</h3>}
         {(hasDisplayValue(week.content) || !hasStudentWeekContent(week)) && <div className="week-content">{hasDisplayValue(week.content) ? week.content : 'Ingen planering angiven ännu.'}</div>}
-        <ImportantDatesForWeek week={week} plan={plan} />
+        <ImportantDatesForWeek week={week} plan={{...plan,schoolClosures:[...(plan.schoolClosures||[]).filter(event=>!selectedClass || !event.classNames || event.classNames.includes(selectedClass.name)),...(selectedClass?.schoolClosures||[]).map(event=>({...event,name:event.type||'Ledig dag',endDate:event.endDate||event.startDate,verified:true}))]}} />
         <LessonDetails week={week} entryType={plan.entryType || 'lektion'} lessonDisplay="dag-och-lektion" />
         <WeekDetails week={week} />
       </article></div>)}
@@ -1993,7 +2004,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           const url = window.location.origin + '/elev/' + encodeURIComponent(slug)
           try { await navigator.clipboard.writeText(url); setStatus('Elevlänken för just denna planering har kopierats.') } catch { window.prompt('Kopiera elevlänken:', url) }
         }}>🔗 Kopiera elevlänk</button>
-
+        <button type="button" className="secondary" disabled={busy} onClick={() => void save(true)}>{busy ? 'Uppdaterar…' : '↥ Uppdatera elevvyn'}</button>
       </div>}
       {false && teacherTab === "new" && <div className="topbar-share-actions">
         <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
@@ -2026,7 +2037,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     </div>}
 
     
-    {selectedId && !calendarOpen && teacherTab === "arsplan" && <div id="kopplade-klasser"><ClassSchedules plan={{...plan,weeksData:weeks}} publicSlug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} /></div>}
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && <div id="kopplade-klasser"><ClassSchedules selectedClassName={editingClassView} onSelectClass={setEditingClassView} plan={{...plan,weeksData:weeks}} publicSlug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} /></div>}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && Array.isArray(plan.classGroups) && plan.classGroups.length>0 && <div className="student-preview-classbar editing-class-picker"><div className="student-preview-class-buttons"><button type="button" className={!editingClassView?'active':''} onClick={()=>setEditingClassView('')}>📘 Grundplanering</button>{plan.classGroups.map(g=><button type="button" key={g.name} className={editingClassView===g.name?'active':''} onClick={()=>setEditingClassView(g.name)}>🏫 {g.name}</button>)}</div><button type="button" className="student-class-copy-link" aria-label="Kopiera elevlänk för vald klass" title="Kopiera elevlänk för vald klass" disabled={!plan.published||!plan.publicSlug} onClick={async()=>{const url=window.location.origin+'/elev/'+encodeURIComponent(plan.publicSlug)+(editingClassView?'?klass='+encodeURIComponent(editingClassView):'');try{await navigator.clipboard.writeText(url);setStatus('Elevlänken för '+(editingClassView||'grundplaneringen')+' har kopierats.')}catch{window.prompt('Kopiera elevlänk',url)}}}>🔗</button></div>}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && plan.classGroups?.some(g=>g.name===editingClassView) && <section className="editing-selected-class-weekly"><StudentView key={editingClassView} plan={{...sanitizeForStudents({...plan,weeksData:weeks}),classGroups:[plan.classGroups.find(g=>g.name===editingClassView)],published:plan.published,publicSlug:plan.publicSlug}} preview initialClass={editingClassView} hideSelector /></section>}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline" style={editingClassView && plan.classGroups?.some(g=>g.name===editingClassView)?{display:"none"}:undefined}>

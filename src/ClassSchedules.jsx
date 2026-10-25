@@ -19,41 +19,103 @@ export function buildClassSchedule(plan, group) {
   const days = Array.isArray(group.days) ? group.days : []
   const extraSlots = Array.isArray(group.extraSlots) ? group.extraSlots : []
   const cancelled = new Set(Array.isArray(group.cancelledDates) ? group.cancelledDates : [])
-  const closures = Array.isArray(group.schoolClosures) ? group.schoolClosures : []
+  const closures = [...(Array.isArray(plan.schoolClosures) ? plan.schoolClosures.filter(event => !event.classNames || event.classNames.includes(group.name)) : []), ...(Array.isArray(group.schoolClosures) ? group.schoolClosures : [])]
+  const weeks = (plan.weeksData || []).filter(week => week?.weekStart && !week.hidden).slice().sort((a,b) => a.weekStart.localeCompare(b.weekStart))
+  if (!weeks.length) return []
   const firstDate = group.startDate || plan.startDate || ''
-  let lessonNumber = 0
-  // Varje klass använder innehållet från rätt grundvecka.
-  // Lektioner från en vecka flyttas aldrig automatiskt till nästa vecka.
-  return (plan.weeksData || []).flatMap(week => {
-    if (!week?.weekStart || week.hidden) return []
-    const source = Array.isArray(week.lessons) ? week.lessons : []
-    const mondayDate = monday(week.weekStart)
+  const queue = weeks.flatMap(week => (Array.isArray(week.lessons) ? week.lessons : []).map((lesson, sourceIndex) => ({
+    lesson, sourceIndex, sourceWeekStart: week.weekStart,
+    sourceWeekNumber: week.weekNumber, sourceWeekTitle: week.title
+  })))
+  // Each class advances through the same source lessons, but can split a
+  // source lesson's moments across multiple class meetings. Never merge
+  // moments from unrelated source lessons or drop their attached resources.
+  const scheduledQueue = queue
+  const results = []
+  let cursor = 0
+  let topicOffset = 0
+  // The saved source weeks may have gaps (e.g. week 42 followed by week 45).
+  // Lessons form an ordered queue, but teaching slots must follow real calendar
+  // weeks rather than jumping directly to the next saved source week.
+  const calendarStarts = weeks.map(week => iso(monday(week.weekStart))).sort()
+  const firstWeekStart = calendarStarts[0]
+  const lastWeekStart = calendarStarts[calendarStarts.length - 1]
+  const sourceWeekSpan = Math.round((monday(lastWeekStart) - monday(firstWeekStart)) / (7 * 86400000)) + 1
+  // Continue into future calendar weeks if closures delayed unfinished lessons.
+  // Bound the horizon so an unscheduled class cannot cause an infinite loop.
+  for (let weekOffset = 0; weekOffset < sourceWeekSpan + 104; weekOffset++) {
+    if (cursor >= scheduledQueue.length) break
+    const start = iso(nextDate(monday(firstWeekStart), weekOffset * 7))
     const slots = []
     for (let offset = 0; offset < 5; offset++) {
-      const date = nextDate(mondayDate, offset)
-      const dateKey = iso(date)
+      const dateKey = iso(nextDate(monday(start), offset))
       const day = DAYS[offset]
       if ((firstDate && dateKey < firstDate) || cancelled.has(dateKey)) continue
-      const closure = closures.find(event => dateKey >= event.startDate && dateKey <= (event.endDate || event.startDate))
-      if (closure && closure.type !== 'Halvdag') continue
-      const scheduledCount = days.filter(d => d === day).length + extraSlots.filter(slot => slot.date === dateKey).length
-      const count = closure?.type === 'Halvdag' ? Math.max(0,scheduledCount - Math.max(1,Number(closure.cancelledLessons)||1)) : scheduledCount
-      for (let n = 0; n < count; n++) slots.push({date:dateKey,day,slot:n+1,time:group.lessonTimes?.[day]?.[n] || ''})
+      const dayClosures = closures.filter(event => event?.startDate && dateKey >= event.startDate && dateKey <= (event.endDate || event.startDate))
+      if (dayClosures.some(event => event.type !== 'Halvdag')) continue
+      // momentsPerDay controls topics within ONE lesson, never the number of lessons.
+      // Otherwise a class with extra topics consumes multiple base lessons on the same day.
+      const regularCount = days.filter(value => value === day).length
+      const scheduledCount = regularCount + extraSlots.filter(slot => slot.date === dateKey).length
+      const cancelledCount = dayClosures.reduce((total, event) => total + (event.type === 'Halvdag' ? Math.max(1, Number(event.cancelledLessons) || 1) : 0), 0)
+      // Keep the original slot number and time when the first lessons of a
+      // half-day are cancelled; otherwise the remaining lesson moves to the wrong time.
+      const cancelFromStart = dayClosures.some(event => event.type === 'Halvdag' && event.cancelledFrom === 'start')
+      const firstRemaining = cancelFromStart ? Math.min(scheduledCount, cancelledCount) : 0
+      const lastRemaining = cancelFromStart ? scheduledCount : Math.max(0, scheduledCount - cancelledCount)
+      for (let n = firstRemaining; n < lastRemaining; n++) slots.push({date: dateKey, day, slot: n + 1, time: group.lessonTimes?.[day]?.[n] || ''})
     }
-    return slots.map((slot, index) => {
-      const lesson = source[index] || {name:'Lektion '+(index+1),topics:[]}
-      lessonNumber++
-      return {...slot,lesson,weekNumber:week.weekNumber,weekTitle:week.title,weekStart:week.weekStart,index,lessonNumber,override:group.overrides?.[String(lessonNumber-1)] || null}
-    })
-  })
+    for (const slot of slots) {
+      const source = scheduledQueue[cursor]
+      if (!source) break
+      const lessonNumber = results.length + 1
+      const requestedMoments = Math.max(1, Math.min(20, Number(group.momentsPerDay?.[slot.day]) || 1))
+      const selectedTopics = []
+      const sourceTopicOffset = topicOffset
+      // A class meeting consumes the next N moments across source lesson
+      // boundaries. Each topic object (pages, assignments, etc.) is preserved.
+      // Empty source lessons still represent one meeting, so they cannot
+      // silently disappear or stall the queue.
+      while (cursor < scheduledQueue.length && selectedTopics.length < requestedMoments) {
+        const current = scheduledQueue[cursor]
+        const topics = Array.isArray(current.lesson?.topics) ? current.lesson.topics : []
+        if (!topics.length) {
+          if (!selectedTopics.length) {
+            cursor++
+            break
+          }
+          break
+        }
+        if (current.lesson?.assessment && selectedTopics.length > 0 && current !== source) break
+        const remaining = requestedMoments - selectedTopics.length
+        selectedTopics.push(...topics.slice(topicOffset, topicOffset + remaining))
+        topicOffset += Math.min(remaining, topics.length - topicOffset)
+        if (topicOffset >= topics.length) {
+          cursor++
+          topicOffset = 0
+          if (current.lesson?.assessment) break
+        }
+      }
+      const scheduledLesson = {...source.lesson, topics: selectedTopics}
+      if (sourceTopicOffset > 0) delete scheduledLesson.assessment
+      results.push({...slot, lesson: scheduledLesson, weekNumber: source.sourceWeekNumber,
+        weekTitle: source.sourceWeekTitle, weekStart: start, sourceWeekStart: source.sourceWeekStart,
+        index: source.sourceIndex, lessonNumber,
+        override: group.overrides?.[String(lessonNumber - 1)] || null})
+    }
+  }
+  return results
 }
 
-export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
+export default function ClassSchedules({ plan, onChange, publicSlug = "", selectedClassName = "", onSelectClass }) {
   const groups = Array.isArray(plan.classGroups) ? plan.classGroups : []
   const [name, setName] = React.useState('')
   const [addingClass, setAddingClass] = React.useState(false)
   const [days, setDays] = React.useState([])
-  const [selected, setSelected] = React.useState(0)
+  const [localSelected, setLocalSelected] = React.useState(0)
+  const namedSelection = groups.findIndex(group => group.name === selectedClassName)
+  const selected = namedSelection >= 0 ? namedSelection : Math.min(localSelected, Math.max(0, groups.length - 1))
+  const setSelected = index => { setLocalSelected(index); onSelectClass?.(groups[index]?.name || '') }
   const [showAll, setShowAll] = React.useState(false)
   const [expandedWeek, setExpandedWeek] = React.useState(null)
   const [showMatrix, setShowMatrix] = React.useState(true)
@@ -86,7 +148,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
   const addClass = () => {
     if (!name.trim() || groups.some(g => g.name.toLocaleLowerCase('sv') === name.trim().toLocaleLowerCase('sv'))) return
     onChange({ ...plan, classGroups: [...groups, { name: name.trim(), days: [...days], startDate: plan.startDate, cancelledDates: [], overrides: {} }] })
-    setSelected(groups.length); setName('')
+    setLocalSelected(groups.length); onSelectClass?.(name.trim()); setName('')
   }
   const grouped = schedule.reduce((result, item) => {
     const weekStart = iso(monday(item.date))
@@ -103,8 +165,8 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
     <div className="class-schedule-intro"><div><h2>Klasser och schema</h2><p className="muted">Samma planering för flera klasser – varje klass följer sitt eget schema.</p></div><details className="class-schedule-help"><summary>ⓘ Så fungerar det</summary><p>Skriv lektionsinnehållet en gång. Lägg sedan till dina klasser och välj deras lektionsdagar. Alla klasser följer samma innehåll i rätt ordning, men i sin egen takt.</p><p>Exempel: 8A har lektioner måndag, onsdag och fredag medan 8B har tisdag och torsdag.</p></details></div>
     <div className="class-mini-row">
       <strong className="class-mini-label">Klasser</strong>
-      <div className="class-mini-chips">{groups.map((g,i)=><button type="button" key={i} className={'class-mini-chip'+(selected===i?' active':'')} aria-pressed={selected===i} onClick={()=>{setSelected(i);setCompare(false);setShowClassDetails(false)}}>{g.name}</button>)}
-        {groups.length>0 && <button type="button" className="class-mini-add" onClick={()=>{if(!window.confirm('Ta bort klassen '+groups[selected]?.name+'?'))return;onChange({...plan,classGroups:groups.filter((_,i)=>i!==selected)});setSelected(0)}}>− Ta bort klass</button>}
+      <div className="class-mini-chips">{groups.map((g,i)=><button type="button" key={i} className={'class-mini-chip'+(selected===i && (!onSelectClass || selectedClassName===g.name)?' active':'')} aria-pressed={selected===i && (!onSelectClass || selectedClassName===g.name)} onClick={()=>{setSelected(i);setCompare(false);setShowClassDetails(false)}}>{g.name}</button>)}
+        {groups.length>0 && <button type="button" className="class-mini-add" onClick={()=>{if(!window.confirm('Ta bort klassen '+groups[selected]?.name+'?'))return;onChange({...plan,classGroups:groups.filter((_,i)=>i!==selected)});setLocalSelected(0);onSelectClass?.(groups.filter((_,i)=>i!==selected)[0]?.name || '')}}>− Ta bort klass</button>}
         <button type="button" className="class-mini-add" onClick={()=>setAddingClass(v=>!v)} aria-expanded={addingClass}>+ Klass</button>
       </div>
       <button type="button" className="class-mini-schema" disabled={!groups.length} aria-expanded={showClassMenu} onClick={()=>{setShowClassMenu(v=>!v);setCompare(false);setShowClassDetails(false)}}>▦ Schema</button>

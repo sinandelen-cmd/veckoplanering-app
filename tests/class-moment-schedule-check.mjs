@@ -1,0 +1,71 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+const source = fs.readFileSync(new URL('../src/ClassSchedules.jsx',import.meta.url),'utf8')
+const prefix = source.slice(source.indexOf('const DAYS'),source.indexOf('export default function ClassSchedules')).replace('export function buildClassSchedule','function buildClassSchedule')
+const build = new Function(prefix+'; return buildClassSchedule')()
+const app = fs.readFileSync(new URL('../src/App.jsx',import.meta.url),'utf8')
+const extract = name => {
+ const start=app.indexOf('function '+name+'(')
+ assert.ok(start>=0,name+' must exist')
+ const next=app.slice(start+1).search(/\n(?:function |export default |const |class )/)
+ return next<0?app.slice(start):app.slice(start,start+1+next)
+}
+const sanitize = new Function(['toIsoDate','validSchoolClosure','resourceInfo','sanitizeForStudents'].map(extract).join('\n')+'; return sanitizeForStudents')()
+const DAYS=['Måndag','Tisdag','Onsdag','Torsdag','Fredag']
+const freeze = value => {if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value)}return value}
+const topic = index => ({name:'Moment '+index,pages:[String(index)],assignments:['Uppgift '+index],links:[{url:'https://example.org/'+index+'.pdf',label:'Resurs '+index}]})
+const firstWeek = {weekStart:'2026-10-12',weekNumber:42,lessons:Array.from({length:5},(_,i)=>({name:'Lektion '+(i+1),day:DAYS[i],topics:[topic(i+1)]}))}
+const nextWeek = {weekStart:'2026-11-02',weekNumber:45,lessons:Array.from({length:5},(_,i)=>({name:'Lektion '+(i+1),topics:[topic(i+6)]}))}
+const group = {name:'8E',startDate:'2026-10-12',days:DAYS,momentsPerDay:{Måndag:4,Tisdag:1,Onsdag:2,Torsdag:4,Fredag:1},overrides:{},schoolClosures:[]}
+const plan=freeze({title:'Syntetisk plan',startDate:'2026-10-12',entryType:'lektion',weeksData:[firstWeek,nextWeek],classGroups:[group],teacherNotes:'Får aldrig publiceras'})
+const before=JSON.stringify(plan)
+const output=build(plan,group)
+assert.deepEqual(output.map(item=>item.lesson.topics.map(t=>t.name)),[
+ ['Moment 1','Moment 2','Moment 3','Moment 4'],['Moment 5'],['Moment 6','Moment 7'],['Moment 8','Moment 9','Moment 10']
+])
+assert.deepEqual(output.map(item=>item.date),['2026-10-12','2026-10-13','2026-10-14','2026-10-15'])
+assert.deepEqual(output.flatMap(item=>item.lesson.topics),[...firstWeek.lessons,...nextWeek.lessons].flatMap(l=>l.topics),'Resources and moment order must survive allocation')
+assert.equal(JSON.stringify(plan),before,'Computing a class schedule must not mutate source data')
+
+const slow={...group,name:'Slow',days:['Måndag'],momentsPerDay:{Måndag:1}}
+const slowOutput=build(plan,slow)
+assert.equal(slowOutput.length,10)
+assert.equal(slowOutput.at(-1).date,'2026-12-14','Unfinished moments must continue beyond the last source week')
+assert.deepEqual(slowOutput.flatMap(item=>item.lesson.topics).map(t=>t.name),output.flatMap(item=>item.lesson.topics).map(t=>t.name))
+const cancelled=build(plan,{...group,cancelledDates:['2026-10-12']})
+assert.equal(cancelled[0].date,'2026-10-13')
+assert.equal(cancelled[0].lesson.topics[0].name,'Moment 1')
+assert.equal(cancelled.flatMap(item=>item.lesson.topics).length,10)
+const closurePlan={...plan,schoolClosures:[{name:'Studiedag',type:'Studiedag',startDate:'2026-10-12',endDate:'2026-10-12',classNames:['8E']}]}
+assert.equal(build(closurePlan,group)[0].date,'2026-10-13')
+assert.equal(build(closurePlan,{...group,name:'Other'})[0].date,'2026-10-12')
+const halfday=build(plan,{...group,extraSlots:[{date:'2026-10-12'}],lessonTimes:{Måndag:['08:00','13:00']},schoolClosures:[{type:'Halvdag',startDate:'2026-10-12',endDate:'2026-10-12',cancelledFrom:'start',cancelledLessons:1}]})
+assert.equal(halfday[0].slot,2)
+assert.equal(halfday[0].time,'13:00')
+assert.equal(halfday.flatMap(item=>item.lesson.topics).length,10)
+assert.equal(build(plan,{...group,days:[]}).length,0)
+assert.equal(build({...plan,weeksData:[]},group).length,0)
+assert.equal(build({...plan,weeksData:[{...firstWeek,hidden:true},nextWeek]},group).flatMap(item=>item.lesson.topics).length,5)
+
+const assessmentPlan={...plan,weeksData:[{...firstWeek,lessons:[{topics:[topic(1)]},{assessment:{type:'Prov',title:'Kapitelprov'},topics:[]},{topics:[topic(2)]}]}]}
+const assessmentOutput=build(assessmentPlan,group)
+assert.equal(assessmentOutput.length,3)
+assert.equal(assessmentOutput[1].lesson.assessment.title,'Kapitelprov')
+assert.equal(assessmentOutput.flatMap(item=>item.lesson.topics).length,2)
+const splitAssessment=build({...plan,weeksData:[{...firstWeek,lessons:[{assessment:{type:'Prov',title:'Ett prov'},topics:[topic(1),topic(2),topic(3)]}]}]},{...group,momentsPerDay:{Måndag:2,Tisdag:2}})
+assert.equal(splitAssessment.filter(item=>item.lesson.assessment).length,1)
+assert.equal(splitAssessment.flatMap(item=>item.lesson.topics).length,3)
+
+const student=sanitize(plan)
+assert.equal(student.classGroups[0].momentsPerDay.Måndag,4)
+assert.equal(student.classGroups[0].momentsPerDay.Onsdag,2)
+assert.ok(!Object.hasOwn(student,'teacherNotes'))
+assert.deepEqual(build(student,student.classGroups[0]).flatMap(item=>item.lesson.topics).map(t=>t.name),output.flatMap(item=>item.lesson.topics).map(t=>t.name),'Published and teacher class schedules must agree')
+const studentClosures=sanitize({...closurePlan,classGroups:[{...group,schoolClosures:[{type:'Halvdag',startDate:'2026-10-13',endDate:'2026-10-13',cancelledLessons:1}]}]})
+assert.deepEqual(studentClosures.schoolClosures[0].classNames,['8E'])
+assert.equal(studentClosures.classGroups[0].schoolClosures[0].type,'Halvdag')
+const studentAssessments=sanitize(assessmentPlan)
+assert.equal(studentAssessments.weeksData[0].lessons[1].assessment.title,'Kapitelprov')
+assert.equal(build(studentAssessments,studentAssessments.classGroups[0]).filter(item=>item.lesson.assessment).length,1)
+assert.equal(JSON.stringify(plan),before)
+console.log('PASS: 8E 4/1/2/4/1 allocation, gaps, slow classes, closures, assessments, public serialization, resources and immutable source')

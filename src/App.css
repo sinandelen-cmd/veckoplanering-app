@@ -3897,3 +3897,12 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
   .student-screen-view .student-title { margin:8px 0; }
   .student-screen-view .chapter-heading { margin-top:10px; }
 }
+
+/* Samma fulla innehållsbredd i den inbäddade klassvyn som i elevlänken. */
+.planning-layout .student-shell .lesson .topic-grid-readonly[data-detail-count="0"] { grid-template-columns:minmax(0,1fr); }
+.planning-layout .student-shell .lesson .topic-grid-readonly[data-detail-count="1"] { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); }
+.planning-layout .student-shell .lesson .topic-grid-readonly[data-detail-count="2"] { grid-template-columns:minmax(0,1.3fr) repeat(2,minmax(0,1fr)); }
+@media(max-width:640px) {
+  .planning-layout .student-shell .lesson .topic-grid-readonly[data-detail-count="1"] { grid-template-columns:minmax(0,1fr); }
+  .planning-layout .student-shell .lesson .topic-grid-readonly[data-detail-count="2"] { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}

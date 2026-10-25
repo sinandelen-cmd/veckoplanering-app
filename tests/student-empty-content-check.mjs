@@ -12,13 +12,26 @@ const extract = name => {
   const next = source.slice(start + 1).search(/\n(?:function |export default )/)
   return next < 0 ? source.slice(start) : source.slice(start, start + 1 + next)
 }
-const functions = ['resourceInfo', 'hasDisplayValue', 'hasStudentTopicContent', 'hasStudentLessonContent', 'hasStudentWeekContent', 'WeekDetails', 'LessonDetails'].map(extract).join('\n')
+const functions = ['resourceInfo', 'hasDisplayValue', 'hasStudentTopicContent', 'hasStudentLessonContent', 'hasStudentWeekContent', 'WeekDetails', 'LessonDetails', 'toIsoDate', 'mondayOf', 'addWeeks', 'StudentView'].map(extract).join('\n')
 const fixture = `import assert from 'node:assert/strict'
-import React from 'react'
+import React, {useState,useEffect} from 'react'
+import ClassSchedules, {buildClassSchedule} from '../src/ClassSchedules.jsx'
 import { renderToStaticMarkup } from 'react-dom/server'
 const WEEKDAYS = ['Måndag','Tisdag','Onsdag','Torsdag','Fredag']
 const DAY_COLORS = ['#fff']
 const lessonDayDate = () => '12 okt. 2026'
+const flushSync = fn => fn()
+const calendarWeekNumber = () => 42
+const groupStudentWeeksForPrint = weeks => [{weeks}]
+const studentWeekPageLabel = () => ''
+const planThemeStyle = () => ({})
+const chapterTone = () => 1
+const studentWeekStyle = () => ({})
+const weekMonthLabel = () => ''
+const studentWeekDateRange = () => ''
+const studentMonthInfo = () => null
+const ImportantDatesForWeek = () => null
+globalThis.window = {location:{search:''}}
 ${functions}
 
 const render = (component, props) => renderToStaticMarkup(React.createElement(component, props))
@@ -90,6 +103,25 @@ assert.equal(hasStudentWeekContent({content:'  ',pages:[''],assignments:[],links
 assert.equal(hasStudentWeekContent({content:'Information till klassen'}),true)
 assert.equal(hasStudentWeekContent({pages:['0']}),true)
 assert.equal(hasStudentWeekContent({links:['https://example.org/film']}),true)
+
+const schedulePlan = {title:'Syntetisk plan',startDate:'2026-10-12',entryType:'lektion',weeksData:[{weekStart:'2026-10-12',weekNumber:42,lessons:Array.from({length:5},(_,i)=>({name:'Lektion '+(i+1),topics:[topic({name:'Innehåll '+(i+1)})]}))}],classGroups:[{name:'8A',days:['Måndag','Tisdag','Onsdag','Torsdag','Fredag']},{name:'8E',days:['Måndag','Tisdag','Onsdag','Torsdag','Fredag'],momentsPerDay:{Måndag:4,Tisdag:1,Onsdag:2,Torsdag:4,Fredag:1}}]}
+const classView = render(StudentView,{plan:schedulePlan,preview:true,initialClass:'8E',hideSelector:true})
+const classLessons = [...classView.matchAll(/<section class="lesson">([\\s\\S]*?)<\\/section>/g)].map(match=>match[1])
+assert.equal(classLessons.length,2,'Five real moments fit into Monday and Tuesday')
+assert.equal((classLessons[0].match(/class="topic"/g)||[]).length,4)
+assert.equal((classLessons[1].match(/class="topic"/g)||[]).length,1)
+assert.match(classLessons[0],/Innehåll 4/)
+assert.match(classLessons[1],/Innehåll 5/)
+const slowView = render(StudentView,{plan:{...schedulePlan,classGroups:[{name:'Slow',days:['Måndag']}]},preview:true,initialClass:'Slow',hideSelector:true})
+assert.equal((slowView.match(/class="topic"/g)||[]).length,5,'Delayed moments beyond the source week stay visible')
+assert.match(slowView,/student-week-2026-11-09/)
+const selectedE = render(ClassSchedules,{plan:schedulePlan,onChange:()=>{},selectedClassName:'8E',onSelectClass:()=>{}})
+assert.match(selectedE, /class-mini-chip active" aria-pressed="true"[^>]*>8E</)
+assert.doesNotMatch(selectedE, /class-mini-chip active" aria-pressed="true"[^>]*>8A</)
+const selectedA = render(ClassSchedules,{plan:schedulePlan,onChange:()=>{},selectedClassName:'8A',onSelectClass:()=>{}})
+assert.match(selectedA, /class-mini-chip active" aria-pressed="true"[^>]*>8A</)
+console.log('PASS: actual StudentView moment allocation, delayed-week visibility and controlled teacher class selection')
+
 console.log('PASS: actual lesson/week renderers, empty fields, filled data, assessment-only lessons, links, editor controls and immutable teacher data')
 `
 const directory = fs.mkdtempSync(path.join(process.cwd(), '.student-readonly-test-'))
