@@ -1526,8 +1526,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   }
 
   async function save(publish, automatic = false) {
-    if (busy) return
     let releaseWarning = ''
+    if (busy) return
     if (!String(plan.title || '').trim()) return setStatus('Skriv ett namn på årsplaneringen.')
     if (!String(plan.subject || '').trim()) return setStatus('Skriv ämne.')
     if ((plan.schoolClosures || []).some(item => !validSchoolClosure(item))) return setStatus('Rätta namn och datum för lov/studiedagar innan du sparar eller publicerar.')
