@@ -63,4 +63,12 @@ for(const scope of ['', 'TEST']){
  cases++
 }
 
-console.log(`PASS: ${cases} SQL/JavaScript calendar parity cases, resource retention, assessment boundaries, expiry, pins and public data minimization`)
+{
+ const plan=structuredClone(base)
+ plan.weeksData.forEach((w,i)=>{w.chapter=i===0?'Tal':i===2?'Geometri':''})
+ const group={name:'SLOW',days:['Måndag'],momentsPerDay:{Måndag:2}}
+ const actual=JSON.parse(sql(`select public.annual_class_calendar(${literal(plan)},${literal(group)})`)).filter(w=>w.lessons.length).map(w=>w.chapter)
+ const expected=build(plan,group).map(item=>item.chapter)
+ assert.deepEqual(actual,expected,'Chapter follows the actual source moments, including weeks after the base calendar')
+}
+console.log(`PASS: ${cases} SQL/JavaScript calendar parity cases, resource retention, chapters, assessment boundaries, expiry, pins and public data minimization`)

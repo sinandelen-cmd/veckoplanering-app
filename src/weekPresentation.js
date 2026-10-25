@@ -16,7 +16,9 @@ export function selectStudentWeeks(weeks,plan={},now=Date.now(),preview=false){
 }
 export function teacherWeekGroups(weeks,now=Date.now()){
  const current=mondayDate(stockholmDate(now)),groups=new Map()
- const items=weeks.map((week,index)=>({week,index,past:week.weekStart<current}))
+ const chapters=new Map();let previousChapter=''
+ for(const week of [...weeks].sort((a,b)=>a.weekStart.localeCompare(b.weekStart))){if(week.chapter?.trim())previousChapter=week.chapter.trim();chapters.set(week.weekStart,previousChapter)}
+ const items=weeks.map((week,index)=>({week:{...week,chapter:chapters.get(week.weekStart)||''},index,past:week.weekStart<current}))
  .sort((a,b)=>Number(a.past)-Number(b.past)||a.week.weekStart.localeCompare(b.week.weekStart))
  for(const item of items){const chapter=String(item.week.chapter||'Övriga veckor').trim();if(!groups.has(chapter))groups.set(chapter,{chapter,current:[],past:[]});groups.get(chapter)[item.past?'past':'current'].push(item)}
  for(const group of groups.values())group.past.reverse()

@@ -27,7 +27,7 @@ export function buildClassSchedule(plan, group) {
   const lastEvent = events.map(e=>e.weekStart).filter(Boolean).sort().at(-1) || ''
   const queue = weeks.filter(w=>!w.calendarEventWeek).flatMap(week => (Array.isArray(week.lessons) ? week.lessons : []).map((lesson, sourceIndex) => ({
     lesson, sourceIndex, sourceWeekStart: week.weekStart,
-    sourceWeekNumber: week.weekNumber, sourceWeekTitle: week.title
+    sourceWeekNumber: week.weekNumber, sourceWeekTitle: week.title, sourceChapter:week.chapter || weeks.filter(w=>w.weekStart<=week.weekStart && w.chapter?.trim()).at(-1)?.chapter || ''
   })))
   // Each class advances through the same source lessons, but can split a
   // source lesson's moments across class meetings while keeping each
@@ -89,6 +89,7 @@ export function buildClassSchedule(plan, group) {
       const requestedMoments = Math.max(1, Math.min(20, Number(group.momentsPerLesson?.[String(lessonNumber-1)] ?? group.momentsPerDay?.[slot.day]) || 1))
       const selectedTopics = []
       const sourceTopics = []
+      const sourceChapters = new Set()
       const sourceTopicOffset = topicOffset
       // A class meeting consumes the next N moments across source lesson
       // boundaries. Each topic object (pages, assignments, etc.) is preserved.
@@ -107,6 +108,7 @@ export function buildClassSchedule(plan, group) {
         if (current.lesson?.assessment && selectedTopics.length > 0 && current !== source) break
         const remaining = requestedMoments - selectedTopics.length
         const selected = topics.slice(topicOffset, topicOffset + remaining)
+        if(selected.length && current.sourceChapter)sourceChapters.add(current.sourceChapter)
         sourceTopics.push(...selected.map((_,offset)=>({weekStart:current.sourceWeekStart,lessonIndex:current.sourceIndex,topicIndex:topicOffset+offset})))
         selectedTopics.push(...selected)
         topicOffset += Math.min(remaining, topics.length - topicOffset)
@@ -120,7 +122,7 @@ export function buildClassSchedule(plan, group) {
       if (sourceTopicOffset > 0) delete scheduledLesson.assessment
       results.push({...slot, lesson: scheduledLesson, weekNumber: source.sourceWeekNumber,
         weekTitle: source.sourceWeekTitle, weekStart: start, sourceWeekStart: source.sourceWeekStart,
-        index: source.sourceIndex, sourceTopics, lessonNumber,
+        index: source.sourceIndex, sourceTopics, chapter:[...sourceChapters].join(' / '), lessonNumber,
         override: plan.sharedBaseContent === true ? null : group.overrides?.[String(lessonNumber - 1)] || null})
     }
   }

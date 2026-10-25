@@ -19,19 +19,20 @@ declare
   regular_count integer; slot_count integer; cancelled_count integer;
   first_slot integer; last_slot integer; slot_index integer;
   requested integer; available integer; take_count integer; i integer;
-  lesson_number integer := 0; week_number integer; week_lessons jsonb;
+  lesson_number integer := 0; week_number integer; week_lessons jsonb; source_chapter text := ''; week_chapters jsonb; chapter_name text;
   blocked boolean; cancel_start boolean;
 begin
   if jsonb_typeof(source_weeks) <> 'array' then return '[]'::jsonb; end if;
   for w in select value from jsonb_array_elements(source_weeks) where value->>'weekStart' ~ '^\d{4}-\d{2}-\d{2}$' order by value->>'weekStart' loop
     week_date := date_trunc('week',(w->>'weekStart')::date)::date;
     first_week := least(first_week,week_date); last_week := greatest(last_week,week_date);
+    if nullif(btrim(w->>'chapter'),'') is not null then source_chapter := w->>'chapter'; end if;
     if coalesce((w->>'calendarEventWeek')::boolean,false) then
       events := events || jsonb_build_array(jsonb_build_object('weekStart',w->>'weekStart','type',coalesce(w->>'eventType','Annat'),'title',coalesce(w->>'eventTitle',w->>'eventType','Händelse'),'days',coalesce(w->'eventDays','["Måndag","Tisdag","Onsdag","Torsdag","Fredag"]'::jsonb),'lessons',coalesce(w->'lessons','[]'::jsonb)));
       continue;
     end if;
     for l in select value from jsonb_array_elements(coalesce(w->'lessons','[]'::jsonb)) loop
-      queue := queue || jsonb_build_array(jsonb_build_object('lesson',l,'chapter',coalesce(w->>'chapter','')));
+      queue := queue || jsonb_build_array(jsonb_build_object('lesson',l,'chapter',source_chapter));
       queue_units := queue_units + greatest(1,jsonb_array_length(coalesce(l->'topics','[]'::jsonb)));
     end loop;
   end loop;
@@ -53,7 +54,7 @@ begin
   for week_offset in 0..horizon-1 loop
     week_date := first_week + week_offset*7;
     exit when cursor_index >= jsonb_array_length(queue) and (last_event is null or week_date>last_event);
-    week_lessons := '[]'::jsonb;
+    week_lessons := '[]'::jsonb; week_chapters := '[]'::jsonb;
     template := null;
     select value into template from jsonb_array_elements(source_weeks) where value->>'weekStart'=week_date::text limit 1;
     for day_offset in 0..4 loop
@@ -102,6 +103,8 @@ begin
             exit;
           end if;
           if current_lesson->'assessment' is not null and jsonb_array_length(selected)>0 and current_lesson is distinct from s->'lesson' then exit; end if;
+          chapter_name := queue->cursor_index->>'chapter';
+          if nullif(chapter_name,'') is not null and not (week_chapters ? chapter_name) then week_chapters := week_chapters || jsonb_build_array(chapter_name); end if;
           available := jsonb_array_length(topics)-topic_offset;
           take_count := least(requested-jsonb_array_length(selected),available);
           if take_count>0 then
@@ -119,7 +122,7 @@ begin
       end loop;
     end loop;
     week_number := extract(week from week_date)::integer;
-    results := results || jsonb_build_array(coalesce(template,'{}'::jsonb) || jsonb_build_object('weekStart',week_date::text,'weekNumber',week_number,'title',coalesce(template->>'title','Vecka '||week_number),'chapter',coalesce(template->>'chapter',''),'lessons',week_lessons,'content','','items','[]'::jsonb,'pages','[]'::jsonb,'assignments','[]'::jsonb,'links','[]'::jsonb));
+    results := results || jsonb_build_array(coalesce(template,'{}'::jsonb) || jsonb_build_object('weekStart',week_date::text,'weekNumber',week_number,'title',coalesce(template->>'title','Vecka '||week_number),'chapter',coalesce((select string_agg(value,' / ') from jsonb_array_elements_text(week_chapters)),template->>'chapter',''),'lessons',week_lessons,'content','','items','[]'::jsonb,'pages','[]'::jsonb,'assignments','[]'::jsonb,'links','[]'::jsonb));
   end loop;
   return results;
 end;

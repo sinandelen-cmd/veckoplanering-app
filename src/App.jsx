@@ -852,7 +852,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
         if(existingTopics.length < requestedMoments) lesson.topics=[...existingTopics,...Array.from({length:requestedMoments-existingTopics.length},()=>({name:'',pages:[],assignments:[],links:[],classMomentPlaceholder:true}))]
         return lesson
       })
-      return {...week,content:'',items:[],pages:[],assignments:[],links:[],lessons}
+      return {...week,chapter:[...new Set(scheduled.map(item=>item.chapter).filter(Boolean))].join(' / ') || week.chapter || '',content:'',items:[],pages:[],assignments:[],links:[],lessons}
     }) : []
 
   useEffect(() => {
