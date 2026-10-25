@@ -317,7 +317,10 @@ assert.doesNotMatch(sql, /create or replace function public\.claim_plan_share_in
 
 // Elevvyn ska vara en sammanhängande läsvy utan utskriftsknappar eller sidbläddring.
 assert.match(app, /function ImportantDatesForWeek/)
-assert.match(app, /<ImportantDatesForWeek week=\{week\} plan=\{plan\}/)
+// Important dates must use the selected class's closure scope.
+assert.match(app, /<ImportantDatesForWeek week=\{week\} plan=\{\{\.\.\.plan,schoolClosures:/)
+assert.ok(app.includes('event.classNames.includes(selectedClass.name)'))
+assert.ok(app.includes('selectedClass?.schoolClosures||[]'))
 assert.match(app, /schoolClosures: Array\.isArray\(plan\?\.schoolClosures\)/)
 assert.doesNotMatch(app, /<nav className="student-pager"/)
 assert.doesNotMatch(app, /<div className="a4-demo-controls">/)
