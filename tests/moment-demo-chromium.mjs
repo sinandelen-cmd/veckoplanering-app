@@ -28,15 +28,16 @@ try{
    assert.equal(await page.getByRole('button',{name:label,exact:true}).getAttribute('aria-pressed'),'true')
    console.log('PASS demo Chromium '+label+': '+expected.join(',')+' moments; all 12 in order')
  }
+ await verify('Grundplanering',Array(12).fill(1))
  await verify('Test 1',Array(12).fill(1))
  await verify('Test 2',Array(6).fill(2))
  await verify('Test 3',Array(4).fill(3))
  await verify('Test 4',Array(3).fill(4))
  await verify('Test Mix',[1,2,3,4,1,1])
- // Mobile touch interaction: all five class buttons remain reachable without
+ // Mobile touch interaction: all six planning/class buttons remain reachable without
  // losing any source moment or creating horizontal document overflow.
  await page.setViewportSize({width:390,height:844})
- for(const label of ['Test 1','Test 2','Test 3','Test 4','Test Mix']){
+ for(const label of ['Grundplanering','Test 1','Test 2','Test 3','Test 4','Test Mix']){
    await page.getByRole('button',{name:label,exact:true}).tap()
    assert.equal(await page.getByRole('button',{name:label,exact:true}).getAttribute('aria-pressed'),'true')
    assert.equal(await page.getByTestId('moment-demo-lessons').locator('div > strong').count(),12)
@@ -44,5 +45,5 @@ try{
    assert.equal(overflow,false,'mobile horizontal overflow in '+label)
  }
  assert.deepEqual(errors,[])
- console.log('PASS demo mobile Chromium: five class tabs, 12 moments and no horizontal overflow')
+ console.log('PASS demo mobile Chromium: Grundplanering and five class tabs, 12 moments and no horizontal overflow')
 }finally{await browser.close()}
