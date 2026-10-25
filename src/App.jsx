@@ -1327,6 +1327,13 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     setPlan(JSON.parse(h.current))
     setHistoryVersion(v => v + 1)
   }
+  const resetPlanHistory = nextPlan => {
+    // Opening a different saved plan must never expose undo snapshots
+    // belonging to the previously selected plan.
+    historyRef.current = {past: [], current: JSON.stringify(nextPlan), future: []}
+    historySkipRef.current = false
+    setHistoryVersion(v => v + 1)
+  }
   const savedPlanRef = useRef(JSON.stringify(plan))
   const [, setSavedRevision] = useState(0)
   const isDirty = JSON.stringify(plan) !== savedPlanRef.current
@@ -1659,7 +1666,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(row.id)) } catch { /* Lagring kan vara blockerad */ }
     setOpenedFromLibrary(teacherTab === 'bibliotek')
     const openedPlan = planFromRow(row)
-    setSimpleSetup(false); setSelectedId(row.id); savedPlanRef.current = JSON.stringify(openedPlan); setSavedRevision(revision => revision + 1); setPlan(openedPlan); setTeacherTab('arsplan'); setCalendarOpen(true); setPreviewStudents(false); setA4Demo(false); setStatus(className ? `Klassen ${className} tillhör grundplaneringen. Öppna klassernas schema nedan.` : 'Planeringen är öppnad i kalendervyn.'); if (className) { setCalendarOpen(false); setTimeout(()=>document.querySelector('[aria-label="Kopplade klasser"]')?.scrollIntoView({behavior:'smooth',block:'start'}),150) } else window.scrollTo({ top: 0, behavior: 'smooth' })
+    setSimpleSetup(false); setSelectedId(row.id); savedPlanRef.current = JSON.stringify(openedPlan); setSavedRevision(revision => revision + 1); resetPlanHistory(openedPlan); setPlan(openedPlan); setTeacherTab('arsplan'); setCalendarOpen(true); setPreviewStudents(false); setA4Demo(false); setStatus(className ? `Klassen ${className} tillhör grundplaneringen. Öppna klassernas schema nedan.` : 'Planeringen är öppnad i kalendervyn.'); if (className) { setCalendarOpen(false); setTimeout(()=>document.querySelector('[aria-label="Kopplade klasser"]')?.scrollIntoView({behavior:'smooth',block:'start'}),150) } else window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function shareWithColleague(event) {
