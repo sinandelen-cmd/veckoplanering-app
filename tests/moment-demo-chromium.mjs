@@ -12,7 +12,7 @@ try{
  const expectedNames=Array.from({length:12},(_,i)=>'Moment '+(i+1)+': ')
  const verify=async(label,expected)=>{
    await page.getByRole('button',{name:label,exact:true}).click()
-   const cards=page.getByTestId('moment-demo-lessons').locator('article')
+   const cards=page.getByTestId('moment-demo-weeks').locator('article')
    assert.equal(await cards.count(),expected.length,label+' lesson count')
    const actual=[]
    for(let i=0;i<expected.length;i++){
@@ -26,9 +26,15 @@ try{
      assert.ok(actual[i].startsWith(expectedNames[i]),label+' moment order '+(i+1))
    }
    assert.equal(await page.getByRole('button',{name:label,exact:true}).getAttribute('aria-pressed'),'true')
+   const weekCards=page.getByTestId('moment-demo-week')
+   assert.ok(await weekCards.count()>=1,label+' has weekly cards')
+   assert.match(await weekCards.first().locator('h3').innerText(),/Vecka 43 · 19 oktober 2026 – 25 oktober 2026/,label+' Swedish ISO week')
    console.log('PASS demo Chromium '+label+': '+expected.join(',')+' moments; all 12 in order')
  }
  await verify('Grundplanering',Array(12).fill(1))
+ assert.equal(await page.getByTestId('moment-demo-week').count(),3,'Grundplanering spans three Swedish weeks')
+ assert.equal(await page.getByTestId('moment-demo-week').nth(1).locator('h3').innerText(),'Vecka 44 · 26 oktober 2026 – 1 november 2026')
+ assert.equal(await page.getByTestId('moment-demo-week').nth(2).locator('h3').innerText(),'Vecka 45 · 2 november 2026 – 8 november 2026')
  await verify('Test 1',Array(12).fill(1))
  await verify('Test 2',Array(6).fill(2))
  await verify('Test 3',Array(4).fill(3))
@@ -40,7 +46,8 @@ try{
  for(const label of ['Grundplanering','Test 1','Test 2','Test 3','Test 4','Test Mix']){
    await page.getByRole('button',{name:label,exact:true}).tap()
    assert.equal(await page.getByRole('button',{name:label,exact:true}).getAttribute('aria-pressed'),'true')
-   assert.equal(await page.getByTestId('moment-demo-lessons').locator('div > strong').count(),12)
+   assert.equal(await page.getByTestId('moment-demo-weeks').locator('article div > strong').count(),12)
+   assert.ok(await page.getByTestId('moment-demo-week').count()>=1,'mobile week cards '+label)
    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+2)
    assert.equal(overflow,false,'mobile horizontal overflow in '+label)
  }
