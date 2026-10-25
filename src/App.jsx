@@ -1457,10 +1457,10 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       const selected=unsorted[index]
       const existing=[...unsorted].sort((a,b)=>a.weekStart.localeCompare(b.weekStart))
       const position=existing.findIndex(week=>week.weekStart===selected?.weekStart)
-      if(position<0||position>=existing.length-1||existing.length>=52)return previous
+      if(position<0||existing.length>=52)return previous
       const nextDate=addWeeks(existing[position].weekStart,1)
       const blank={...makeWeeks({...previous,lessonsPerWeek:5,lessonDays:[...WEEKDAYS],startDate:nextDate,startWeek:calendarWeekNumber(nextDate),weeks:1},1)[0],hidden:true}
-      const mustShift=existing[position+1].weekStart<=nextDate
+      const mustShift=Boolean(existing[position+1] && existing[position+1].weekStart<=nextDate)
       const following=existing.slice(position+1).map(week=>{
         if(!mustShift)return week
         const weekStart=addWeeks(week.weekStart,1)
@@ -2118,7 +2118,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             <p className="muted">Använd i första hand momenten under varje lektion. Här kan du även lägga material för hela veckan.</p>
             <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
           </details>
-        </article>{weeks.some(other=>other.weekStart>week.weekStart)&&<div className="insert-week-between" style={{display:'flex',justifyContent:'center',padding:'14px 0'}}><button type="button" className="secondary" disabled={weeks.length>=52} onClick={()=>insertBlankWeekAfter(index)}>＋ Lägg till vecka mellan veckorna</button></div>}</div>)}
+        </article>{<div className="insert-week-between" style={{display:'flex',justifyContent:'center',padding:'14px 0'}}><button type="button" className="secondary" disabled={weeks.length>=52} onClick={()=>insertBlankWeekAfter(index)}>＋ Infoga vecka efter denna</button></div>}</div>)}
       </WeekBoard>
       <div className="button-row week-add-actions">
         <button type="button" className="secondary" disabled={weeks.length >= 52} onClick={() => setPlan(p => {
@@ -2369,7 +2369,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             <p className="muted">Använd i första hand momenten under varje lektion. Här kan du även lägga material för hela veckan.</p>
             <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
           </details>
-        </article>{displayIndex<ordered.length-1&&<div style={{display:'flex',justifyContent:'center',padding:'12px 0'}}><button type="button" className="secondary" disabled={weeks.length>=52} onClick={()=>insertBlankWeekAfter(index)}>＋ Infoga tom vecka här</button></div>}</div>)}
+        </article>{<div style={{display:'flex',justifyContent:'center',padding:'12px 0'}}><button type="button" className="secondary" disabled={weeks.length>=52} onClick={()=>insertBlankWeekAfter(index)}>＋ Infoga tom vecka här</button></div>}</div>)}
       </div>
       <div className="button-row week-add-actions">
         <button type="button" className="secondary" disabled={weeks.length >= 52} onClick={() => setPlan(p => {
@@ -2789,6 +2789,15 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
     const actions=[...new Map(buttons.filter(Boolean).filter(b=>!b.disabled).map(b=>[b.getAttribute('aria-label')||b.title||b.textContent.trim(),b])).entries()]
     setContextMenu({x:Math.max(8,Math.min(event.clientX,window.innerWidth-250)),y:Math.max(8,Math.min(event.clientY,window.innerHeight-360)),actions})
   }
+  const handleFieldTab=event=>{
+    if(typeof onChange!=='function'||event.key!=='Tab'||event.ctrlKey||event.altKey||event.metaKey)return
+    const selector='.topic-name textarea, .topic-cell input'
+    if(!event.target.matches(selector))return
+    const host=event.currentTarget.closest('.teacher-week-board')||event.currentTarget
+    const fields=[...host.querySelectorAll(selector)].filter(field=>!field.disabled&&field.getClientRects().length)
+    const index=fields.indexOf(event.target),next=fields[index+(event.shiftKey?-1:1)]
+    if(next){event.preventDefault();next.focus()}
+  }
   const lessons = Array.isArray(week?.lessons) ? week.lessons : []
   const editable = typeof onChange === 'function'
   if (!editable && !lessons.some(hasStudentLessonContent)) return null
@@ -2808,7 +2817,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
     next[target] = { ...next[target], day: targetDay }
     changeLessons(normalizeLessonOrder(next))
   }
-  return <div className={editable?"lessons context-editing":"lessons"}>
+  return <div className={editable?"lessons context-editing":"lessons"} onKeyDown={handleFieldTab}>
     {lessons.map((lesson, i) => ({ lesson, i })).filter(({ lesson }) => editable || hasStudentLessonContent(lesson)).sort((a, b) => editable ? a.i - b.i : (WEEKDAYS.indexOf(a.lesson.day || a.lesson.name) + 5) % 5 - (WEEKDAYS.indexOf(b.lesson.day || b.lesson.name) + 5) % 5).map(({ lesson, i }) => <section className="lesson" key={i} onContextMenu={e=>openContextMenu(e,e.currentTarget)}>
       <div className="lesson-heading">{editable && <button type="button" className="context-trigger" title="Lektionens meny" aria-label="Lektionens meny" onClick={e=>openContextMenu(e,e.currentTarget.closest(".lesson"))}>⋮</button>}
         {editable ? <div className="lesson-edit-heading" style={{ '--lesson-day-color': DAY_COLORS[Math.max(0, WEEKDAYS.indexOf(entryType === 'dag' ? lesson.name : lesson.day)) % DAY_COLORS.length] }}>
@@ -2891,7 +2900,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
                 {editable && <button type="button" className="remove-small link-menu-control" aria-label="Ta bort länk" onClick={()=>{if(hasDisplayValue(url)&&!window.confirm('Ta bort länken? Du kan ångra ändringen.'))return;updateTopic({...topic,links:links.filter((_,index)=>index!==k)})}}>×</button>}
               </div>
             })}
-            {editable && <button type="button" className="add-detail moment-action" onClick={() => updateTopic({ ...topic, links: [...links, { label: '', url: '', editing:true }] })} title="Lägg till länk" aria-label="Lägg till länk"><MomentActionIcon kind="link"/></button>}
+            {editable && <button type="button" className="add-detail moment-action link-add-always" onClick={() => updateTopic({ ...topic, links: [...links, { label: '', url: '', editing:true }] })} title="Lägg till länk" aria-label="Lägg till länk"><span className="link-plus-mark" aria-hidden="true">+</span><MomentActionIcon kind="link"/></button>}
           </div>}
           {editable && <button type="button" className="remove-small moment-action moment-action-remove" title="Ta bort moment" aria-label="Ta bort moment" onClick={() => { if (!(topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm('Ta bort momentet och allt innehåll?')) changeLesson(i, { ...lesson, topics: (lesson.topics || []).filter((_, index) => index !== j) }) }}><MomentActionIcon kind="remove"/></button>}
           {editable && <button type="button" className="secondary moment-action moment-add-corner" title="Lägg till moment efter detta" aria-label="Lägg till moment" onClick={()=>{if(lockLessons){changeLesson(i,{...lesson,consumeNextMoment:true});return}const topics=[...(lesson.topics || [])];topics.splice(j+1,0,{name:'',pages:[],assignments:[],links:[]});changeLesson(i,{...lesson,topics})}}><MomentActionIcon kind="plus"/></button>}
