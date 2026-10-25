@@ -37,3 +37,6 @@ jobs:
       - run: node tests/plan-history-check.mjs
       - run: node tests/week-presentation-check.mjs
       - run: npm run build
+      - run: npm install --no-save --package-lock=false playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: node tests/class-editor-browser-check.mjs
