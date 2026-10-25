@@ -901,7 +901,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
       <WeekBoard weeks={visibleWeeks} enabled={Boolean(onClassLessonChange)}>{visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
         {!onClassLessonChange && week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`} style={{backgroundColor:chapterColor(week.chapter)}}>{week.chapter}</h2>}
-        <article id={"student-week-" + week.weekStart} className={`week-card student-week-card${hasStudentWeekContent(week) ? '' : ' student-week-empty'}`} style={{...studentWeekStyle(week.weekStart),...(week.chapter?{backgroundColor:chapterColor(week.chapter)}:{})}}>
+        <article id={"student-week-" + week.weekStart} className={`week-card student-week-card${hasStudentWeekContent(week) ? '' : ' student-week-empty'}`} style={{...studentWeekStyle(week.weekStart),...(onClassLessonChange?{backgroundColor:'var(--chapter-color)'}:week.chapter?{backgroundColor:chapterColor(week.chapter)}:{})}}>
 
         <div className="week-top student-week-top">
           <div className="student-week-identity"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span className="calendar-month-corner calendar-tile-month">{weekMonthLabel(week.weekStart)}</span><span>{studentWeekDateRange(week.weekStart)}</span></div>
