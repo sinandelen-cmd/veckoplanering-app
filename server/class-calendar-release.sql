@@ -151,7 +151,7 @@ begin
    shown := public.annual_class_calendar(doc,class_doc);
  else shown := doc->'weeksData'; end if;
  shown := public.annual_visible_weeks(shown,coalesce((doc->>'autoReleaseWeeks')::boolean,false),coalesce((doc->>'visibleWeekCount')::integer,2),today);
- select coalesce(jsonb_agg(c),'[]'::jsonb) into public_closures from jsonb_array_elements(coalesce(doc->'schoolClosures','[]'::jsonb) || coalesce(class_doc->'schoolClosures','[]'::jsonb)) c where (coalesce(class_value,'')='' or c->'classNames' is null or c->'classNames' ? class_value) and exists(select 1 from jsonb_array_elements(shown) w where c->>'startDate' <= ((w->>'weekStart')::date+6)::text and coalesce(c->>'endDate',c->>'startDate') >= w->>'weekStart');
+ select coalesce(jsonb_agg(c || jsonb_build_object('name',coalesce(c->>'name',c->>'type','Ledig dag'),'endDate',coalesce(c->>'endDate',c->>'startDate'),'verified',coalesce((c->>'verified')::boolean,true))),'[]'::jsonb) into public_closures from jsonb_array_elements(coalesce(doc->'schoolClosures','[]'::jsonb) || coalesce(class_doc->'schoolClosures','[]'::jsonb)) c where (coalesce(class_value,'')='' or c->'classNames' is null or c->'classNames' ? class_value) and exists(select 1 from jsonb_array_elements(shown) w where c->>'startDate' <= ((w->>'weekStart')::date+6)::text and coalesce(c->>'endDate',c->>'startDate') >= w->>'weekStart');
  doc := (doc-'classSourceWeeks'-'classGroups'-'schoolClosures') || jsonb_build_object('weeksData',shown,'schoolClosures',public_closures,'classGroups',names,'classScheduleResolved',coalesce(class_value,'')<>'','resolvedClassName',coalesce(class_value,''));
  return query select doc::text;
 end;
