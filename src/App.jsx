@@ -2844,22 +2844,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
         }
         const lastFilledRow = values => values.reduce((last, value, index) => String(value ?? '').trim() ? index + 1 : last, 0)
         const rows = editable ? Math.max(1, pages.length, assignments.length) : Math.max(1, lastFilledRow(pages), lastFilledRow(assignments))
-        return <div className="topic" data-editable={editable || undefined} key={j}>
-          <div className={`topic-grid ${editable ? '' : 'topic-grid-readonly'} ${visibleFields.includes('pages') ? '' : 'without-pages'} ${visibleFields.includes('assignments') ? '' : 'without-assignments'}`} data-detail-count={visibleFields.length}>
-            <div className="topic-name">{editable ? <textarea aria-label="Momentets namn" placeholder="Exempel: Procent – tryck Enter för ny rad" rows={Math.max(2, String(topic.name || '').split('\n').length)} value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong className="topic-name-display">{hasDisplayValue(topic.name) ? topic.name : 'Moment'}</strong>}</div>
-            {visibleFields.map(field => <div className={`topic-column ${field}`} key={field}>
-              <div className="topic-fixed-heading"><h5>{field === 'pages' ? 'Sida' : 'Uppgift'}</h5>{editable && <button type="button" className="remove-small remove-topic-column moment-action" title={`Dölj hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan`} aria-label={`Dölj hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan`} onClick={() => { if ((field === 'pages' ? pages : assignments).some(value => String(value).trim()) && !window.confirm(`Dölj hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan? Innehållet sparas och kan visas igen.`)) return; updateTopic({ ...topic, [field === 'pages' ? 'hidePages' : 'hideAssignments']: true }) }}><MomentActionIcon kind="hide"/></button>}</div>
-              {Array.from({ length: editable ? (field === "pages" ? pages.length : assignments.length) : Math.max(1,lastFilledRow(field === "pages" ? pages : assignments)) }, (_, row) => <div className="topic-cell" key={row}>
-                {editable ? <><input aria-label={`${(field === 'pages' ? topic.pagesLabel : topic.assignmentsLabel)?.trim() || (field === 'pages' ? 'Sida' : 'Uppgift')} rad ${row + 1}`} value={(field === 'pages' ? pages : assignments)[row] || ''} onChange={e => {
-                  const next = [...(field === 'pages' ? pages : assignments)]
-                  while (next.length <= row) next.push('')
-                  next[row] = e.target.value
-                  updateTopic({ ...topic, [field]: next })
-                }} /><button className="remove-small" type="button" aria-label={`Ta bort ${field === "pages" ? "sida" : "uppgift"} på rad ${row + 1}`} onClick={() => {if (hasDisplayValue((field === 'pages' ? pages : assignments)[row]) && !window.confirm('Ta bort den ifyllda raden? Du kan ångra ändringen.')) return;updateTopic({ ...topic, [field]: (field === 'pages' ? pages : assignments).filter((_, index) => index !== row) })}}>×</button></> : <span>{hasDisplayValue((field === 'pages' ? pages : assignments)[row]) ? (field === 'pages' ? pages : assignments)[row] : '—'}</span>}
-              </div>)}
-
-            </div>)}
-          </div>
+        const topicTools=<div className="topic-action-row">
           {editable && <div className="topic-edit-actions">
             <button type="button" className="add-detail moment-action" title="Lägg till en rad med Sida och Uppgift" aria-label="Lägg till Sida och Uppgift" onClick={()=>{updateTopic({...topic,pages:[...pages,""],assignments:[...assignments,""],hidePages:false,hideAssignments:false})}}><MomentActionIcon kind="pair"/></button>
             <button type="button" className="secondary" title="Flytta moment uppåt" aria-label={'Flytta moment '+(j+1)+' uppåt'} disabled={j===0} onClick={()=>moveTopic(-1)}>↑</button>
@@ -2884,6 +2869,24 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
             })}
             {editable && <button type="button" className="add-detail moment-action link-add-always" onClick={() => updateTopic({ ...topic, links: [...links, { label: '', url: '', editing:true }] })} title="Lägg till länk" aria-label="Lägg till länk"><span className="link-plus-mark" aria-hidden="true">+</span><MomentActionIcon kind="link"/></button>}
           </div>}
+        </div>
+        return <div className="topic" data-editable={editable || undefined} key={j}>
+          <div className={`topic-grid ${editable ? '' : 'topic-grid-readonly'} ${visibleFields.includes('pages') ? '' : 'without-pages'} ${visibleFields.includes('assignments') ? '' : 'without-assignments'}`} data-detail-count={visibleFields.length}>
+            <div className="topic-name">{editable ? <><textarea aria-label="Momentets namn" placeholder="Exempel: Procent – tryck Enter för ny rad" rows={Math.max(2, String(topic.name || '').split('\n').length)} value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} />{topicTools}</> : <strong className="topic-name-display">{hasDisplayValue(topic.name) ? topic.name : 'Moment'}</strong>}</div>
+            {visibleFields.map(field => <div className={`topic-column ${field}`} key={field}>
+              <div className="topic-fixed-heading"><h5>{field === 'pages' ? 'Sida' : 'Uppgift'}</h5>{editable && <button type="button" className="remove-small remove-topic-column moment-action" title={`Dölj hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan`} aria-label={`Dölj hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan`} onClick={() => { if ((field === 'pages' ? pages : assignments).some(value => String(value).trim()) && !window.confirm(`Dölj hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan? Innehållet sparas och kan visas igen.`)) return; updateTopic({ ...topic, [field === 'pages' ? 'hidePages' : 'hideAssignments']: true }) }}><MomentActionIcon kind="hide"/></button>}</div>
+              {Array.from({ length: editable ? (field === "pages" ? pages.length : assignments.length) : Math.max(1,lastFilledRow(field === "pages" ? pages : assignments)) }, (_, row) => <div className="topic-cell" key={row}>
+                {editable ? <><input aria-label={`${(field === 'pages' ? topic.pagesLabel : topic.assignmentsLabel)?.trim() || (field === 'pages' ? 'Sida' : 'Uppgift')} rad ${row + 1}`} value={(field === 'pages' ? pages : assignments)[row] || ''} onChange={e => {
+                  const next = [...(field === 'pages' ? pages : assignments)]
+                  while (next.length <= row) next.push('')
+                  next[row] = e.target.value
+                  updateTopic({ ...topic, [field]: next })
+                }} /><button className="remove-small" type="button" aria-label={`Ta bort ${field === "pages" ? "sida" : "uppgift"} på rad ${row + 1}`} onClick={() => {if (hasDisplayValue((field === 'pages' ? pages : assignments)[row]) && !window.confirm('Ta bort den ifyllda raden? Du kan ångra ändringen.')) return;updateTopic({ ...topic, [field]: (field === 'pages' ? pages : assignments).filter((_, index) => index !== row) })}}>×</button></> : <span>{hasDisplayValue((field === 'pages' ? pages : assignments)[row]) ? (field === 'pages' ? pages : assignments)[row] : '—'}</span>}
+              </div>)}
+
+            </div>)}
+          </div>
+          {!editable && topicTools}
           {editable && <button type="button" className="remove-small moment-action moment-action-remove" title="Ta bort moment" aria-label="Ta bort moment" onClick={() => { if (!(topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm('Ta bort momentet och allt innehåll?')) changeLesson(i, { ...lesson, topics: (lesson.topics || []).filter((_, index) => index !== j) }) }}><MomentActionIcon kind="remove"/></button>}
           {editable && <button type="button" className="secondary moment-action moment-add-corner" title="Lägg till moment efter detta" aria-label="Lägg till moment" onClick={()=>{if(lockLessons){changeLesson(i,{...lesson,consumeNextMoment:true});return}const topics=[...(lesson.topics || [])];topics.splice(j+1,0,{name:'',pages:[''],assignments:[''],links:[]});changeLesson(i,{...lesson,topics})}}><MomentActionIcon kind="plus"/></button>}
         </div>
