@@ -4108,3 +4108,7 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .lesson .topic-action-row .topic-link{display:inline-flex;align-items:center;flex-wrap:wrap;width:auto;margin:0;min-width:0;gap:3px}
 .lesson .topic-action-row .resource-chip{margin:0}
 .lesson .topic-action-row .topic-link input{min-width:80px;max-width:100%}
+
+
+/* Keep lesson insertion separate from the moment corner action. */
+.inline-editing .lesson-heading .lesson-insert-direct{float:none;clear:none;margin:0;display:inline-flex;align-items:center;gap:3px;font-size:11px}

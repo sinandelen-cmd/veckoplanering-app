@@ -212,7 +212,7 @@ function makeWeeks(plan, count = plan.weeks) {
     chapter: '',
     content: '',
     pages: [], assignments: [], links: [],
-    items: [], lessons: Array.from({ length: plan.entryType === 'dag' ? 5 : Math.max(1, Math.min(8, Number(plan.lessonsPerWeek) || 3)) }, (_, i) => ({ name: plan.entryType === 'dag' ? WEEKDAYS[i] : `Lektion ${i + 1}`, day: plan.entryType === 'dag' ? WEEKDAYS[i] : (plan.lessonDays?.[i] || ''), topics: [{name:'',pages:[],assignments:[],links:[]}] })),
+    items: [], lessons: Array.from({ length: plan.entryType === 'dag' ? 5 : Math.max(1, Math.min(8, Number(plan.lessonsPerWeek) || 3)) }, (_, i) => ({ name: plan.entryType === 'dag' ? WEEKDAYS[i] : `Lektion ${i + 1}`, day: plan.entryType === 'dag' ? WEEKDAYS[i] : (plan.lessonDays?.[i] || ''), topics: [{name:'',pages:[''],assignments:[''],links:[]}] })),
   }))
 }
 
@@ -306,7 +306,7 @@ function distributeUnits(plan, units) {
       const unit=group.units[i]
       const previous=template.lessons?.[i]||{}
       return {...previous,name:previous.name||'Lektion '+(i+1),day:previous.day||plan.lessonDays?.[i]||'',
-        topics:unit?[{name:unit.topic,description:[unit.chapter&&'Kapitel: '+unit.chapter,unit.details].filter(Boolean).join('\n'),pages:[],assignments:[],links:[]}]:[]}
+        topics:unit?[{name:unit.topic,description:[unit.chapter&&'Kapitel: '+unit.chapter,unit.details].filter(Boolean).join('\n'),pages:[''],assignments:[''],links:[]}]:[]}
     })
     const chapters=[...new Set(group.units.map(u=>u.chapter).filter(Boolean))]
     return {...template,chapter:chapters.join(' / '),content:group.units.map(u=>[u.chapter,u.topic].filter(Boolean).join(' – ')).join('\n'),
@@ -2809,6 +2809,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
           })()}
         </h4>}
         {editable && !lockLessons && entryType !== 'dag' && <div className="lesson-reorder-controls"><button type="button" disabled={i === 0} aria-label={`Flytta lektion ${i + 1} uppåt`} onClick={() => moveLesson(i, -1)}>↑</button><span className="lesson-move-label">Flytta</span><button type="button" disabled={i === lessons.length - 1} aria-label={`Flytta lektion ${i + 1} nedåt`} onClick={() => moveLesson(i, 1)}>↓</button></div>}
+      {editable && !lockLessons && entryType!=='dag' && <button type="button" className="lesson-menu-action lesson-insert-direct" title="Lägg till lektion efter denna" aria-label="Lägg till lektion efter denna" onClick={()=>{const next=[...lessons];next.splice(i+1,0,{name:'Lektion',day:lesson.day||'Måndag',topics:[{name:'',pages:[''],assignments:[''],links:[]}]});changeLessons(normalizeLessonOrder(next))}}><MomentActionIcon kind="plus"/><span>Lektion</span></button>}
         {editable && !lockLessons && <button type="button" className="remove-small lesson-menu-action" aria-label={entryType === "dag" ? "Ta bort dag" : "Ta bort lektion"} onClick={() => { if (!lesson.assessment && !(lesson.topics || []).some(topic => topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm(entryType === 'dag' ? 'Ta bort dagen och allt innehåll i den?' : 'Ta bort lektionen och allt innehåll i den?')) changeLessons(entryType === 'dag' ? lessons.filter((_, index) => index !== i) : normalizeLessonOrder(lessons.filter((_, index) => index !== i))) }}><MomentActionIcon kind="remove"/></button>}
       </div>
 
@@ -2825,25 +2826,33 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
       {editable && !lesson.assessment && <button type="button" className="lesson-add-assessment moment-action" onClick={()=>updateAssessment(i,{type:'Prov',title:'',description:''})} title="Infoga prov eller test" aria-label="Infoga prov eller test"><MomentActionIcon kind="exam"/></button>}
       {(lesson.topics || []).map((topic, j) => ({ topic, j })).filter(({ topic }) => editable || hasStudentTopicContent(topic)).map(({ topic, j }) => {
         const updateTopic = next => changeLesson(i, { ...lesson, topics: (lesson.topics || []).map((item, index) => index === j ? next : item) })
-        const pages = Array.isArray(topic.pages) ? topic.pages : []
-        const assignments = Array.isArray(topic.assignments) ? topic.assignments : []
+        const pages = Array.isArray(topic.pages) && topic.pages.length ? topic.pages : (editable && !topic.pagesRemoved ? [''] : [])
+        const assignments = Array.isArray(topic.assignments) && topic.assignments.length ? topic.assignments : (editable && !topic.assignmentsRemoved ? [''] : [])
         const links = Array.isArray(topic.links) ? topic.links : []
         const visibleFields = ['pages', 'assignments'].filter(field => !topic[field === 'pages' ? 'hidePages' : 'hideAssignments'])
         const visibleLinks = links.map((link, k) => ({ link, k })).filter(({ link }) => editable || link?.editing !== true && resourceInfo(typeof link === 'string' ? link : link?.url || ''))
-        const moveTopic = direction => {
+        const neighbor = direction => {
           const target=j+direction
-          if (target<0 || target>=(lesson.topics || []).length) return
-          const topics=[...lesson.topics]
-          ;[topics[j],topics[target]]=[topics[target],topics[j]]
-          changeLesson(i,{...lesson,topics})
+          if(target>=0 && target<(lesson.topics || []).length)return [i,target]
+          for(let k=i+direction;k>=0 && k<lessons.length;k+=direction){
+            if(lessons[k].topics?.length)return [k,direction<0?lessons[k].topics.length-1:0]
+          }
+          return null
+        }
+        const moveTopic = direction => {
+          const target=neighbor(direction)
+          if(!target)return
+          const next=lessons.map(item=>({...item,topics:[...(item.topics || [])]}))
+          ;[next[i].topics[j],next[target[0]].topics[target[1]]]=[next[target[0]].topics[target[1]],next[i].topics[j]]
+          changeLessons(next)
         }
         const lastFilledRow = values => values.reduce((last, value, index) => String(value ?? '').trim() ? index + 1 : last, 0)
         const rows = editable ? Math.max(1, pages.length, assignments.length) : Math.max(1, lastFilledRow(pages), lastFilledRow(assignments))
         const topicTools=<div className="topic-action-row">
           {editable && <div className="topic-edit-actions">
-            <button type="button" className="add-detail moment-action" title="Lägg till en rad med Sida och Uppgift" aria-label="Lägg till Sida och Uppgift" onClick={()=>{updateTopic({...topic,pages:[...pages,""],assignments:[...assignments,""],hidePages:false,hideAssignments:false})}}><MomentActionIcon kind="pair"/></button>
-            <button type="button" className="secondary" title="Flytta moment uppåt" aria-label={'Flytta moment '+(j+1)+' uppåt'} disabled={j===0} onClick={()=>moveTopic(-1)}>↑</button>
-            <button type="button" className="secondary" title="Flytta moment nedåt" aria-label={'Flytta moment '+(j+1)+' nedåt'} disabled={j===(lesson.topics || []).length-1} onClick={()=>moveTopic(1)}>↓</button>
+            <button type="button" className="add-detail moment-action" title="Lägg till en rad med Sida och Uppgift" aria-label="Lägg till Sida och Uppgift" onClick={()=>{updateTopic({...topic,pages:[...pages,""],assignments:[...assignments,""],hidePages:false,hideAssignments:false,pagesRemoved:false,assignmentsRemoved:false})}}><MomentActionIcon kind="pair"/></button>
+            <button type="button" className="secondary" title="Flytta moment uppåt" aria-label={'Flytta moment '+(j+1)+' uppåt'} disabled={!neighbor(-1)} onClick={()=>moveTopic(-1)}>↑</button>
+            <button type="button" className="secondary" title="Flytta moment nedåt" aria-label={'Flytta moment '+(j+1)+' nedåt'} disabled={!neighbor(1)} onClick={()=>moveTopic(1)}>↓</button>
             {topic.hidePages && <button type="button" className="secondary" onClick={()=>updateTopic({...topic,hidePages:false})}>+ Visa Sida</button>}
             {topic.hideAssignments && <button type="button" className="secondary" onClick={()=>updateTopic({...topic,hideAssignments:false})}>+ Visa Uppgift</button>}
           </div>}
@@ -2876,7 +2885,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
                   while (next.length <= row) next.push('')
                   next[row] = e.target.value
                   updateTopic({ ...topic, [field]: next })
-                }} /><button className="remove-small" type="button" aria-label={`Ta bort ${field === "pages" ? "sida" : "uppgift"} på rad ${row + 1}`} onClick={() => {if (hasDisplayValue((field === 'pages' ? pages : assignments)[row]) && !window.confirm('Ta bort den ifyllda raden? Du kan ångra ändringen.')) return;updateTopic({ ...topic, [field]: (field === 'pages' ? pages : assignments).filter((_, index) => index !== row) })}}>×</button></> : <span>{hasDisplayValue((field === 'pages' ? pages : assignments)[row]) ? (field === 'pages' ? pages : assignments)[row] : '—'}</span>}
+                }} /><button className="remove-small" type="button" aria-label={`Ta bort ${field === "pages" ? "sida" : "uppgift"} på rad ${row + 1}`} onClick={() => {if (hasDisplayValue((field === 'pages' ? pages : assignments)[row]) && !window.confirm('Ta bort den ifyllda raden? Du kan ångra ändringen.')) return;updateTopic({ ...topic, [field+'Removed']: true, [field]: (field === 'pages' ? pages : assignments).filter((_, index) => index !== row) })}}>×</button></> : <span>{hasDisplayValue((field === 'pages' ? pages : assignments)[row]) ? (field === 'pages' ? pages : assignments)[row] : '—'}</span>}
               </div>)}
 
             </div>)}
@@ -2887,7 +2896,6 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
         </div>
       })}
       {editable && !(lesson.topics || []).length && <button type="button" className="secondary moment-action" onClick={() => changeLesson(i, { ...lesson, topics: [...(lesson.topics || []), { name: '', pages: [''], assignments: [''], links: [] }] })} title="Lägg till moment" aria-label="Lägg till moment"><MomentActionIcon kind="plus"/></button>}
-      {editable && !lockLessons && entryType!=='dag' && <button type="button" className="lesson-menu-action lesson-insert-direct" title="Lägg till lektion efter denna" aria-label="Lägg till lektion efter denna" onClick={()=>{const next=[...lessons];next.splice(i+1,0,{name:'Lektion',day:lesson.day||'Måndag',topics:[{name:'',pages:[''],assignments:[''],links:[]}]});changeLessons(normalizeLessonOrder(next))}}><MomentActionIcon kind="plus"/></button>}
     </section>)}
     {editable && !lockLessons && (entryType !== 'dag' || WEEKDAYS.some(day => !lessons.some(lesson => lesson.name === day))) && <button type="button" className="secondary" onClick={() => {
       if (entryType === 'dag') {

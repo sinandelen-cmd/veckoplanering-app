@@ -6,7 +6,7 @@ import {insertCalendarEventWeek} from '../../src/weekEvents.js'
 import ClassSchedules from '../../src/ClassSchedules.jsx'
 import {recordPlanHistory,undoPlanHistory,redoPlanHistory} from '../../src/planHistory.js'
 const topic=(name)=>({name,pages:['45–48'],assignments:['1–5, 8 och 12'],links:[{url:'https://example.org/exercise',label:'Övningar'}]})
-const seed={sharedBaseContent:true,title:'Syntetiskt funktionstest',entryType:'lektion',startDate:'2026-10-12',weeksData:[{weekStart:'2026-10-12',weekNumber:42,title:'Vecka 42',lessons:['Bråk','Procent','Geometri','Algebra','Ekvationer'].map((name,index)=>({name:'Lektion '+(index+1),day:['Måndag','Tisdag','Onsdag','Torsdag','Fredag'][index],topics:[topic(name)]}))}],classGroups:[{name:'TEST A',startDate:'2026-10-12',days:['Måndag','Tisdag'],momentsPerDay:{Måndag:2}},{name:'TEST B',startDate:'2026-10-12',days:['Måndag','Tisdag']}]}
+const seed={sharedBaseContent:true,title:'Syntetiskt funktionstest',entryType:'lektion',startDate:'2026-10-12',weeksData:[{weekStart:'2026-10-12',weekNumber:42,title:'Vecka 42',lessons:['Bråk','Procent','Geometri','Algebra','Ekvationer'].map((name,index)=>({name:'Lektion '+(index+1),day:['Måndag','Tisdag','Onsdag','Torsdag','Fredag'][index],topics:[index===4?{name,pages:[],assignments:[],links:[]}:topic(name)]}))}],classGroups:[{name:'TEST A',startDate:'2026-10-12',days:['Måndag','Tisdag'],momentsPerDay:{Måndag:2}},{name:'TEST B',startDate:'2026-10-12',days:['Måndag','Tisdag']}]}
 function Demo(){
 const [history,setHistory]=useState(()=>recordPlanHistory({},'synthetic:1',seed))
 const [selected,setSelected]=useState('')
