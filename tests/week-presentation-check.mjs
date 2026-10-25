@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {selectStudentWeeks,teacherWeekGroups,teacherWeekSections,chapterColor,stockholmDate,mondayDate} from '../src/weekPresentation.js'
+import {selectStudentWeeks,teacherWeekGroups,teacherWeekSections,teacherYearWheel,teacherYearWheelSections,chapterColor,stockholmDate,mondayDate} from '../src/weekPresentation.js'
 import fs from 'node:fs'
 const weeks=[{weekStart:'2026-02-09',weekNumber:7,chapter:'Kapitel 4'},{weekStart:'2026-02-16',weekNumber:8,chapter:'Kapitel 4'},{weekStart:'2026-02-23',weekNumber:9,chapter:'Kapitel 5'}]
 const plan={autoReleaseWeeks:true,visibleWeekCount:2}
@@ -47,3 +47,22 @@ assert.deepEqual(shifted.weeksData.map(w=>w.lessons),sourceWeeks.map(w=>w.lesson
 assert.equal(JSON.stringify(sourceWeeks),original)
 assert.deepEqual(teacherWeekSections(shifted.weeksData,'2026-10-25T12:00:00Z').flatMap(g=>g.current).map(i=>i.week.weekNumber),[43,44])
 console.log('PASS: current week first, multi-year chronological order, chapter history once, renumbering before/after anchor with content preserved')
+
+const wheelSource=[{weekStart:'2026-10-12',weekNumber:42,chapter:'Tal',lessons:[{date:'2026-10-13',topics:[{name:'A'}]}]},{weekStart:'2026-10-19',weekNumber:43,chapter:'Tal'},{weekStart:'2027-10-18',weekNumber:42,chapter:'Tal'}]
+const wheelBefore=JSON.stringify(wheelSource)
+const wheel=teacherYearWheel(wheelSource,'2026-10-25T12:00:00Z')
+assert.equal(wheel[0].weekStart,'2028-10-16','An existing next-year week must not be overwritten')
+assert.equal(wheel[0].lessons[0].date,'2028-10-17')
+assert.equal(wheel[0].originalWeekStart,'2026-10-12')
+assert.equal(wheel[0].yearWheel,true)
+assert.equal(wheel[1].weekStart,'2026-10-19')
+assert.equal(JSON.stringify(wheelSource),wheelBefore,'Annual projection must not rewrite source dates or student publication')
+const rollover=teacherYearWheel([{weekStart:'2026-10-12'}],'2027-10-25T12:00:00Z')
+assert.equal(rollover[0].weekStart,'2028-10-16','Repeat annual rollover after the next occurrence passes')
+const week53=teacherYearWheel([{weekStart:'2026-12-28'}],'2027-01-04T12:00:00Z')
+assert.equal(week53[0].weekStart,'2032-12-27','ISO week 53 must remain week 53 in a valid future ISO year')
+const wheelSections=teacherYearWheelSections(years,'2026-10-25T12:00:00Z').sections
+const wheelDates=wheelSections.flatMap(g=>g.current).map(i=>i.week.weekStart)
+assert.deepEqual(wheelDates,[...wheelDates].sort())
+assert.ok(wheelSections.some(g=>g.rolled))
+console.log('PASS: annual teacher wheel, repeated rollover, occupied dates, lesson dates, ISO week 53 and immutable history')

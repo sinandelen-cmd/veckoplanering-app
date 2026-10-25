@@ -38,5 +38,37 @@ export function teacherWeekSections(weeks,now=Date.now()){
  for(const group of groups)if(!historyShown.has(group.chapter)&&group.past.length)sections.push({...group,current:[]})
  return sections
 }
+function isoWeekParts(iso){const thursday=shiftDate(mondayDate(iso),3),year=Number(thursday.slice(0,4));return {year,number:1+Math.round((new Date(mondayDate(iso)+'T12:00:00Z')-new Date(mondayDate(year+'-01-04')+'T12:00:00Z'))/(7*DAY))}}
+export function teacherYearWheel(weeks,now=Date.now()){
+ const current=mondayDate(stockholmDate(now)),year=isoWeekParts(current).year
+ const inherited=new Map(teacherWeekGroups(weeks,now).flatMap(g=>[...g.current,...g.past].map(i=>[i.index,i.week.chapter])))
+ const occupied=new Set(weeks.filter(w=>w.weekStart>=current).map(w=>w.weekStart))
+ return weeks.map((week,index)=>{
+  if(week.weekStart>=current)return {...week,chapter:inherited.get(index)||''}
+  const original=isoWeekParts(week.weekStart)
+  let nextYear=Math.max(year,original.year+1),date
+  for(;;nextYear++){
+   date=shiftDate(mondayDate(nextYear+'-01-04'),7*(original.number-1))
+   // ISO week 53 only exists in some years. Keep its number rather than
+   // silently turning it into week 1 of another year.
+   if(isoWeekParts(date).year!==nextYear || date<current || occupied.has(date))continue
+   break
+  }
+  occupied.add(date)
+  const dayShift=Math.round((new Date(date+'T12:00:00Z')-new Date(week.weekStart+'T12:00:00Z'))/DAY)
+  return {...week,chapter:inherited.get(index)||'',weekStart:date,weekNumber:original.number,yearWheel:true,originalWeekStart:week.weekStart,
+   lessons:(week.lessons||[]).map(l=>({...l,...(l.date?{date:shiftDate(l.date,dayShift)}:{})}))}
+ })
+}
+export function teacherYearWheelSections(weeks,now=Date.now()){
+ const projected=teacherYearWheel(weeks,now),current=mondayDate(stockholmDate(now)),sections=[]
+ for(const item of projected.map((week,index)=>({week,index,past:week.yearWheel===true && week.weekStart!==current})).sort((a,b)=>a.week.weekStart.localeCompare(b.week.weekStart))){
+  const year=isoWeekParts(item.week.weekStart).year,chapter=item.week.chapter||'Övriga veckor'
+  const previous=sections.at(-1)
+  if(previous?.year===year && previous.chapter===chapter && previous.rolled===item.past)previous.current.push(item)
+  else sections.push({year,chapter,rolled:item.past,current:[item],past:[]})
+ }
+ return {weeks:projected,sections}
+}
 export function chapterColor(chapter){let hash=0;for(const char of String(chapter||'Övriga veckor').trim().toLocaleLowerCase('sv-SE'))hash=(hash*31+char.codePointAt(0))>>>0;return 'hsl('+hash%360+' 65% 92%)'}
 

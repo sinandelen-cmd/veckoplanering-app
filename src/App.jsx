@@ -908,7 +908,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     </header>}
     {studentWeeks.length === 0 && <p className="card empty" role="status">{plan.autoReleaseWeeks ? "Ingen vecka är publicerad för elever ännu. Nästa vecka visas automatiskt när dess måndag börjar." : "Det finns inga synliga veckor i den här planeringen ännu."}</p>}
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
-      <WeekBoard weeks={visibleWeeks} enabled={Boolean(onClassLessonChange || teacherCalendar)}>{visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
+      <WeekBoard weeks={visibleWeeks} enabled={Boolean(onClassLessonChange || teacherCalendar)}>{presentedWeeks=>presentedWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
         {!onClassLessonChange && week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`} style={{backgroundColor:chapterColor(week.chapter)}}>{week.chapter}</h2>}
         <article id={"student-week-" + week.weekStart} className={`week-card student-week-card${hasStudentWeekContent(week) ? '' : ' student-week-empty'}`} style={{...studentWeekStyle(week.weekStart),...(onClassLessonChange?{backgroundColor:'var(--chapter-color)'}:week.chapter?{backgroundColor:chapterColor(week.chapter)}:{})}}>
 
@@ -2076,7 +2076,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
 <section className="card">
       <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
       <WeekBoard weeks={weeks} key={selectedId}>
-        {weeks.map((week,index)=>({week,index})).map(({week,index},displayIndex,ordered) => <div className="chapter-week-group" key={`${week.weekNumber}-${index}`}>
+        {presentedWeeks=>presentedWeeks.map((week,index)=>({week,index})).map(({week,index},displayIndex,ordered) => <div className="chapter-week-group" key={`${week.weekNumber}-${index}`}>
 
           <article className="week-card" id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
           <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",marginBottom:10,padding:"8px 10px",background:"#fff9e9",borderRadius:9}}>
