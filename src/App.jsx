@@ -609,7 +609,7 @@ function sanitizeForStudents(plan) {
         hideDate: /^\d{4}-\d{2}-\d{2}$/.test(week.hideDate || '') ? week.hideDate : '',
         title: typeof week.title === 'string' ? week.title : '',
         chapter: typeof week.chapter === 'string' ? week.chapter.slice(0, 160) : '',
-        lessons: Array.isArray(week.lessons) ? week.lessons.filter(lesson => lesson && typeof lesson === 'object').map(lesson => ({ name: String(lesson.name || ''), day: String(lesson.day || ''), ...(lesson.assessment && typeof lesson.assessment === 'object' ? {assessment:{type:String(lesson.assessment.type||'Prov').slice(0,80),customType:String(lesson.assessment.customType||'').slice(0,80),title:String(lesson.assessment.title||'').slice(0,300),description:String(lesson.assessment.description||'').slice(0,5000)}} : {}), topics: Array.isArray(lesson.topics) ? lesson.topics.filter(topic => topic && typeof topic === 'object').map(topic => ({ name: String(topic.name || ''), pagesLabel: String(topic.pagesLabel || '').slice(0, 60), assignmentsLabel: String(topic.assignmentsLabel || '').slice(0, 60), hidePages: topic.hidePages === true, hideAssignments: topic.hideAssignments === true, pages: Array.isArray(topic.pages) ? topic.pages.map(String) : [], assignments: Array.isArray(topic.assignments) ? topic.assignments.map(String) : [], links: Array.isArray(topic.links) ? topic.links.filter(link => link && resourceInfo(typeof link === 'string' ? link : link.url)).map(link => typeof link === 'string' ? { url: link.trim(), label: resourceInfo(link).label } : { url: String(link.url).trim(), label: String(link.label || resourceInfo(link.url).label) }) : [] })) : [] })) : [],
+        lessons: Array.isArray(week.lessons) ? week.lessons.filter(lesson => lesson && typeof lesson === 'object').map(lesson => ({ name: String(lesson.name || ''), day: String(lesson.day || ''), ...(lesson.assessment && typeof lesson.assessment === 'object' ? {assessment:{type:String(lesson.assessment.type||'Prov').slice(0,80),customType:String(lesson.assessment.customType||'').slice(0,80),title:String(lesson.assessment.title||'').slice(0,300),description:String(lesson.assessment.description||'').slice(0,5000)}} : {}), topics: Array.isArray(lesson.topics) ? lesson.topics.filter(topic => topic && typeof topic === 'object').map(topic => ({ name: String(topic.name || ''), pagesLabel: String(topic.pagesLabel || '').slice(0, 60), assignmentsLabel: String(topic.assignmentsLabel || '').slice(0, 60), hidePages: topic.hidePages === true, hideAssignments: topic.hideAssignments === true, pages: Array.isArray(topic.pages) ? topic.pages.map(String) : [], assignments: Array.isArray(topic.assignments) ? topic.assignments.map(String) : [], links: Array.isArray(topic.links) ? topic.links.filter(link => link && link.editing !== true && resourceInfo(typeof link === 'string' ? link : link.url)).map(link => typeof link === 'string' ? { url: link.trim(), label: resourceInfo(link).label } : { url: String(link.url).trim(), label: String(link.label || resourceInfo(link.url).label) }) : [] })) : [] })) : [],
         content: typeof week.content === 'string' ? week.content : '',
         pages: Array.isArray(week.pages) ? week.pages.filter(v => typeof v === 'string' && v.trim()).slice(0, 100) : [],
         assignments: Array.isArray(week.assignments) ? week.assignments.filter(v => typeof v === 'string' && v.trim()).slice(0, 100) : [],
@@ -643,7 +643,7 @@ function hasStudentTopicContent(topic) {
   return Boolean(topic && (hasDisplayValue(topic.name)
     || (!topic.hidePages && topic.pages?.some(hasDisplayValue))
     || (!topic.hideAssignments && topic.assignments?.some(hasDisplayValue))
-    || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || ''))))
+    || topic.links?.some(link => link?.editing !== true && resourceInfo(typeof link === 'string' ? link : link?.url || ''))))
 }
 function hasStudentLessonContent(lesson) {
   return Boolean(lesson && (lesson.assessment || lesson.topics?.some(hasStudentTopicContent)))
@@ -2777,8 +2777,11 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
     const topic=event.target.closest('.topic')
     const row=event.target.closest('.topic-cell')
     const column=event.target.closest('.topic-column')
+    const linkRow=event.target.closest('.topic-link')
     let buttons
-    if(topic && (row || column)){
+    if(linkRow){
+      buttons=[...linkRow.querySelectorAll('button'),topic?.querySelector('[aria-label="Lägg till länk"]')]
+    } else if(topic && (row || column)){
       buttons=[topic.querySelector('[aria-label="Lägg till Sida och Uppgift"]'),...(row?row.querySelectorAll('button'):column.querySelectorAll('button'))]
     } else {
       buttons=[...scope.querySelectorAll('button')].filter(b=>!b.classList.contains('context-trigger') && (b.classList.contains('moment-action') || b.closest('.topic-edit-actions')))
@@ -2840,7 +2843,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
         const assignments = Array.isArray(topic.assignments) ? topic.assignments : []
         const links = Array.isArray(topic.links) ? topic.links : []
         const visibleFields = ['pages', 'assignments'].filter(field => !topic[field === 'pages' ? 'hidePages' : 'hideAssignments'])
-        const visibleLinks = links.map((link, k) => ({ link, k })).filter(({ link }) => editable || resourceInfo(typeof link === 'string' ? link : link?.url || ''))
+        const visibleLinks = links.map((link, k) => ({ link, k })).filter(({ link }) => editable || link?.editing !== true && resourceInfo(typeof link === 'string' ? link : link?.url || ''))
         const moveTopic = direction => {
           const target=j+direction
           if (target<0 || target>=(lesson.topics || []).length) return
@@ -2879,13 +2882,16 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
               const label = typeof link === 'string' ? resourceInfo(link)?.label || '' : link.label || ''
               const info = resourceInfo(url)
               const changeLink = next => updateTopic({ ...topic, links: links.map((item, index) => index === k ? next : item) })
+              const editing=editable && (link?.editing === true || !info || !label.trim())
               return <div className="topic-link" key={k}>
-                {editable && <><input aria-label="Länkens namn" placeholder="Namn" value={label} onChange={e => changeLink({ url, label: e.target.value })} /><input aria-label="Länkadress" placeholder="https://..." value={url} onChange={e => changeLink({ url: e.target.value, label })} /></>}
-                {info && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon" aria-hidden="true" />{label || info.label}<span className="print-resource-url">{url}</span></a>}
-                {editable && <button type="button" className="remove-small" onClick={() => {if (hasDisplayValue(url) && !window.confirm('Ta bort länken? Du kan ångra ändringen.')) return;updateTopic({ ...topic, links: links.filter((_, index) => index !== k) })}}>×</button>}
+                {editing && <><input aria-label="Länkens namn" placeholder="Namn" value={label} onChange={e => changeLink({url,label:e.target.value,editing:true})}/><input aria-label="Länkadress" placeholder="https://..." value={url} onChange={e=>changeLink({url:e.target.value,label,editing:true})}/>
+                  <button type="button" className="link-confirm" title="Bekräfta länk" aria-label="Bekräfta länk" disabled={!info || !label.trim()} onClick={()=>changeLink({url:url.trim(),label:label.trim(),editing:false})}><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></button></>}
+                {info && !editing && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon" aria-hidden="true"/>{label || info.label}<span className="print-resource-url">{url}</span></a>}
+                {editable && !editing && <button type="button" className="link-menu-control" aria-label="Redigera länk" onClick={()=>changeLink({url,label,editing:true})}>Redigera länk</button>}
+                {editable && <button type="button" className="remove-small link-menu-control" aria-label="Ta bort länk" onClick={()=>{if(hasDisplayValue(url)&&!window.confirm('Ta bort länken? Du kan ångra ändringen.'))return;updateTopic({...topic,links:links.filter((_,index)=>index!==k)})}}>×</button>}
               </div>
             })}
-            {editable && <button type="button" className="add-detail moment-action" onClick={() => updateTopic({ ...topic, links: [...links, { label: '', url: '' }] })} title="Lägg till länk" aria-label="Lägg till länk"><MomentActionIcon kind="link"/></button>}
+            {editable && <button type="button" className="add-detail moment-action" onClick={() => updateTopic({ ...topic, links: [...links, { label: '', url: '', editing:true }] })} title="Lägg till länk" aria-label="Lägg till länk"><MomentActionIcon kind="link"/></button>}
           </div>}
           {editable && <button type="button" className="remove-small moment-action moment-action-remove" title="Ta bort moment" aria-label="Ta bort moment" onClick={() => { if (!(topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm('Ta bort momentet och allt innehåll?')) changeLesson(i, { ...lesson, topics: (lesson.topics || []).filter((_, index) => index !== j) }) }}><MomentActionIcon kind="remove"/></button>}
           {editable && <button type="button" className="secondary moment-action moment-add-corner" title="Lägg till moment efter detta" aria-label="Lägg till moment" onClick={()=>{if(lockLessons){changeLesson(i,{...lesson,consumeNextMoment:true});return}const topics=[...(lesson.topics || [])];topics.splice(j+1,0,{name:'',pages:[],assignments:[],links:[]});changeLesson(i,{...lesson,topics})}}><MomentActionIcon kind="plus"/></button>}

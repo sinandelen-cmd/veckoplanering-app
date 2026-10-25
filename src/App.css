@@ -4067,3 +4067,8 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .moment-context-menu{position:fixed;min-width:230px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);overflow:auto;display:grid;padding:6px;background:#fffdf7;border:1px solid #d8dfd7;border-radius:10px;box-shadow:0 8px 28px #19392d33}
 .moment-context-menu button{background:transparent;color:#254c42;text-align:left;min-height:38px;padding:8px 12px;border-radius:6px}
 .moment-context-menu button:hover,.moment-context-menu button:focus-visible{background:#edf5ef;outline:2px solid #759d8b;outline-offset:-2px}
+
+.link-confirm{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:4px;border:0;background:transparent;color:var(--plan-accent,#27805f);border-radius:5px}
+.link-confirm:disabled{opacity:.35;cursor:default}
+.link-confirm:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.link-menu-control{display:none!important}
