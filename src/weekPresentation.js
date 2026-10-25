@@ -11,7 +11,7 @@ export function selectStudentWeeks(weeks,plan={},now=Date.now(),preview=false){
  return weeks.filter(w=>w?.weekStart && !w.hidden)
  .filter(w=>preview || (w.publishDate || mondayDate(w.weekStart))<=today)
  .filter(w=>preview || !w.hideDate || w.hideDate>today)
- .filter(w=>plan.autoReleaseWeeks!==true || w.keepVisibleExtra || w.weekStart>=earliest && w.weekStart<=current)
+ .filter(w=>preview && plan.autoReleaseWeeks!==true || w.keepVisibleExtra || w.weekStart>=earliest && w.weekStart<=current)
  .slice().sort((a,b)=>b.weekStart.localeCompare(a.weekStart))
 }
 export function teacherWeekGroups(weeks,now=Date.now()){
@@ -23,3 +23,4 @@ export function teacherWeekGroups(weeks,now=Date.now()){
  return [...groups.values()]
 }
 export function chapterColor(chapter){let hash=0;for(const char of String(chapter||'Övriga veckor').trim().toLocaleLowerCase('sv-SE'))hash=(hash*31+char.codePointAt(0))>>>0;return 'hsl('+hash%360+' 65% 92%)'}
+

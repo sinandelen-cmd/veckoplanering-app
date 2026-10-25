@@ -20,3 +20,6 @@ assert.equal(stockholmDate('2026-10-25T23:01:00Z'),'2026-10-26')
 assert.equal(mondayDate(stockholmDate('2027-01-03T23:01:00Z')),'2027-01-04')
 assert.deepEqual(selectStudentWeeks([{weekStart:'2026-12-28'},{weekStart:'2027-01-04'}],plan,'2027-01-03T23:01:00Z').map(w=>w.weekStart),['2027-01-04','2026-12-28'])
 console.log('PASS: Stockholm Monday 00:01 boundary, expiration, missing weeks, extra weeks, hidden weeks, chapter groups, DST and year boundary')
+
+
+assert.deepEqual(ids(selectStudentWeeks(weeks,{autoReleaseWeeks:false,visibleWeekCount:2},'2026-02-22T23:01:00Z')),[9,8],'Existing manual plans also show the default two calendar weeks to students')

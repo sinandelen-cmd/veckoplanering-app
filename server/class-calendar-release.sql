@@ -131,9 +131,9 @@ returns jsonb language sql immutable security invoker set search_path = '' as $b
  from jsonb_array_elements(coalesce(weeks,'[]'::jsonb)) as a(w)
  where w->>'weekStart' ~ '^\d{4}-\d{2}-\d{2}$'
    and coalesce(w->>'hidden','false') <> 'true'
-   and (not automatic or coalesce(nullif(w->>'publishDate',''),w->>'weekStart')::date <= today)
+   and coalesce(nullif(w->>'publishDate',''),w->>'weekStart')::date <= today
    and (nullif(w->>'hideDate','') is null or (w->>'hideDate')::date > today)
-   and (not automatic or w->>'keepVisibleExtra'='true'
+   and (w->>'keepVisibleExtra'='true'
      or (w->>'weekStart')::date between date_trunc('week',today)::date-7*(greatest(1,least(12,visible_count))-1) and date_trunc('week',today)::date);
 $body$;
 

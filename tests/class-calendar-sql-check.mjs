@@ -36,6 +36,7 @@ const show=(date,extra=[])=>JSON.parse(sql(`select public.annual_visible_weeks($
 assert.deepEqual(show('2026-10-25'),['2026-10-19','2026-10-12'])
 assert.deepEqual(show('2026-10-26'),['2026-10-26','2026-10-19'])
 assert.deepEqual(show('2026-10-26',[{weekStart:'2026-09-28',keepVisibleExtra:true}]),['2026-10-26','2026-10-19','2026-09-28'])
+assert.deepEqual(JSON.parse(sql(`select public.annual_visible_weeks(${literal(weeks)},false,2,'2026-10-26'::date)`)).map(w=>w.weekStart),['2026-10-26','2026-10-19'],'Legacy manual publication still respects the two-week student window')
 assert.deepEqual(show('2027-01-04'),[],'Old available rows must expire even if no newer row exists')
 // Public endpoint must return only the selected, resolved calendar and release window.
 const doc={...base,autoReleaseWeeks:true,visibleWeekCount:2,classSourceWeeks:base.weeksData,classGroups:[{name:'SLOW',days:['Måndag'],weeksData:[{secret:'stale copy'}],overrides:{secret:'old text'}},{name:'FAST',days, momentsPerDay:{Måndag:5,Tisdag:5,Onsdag:5,Fredag:5}}]}
