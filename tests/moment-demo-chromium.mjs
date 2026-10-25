@@ -75,6 +75,50 @@ try{
  await page.getByRole('textbox',{name:'Från datum'}).fill('2026-10-22')
  console.log('PASS demo retrospective safety: completed lessons frozen, past dates blocked, future holiday editable')
  console.log('PASS demo interactive closures: study day, half-day, holiday, restore and class isolation')
+
+// Step 4: overlapping synthetic closures on desktop and mobile, edit/remove one at a time.
+ const checkIntegrity=async()=> {
+   assert.match(await page.getByTestId('demo-integrity').innerText(),/Alla 12 moment bevaras/)
+   assert.match(await page.getByTestId('demo-integrity').innerText(),/Genomförda lektioner är oförändrade/)
+   assert.equal(await page.getByTestId('moment-demo-weeks').locator('article div > strong').count(),12)
+   assert.equal(await page.locator('article[data-completed="true"]').count(),2)
+ }
+ const runOverlap=async(mobile)=>{
+   const action=async(locator)=>mobile?locator.tap():locator.click()
+   await action(page.getByRole('button',{name:'Test 1',exact:true}))
+   await action(page.getByRole('button',{name:'Återställ Test 1'}))
+   await page.getByRole('combobox',{name:'Typ av lektionsfri dag'}).selectOption('Lov')
+   await page.getByLabel('Från datum').fill('2026-10-22')
+   await page.getByLabel('Till datum').fill('2026-10-26')
+   await action(page.getByRole('button',{name:'Lägg till för Test 1'}))
+   await page.getByRole('combobox',{name:'Typ av lektionsfri dag'}).selectOption('Studiedag')
+   await page.getByLabel('Från datum').fill('2026-10-23')
+   await action(page.getByRole('button',{name:'Lägg till för Test 1'}))
+   await page.getByRole('combobox',{name:'Typ av lektionsfri dag'}).selectOption('Halvdag')
+   await page.getByLabel('Från datum').fill('2026-10-22')
+   await action(page.getByRole('button',{name:'Lägg till för Test 1'}))
+   assert.equal(await page.getByTestId('demo-closures').locator('button[aria-label^="Ta bort"]').count(),3)
+   assert.match(await page.getByTestId('demo-overlap').innerText(),/överlappar/)
+   await checkIntegrity()
+   await action(page.getByRole('button',{name:'Test 2',exact:true}))
+   assert.match(await page.getByTestId('demo-closures').innerText(),/Inga lektionsfria dagar/)
+   await action(page.getByRole('button',{name:'Test 1',exact:true}))
+   await action(page.getByRole('button',{name:'Ändra undantag 1'}))
+   await page.getByLabel('Till datum').fill('2026-10-27')
+   await action(page.getByRole('button',{name:'Spara ändrat undantag'}))
+   assert.match(await page.getByTestId('demo-closures').innerText(),/2026-10-27/)
+   await checkIntegrity()
+   await action(page.getByRole('button',{name:'Ta bort undantag 2'}))
+   assert.equal(await page.getByTestId('demo-closures').locator('button[aria-label^="Ta bort"]').count(),2)
+   await checkIntegrity()
+   await action(page.getByRole('button',{name:'Ta bort undantag 1'}))
+   await action(page.getByRole('button',{name:'Ta bort undantag 1'}))
+   assert.match(await page.getByTestId('demo-closures').innerText(),/Inga lektionsfria dagar/)
+   await checkIntegrity()
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+2),false)
+   console.log('PASS demo step 4 '+(mobile?'mobile':'desktop')+': overlapping holiday, study day, half-day; edit/remove; 12 moments, completed lessons, class isolation')
+ }
+ await runOverlap(false)
  // Mobile touch interaction: all six planning/class buttons remain reachable without
  // losing any source moment or creating horizontal document overflow.
  await page.setViewportSize({width:390,height:844})
@@ -101,6 +145,7 @@ try{
  assert.equal(await page.getByTestId('demo-comparison').isVisible(),true,'mobile comparison expands')
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+2),false,'mobile editor has no overflow')
  console.log('PASS demo mobile interactive editor: locked lessons, date validation, closure, comparison toggle and no overflow')
+ await runOverlap(true)
  assert.deepEqual(errors,[])
  console.log('PASS demo mobile Chromium: Grundplanering and five class tabs, 12 moments and no horizontal overflow')
 }finally{await browser.close()}
