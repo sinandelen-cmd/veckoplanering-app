@@ -9,7 +9,7 @@ const source = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8
 const extract = name => {
   const start = source.indexOf('function ' + name + '(')
   assert.notEqual(start, -1, 'Missing component/helper: ' + name)
-  const next = source.slice(start + 1).search(/\n(?:function |export default )/)
+  const next = source.slice(start + 1).search(/\n(?:function |export )/)
   return next < 0 ? source.slice(start) : source.slice(start, start + 1 + next)
 }
 const functions = ['resourceInfo', 'hasDisplayValue', 'hasStudentTopicContent', 'hasStudentLessonContent', 'hasStudentWeekContent', 'WeekDetails', 'LessonDetails', 'toIsoDate', 'mondayOf', 'addWeeks', 'StudentView'].map(extract).join('\n')

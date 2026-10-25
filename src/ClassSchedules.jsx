@@ -20,7 +20,7 @@ export function buildClassSchedule(plan, group) {
   const extraSlots = Array.isArray(group.extraSlots) ? group.extraSlots : []
   const cancelled = new Set(Array.isArray(group.cancelledDates) ? group.cancelledDates : [])
   const closures = [...(Array.isArray(plan.schoolClosures) ? plan.schoolClosures.filter(event => !event.classNames || event.classNames.includes(group.name)) : []), ...(Array.isArray(group.schoolClosures) ? group.schoolClosures : [])]
-  const weeks = (plan.weeksData || []).filter(week => week?.weekStart && !week.hidden).slice().sort((a,b) => a.weekStart.localeCompare(b.weekStart))
+  const weeks = (Array.isArray(group.weeksData) ? group.weeksData : plan.weeksData || []).filter(week => week?.weekStart && !week.hidden).slice().sort((a,b) => a.weekStart.localeCompare(b.weekStart))
   if (!weeks.length) return []
   const firstDate = group.startDate || plan.startDate || ''
   const queue = weeks.flatMap(week => (Array.isArray(week.lessons) ? week.lessons : []).map((lesson, sourceIndex) => ({
@@ -28,8 +28,8 @@ export function buildClassSchedule(plan, group) {
     sourceWeekNumber: week.weekNumber, sourceWeekTitle: week.title
   })))
   // Each class advances through the same source lessons, but can split a
-  // source lesson's moments across multiple class meetings. Never merge
-  // moments from unrelated source lessons or drop their attached resources.
+  // source lesson's moments across class meetings while keeping each
+  // moment's pages, assignments and resources together.
   const scheduledQueue = queue
   const results = []
   let cursor = 0
@@ -69,8 +69,9 @@ export function buildClassSchedule(plan, group) {
       const source = scheduledQueue[cursor]
       if (!source) break
       const lessonNumber = results.length + 1
-      const requestedMoments = Math.max(1, Math.min(20, Number(group.momentsPerDay?.[slot.day]) || 1))
+      const requestedMoments = Math.max(1, Math.min(20, Number(group.momentsPerLesson?.[String(lessonNumber-1)] ?? group.momentsPerDay?.[slot.day]) || 1))
       const selectedTopics = []
+      const sourceTopics = []
       const sourceTopicOffset = topicOffset
       // A class meeting consumes the next N moments across source lesson
       // boundaries. Each topic object (pages, assignments, etc.) is preserved.
@@ -88,7 +89,9 @@ export function buildClassSchedule(plan, group) {
         }
         if (current.lesson?.assessment && selectedTopics.length > 0 && current !== source) break
         const remaining = requestedMoments - selectedTopics.length
-        selectedTopics.push(...topics.slice(topicOffset, topicOffset + remaining))
+        const selected = topics.slice(topicOffset, topicOffset + remaining)
+        sourceTopics.push(...selected.map((_,offset)=>({weekStart:current.sourceWeekStart,lessonIndex:current.sourceIndex,topicIndex:topicOffset+offset})))
+        selectedTopics.push(...selected)
         topicOffset += Math.min(remaining, topics.length - topicOffset)
         if (topicOffset >= topics.length) {
           cursor++
@@ -100,11 +103,64 @@ export function buildClassSchedule(plan, group) {
       if (sourceTopicOffset > 0) delete scheduledLesson.assessment
       results.push({...slot, lesson: scheduledLesson, weekNumber: source.sourceWeekNumber,
         weekTitle: source.sourceWeekTitle, weekStart: start, sourceWeekStart: source.sourceWeekStart,
-        index: source.sourceIndex, lessonNumber,
+        index: source.sourceIndex, sourceTopics, lessonNumber,
         override: group.overrides?.[String(lessonNumber - 1)] || null})
     }
   }
   return results
+}
+
+
+export function updateClassLessonContent(plan, className, scheduled, nextLesson) {
+  const group = plan.classGroups?.find(item=>item.name===className)
+  if (!group || !scheduled) return plan
+  const weeks = JSON.parse(JSON.stringify(Array.isArray(group.weeksData) ? group.weeksData : plan.weeksData || []))
+  const anchorWeek = weeks.find(week=>week.weekStart===scheduled.sourceWeekStart)
+  const anchorLesson = anchorWeek?.lessons?.[scheduled.index]
+  if (!anchorLesson) return plan
+  const refs = scheduled.sourceTopics || []
+  const firstOffset = refs[0]?.topicIndex || 0
+  const removals = new Map()
+  for (const ref of refs) {
+    const key = ref.weekStart+':'+ref.lessonIndex
+    if (!removals.has(key)) removals.set(key,new Set())
+    removals.get(key).add(ref.topicIndex)
+  }
+  const original = anchorLesson.topics || []
+  const anchorRemoval = removals.get(scheduled.sourceWeekStart+':'+scheduled.index) || new Set()
+  const prefix = original.filter((_,index)=>index<firstOffset && !anchorRemoval.has(index))
+  const suffix = original.filter((_,index)=>index>=firstOffset && !anchorRemoval.has(index))
+  const removedLessons=new Set()
+  for (const week of weeks) for (const [index,lesson] of (week.lessons || []).entries()) {
+    const remove = removals.get(week.weekStart+':'+index)
+    if (remove) {removedLessons.add(lesson);lesson.topics=(lesson.topics || []).filter((_,topicIndex)=>!remove.has(topicIndex))}
+  }
+  const edited = JSON.parse(JSON.stringify(nextLesson))
+  delete edited.classLessonNumber
+  delete edited.date
+  edited.topics=Array.isArray(edited.topics)?edited.topics:[]
+  const replacements=[]
+  if (prefix.length) replacements.push({...anchorLesson,topics:prefix})
+  replacements.push(edited)
+  if (suffix.length) {
+    const after={...anchorLesson,topics:suffix}
+    delete after.assessment
+    replacements.push(after)
+  }
+  anchorWeek.lessons.splice(scheduled.index,1,...replacements)
+  // Remove only source lessons fully consumed by this edit. Preserve intentional empty meetings.
+  const consumed=new Set()
+  for (const week of weeks) for (const [index,lesson] of (week.lessons || []).entries()) {
+    if (week===anchorWeek) continue
+    if (removals.has(week.weekStart+':'+index) && !lesson.assessment && !lesson.topics?.length) consumed.add(lesson)
+  }
+  // Anchor-week indices changed after splice: identify consumed objects from the source refs separately.
+  for (const lesson of anchorWeek.lessons) if (!replacements.includes(lesson) && !lesson.assessment && !lesson.topics?.length && removedLessons.has(lesson)) consumed.add(lesson)
+  for (const week of weeks) week.lessons=(week.lessons || []).filter(lesson=>!consumed.has(lesson))
+  if (!weeks.some(week=>week.lessons.length)) weeks[0].lessons=[{name:'Lektion 1',topics:[]}]
+  const overrides={...group.overrides}
+  delete overrides[String(scheduled.lessonNumber-1)]
+  return {...plan,classGroups:plan.classGroups.map(item=>item.name===className?{...item,weeksData:weeks,overrides,momentsPerLesson:{...item.momentsPerLesson,[String(scheduled.lessonNumber-1)]:Math.max(1,edited.topics.length)}}:item)}
 }
 
 export default function ClassSchedules({ plan, onChange, publicSlug = "", selectedClassName = "", onSelectClass }) {
@@ -162,7 +218,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", select
   const visibleComparisonWeeks = showAll ? comparisonWeeks : comparisonWeeks.slice(0,8)
   const unscheduledGroups = groups.filter(g => !(g.days || []).length)
   return <section className="card" aria-label="Kopplade klasser">
-    <div className="class-schedule-intro"><div><h2>Klasser och schema</h2><p className="muted">Samma planering för flera klasser – varje klass följer sitt eget schema.</p></div><details className="class-schedule-help"><summary>ⓘ Så fungerar det</summary><p>Skriv lektionsinnehållet en gång. Lägg sedan till dina klasser och välj deras lektionsdagar. Alla klasser följer samma innehåll i rätt ordning, men i sin egen takt.</p><p>Exempel: 8A har lektioner måndag, onsdag och fredag medan 8B har tisdag och torsdag.</p></details></div>
+    <div className="class-schedule-intro"><div><h2>Klasser och schema</h2><p className="muted">Grundplanering med eget schema och egna ändringar för varje klass.</p></div><details className="class-schedule-help"><summary>ⓘ Så fungerar det</summary><p>Skriv lektionsinnehållet en gång. Lägg sedan till dina klasser och välj deras lektionsdagar. Klasser utgår från grundplaneringen. När du redigerar innehållet i en klass får den en egen kopia; senare innehållsändringar i Grundplanering förs då inte automatiskt över till den klassen.</p><p>Exempel: 8A har lektioner måndag, onsdag och fredag medan 8B har tisdag och torsdag.</p></details></div>
     <div className="class-mini-row">
       <strong className="class-mini-label">Klasser</strong>
       <div className="class-mini-chips">{groups.map((g,i)=><button type="button" key={i} className={'class-mini-chip'+(selected===i && (!onSelectClass || selectedClassName===g.name)?' active':'')} aria-pressed={selected===i && (!onSelectClass || selectedClassName===g.name)} onClick={()=>{setSelected(i);setCompare(false);setShowClassDetails(false)}}>{g.name}</button>)}

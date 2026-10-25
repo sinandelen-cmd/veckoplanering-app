@@ -6,7 +6,8 @@ import { flushSync } from 'react-dom'
 import { supabase } from './supabase'
 import './App.css'
 import Navigation from './Navigation.jsx'
-import ClassSchedules, { buildClassSchedule } from './ClassSchedules.jsx'
+import ClassSchedules, { buildClassSchedule, updateClassLessonContent } from './ClassSchedules.jsx'
+import {recordPlanHistory,undoPlanHistory,redoPlanHistory} from './planHistory.js'
 import { MUNICIPALITIES_BY_COUNTY } from './swedishMunicipalities.js'
 import { NATIONAL_EXAMS_2026_27, NATIONAL_EXAM_PERIODS_2026_27 } from './nationalExams.js'
 
@@ -571,10 +572,12 @@ function sanitizeForStudents(plan) {
     classGroups: Array.isArray(plan?.classGroups) ? plan.classGroups.filter(g=>g && typeof g.name==='string').map(g=>({
       name:g.name.slice(0,80), startDate:String(g.startDate || plan.startDate || ''),
       days:Array.isArray(g.days)?g.days.filter(d=>['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].includes(d)):[],
+      momentsPerLesson:Object.fromEntries(Object.entries(g.momentsPerLesson || {}).filter(([key,value])=>/^\d+$/.test(key) && Number.isFinite(Number(value))).map(([key,value])=>[key,Math.max(1,Number(value))])),
       momentsPerDay:Object.fromEntries(['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].map(day=>[day,Math.max(1,Math.min(20,Number(g.momentsPerDay?.[day])||1))])),
       extraSlots:Array.isArray(g.extraSlots)?g.extraSlots.filter(item=>item && /^\d{4}-\d{2}-\d{2}$/.test(item.date || '')).map(item=>({date:item.date})):[],
       cancelledDates:Array.isArray(g.cancelledDates)?g.cancelledDates.filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)):[],
       schoolClosures:Array.isArray(g.schoolClosures)?g.schoolClosures.filter(item=>item && /^\d{4}-\d{2}-\d{2}$/.test(item.startDate || '') && /^\d{4}-\d{2}-\d{2}$/.test(item.endDate || item.startDate || '')).map(item=>({type:String(item.type||'Studiedag'),startDate:item.startDate,endDate:item.endDate||item.startDate,cancelledLessons:Math.max(1,Math.min(20,Number(item.cancelledLessons)||1)),cancelledFrom:item.cancelledFrom==='start'?'start':'end'})):[],
+      ...(Array.isArray(g.weeksData) ? {weeksData:sanitizeForStudents({...plan,classGroups:[],weeksData:g.weeksData}).weeksData} : {}),
       lessonTimes:g.lessonTimes && typeof g.lessonTimes==='object'?g.lessonTimes:{},
       overrides:g.overrides && typeof g.overrides==='object'?g.overrides:{}
     })) : [],
@@ -800,7 +803,7 @@ function ImportantDatesForWeek({ week, plan }) {
   </div>
 }
 
-function StudentView({ plan, error, preview = false, printPage = null, printWeekStart = null, initialClass = "", hideSelector = false }) {
+function StudentView({ plan, error, preview = false, printPage = null, printWeekStart = null, initialClass = "", hideSelector = false, onClassLessonChange }) {
   const [page, setPage] = useState(0)
   const [singlePrintWeek, setSinglePrintWeek] = useState(null)
   const [previewClass, setPreviewClass] = useState(initialClass)
@@ -811,7 +814,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   const classLessons = selectedClass ? buildClassSchedule(plan,selectedClass) : []
   // Grundplaneringens veckor är den enda källan för klassernas veckokort.
   // Klassens schema får bara placera lektioner i redan skapade veckor.
-  const sourceClassWeeks = (Array.isArray(plan?.weeksData) ? plan.weeksData : [])
+  const sourceClassWeeks = (Array.isArray(selectedClass?.weeksData) ? selectedClass.weeksData : Array.isArray(plan?.weeksData) ? plan.weeksData : [])
     .filter(week => week && !week.hidden && week.weekStart)
     .sort((a,b)=>a.weekStart.localeCompare(b.weekStart))
   // Visa även mellanliggande kalenderveckor utan att ändra grundplaneringens data.
@@ -829,9 +832,9 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     .map(week => {
       const scheduled = classLessons.filter(item => mondayOf(item.date) === week.weekStart)
       const lessons = scheduled.map((item, index) => {
-        const lesson = {...item.lesson,day:item.day,date:item.date,name:'Lektion '+(index+1)}
+        const lesson = {...item.lesson,day:item.day,date:item.date,name:'Lektion '+(index+1),classLessonNumber:item.lessonNumber}
         if(item.override?.text) lesson.topics=[{name:item.override.text}]
-        const requestedMoments = Math.max(1,Math.min(20,Number(selectedClass.momentsPerDay?.[item.day])||1))
+        const requestedMoments = Math.max(1,Math.min(20,Number(selectedClass.momentsPerLesson?.[String(item.lessonNumber-1)] ?? selectedClass.momentsPerDay?.[item.day])||1))
         const existingTopics = Array.isArray(lesson.topics) ? lesson.topics : []
         // Lägg till tomma moment vid behov, men radera aldrig befintligt innehåll.
         if(existingTopics.length < requestedMoments) lesson.topics=[...existingTopics,...Array.from({length:requestedMoments-existingTopics.length},()=>({name:'',pages:[],assignments:[],links:[],classMomentPlaceholder:true}))]
@@ -904,7 +907,16 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
         {!/^Vecka\s+\d+$/i.test(week.title || '') && week.title?.trim() && <h3>{week.title}</h3>}
         {(hasDisplayValue(week.content) || !hasStudentWeekContent(week)) && <div className="week-content">{hasDisplayValue(week.content) ? week.content : 'Ingen planering angiven ännu.'}</div>}
         <ImportantDatesForWeek week={week} plan={{...plan,schoolClosures:[...(plan.schoolClosures||[]).filter(event=>!selectedClass || !event.classNames || event.classNames.includes(selectedClass.name)),...(selectedClass?.schoolClosures||[]).map(event=>({...event,name:event.type||'Ledig dag',endDate:event.endDate||event.startDate,verified:true}))]}} />
-        <LessonDetails week={week} entryType={plan.entryType || 'lektion'} lessonDisplay="dag-och-lektion" />
+        <LessonDetails week={week} entryType={plan.entryType || 'lektion'} lessonDisplay="dag-och-lektion" lockLessons={Boolean(onClassLessonChange && selectedClass)} onChange={onClassLessonChange && selectedClass ? changes=>{
+          for (let index=0; index<(changes.lessons || []).length; index++) {
+            const next=changes.lessons[index]
+            const previous=week.lessons[index]
+            if (previous && JSON.stringify(next)!==JSON.stringify(previous)) {
+              const scheduled=classLessons.find(item=>item.lessonNumber===previous.classLessonNumber)
+              if (scheduled) onClassLessonChange(scheduled,next)
+            }
+          }
+        } : undefined} />
         <WeekDetails week={week} />
       </article></div>)}
     </section>
@@ -1330,41 +1342,25 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const initialPlansLoadedRef = useRef(false)
   const latestPlanRef = useRef(plan)
   useEffect(() => { latestPlanRef.current = plan }, [plan])
-  const historyRef = useRef({ past: [], current: JSON.stringify(plan), future: [] })
+  const historyRef = useRef({identity:session.user.id+':'+(selectedId ?? 'new'),past:[],current:JSON.stringify(plan),future:[]})
   const historySkipRef = useRef(false)
-  const [historyVersion, setHistoryVersion] = useState(0)
-  useEffect(() => {
-    const next = JSON.stringify(plan)
-    const history = historyRef.current
-    if (next === history.current) return
-    if (historySkipRef.current) {
-      historySkipRef.current = false
-      history.current = next
-      return
-    }
-    history.past.push(history.current)
-    if (history.past.length > 60) history.past.shift()
-    history.current = next
-    history.future = []
-    setHistoryVersion(v => v + 1)
-  }, [plan])
-  const undoPlan = () => {
-    const h = historyRef.current
-    if (!h.past.length) return
-    h.future.unshift(h.current)
-    h.current = h.past.pop()
-    historySkipRef.current = true
-    setPlan(JSON.parse(h.current))
-    setHistoryVersion(v => v + 1)
+  const [historyVersion,setHistoryVersion]=useState(0)
+  useEffect(()=>{
+    const next=recordPlanHistory(historyRef.current,session.user.id+':'+(selectedId ?? 'new'),plan,historySkipRef.current)
+    historySkipRef.current=false
+    if (next!==historyRef.current) {historyRef.current=next;setHistoryVersion(value=>value+1)}
+  },[plan,selectedId,session.user.id])
+  const undoPlan=()=>{
+    const next=undoPlanHistory(historyRef.current)
+    if (next===historyRef.current) return
+    historyRef.current=next;historySkipRef.current=true
+    setPlan(JSON.parse(next.current));setHistoryVersion(value=>value+1)
   }
-  const redoPlan = () => {
-    const h = historyRef.current
-    if (!h.future.length) return
-    h.past.push(h.current)
-    h.current = h.future.shift()
-    historySkipRef.current = true
-    setPlan(JSON.parse(h.current))
-    setHistoryVersion(v => v + 1)
+  const redoPlan=()=>{
+    const next=redoPlanHistory(historyRef.current)
+    if (next===historyRef.current) return
+    historyRef.current=next;historySkipRef.current=true
+    setPlan(JSON.parse(next.current));setHistoryVersion(value=>value+1)
   }
   const savedPlanRef = useRef(JSON.stringify(plan))
   const [, setSavedRevision] = useState(0)
@@ -2060,7 +2056,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div id="kopplade-klasser"><ClassSchedules selectedClassName={editingClassView} onSelectClass={setEditingClassView} plan={{...plan,weeksData:weeks}} publicSlug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} /></div>}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && Array.isArray(plan.classGroups) && plan.classGroups.length>0 && <div className="student-preview-classbar editing-class-picker"><div className="student-preview-class-buttons"><button type="button" className={!editingClassView?'active':''} onClick={()=>setEditingClassView('')}>📘 Grundplanering</button>{plan.classGroups.map(g=><button type="button" key={g.name} className={editingClassView===g.name?'active':''} onClick={()=>setEditingClassView(g.name)}>🏫 {g.name}</button>)}</div><button type="button" className="student-class-copy-link" aria-label="Kopiera elevlänk för vald klass" title="Kopiera elevlänk för vald klass" disabled={!plan.published||!plan.publicSlug} onClick={async()=>{const url=window.location.origin+'/elev/'+encodeURIComponent(plan.publicSlug)+(editingClassView?'?klass='+encodeURIComponent(editingClassView):'');try{await navigator.clipboard.writeText(url);setStatus('Elevlänken för '+(editingClassView||'grundplaneringen')+' har kopierats.')}catch{window.prompt('Kopiera elevlänk',url)}}}>🔗</button></div>}
-    {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && plan.classGroups?.some(g=>g.name===editingClassView) && <section className="editing-selected-class-weekly"><StudentView key={editingClassView} plan={{...sanitizeForStudents({...plan,weeksData:weeks}),classGroups:[plan.classGroups.find(g=>g.name===editingClassView)],published:plan.published,publicSlug:plan.publicSlug}} preview initialClass={editingClassView} hideSelector /></section>}
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && plan.classGroups?.some(g=>g.name===editingClassView) && <section className="editing-selected-class-weekly"><StudentView key={editingClassView} plan={{...plan,weeksData:weeks,classGroups:[plan.classGroups.find(g=>g.name===editingClassView)]}} preview initialClass={editingClassView} hideSelector onClassLessonChange={(item,lesson)=>setPlan(previous=>updateClassLessonContent(previous,editingClassView,item,lesson))} /><p className="class-edit-scope">Ändringar här gäller bara {editingClassView}. Vid första redigeringen får klassen en egen innehållskopia. Senare ändringar i Grundplanering förs inte automatiskt över.</p></section>}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline" style={editingClassView && plan.classGroups?.some(g=>g.name===editingClassView)?{display:"none"}:undefined}>
     <div className="calendar-bulk-visibility" style={{ margin: '8px 0 18px' }}><button type="button" className="secondary" disabled={busy} onClick={() => setAllWeeksVisibility(!weeks.every(week => !week.hidden))} style={{ padding: '13px 20px', fontSize: '1.05rem', fontWeight: 800, background: '#e4f6e9', border: '2px solid #80b69a', borderRadius: 12 }}>{weeks.every(week => !week.hidden) ? '☑ Dölj alla veckor i Elevvy' : '☐ Visa alla veckor i Elevvy'}</button></div>
 <section className="card">
@@ -2751,7 +2747,7 @@ function lessonDayDate(weekStart, lessonName) {
   date.setDate(date.getDate() - ((date.getDay() + 6) % 7) + index)
   return formatDate(toIsoDate(date))
 }
-function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 'bara-lektion' }) {
+function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 'bara-lektion', lockLessons = false }) {
   const lessons = Array.isArray(week?.lessons) ? week.lessons : []
   const editable = typeof onChange === 'function'
   if (!editable && !lessons.some(hasStudentLessonContent)) return null
@@ -2786,8 +2782,8 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
             return <>{showDay && <span>{dayLabel}</span>}{showDay && showLesson && ' · '}{showLesson && <span>{name}</span>}{lesson.assessment && <> · <span className="lesson-heading-assessment">{lesson.assessment.type === 'Egen benämning' ? (lesson.assessment.customType || 'Prov') : (lesson.assessment.type || 'Prov')}</span></>}{lessonDayDate(week.weekStart, day) && <span className="lesson-day-date"> · {lessonDayDate(week.weekStart, day)}</span>}</>
           })()}
         </h4>}
-        {editable && entryType !== 'dag' && <div className="lesson-reorder-controls"><button type="button" disabled={i === 0} aria-label={`Flytta lektion ${i + 1} uppåt`} onClick={() => moveLesson(i, -1)}>↑ Flytta upp</button><button type="button" disabled={i === lessons.length - 1} aria-label={`Flytta lektion ${i + 1} nedåt`} onClick={() => moveLesson(i, 1)}>↓ Flytta ned</button></div>}
-        {editable && <button type="button" className="remove-small" onClick={() => { if (!(lesson.topics || []).some(topic => topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm(entryType === 'dag' ? 'Ta bort dagen och allt innehåll i den?' : 'Ta bort lektionen och allt innehåll i den?')) changeLessons(entryType === 'dag' ? lessons.filter((_, index) => index !== i) : normalizeLessonOrder(lessons.filter((_, index) => index !== i))) }}>× Ta bort {entryType === 'dag' ? 'dag' : 'lektion'}</button>}
+        {editable && !lockLessons && entryType !== 'dag' && <div className="lesson-reorder-controls"><button type="button" disabled={i === 0} aria-label={`Flytta lektion ${i + 1} uppåt`} onClick={() => moveLesson(i, -1)}>↑ Flytta upp</button><button type="button" disabled={i === lessons.length - 1} aria-label={`Flytta lektion ${i + 1} nedåt`} onClick={() => moveLesson(i, 1)}>↓ Flytta ned</button></div>}
+        {editable && !lockLessons && <button type="button" className="remove-small" onClick={() => { if (!lesson.assessment && !(lesson.topics || []).some(topic => topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm(entryType === 'dag' ? 'Ta bort dagen och allt innehåll i den?' : 'Ta bort lektionen och allt innehåll i den?')) changeLessons(entryType === 'dag' ? lessons.filter((_, index) => index !== i) : normalizeLessonOrder(lessons.filter((_, index) => index !== i))) }}>× Ta bort {entryType === 'dag' ? 'dag' : 'lektion'}</button>}
       </div>
       {lesson.assessment && <div className="lesson-assessment-card" role="note">
         <strong>📝 {lesson.assessment.type === 'Egen benämning' ? (lesson.assessment.customType || 'Prov/test') : (lesson.assessment.type || 'Prov')}</strong>
@@ -2796,7 +2792,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
           {lesson.assessment.type === 'Egen benämning' && <input aria-label="Egen provtyp" placeholder="Skriv egen benämning" value={lesson.assessment.customType||''} onChange={e=>updateAssessment(i,{customType:e.target.value})}/>}
           <input aria-label="Provets rubrik" placeholder="Rubrik för provet" value={lesson.assessment.title||''} onChange={e=>updateAssessment(i,{title:e.target.value})}/>
           <textarea aria-label="Information om provet" placeholder="Information till eleverna" value={lesson.assessment.description||''} onChange={e=>updateAssessment(i,{description:e.target.value})}/>
-          <button type="button" onClick={()=>changeLesson(i,{...lesson,assessment:null})}>Ta bort provmarkering</button>
+          <button type="button" onClick={()=>{if(window.confirm('Ta bort provmarkeringen och dess beskrivning? Du kan ångra ändringen.'))changeLesson(i,{...lesson,assessment:null})}}>Ta bort provmarkering</button>
         </div> : <><div>{lesson.assessment.title}</div>{lesson.assessment.description && <p>{lesson.assessment.description}</p>}</>}
       </div>}
       {editable && !lesson.assessment && <button type="button" className="lesson-add-assessment" onClick={()=>updateAssessment(i,{type:'Prov',title:'',description:''})}>+ Infoga prov/test</button>}
@@ -2807,6 +2803,13 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
         const links = Array.isArray(topic.links) ? topic.links : []
         const visibleFields = ['pages', 'assignments'].filter(field => !topic[field === 'pages' ? 'hidePages' : 'hideAssignments'])
         const visibleLinks = links.map((link, k) => ({ link, k })).filter(({ link }) => editable || resourceInfo(typeof link === 'string' ? link : link?.url || ''))
+        const moveTopic = direction => {
+          const target=j+direction
+          if (target<0 || target>=(lesson.topics || []).length) return
+          const topics=[...lesson.topics]
+          ;[topics[j],topics[target]]=[topics[target],topics[j]]
+          changeLesson(i,{...lesson,topics})
+        }
         const lastFilledRow = values => values.reduce((last, value, index) => String(value ?? '').trim() ? index + 1 : last, 0)
         const rows = editable ? Math.max(1, pages.length, assignments.length) : Math.max(1, lastFilledRow(pages), lastFilledRow(assignments))
         return <div className="topic" key={j}>
@@ -2820,11 +2823,17 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
                   while (next.length <= row) next.push('')
                   next[row] = e.target.value
                   updateTopic({ ...topic, [field]: next })
-                }} /><button className="remove-small" type="button" aria-label={`Ta bort ${field === "pages" ? "sida" : "uppgift"} på rad ${row + 1}`} onClick={() => updateTopic({ ...topic, [field]: (field === 'pages' ? pages : assignments).filter((_, index) => index !== row) })}>×</button></> : <span>{hasDisplayValue((field === 'pages' ? pages : assignments)[row]) ? (field === 'pages' ? pages : assignments)[row] : '—'}</span>}
+                }} /><button className="remove-small" type="button" aria-label={`Ta bort ${field === "pages" ? "sida" : "uppgift"} på rad ${row + 1}`} onClick={() => {if (hasDisplayValue((field === 'pages' ? pages : assignments)[row]) && !window.confirm('Ta bort den ifyllda raden? Du kan ångra ändringen.')) return;updateTopic({ ...topic, [field]: (field === 'pages' ? pages : assignments).filter((_, index) => index !== row) })}}>×</button></> : <span>{hasDisplayValue((field === 'pages' ? pages : assignments)[row]) ? (field === 'pages' ? pages : assignments)[row] : '—'}</span>}
               </div>)}
               {editable && <button type="button" className="add-detail" onClick={() => updateTopic({ ...topic, [field]: [...(field === 'pages' ? pages : assignments), ''] })}>+ {(field === 'pages' ? topic.pagesLabel : topic.assignmentsLabel)?.trim() || (field === 'pages' ? 'Sida' : 'Uppgift')}</button>}
             </div>)}
           </div>
+          {editable && <div className="topic-edit-actions">
+            <button type="button" className="secondary" title="Flytta moment uppåt" aria-label={'Flytta moment '+(j+1)+' uppåt'} disabled={j===0} onClick={()=>moveTopic(-1)}>↑</button>
+            <button type="button" className="secondary" title="Flytta moment nedåt" aria-label={'Flytta moment '+(j+1)+' nedåt'} disabled={j===(lesson.topics || []).length-1} onClick={()=>moveTopic(1)}>↓</button>
+            {topic.hidePages && <button type="button" className="secondary" onClick={()=>updateTopic({...topic,hidePages:false})}>+ Visa Sida</button>}
+            {topic.hideAssignments && <button type="button" className="secondary" onClick={()=>updateTopic({...topic,hideAssignments:false})}>+ Visa Uppgift</button>}
+          </div>}
           {(editable || visibleLinks.length > 0) && <div className="topic-links">
             {visibleLinks.map(({ link, k }) => {
               const url = typeof link === 'string' ? link : link.url || ''
@@ -2834,7 +2843,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
               return <div className="topic-link" key={k}>
                 {editable && <><input aria-label="Länkens namn" placeholder="Namn" value={label} onChange={e => changeLink({ url, label: e.target.value })} /><input aria-label="Länkadress" placeholder="https://..." value={url} onChange={e => changeLink({ url: e.target.value, label })} /></>}
                 {info && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon">{info.icon}</span>{label || info.label}<span className="print-resource-url">{url}</span></a>}
-                {editable && <button type="button" className="remove-small" onClick={() => updateTopic({ ...topic, links: links.filter((_, index) => index !== k) })}>×</button>}
+                {editable && <button type="button" className="remove-small" onClick={() => {if (hasDisplayValue(url) && !window.confirm('Ta bort länken? Du kan ångra ändringen.')) return;updateTopic({ ...topic, links: links.filter((_, index) => index !== k) })}}>×</button>}
               </div>
             })}
             {editable && <button type="button" className="add-detail" onClick={() => updateTopic({ ...topic, links: [...links, { label: '', url: '' }] })}>+ Länk</button>}
@@ -2844,7 +2853,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
       })}
       {editable && <button type="button" className="secondary" onClick={() => changeLesson(i, { ...lesson, topics: [...(lesson.topics || []), { name: '', pages: [], assignments: [], links: [] }] })}>+ Moment</button>}
     </section>)}
-    {editable && (entryType !== 'dag' || WEEKDAYS.some(day => !lessons.some(lesson => lesson.name === day))) && <button type="button" className="secondary" onClick={() => {
+    {editable && !lockLessons && (entryType !== 'dag' || WEEKDAYS.some(day => !lessons.some(lesson => lesson.name === day))) && <button type="button" className="secondary" onClick={() => {
       if (entryType === 'dag') {
         const missing = WEEKDAYS.find(day => !lessons.some(lesson => lesson.name === day))
         if (!missing) return
@@ -2862,3 +2871,5 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
     }}>{entryType === 'dag' ? `+ Lägg tillbaka ${WEEKDAYS.find(day => !lessons.some(lesson => lesson.name === day)) || 'dag'}` : '+ Lägg till lektion'}</button>}
   </div>
 }
+
+export {LessonDetails,StudentView}

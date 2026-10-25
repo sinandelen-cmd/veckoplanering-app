@@ -3906,3 +3906,8 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
   .planning-layout .student-shell .lesson .topic-grid-readonly[data-detail-count="1"] { grid-template-columns:minmax(0,1fr); }
   .planning-layout .student-shell .lesson .topic-grid-readonly[data-detail-count="2"] { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
+
+.topic-edit-actions {display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.topic-edit-actions button {min-width:38px;min-height:38px;padding:6px 10px}
+.class-edit-scope {padding:10px 12px;border:1px solid #b8d7cd;border-radius:10px;background:#eef7f2;color:#285a4d;font-size:.9rem}
+@media(max-width:640px){.topic-edit-actions button{min-height:44px;min-width:44px}}

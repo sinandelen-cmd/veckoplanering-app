@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 const source = fs.readFileSync(new URL('../src/ClassSchedules.jsx',import.meta.url),'utf8')
-const prefix = source.slice(source.indexOf('const DAYS'),source.indexOf('export default function ClassSchedules')).replace('export function buildClassSchedule','function buildClassSchedule')
+const prefix = source.slice(source.indexOf('const DAYS'),source.indexOf('export default function ClassSchedules')).replaceAll('export function ','function ')
 const build = new Function(prefix+'; return buildClassSchedule')()
 const app = fs.readFileSync(new URL('../src/App.jsx',import.meta.url),'utf8')
 const extract = name => {
  const start=app.indexOf('function '+name+'(')
  assert.ok(start>=0,name+' must exist')
- const next=app.slice(start+1).search(/\n(?:function |export default |const |class )/)
+ const next=app.slice(start+1).search(/\n(?:function |export |const |class )/)
  return next<0?app.slice(start):app.slice(start,start+1+next)
 }
 const sanitize = new Function(['toIsoDate','validSchoolClosure','resourceInfo','sanitizeForStudents'].map(extract).join('\n')+'; return sanitizeForStudents')()
@@ -69,3 +69,27 @@ assert.equal(studentAssessments.weeksData[0].lessons[1].assessment.title,'Kapite
 assert.equal(build(studentAssessments,studentAssessments.classGroups[0]).filter(item=>item.lesson.assessment).length,1)
 assert.equal(JSON.stringify(plan),before)
 console.log('PASS: 8E 4/1/2/4/1 allocation, gaps, slow classes, closures, assessments, public serialization, resources and immutable source')
+
+const update = new Function(prefix+'; return updateClassLessonContent')()
+const two={...plan,classGroups:[group,{...group,name:'Other'}]}
+const nextLesson={...output[0].lesson,topics:output[0].lesson.topics.map((t,i)=>i? t:{...t,name:'Edited',pages:['45–48'],assignments:['1–5, 8 och 12']})}
+const edited=update(two,'8E',output[0],nextLesson)
+assert.deepEqual(edited.weeksData,two.weeksData)
+assert.deepEqual(edited.classGroups[1],two.classGroups[1])
+assert.equal(build(edited,edited.classGroups[0])[0].lesson.topics[0].name,'Edited')
+assert.deepEqual(build(edited,edited.classGroups[0])[0].lesson.topics[0].links,topic(1).links)
+assert.equal(build(edited,edited.classGroups[0]).flatMap(x=>x.lesson.topics).length,10)
+const single={...two,classGroups:[slow,{...group,name:'Other'}]}
+let own=update(single,'Slow',build(single,slow)[0],{topics:[topic(101),topic(102)]})
+let ownSchedule=build(own,own.classGroups[0])
+assert.equal(ownSchedule[0].lesson.topics.length,2,'Adding a moment keeps it in the same meeting')
+assert.equal(ownSchedule.flatMap(x=>x.lesson.topics).length,11)
+own=update(own,'Slow',ownSchedule[0],{...ownSchedule[0].lesson,topics:[]})
+ownSchedule=build(own,own.classGroups[0])
+assert.equal(ownSchedule[0].lesson.topics.length,0,'An intentionally cleared meeting remains editable')
+assert.equal(ownSchedule[1].lesson.topics[0].name,'Moment 2')
+const studentOwn=sanitize(edited)
+assert.equal(build(studentOwn,studentOwn.classGroups[0])[0].lesson.topics[0].name,'Edited')
+assert.equal(studentOwn.classGroups[0].weeksData[0].teacherNotes,undefined)
+assert.equal(JSON.stringify(plan),before)
+console.log('PASS: class-only edits, resources, independent base/other class, same-meeting insertion, clearing, student serialization')
