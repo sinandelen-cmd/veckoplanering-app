@@ -144,3 +144,14 @@ const taskRemoved={...allocated.lesson,topics:allocated.lesson.topics.map((t,i)=
 const taskPlan=update(queueExpanded,'Queue A',allocated,taskRemoved)
 assert.deepEqual(build(taskPlan,taskPlan.classGroups[0])[0].lesson.topics[0].pages,allocated.lesson.topics[0].pages)
 console.log('PASS: requesting next queued moment reflows only chosen class; pages and assignments delete independently with links preserved')
+
+const sharedPlan={sharedBaseContent:true,startDate:'2026-10-12',weeksData:[{weekStart:'2026-10-12',lessons:[1,2,3].map(n=>({topics:[topic(n)]}))}],classGroups:[]}
+const staleGroup={name:'A',startDate:'2026-10-12',days:['Måndag','Tisdag'],weeksData:[{weekStart:'2026-10-12',lessons:[{topics:[{name:'Gammal klasskopia'}]}]}],overrides:{'0':{text:'Gammalt eget innehåll'}}}
+const sharedGroup={name:'B',startDate:'2026-10-12',days:['Måndag'],momentsPerDay:{Måndag:2}}
+assert.deepEqual(build(sharedPlan,staleGroup).flatMap(x=>x.lesson.topics),sharedPlan.weeksData[0].lessons.flatMap(x=>x.topics))
+assert.equal(build(sharedPlan,staleGroup)[0].override,null)
+const changedShared={...sharedPlan,weeksData:[{...sharedPlan.weeksData[0],lessons:[{topics:[{...topic(1),name:'Ändrat i Grundplanering'}]},...sharedPlan.weeksData[0].lessons.slice(1)]}]}
+for(const group of [staleGroup,sharedGroup])assert.equal(build(changedShared,group)[0].lesson.topics[0].name,'Ändrat i Grundplanering')
+assert.equal(build(sharedPlan,sharedGroup)[0].lesson.topics.length,2)
+assert.equal(staleGroup.weeksData[0].lessons[0].topics[0].name,'Gammal klasskopia','Old saved class data is preserved, but never used in shared mode')
+console.log('PASS: shared base content reaches every class; separate schedules remain; stale class copies and overrides cannot replace base content')

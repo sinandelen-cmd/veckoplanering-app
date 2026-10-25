@@ -20,7 +20,7 @@ export function buildClassSchedule(plan, group) {
   const extraSlots = Array.isArray(group.extraSlots) ? group.extraSlots : []
   const cancelled = new Set(Array.isArray(group.cancelledDates) ? group.cancelledDates : [])
   const closures = [...(Array.isArray(plan.schoolClosures) ? plan.schoolClosures.filter(event => !event.classNames || event.classNames.includes(group.name)) : []), ...(Array.isArray(group.schoolClosures) ? group.schoolClosures : [])]
-  const weeks = (Array.isArray(group.weeksData) ? group.weeksData : plan.weeksData || []).filter(week => week?.weekStart && !week.hidden).slice().sort((a,b) => a.weekStart.localeCompare(b.weekStart))
+  const weeks = (plan.sharedBaseContent === true ? plan.weeksData || [] : Array.isArray(group.weeksData) ? group.weeksData : plan.weeksData || []).filter(week => week?.weekStart && !week.hidden).slice().sort((a,b) => a.weekStart.localeCompare(b.weekStart))
   if (!weeks.length) return []
   const firstDate = group.startDate || plan.startDate || ''
   const queue = weeks.flatMap(week => (Array.isArray(week.lessons) ? week.lessons : []).map((lesson, sourceIndex) => ({
@@ -111,7 +111,7 @@ export function buildClassSchedule(plan, group) {
       results.push({...slot, lesson: scheduledLesson, weekNumber: source.sourceWeekNumber,
         weekTitle: source.sourceWeekTitle, weekStart: start, sourceWeekStart: source.sourceWeekStart,
         index: source.sourceIndex, sourceTopics, lessonNumber,
-        override: group.overrides?.[String(lessonNumber - 1)] || null})
+        override: plan.sharedBaseContent === true ? null : group.overrides?.[String(lessonNumber - 1)] || null})
     }
   }
   return results
@@ -200,7 +200,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", select
   const [closureNote, setClosureNote] = React.useState('')
   const group = groups[selected]
   const lessonsPerWeek = group => (group.days || []).length
-  const schedule = React.useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
+  const schedule = React.useMemo(() => group ? buildClassSchedule({...plan,sharedBaseContent:true}, group) : [], [plan, group])
   const updateGroup = changes => onChange({ ...plan, classGroups: groups.map((g, i) => i === selected ? { ...g, ...changes } : g) })
   // Tidigare schematider bevaras i datat, men behöver inte redigeras i matrisen.
   const setLessonTime = (classIndex, day, slotIndex, value) => {
@@ -225,12 +225,12 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", select
     return result
   }, [])
   const weeksShown = showAll ? grouped : grouped.slice(0, 8)
-  const comparison = groups.map(g => ({name:g.name, weeks:buildClassSchedule(plan,g).reduce((acc,item)=>{const key=iso(monday(item.date));(acc[key] ||= []).push(item);return acc},{})}))
+  const comparison = groups.map(g => ({name:g.name, weeks:buildClassSchedule({...plan,sharedBaseContent:true},g).reduce((acc,item)=>{const key=iso(monday(item.date));(acc[key] ||= []).push(item);return acc},{})}))
   const comparisonWeeks = [...new Set(comparison.flatMap(g=>Object.keys(g.weeks)))].sort()
   const visibleComparisonWeeks = showAll ? comparisonWeeks : comparisonWeeks.slice(0,8)
   const unscheduledGroups = groups.filter(g => !(g.days || []).length)
   return <section className="card" aria-label="Kopplade klasser">
-    <div className="class-schedule-intro"><div><h2>Klasser och schema</h2><p className="muted">Grundplanering med eget schema och egna ändringar för varje klass.</p></div><details className="class-schedule-help"><summary>ⓘ Så fungerar det</summary><p>Skriv lektionsinnehållet en gång. Lägg sedan till dina klasser och välj deras lektionsdagar. Klasser utgår från grundplaneringen. När du redigerar innehållet i en klass får den en egen kopia; senare innehållsändringar i Grundplanering förs då inte automatiskt över till den klassen.</p><p>Exempel: 8A har lektioner måndag, onsdag och fredag medan 8B har tisdag och torsdag.</p></details></div>
+    <div className="class-schedule-intro"><div><h2>Klasser och schema</h2><p className="muted">Gemensam grundplanering med eget schema och egen momenttakt för varje klass.</p></div><details className="class-schedule-help"><summary>ⓘ Så fungerar det</summary><p>Skriv lektionsinnehållet en gång. Lägg sedan till dina klasser och välj deras lektionsdagar. Allt innehåll redigeras i Grundplanering och speglas till alla klasser. Varje klass följer samma momentkö enligt sitt eget schema och sin momenttakt.</p><p>Exempel: 8A har lektioner måndag, onsdag och fredag medan 8B har tisdag och torsdag.</p></details></div>
     <div className="class-mini-row">
       <strong className="class-mini-label">Klasser</strong>
       <div className="class-mini-chips">{groups.map((g,i)=><button type="button" key={i} className={'class-mini-chip'+(selected===i && (!onSelectClass || selectedClassName===g.name)?' active':'')} aria-pressed={selected===i && (!onSelectClass || selectedClassName===g.name)} onClick={()=>{setSelected(i);setCompare(false);setShowClassDetails(false)}}>{g.name}</button>)}
@@ -310,7 +310,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", select
             <button type="button" onClick={() => {updateGroup({overrides:{...group.overrides,[String(item.lessonNumber-1)]:{text:editText}}});setEditing(null)}}>Spara klassens ändring</button>
             <button type="button" className="secondary" onClick={()=>setEditing(null)}>Avbryt</button>
           </div> : <div className="button-row">
-            <button type="button" className="secondary" onClick={()=>{setEditing(item.lessonNumber);setEditText(item.override?.text ?? describe(item.lesson))}}>Ändra bara för {group.name}</button>
+            <small>Innehållet redigeras i Grundplanering.</small>
             {item.override && <button type="button" className="secondary" onClick={()=>{const overrides={...group.overrides};delete overrides[String(item.lessonNumber-1)];updateGroup({overrides})}}>Återställ grundinnehåll</button>}
             <button type="button" className="secondary" onClick={()=>{
               if (!window.confirm('Ställa in alla lektioner '+item.date+' för '+group.name+'? Innehållet flyttas till nästa tillgängliga lektionstillfälle.')) return
