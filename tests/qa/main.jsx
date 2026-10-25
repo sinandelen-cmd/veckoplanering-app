@@ -1,6 +1,8 @@
 import React,{useState} from 'react'
 import {createRoot} from 'react-dom/client'
 import {StudentView,LessonDetails} from '../../src/App.jsx'
+import WeekEventEditor from '../../src/WeekEventEditor.jsx'
+import {insertCalendarEventWeek} from '../../src/weekEvents.js'
 import ClassSchedules from '../../src/ClassSchedules.jsx'
 import {recordPlanHistory,undoPlanHistory,redoPlanHistory} from '../../src/planHistory.js'
 const topic=(name)=>({name,pages:['45–48'],assignments:['1–5, 8 och 12'],links:[{url:'https://example.org/exercise',label:'Övningar'}]})
@@ -13,7 +15,8 @@ const plan=JSON.parse(history.current)
 const change=fn=>setHistory(h=>recordPlanHistory(h,'synthetic:1',typeof fn==='function'?fn(JSON.parse(h.current)):fn))
 return <main className="shell"><h1>Testversion – endast påhittade data</h1><p>Ingenting här sparas till din databas. Ladda om sidan för att återställa testet.</p><div style={{display:'flex',flexWrap:'wrap',gap:8}}><button onClick={()=>setHistory(undoPlanHistory)} disabled={!history.past.length}>Ångra teständring</button><button onClick={()=>setHistory(redoPlanHistory)} disabled={!history.future.length}>Gör om teständring</button><button onClick={()=>setSelected('')}>Grundplanering</button><button onClick={()=>setStudent(!student)}>{student?'Lärarvy':'Elevvy'}</button></div>
 <ClassSchedules plan={plan} selectedClassName={selected} onSelectClass={setSelected} onChange={change}/>
-{selected?<StudentView key={selected+student} plan={plan} preview hideSelector initialClass={selected}/>:<LessonDetails week={plan.weeksData[0]} onChange={student?undefined:changes=>change(p=>({...p,weeksData:[{...p.weeksData[0],...changes}]}))}/>}
+{selected?<StudentView key={selected+student} plan={plan} preview hideSelector initialClass={selected} teacherCalendar={!student} onAddWeek={student?undefined:(date,event)=>change(p=>insertCalendarEventWeek(p,date,event,selected))}/>:plan.weeksData.map((week,index)=><React.Fragment key={week.weekStart}><h2>Vecka {week.weekNumber}</h2><LessonDetails week={week} onChange={student?undefined:changes=>change(p=>({...p,weeksData:p.weeksData.map((w,i)=>i===index?{...w,...changes}:w)}))}/>{!student&&<WeekEventEditor afterDate={week.weekStart} onAdd={event=>change(p=>insertCalendarEventWeek(p,week.weekStart,event))}/>}</React.Fragment>)}
 <pre aria-label="Kontrollresultat">{JSON.stringify({base:plan.weeksData[0].lessons.flatMap(l=>l.topics).map(t=>t.name),classes:plan.classGroups.map(g=>({name:g.name,ownCopy:!!g.weeksData,moments:g.weeksData?.flatMap(w=>w.lessons).flatMap(l=>l.topics).map(t=>t.name)}))},null,2)}</pre></main>
 }
 createRoot(document.getElementById('root')).render(<Demo/>)
+

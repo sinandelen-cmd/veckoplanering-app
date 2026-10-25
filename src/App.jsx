@@ -1,7 +1,9 @@
-Warning: truncated output (original token count: 63213)
-Total output lines: 2922
+Warning: truncated output (original token count: 63197)
+Total output lines: 2913
 
 function capitalizeFirstSwedish(value) { return String(value || '').replace(/^(\s*)([a-zåäö])/i, (_, spaces, letter) => spaces + letter.toLocaleUpperCase('sv-SE')) }
+import WeekEventEditor from './WeekEventEditor.jsx'
+import {insertCalendarEventWeek} from './weekEvents.js'
 import UpdateNotices from './UpdateNotices.jsx'
 import { groupStudentWeeksForPrint } from './printGroups.js'
 import { Component, Fragment, useEffect, useMemo, useRef, useState } from 'react'
@@ -577,7 +579,7 @@ function sanitizeForStudents(plan, includeHidden = false) {
     className: String(plan?.className || ''),
     startDate: String(plan?.startDate || ''),
     classGroups: Array.isArray(plan?.classGroups) ? plan.classGroups.filter(g=>g && typeof g.name==='string').map(g=>({
-      name:g.name.slice(0,80), startDate:String(g.startDate || plan.startDate || ''),
+      name:g.name.slice(0,80), calendarEvents:Array.isArray(g.calendarEvents)?g.calendarEvents.map(e=>({weekStart:String(e.weekStart||''),type:String(e.type||'Annat'),title:String(e.title||''),days:Array.isArray(e.days)?e.days.filter(d=>['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].includes(d)):[]})):[], startDate:String(g.startDate || plan.startDate || ''),
       days:Array.isArray(g.days)?g.days.filter(d=>['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].includes(d)):[],
       momentsPerLesson:Object.fromEntries(Object.entries(g.momentsPerLesson || {}).filter(([key,value])=>/^\d+$/.test(key) && Number.isFinite(Number(value))).map(([key,value])=>[key,Math.max(1,Number(value))])),
       momentsPerDay:Object.fromEntries(['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].map(day=>[day,Math.max(1,Math.min(20,Number(g.momentsPerDay?.[day])||1))])),
@@ -610,6 +612,9 @@ function sanitizeForStudents(plan, includeHidden = false) {
         weekStart: typeof week.weekStart === 'string' ? week.weekStart : '',
         ...(includeHidden ? {hidden:week.hidden === true} : {}),
         calendarEventWeek: week.calendarEventWeek === true,
+        eventType: String(week.eventType||''),
+        eventTitle: String(week.eventTitle||''),
+        eventDays: Array.isArray(week.eventDays)?week.eventDays.filter(d=>['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].includes(d)):[],
         autoVisibility: week.autoVisibility === true,
         keepVisibleExtra: week.keepVisibleExtra === true,
         publishDate: /^\d{4}-\d{2}-\d{2}$/.test(week.publishDate || '') ? week.publishDate : '',
@@ -812,7 +817,7 @@ function ImportantDatesForWeek({ week, plan }) {
   </div>
 }
 
-function StudentView({ plan, error, preview = false, printPage = null, printWeekStart = null, initialClass = "", hideSelector = false, onClassLessonChange }) {
+function StudentView({ plan, error, preview = false, printPage = null, printWeekStart = null, initialClass = "", hideSelector = false, onClassLessonChange, teacherCalendar = false, onAddWeek }) {
   const clock=useWeekClock()
   const [page, setPage] = useState(0)
   const [singlePrintWeek, setSinglePrintWeek] = useState(null)
@@ -882,7 +887,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     .filter((week, index, weeks) => weeks.findIndex(other => (other.weekStart || `number-${other.weekNumber}`) === (week.weekStart || `number-${week.weekNumber}`)) === index)
     .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || ''))
  : []
-  const studentWeeks=onClassLessonChange ? candidateWeeks : selectStudentWeeks(candidateWeeks,plan,clock,preview)
+  const studentWeeks=onClassLessonChange || teacherCalendar ? candidateWeeks : selectStudentWeeks(candidateWeeks,plan,clock,preview)
   const currentStudentWeekStart = mondayDate(stockholmDate(clock))
   const currentStudentWeek = studentWeeks.find(week => week.weekStart === currentStudentWeekStart)
   const upcomingStudentWeek = [...studentWeeks].reverse().find(week => week.weekStart >= currentStudentWeekStart)
@@ -906,7 +911,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     </header>}
     {studentWeeks.length === 0 && <p className="card empty" role="status">{plan.autoReleaseWeeks ? "Ingen vecka är publicerad för elever ännu. Nästa vecka visas automatiskt när dess måndag börjar." : "Det finns inga synliga veckor i den här planeringen ännu."}</p>}
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
-      <WeekBoard weeks={visibleWeeks} enabled={Boolean(onClassLessonChange)}>{visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
+      <WeekBoard weeks={visibleWeeks} enabled={Boolean(onClassLessonChange || teacherCalendar)}>{visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
         {!onClassLessonChange && week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`} style={{backgroundColor:chapterColor(week.chapter)}}>{week.chapter}</h2>}
         <article id={"student-week-" + week.weekStart} className={`week-card student-week-card${hasStudentWeekContent(week) ? '' : ' student-week-empty'}`} style={{...studentWeekStyle(week.weekStart),...(onClassLessonChange?{backgroundColor:'var(--chapter-color)'}:week.chapter?{backgroundColor:chapterColor(week.chapter)}:{})}}>
 
@@ -928,7 +933,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
           }
         } : undefined} />
         <WeekDetails week={week} />
-      </article></div>)}</WeekBoard>
+      </article>{onAddWeek&&<WeekEventEditor afterDate={week.weekStart} days={selectedClass?.days} onAdd={event=>onAddWeek(week.weekStart,event)}/>}</div>)}</WeekBoard>
     </section>
   </main>
   {false && printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">
@@ -1458,26 +1463,11 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     setStatus('Alla veckor och datum har anpassats. Spara planeringen för att behålla ändringen.')
   }
 
-  function insertBlankWeekAfter(index) {
-    setPlan(previous => {
-      const unsorted=displayWeeks(previous)
-      const selected=unsorted[index]
-      const existing=[...unsorted].sort((a,b)=>a.weekStart.localeCompare(b.weekStart))
-      const position=existing.findIndex(week=>week.weekStart===selected?.weekStart)
-      if(position<0||existing.length>=52)return previous
-      const nextDate=addWeeks(existing[position].weekStart,1)
-      const blank={...makeWeeks({...previous,lessonsPerWeek:5,lessonDays:[...WEEKDAYS],startDate:nextDate,startWeek:calendarWeekNumber(nextDate),weeks:1},1)[0],hidden:true}
-      const mustShift=Boolean(existing[position+1] && existing[position+1].weekStart<=nextDate)
-      const following=existing.slice(position+1).map(week=>{
-        if(!mustShift)return week
-        const weekStart=addWeeks(week.weekStart,1)
-        const weekNumber=calendarWeekNumber(weekStart)
-        return {...week,weekStart,weekNumber,title:!week.title||/^Vecka\s+\d+$/i.test(week.title)?'Vecka '+weekNumber:week.title}
-      })
-      const weeksData=[...existing.slice(0,position+1),blank,...following]
-      return {...previous,weeks:weeksData.length,weeksData}
-    })
-    setStatus('Vecka med fem lektioner infogad och dold för elever. Efterföljande veckor flyttas bara när datum krockar.')
+  function insertBlankWeekAfter(index,event) {
+    const afterDate=weeks[index]?.weekStart
+    if(!afterDate)return
+    setPlan(previous=>insertCalendarEventWeek(previous,afterDate,event))
+    setStatus('Händelsevecka tillagd. Grundplaneringens moment bevaras och fortsätter efter händelsen.')
   }
 
   function updateWeek(index, changes) {
@@ -1581,9 +1571,12 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         const { data: existing, error: lookupError } = await supabase.from('veckoplanering')
           .select('published,public_slug').eq('id', selectedId).eq('user_id', session.user.id).single()
         if (lookupError) {
-       …3213 tokens truncated…inte läsas.')
-      const updated = { ...stored, archived }
-      const { data, error } = await supabase.from('veckoplanering').update({ content: JSON.stringify(updated), updated_at: new Date().toISOString() })
+          setStatus(`Kunde inte kontrollera publiceringsstatus: ${lookupError.message}`)
+          setBusy(false)
+          return
+        }
+        databasePublished = existing.published === true
+…3197 tokens truncated… = await supabase.from('veckoplanering').update({ content: JSON.stringify(updated), updated_at: new Date().toISOString() })
         .eq('id', row.id).eq('user_id', session.user.id).select('id').single()
       if (error || !data) throw error || new Error('Ingen planering uppdaterades.')
       if (selectedId === row.id) {
@@ -1859,7 +1852,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div id="kopplade-klasser"><ClassSchedules selectedClassName={editingClassView} onSelectClass={setEditingClassView} plan={{...plan,weeksData:weeks}} publicSlug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} /></div>}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && Array.isArray(plan.classGroups) && plan.classGroups.length>0 && <div className="student-preview-classbar editing-class-picker"><div className="student-preview-class-buttons"><button type="button" className={!editingClassView?'active':''} onClick={()=>setEditingClassView('')}>📘 Grundplanering</button>{plan.classGroups.map(g=><button type="button" key={g.name} className={editingClassView===g.name?'active':''} onClick={()=>setEditingClassView(g.name)}>🏫 {g.name}</button>)}</div><button type="button" className="student-class-copy-link" aria-label="Kopiera elevlänk för vald klass" title="Kopiera elevlänk för vald klass" disabled={!plan.published||!plan.publicSlug} onClick={async()=>{const url=window.location.origin+'/elev/'+encodeURIComponent(plan.publicSlug)+(editingClassView?'?klass='+encodeURIComponent(editingClassView):'');try{await navigator.clipboard.writeText(url);setStatus('Elevlänken för '+(editingClassView||'grundplaneringen')+' har kopierats.')}catch{window.prompt('Kopiera elevlänk',url)}}}>🔗</button></div>}
-    {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && plan.classGroups?.some(g=>g.name===editingClassView) && <section className="editing-selected-class-weekly"><StudentView key={editingClassView} plan={{...plan,weeksData:weeks,classGroups:[plan.classGroups.find(g=>g.name===editingClassView)]}} preview initialClass={editingClassView} hideSelector /><p className="class-edit-scope">Innehållet kommer alltid från Grundplanering. Redigera moment, sidor, uppgifter och länkar där. Klassen följer sitt eget schema och sin egen momenttakt.</p></section>}
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && plan.classGroups?.some(g=>g.name===editingClassView) && <section className="editing-selected-class-weekly"><StudentView key={editingClassView} plan={{...plan,weeksData:weeks,classGroups:[plan.classGroups.find(g=>g.name===editingClassView)]}} preview initialClass={editingClassView} hideSelector teacherCalendar onAddWeek={(date,event)=>setPlan(p=>insertCalendarEventWeek(p,date,event,editingClassView))}/><p className="class-edit-scope">Innehållet kommer alltid från Grundplanering. Redigera moment, sidor, uppgifter och länkar där. Klassen följer sitt eget schema och sin egen momenttakt.</p></section>}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline" style={editingClassView && plan.classGroups?.some(g=>g.name===editingClassView)?{display:"none"}:undefined}>
     <div className="calendar-bulk-visibility" style={{ margin: '8px 0 18px' }}><button type="button" className="secondary" disabled={busy} onClick={() => setAllWeeksVisibility(!weeks.every(week => !week.hidden))} style={{ padding: '13px 20px', fontSize: '1.05rem', fontWeight: 800, background: '#e4f6e9', border: '2px solid #80b69a', borderRadius: 12 }}>{weeks.every(week => !week.hidden) ? '☑ Dölj alla veckor i Elevvy' : '☐ Visa alla veckor i Elevvy'}</button></div>
 <section className="card">
@@ -1902,7 +1895,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             <p className="muted">Använd i första hand momenten under varje lektion. Här kan du även lägga material för hela veckan.</p>
             <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
           </details>
-        </article>{<div className="insert-week-between" style={{display:'flex',justifyContent:'center',padding:'14px 0'}}><button type="button" className="secondary" disabled={weeks.length>=52} onClick={()=>insertBlankWeekAfter(index)}>＋ Vecka</button></div>}</div>)}
+        </article>{<div className="insert-week-between" style={{display:'flex',justifyContent:'center',padding:'14px 0'}}><WeekEventEditor afterDate={week.weekStart} disabled={weeks.length>=52} onAdd={event=>insertBlankWeekAfter(index,event)}/></div>}</div>)}
       </WeekBoard>
       <div className="button-row week-add-actions">
         <button type="button" className="secondary" disabled={weeks.length >= 52} onClick={() => setPlan(p => {
@@ -2153,7 +2146,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             <p className="muted">Använd i första hand momenten under varje lektion. Här kan du även lägga material för hela veckan.</p>
             <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
           </details>
-        </article>{<div style={{display:'flex',justifyContent:'center',padding:'12px 0'}}><button type="button" className="secondary" disabled={weeks.length>=52} onClick={()=>insertBlankWeekAfter(index)}>＋ Vecka</button></div>}</div>)}
+        </article>{<div style={{display:'flex',justifyContent:'center',padding:'12px 0'}}><WeekEventEditor afterDate={week.weekStart} disabled={weeks.length>=52} onAdd={event=>insertBlankWeekAfter(index,event)}/></div>}</div>)}
       </div>
       <div className="button-row week-add-actions">
         <button type="button" className="secondary" disabled={weeks.length >= 52} onClick={() => setPlan(p => {

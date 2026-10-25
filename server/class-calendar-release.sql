@@ -7,6 +7,8 @@ declare
   queue jsonb := '[]'::jsonb;
   closures jsonb := '[]'::jsonb;
   results jsonb := '[]'::jsonb;
+  events jsonb := coalesce(class_doc->'calendarEvents','[]'::jsonb);
+  event_doc jsonb; event_lesson jsonb; last_event date;
   w jsonb; l jsonb; e jsonb; s jsonb; topics jsonb; selected jsonb;
   current_lesson jsonb; scheduled_lesson jsonb; template jsonb;
   first_week date; last_week date; calendar_day date; week_date date;
@@ -24,7 +26,10 @@ begin
   for w in select value from jsonb_array_elements(source_weeks) where value->>'weekStart' ~ '^\d{4}-\d{2}-\d{2}$' order by value->>'weekStart' loop
     week_date := date_trunc('week',(w->>'weekStart')::date)::date;
     first_week := least(first_week,week_date); last_week := greatest(last_week,week_date);
-    if coalesce((w->>'calendarEventWeek')::boolean,false) then continue; end if;
+    if coalesce((w->>'calendarEventWeek')::boolean,false) then
+      events := events || jsonb_build_array(jsonb_build_object('weekStart',w->>'weekStart','type',coalesce(w->>'eventType','Annat'),'title',coalesce(w->>'eventTitle',w->>'eventType','Händelse'),'days',coalesce(w->'eventDays','["Måndag","Tisdag","Onsdag","Torsdag","Fredag"]'::jsonb),'lessons',coalesce(w->'lessons','[]'::jsonb)));
+      continue;
+    end if;
     for l in select value from jsonb_array_elements(coalesce(w->'lessons','[]'::jsonb)) loop
       queue := queue || jsonb_build_array(jsonb_build_object('lesson',l,'chapter',coalesce(w->>'chapter','')));
       queue_units := queue_units + greatest(1,jsonb_array_length(coalesce(l->'topics','[]'::jsonb)));
@@ -35,7 +40,8 @@ begin
     if e->'classNames' is null or e->'classNames' ? (class_doc->>'name') then closures := closures || jsonb_build_array(e); end if;
   end loop;
   closures := closures || coalesce(class_doc->'schoolClosures','[]'::jsonb);
-  last_week := greatest(last_week,start_day);
+  select max((value->>'weekStart')::date) into last_event from jsonb_array_elements(events) where value->>'weekStart' ~ '^\d{4}-\d{2}-\d{2}$';
+  last_week := greatest(last_week,start_day,last_event);
   for e in select value from jsonb_array_elements(closures || coalesce(class_doc->'extraSlots','[]'::jsonb)) loop
     key := coalesce(e->>'endDate',e->>'startDate',e->>'date');
     if key ~ '^\d{4}-\d{2}-\d{2}$' then last_week := greatest(last_week,key::date); end if;
@@ -45,8 +51,8 @@ begin
   end loop;
   horizon := greatest(1,(last_week-first_week)/7+1) + ceil(queue_units::numeric/greatest(1,jsonb_array_length(coalesce(class_doc->'days','[]'::jsonb))))::integer + 2;
   for week_offset in 0..horizon-1 loop
-    exit when cursor_index >= jsonb_array_length(queue);
     week_date := first_week + week_offset*7;
+    exit when cursor_index >= jsonb_array_length(queue) and (last_event is null or week_date>last_event);
     week_lessons := '[]'::jsonb;
     template := null;
     select value into template from jsonb_array_elements(source_weeks) where value->>'weekStart'=week_date::text limit 1;
@@ -69,7 +75,20 @@ begin
       last_slot := case when cancel_start then slot_count else greatest(0,slot_count-cancelled_count) end;
       if last_slot <= first_slot then continue; end if;
       for slot_index in first_slot..last_slot-1 loop
-        exit when cursor_index >= jsonb_array_length(queue);
+        event_doc := null;
+        select value into event_doc from jsonb_array_elements(events) with ordinality as x(value,n) where value->>'weekStart'=week_date::text and coalesce(value->'days','[]'::jsonb) ? day_name order by n desc limit 1;
+        if event_doc is not null then
+          event_lesson := null;
+          select value into event_lesson from jsonb_array_elements(coalesce(event_doc->'lessons','[]'::jsonb)) where value->>'day'=day_name limit 1;
+          if event_lesson is null then
+            event_lesson := jsonb_build_object('name',event_doc->>'type','topics',jsonb_build_array(jsonb_build_object('name',coalesce(event_doc->>'title',event_doc->>'type'),'pages','[]'::jsonb,'assignments','[]'::jsonb,'links','[]'::jsonb)));
+            if event_doc->>'type' in ('Prov','Test','Nationellt prov') then event_lesson := event_lesson || jsonb_build_object('assessment',jsonb_build_object('type',event_doc->>'type','title',coalesce(event_doc->>'title',event_doc->>'type'),'description','')); end if;
+          end if;
+          lesson_number := lesson_number+1;
+          week_lessons := week_lessons || jsonb_build_array(event_lesson || jsonb_build_object('day',day_name,'date',date_key,'name','Lektion '||(jsonb_array_length(week_lessons)+1)));
+          continue;
+        end if;
+        if cursor_index >= jsonb_array_length(queue) then continue; end if;
         s := queue->cursor_index;
         original_offset := topic_offset;
         lesson_number := lesson_number+1;
@@ -120,7 +139,7 @@ $body$;
 
 create or replace function public.get_public_annual_plan_v2(slug_value text, class_value text default '')
 returns table(published_content text) language plpgsql stable security definer set search_path = '' as $body$
-declare doc jsonb; class_doc jsonb; shown jsonb; today date; names jsonb;
+declare doc jsonb; class_doc jsonb; shown jsonb; today date; names jsonb; public_closures jsonb;
 begin
  select v.published_content::jsonb into doc from public.veckoplanering v where v.published=true and v.public_slug=slug_value and v.published_content is not null limit 1;
  if doc is null then return; end if;
@@ -132,7 +151,8 @@ begin
    shown := public.annual_class_calendar(doc,class_doc);
  else shown := doc->'weeksData'; end if;
  shown := public.annual_visible_weeks(shown,coalesce((doc->>'autoReleaseWeeks')::boolean,false),coalesce((doc->>'visibleWeekCount')::integer,2),today);
- doc := (doc-'classSourceWeeks'-'classGroups'-'schoolClosures') || jsonb_build_object('weeksData',shown,'classGroups',names,'classScheduleResolved',coalesce(class_value,'')<>'','resolvedClassName',coalesce(class_value,''));
+ select coalesce(jsonb_agg(c),'[]'::jsonb) into public_closures from jsonb_array_elements(coalesce(doc->'schoolClosures','[]'::jsonb) || coalesce(class_doc->'schoolClosures','[]'::jsonb)) c where (coalesce(class_value,'')='' or c->'classNames' is null or c->'classNames' ? class_value) and exists(select 1 from jsonb_array_elements(shown) w where c->>'startDate' <= ((w->>'weekStart')::date+6)::text and coalesce(c->>'endDate',c->>'startDate') >= w->>'weekStart');
+ doc := (doc-'classSourceWeeks'-'classGroups'-'schoolClosures') || jsonb_build_object('weeksData',shown,'schoolClosures',public_closures,'classGroups',names,'classScheduleResolved',coalesce(class_value,'')<>'','resolvedClassName',coalesce(class_value,''));
  return query select doc::text;
 end;
 $body$;

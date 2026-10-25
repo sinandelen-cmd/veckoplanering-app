@@ -23,7 +23,9 @@ export function buildClassSchedule(plan, group) {
   const weeks = (plan.sharedBaseContent === true ? plan.weeksData || [] : Array.isArray(group.weeksData) ? group.weeksData : plan.weeksData || []).filter(week => week?.weekStart && (plan.sharedBaseContent === true || !week.hidden)).slice().sort((a,b) => a.weekStart.localeCompare(b.weekStart))
   if (!weeks.length) return []
   const firstDate = group.startDate || plan.startDate || ''
-  const queue = weeks.flatMap(week => (Array.isArray(week.lessons) ? week.lessons : []).map((lesson, sourceIndex) => ({
+  const events = [...weeks.filter(w=>w.calendarEventWeek).map(w=>({weekStart:w.weekStart,type:w.eventType||'Annat',days:w.eventDays||DAYS,lessons:w.lessons||[],title:w.eventTitle||w.content||w.eventType||'Händelse'})),...(group.calendarEvents||[])]
+  const lastEvent = events.map(e=>e.weekStart).filter(Boolean).sort().at(-1) || ''
+  const queue = weeks.filter(w=>!w.calendarEventWeek).flatMap(week => (Array.isArray(week.lessons) ? week.lessons : []).map((lesson, sourceIndex) => ({
     lesson, sourceIndex, sourceWeekStart: week.weekStart,
     sourceWeekNumber: week.weekNumber, sourceWeekTitle: week.title
   })))
@@ -47,11 +49,11 @@ export function buildClassSchedule(plan, group) {
   // calendar weeks for every queued topic, including starts/closures far ahead.
   const queueUnits = queue.reduce((total,item)=>total+Math.max(1,item.lesson?.topics?.length || 0),0)
   const constraints = [lastWeekStart,firstDate,...closures.map(event=>event.endDate || event.startDate),
-    ...cancelled,...extraSlots.map(slot=>slot.date)].filter(value=>/^\d{4}-\d{2}-\d{2}$/.test(value || ''))
+    ...events.map(e=>e.weekStart),...cancelled,...extraSlots.map(slot=>slot.date)].filter(value=>/^\d{4}-\d{2}-\d{2}$/.test(value || ''))
   const lastConstraintOffset = Math.max(0,...constraints.map(value=>Math.round((monday(value)-monday(firstWeekStart))/(7*86400000))).filter(Number.isFinite))
   const calendarHorizon = Math.max(sourceWeekSpan,lastConstraintOffset+1)+Math.ceil(queueUnits/Math.max(1,days.length))+2
   for (let weekOffset = 0; weekOffset < calendarHorizon; weekOffset++) {
-    if (cursor >= scheduledQueue.length) break
+    if (cursor >= scheduledQueue.length && iso(nextDate(monday(firstWeekStart),weekOffset*7))>lastEvent) break
     const start = iso(nextDate(monday(firstWeekStart), weekOffset * 7))
     const slots = []
     for (let offset = 0; offset < 5; offset++) {
@@ -73,8 +75,16 @@ export function buildClassSchedule(plan, group) {
       for (let n = firstRemaining; n < lastRemaining; n++) slots.push({date: dateKey, day, slot: n + 1, time: group.lessonTimes?.[day]?.[n] || ''})
     }
     for (const slot of slots) {
+      const event=events.filter(e=>e.weekStart===start && (e.days||DAYS).includes(slot.day)).at(-1)
+      if(event){
+        const baseLesson=event.lessons?.find(l=>l.day===slot.day)
+        const assessment=['Prov','Test','Nationellt prov'].includes(event.type)?{type:event.type,title:event.title||event.type,description:''}:null
+        const lesson=baseLesson || {name:event.type,topics:[{name:event.title||event.type,pages:[],assignments:[],links:[]}],...(assessment?{assessment}:{})}
+        results.push({...slot,lesson,weekNumber:0,weekTitle:event.type,weekStart:start,sourceWeekStart:start,index:0,sourceTopics:[],lessonNumber:results.length+1,calendarEvent:true,override:null})
+        continue
+      }
       const source = scheduledQueue[cursor]
-      if (!source) break
+      if (!source) continue
       const lessonNumber = results.length + 1
       const requestedMoments = Math.max(1, Math.min(20, Number(group.momentsPerLesson?.[String(lessonNumber-1)] ?? group.momentsPerDay?.[slot.day]) || 1))
       const selectedTopics = []

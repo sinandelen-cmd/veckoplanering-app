@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import {execFileSync} from 'node:child_process'
+import {insertCalendarEventWeek} from '../src/weekEvents.js'
 // This runner deliberately refuses to operate against the user's database.
 assert.equal(process.env.ANNUAL_SQL_TEST_DATABASE,'synthetic-only')
 assert.equal(process.env.PGHOST,'127.0.0.1')
@@ -48,4 +49,17 @@ for(const klass of ['SLOW','FAST','']){
 }
 assert.equal(sql("select count(*) from public.get_public_annual_plan_v2('synthetic','unknown')"),'0')
 assert.equal(sql("select count(*) from public.get_public_annual_plan_v2('missing','')"),'0')
+for(const scope of ['', 'TEST']){
+ const group={name:'TEST',days:['Måndag','Onsdag'],momentsPerDay:{Måndag:2,Onsdag:1}}
+ const plan=insertCalendarEventWeek({...base,classGroups:[group]},'2026-10-12',{weekStart:'2026-10-19',type:'Prov',title:'Bråkprov',days:['Måndag']},scope)
+ const g=plan.classGroups[0]
+ const actual=JSON.parse(sql(`select public.annual_class_calendar(${literal(plan)},${literal(g)})`)).flatMap(w=>w.lessons.map(lesson=>({date:lesson.date,day:lesson.day,topics:lesson.topics,assessment:lesson.assessment || null})))
+ assert.deepEqual(actual,normalize(build(plan,g)))
+ assert.equal(actual.filter(x=>x.assessment?.title==='Bråkprov').length,1)
+ assert.deepEqual(actual.filter(x=>!x.assessment).flatMap(x=>x.topics).map(t=>t.name),Array.from({length:20},(_,i)=>'Moment '+(i+1)))
+ if(scope)assert.deepEqual(plan.weeksData,base.weeksData)
+ else assert.equal(plan.weeksData.find(w=>w.calendarEventWeek).lessons.length,5)
+ cases++
+}
+
 console.log(`PASS: ${cases} SQL/JavaScript calendar parity cases, resource retention, assessment boundaries, expiry, pins and public data minimization`)
