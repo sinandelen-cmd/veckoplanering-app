@@ -93,3 +93,22 @@ assert.equal(build(studentOwn,studentOwn.classGroups[0])[0].lesson.topics[0].nam
 assert.equal(studentOwn.classGroups[0].weeksData[0].teacherNotes,undefined)
 assert.equal(JSON.stringify(plan),before)
 console.log('PASS: class-only edits, resources, independent base/other class, same-meeting insertion, clearing, student serialization')
+
+for(let size=1;size<=8;size++) for(let perDay=1;perDay<=5;perDay++) {
+ const group={name:'A',days:['Måndag','Tisdag','Onsdag','Torsdag','Fredag'],momentsPerDay:Object.fromEntries(DAYS.map(d=>[d,perDay]))}
+ const fixture={startDate:'2026-10-12',classGroups:[group,{...group,name:'B'}],weeksData:[{weekStart:'2026-10-12',lessons:Array.from({length:3},(_,l)=>({topics:Array.from({length:size},(_,t)=>topic(l*size+t))}))},{weekStart:'2026-10-19',lessons:[{topics:[topic(100)]}]}]}
+ const scheduled=build(fixture,group)
+ for(const item of scheduled){
+  const original=scheduled.flatMap(x=>x.lesson.topics)
+  const first=original.findIndex(t=>t.name===item.lesson.topics[0]?.name)
+  if(first<0) continue
+  const replacement=item.lesson.topics.map(t=>({...t,name:t.name+' edited'}))
+  const changed=update(fixture,'A',item,{...item.lesson,topics:replacement})
+  assert.deepEqual(build(changed,changed.classGroups[0]).flatMap(x=>x.lesson.topics),[...original.slice(0,first),...replacement,...original.slice(first+replacement.length)],'Split/merge edit must preserve every resource and topic')
+  assert.deepEqual(changed.weeksData,fixture.weeksData)
+  assert.deepEqual(changed.classGroups[1],fixture.classGroups[1])
+  const moved={...changed.classGroups[0],cancelledDates:['2026-10-12','2026-10-13'],days:['Tisdag','Fredag']}
+  assert.deepEqual(build(changed,moved).flatMap(x=>x.lesson.topics),build(changed,changed.classGroups[0]).flatMap(x=>x.lesson.topics),'Changing days and closures must preserve all edited topics')
+ }
+}
+console.log('PASS: exhaustive split/merge edits across 40 source sizes and daily allocations, with schedule shifts')
