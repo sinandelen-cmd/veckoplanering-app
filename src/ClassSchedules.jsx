@@ -139,7 +139,7 @@ export function remapClassOverridesAfterInsertion(previous, next, insertAfterInd
   })
 }
 
-export default function ClassSchedules({ plan, onChange, publicSlug = "", themes = [], selectedClassName = "", onSelectClass }) {
+export default function ClassSchedules({ plan, onChange, publicSlug = "", themes = [], selectedClassName = "", onSelectClass, onUndo, onRedo, canUndo = false, canRedo = false }) {
   const groups = Array.isArray(plan.classGroups) ? plan.classGroups : []
   const [name, setName] = React.useState('')
   const [addingClass, setAddingClass] = React.useState(false)
@@ -215,6 +215,11 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", themes
         {themes.map(theme=><option key={theme.id} value={theme.id}>{theme.name}</option>)}
       </select>
       <span aria-hidden="true" style={{width:28,height:28,borderRadius:'50%',background:themes.find(theme=>theme.id===(group.themeId || plan.themeId))?.accent || '#64748b',border:'1px solid #aaa'}} />
+    </div>}
+    {group && <div className="edit-history-actions" aria-label="Ångra eller gör om schemaändringar" style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:12}}>
+      <button type="button" className="secondary" disabled={!canUndo} onClick={onUndo} aria-label="Ångra senaste ändringen i planeringen">↶ Ångra</button>
+      <button type="button" className="secondary" disabled={!canRedo} onClick={onRedo} aria-label="Gör om senaste ändringen i planeringen">↷ Gör om</button>
+      <span className="muted">Gäller ändringar i den öppna planeringen, inklusive klassernas scheman.</span>
     </div>}
     <div className="class-mini-row">
       <strong className="class-mini-label">Klasser</strong>
