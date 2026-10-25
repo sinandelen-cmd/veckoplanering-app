@@ -1596,6 +1596,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         savedPlanRef.current = JSON.stringify(payload)
         setSavedRevision(revision => revision + 1)
         const newerEdits = latestPlanRef.current !== plan
+        // Saving metadata is not a user edit and must not consume the next Undo.
+        if (!newerEdits) historySkipRef.current = true
         setPlan(current => current === plan ? payload : current)
         const message = !refreshed ? 'Sparad, men listan kunde inte uppdateras. Ladda om för att kontrollera.' : publish
           ? `Publicerad: ${window.location.origin}/elev/${slug}`
