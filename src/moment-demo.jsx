@@ -29,18 +29,25 @@ function addDays(value,days){
  d.setUTCDate(d.getUTCDate()+days)
  return d.toISOString().slice(0,10)
 }
+const momentNamesFromRows=rows=>rows.flatMap(row=>row.lesson.topics.map(topic=>topic.name))
 function App(){
  const [selected,setSelected]=useState(-1)
  const [closuresByClass,setClosuresByClass]=useState({})
  const [closureType,setClosureType]=useState('Studiedag')
  const [closureDate,setClosureDate]=useState('2026-10-19')
  const [closureEnd,setClosureEnd]=useState('2026-10-23')
+ const [completedThrough,setCompletedThrough]=useState('2026-10-20')
+ const [editingIndex,setEditingIndex]=useState(null)
  const current=selected<0?null:classes[selected]
  const activeClosures=current?(closuresByClass[current.name]||[]):[]
  const original=current?buildClassSchedule(plan,current):[]
- const schedule=current?buildClassSchedule(plan,{...current,schoolClosures:activeClosures}):plan.weeksData.flatMap(week=>week.lessons.map((lesson,i)=>({date:addDays(week.weekStart,Math.floor(i/4)*7+(i%4===0?0:i%4===1?1:i%4===2?3:4)),day:dayLabels[new Date(addDays(week.weekStart,Math.floor(i/4)*7+(i%4===0?0:i%4===1?1:i%4===2?3:4))+'T12:00:00Z').getUTCDay()],lessonNumber:i+1,lesson})))
+ const completedOriginal=current?original.filter(row=>row.date<=completedThrough):[]
+ const remainingPlan=current?{...plan,startDate:addDays(completedThrough,1),weeksData:[{...plan.weeksData[0],lessons:plan.weeksData[0].lessons.slice(momentNamesFromRows(completedOriginal).length)}]}:null
+ const future=current?buildClassSchedule(remainingPlan,{...current,startDate:addDays(completedThrough,1),schoolClosures:activeClosures.filter(event=>event.endDate>completedThrough)}):[]
+ const schedule=current?[...completedOriginal,...future.map((row,i)=>({...row,lessonNumber:completedOriginal.length+i+1}))]:plan.weeksData.flatMap(week=>week.lessons.map((lesson,i)=>({date:addDays(week.weekStart,Math.floor(i/4)*7+(i%4===0?0:i%4===1?1:i%4===2?3:4)),day:dayLabels[new Date(addDays(week.weekStart,Math.floor(i/4)*7+(i%4===0?0:i%4===1?1:i%4===2?3:4))+'T12:00:00Z').getUTCDay()],lessonNumber:i+1,lesson})))
  const momentNames=rows=>rows.flatMap(row=>row.lesson.topics.map(topic=>topic.name))
  const preserved=!current||JSON.stringify(momentNames(original))===JSON.stringify(momentNames(schedule))
+ const completedPreserved=!current||JSON.stringify(completedOriginal.map(row=>({date:row.date,topics:momentNames([row])})))===JSON.stringify(schedule.filter(row=>row.date<=completedThrough).map(row=>({date:row.date,topics:momentNames([row])})))
  const grouped=schedule.reduce((weeks,row)=>{
    const monday=weekMonday(row.date)
    if(!weeks.some(w=>w.start===monday))weeks.push({start:monday,rows:[]})
@@ -64,15 +71,19 @@ function App(){
    <h2 style={{margin:'0 0 8px',fontSize:'1.1rem'}}>Testa studiedag, halvdag eller lov</h2>
    <p style={{margin:'0 0 12px'}}>Välj en testklass ovan och lägg till ett undantag. Jämför originalets datum med den nya fördelningen. Ändringarna finns bara på denna sida och sparas inte.</p>
    {!current?<p role="status">Välj Test 1–4 eller Test Mix för att prova lektionsfria dagar. Grundplaneringen förblir oförändrad.</p>:<>
+    <label style={{display:'inline-grid',gap:5,marginBottom:12}}>Genomförda lektioner till och med (syntetiskt datum)<input aria-label="Genomförda till och med" type="date" value={completedThrough} min="2026-10-18" max="2026-10-30" onChange={e=>{setCompletedThrough(e.target.value);setClosuresByClass({})}} /></label>
+    <p data-testid="demo-completed">{completedOriginal.length} genomförda lektioner låses vid omplanering. Endast framtida moment flyttas.</p>
     <div style={{display:'flex',gap:10,flexWrap:'wrap',alignItems:'end',marginBottom:12}}>
      <label style={{display:'grid',gap:5}}>Typ<select aria-label="Typ av lektionsfri dag" value={closureType} onChange={e=>setClosureType(e.target.value)} style={{padding:10}}><option>Studiedag</option><option>Halvdag</option><option>Lov</option></select></label>
      <label style={{display:'grid',gap:5}}>Från datum<input aria-label="Från datum" type="date" value={closureDate} onChange={e=>setClosureDate(e.target.value)} style={{padding:10}} /></label>
      {closureType==='Lov'&&<label style={{display:'grid',gap:5}}>Till datum<input aria-label="Till datum" type="date" min={closureDate} value={closureEnd} onChange={e=>setClosureEnd(e.target.value)} style={{padding:10}} /></label>}
-     <button type="button" style={buttonStyle(false)} disabled={!closureDate||(closureType==='Lov'&&closureEnd<closureDate)} onClick={()=>setClosuresByClass(previous=>({...previous,[current.name]:[...(previous[current.name]||[]),{type:closureType,startDate:closureDate,endDate:closureType==='Lov'?closureEnd:closureDate,...(closureType==='Halvdag'?{cancelledLessons:1}:{} )}]}))}>Lägg till för {current.name}</button>
+     <button type="button" style={buttonStyle(false)} disabled={!closureDate||closureDate<=completedThrough||(closureType==='Lov'&&closureEnd<closureDate)} onClick={()=>{setClosuresByClass(previous=>({...previous,[current.name]:[...(previous[current.name]||[]),{type:closureType,startDate:closureDate,endDate:closureType==='Lov'?closureEnd:closureDate,...(closureType==='Halvdag'?{cancelledLessons:1}:{} )}]}));setEditingIndex(null)}}>Lägg till för {current.name}</button>
      <button type="button" style={buttonStyle(false)} onClick={()=>setClosuresByClass(previous=>({...previous,[current.name]:[]}))}>Återställ {current.name}</button>
     </div>
-    <div data-testid="demo-closures">{activeClosures.length?activeClosures.map((event,i)=><div key={i} style={{padding:'7px 0'}}>{event.type}: {event.startDate}{event.endDate!==event.startDate?' – '+event.endDate:''} <button type="button" aria-label={'Ta bort undantag '+(i+1)} onClick={()=>setClosuresByClass(previous=>({...previous,[current.name]:(previous[current.name]||[]).filter((_,j)=>i!==j)}))}>Ta bort</button></div>):'Inga lektionsfria dagar tillagda.'}</div>
-    <div data-testid="demo-integrity" role="status" style={{marginTop:12,padding:12,background:preserved?'#e3f5e9':'#ffebeb',borderRadius:8}}>{preserved?'Alla 12 moment bevaras i rätt ordning.':'Varning: moment saknas eller har ändrat ordning.'} Grundplaneringen ändras inte.</div>
+    <p>Datum för nya undantag måste vara efter sista genomförda lektionen.</p>
+    <div data-testid="demo-closures">{activeClosures.length?activeClosures.map((event,i)=><div key={i} style={{padding:'7px 0'}}>{event.type}: {event.startDate}{event.endDate!==event.startDate?' – '+event.endDate:''} <button type="button" aria-label={'Ta bort undantag '+(i+1)} onClick={()=>setClosuresByClass(previous=>({...previous,[current.name]:(previous[current.name]||[]).filter((_,j)=>i!==j)}))}>Ta bort</button> <button type="button" aria-label={'Ändra undantag '+(i+1)} onClick={()=>{setEditingIndex(i);setClosureType(event.type);setClosureDate(event.startDate);setClosureEnd(event.endDate)}}>Ändra</button></div>):'Inga lektionsfria dagar tillagda.'}</div>
+    {editingIndex!==null&&<button type="button" disabled={closureDate<=completedThrough||(closureType==='Lov'&&closureEnd<closureDate)} onClick={()=>{setClosuresByClass(previous=>({...previous,[current.name]:(previous[current.name]||[]).map((event,i)=>i===editingIndex?{type:closureType,startDate:closureDate,endDate:closureType==='Lov'?closureEnd:closureDate,...(closureType==='Halvdag'?{cancelledLessons:1}:{})}:event)}));setEditingIndex(null)}}>Spara ändrat undantag</button>}
+    <div data-testid="demo-integrity" role="status" style={{marginTop:12,padding:12,background:preserved?'#e3f5e9':'#ffebeb',borderRadius:8}}>{preserved?'Alla 12 moment bevaras i rätt ordning.':'Varning: moment saknas eller har ändrat ordning.'} {completedPreserved?'Genomförda lektioner är oförändrade.':'Varning: genomförda lektioner ändrades.'} Grundplaneringen ändras inte.</div>
     <div data-testid="demo-comparison" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,280px),1fr))',gap:12,marginTop:12}}>
      <div style={{padding:12,background:'white',borderRadius:10}}><strong>Före – {current.name}</strong><ol>{original.map((row,i)=><li key={i}>{formatDate(row.date)} · {row.lesson.topics.map(t=>t.name).join(', ')}</li>)}</ol></div>
      <div style={{padding:12,background:'white',borderRadius:10}}><strong>Efter – {current.name}</strong><ol>{schedule.map((row,i)=><li key={i}>{formatDate(row.date)} · {row.lesson.topics.map(t=>t.name).join(', ')}</li>)}</ol></div>
