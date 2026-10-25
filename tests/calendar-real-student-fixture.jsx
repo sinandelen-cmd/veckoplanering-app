@@ -21,7 +21,8 @@ const source={
     {name:'8E',days:['Måndag','Torsdag'],momentsPerDay:{Måndag:3,Torsdag:2}},
     {name:'8F',days:['Måndag'],startDate:'2026-11-02'},
     {name:'8G',days:[]},
-    {name:'8H',days:['Måndag'],schoolClosures:[{type:'Lov',startDate:'2026-10-19',endDate:'2026-10-23'}]}
+    {name:'8H',days:['Måndag'],schoolClosures:[{type:'Lov',startDate:'2026-10-19',endDate:'2026-10-23'}]},
+    {name:'8I',days:['Måndag','Tisdag','Torsdag','Fredag'],momentsPerDay:{Måndag:1,Tisdag:2,Torsdag:3,Fredag:4},schoolClosures:[{type:'Studiedag',startDate:'2026-10-19',endDate:'2026-10-19'},{type:'Halvdag',startDate:'2026-10-20',endDate:'2026-10-20',cancelledLessons:1},{type:'Lov',startDate:'2026-10-22',endDate:'2026-10-23'}]}
   ]
 }
 const studentPlan=sanitizeForStudents(source)
