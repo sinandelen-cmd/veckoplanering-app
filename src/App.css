@@ -4011,3 +4011,22 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .resource-chip.pptx .resource-icon{mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%202h8l4%204v16H6zM10%2018v-8h3a2%202%200%200%201%200%204h-3%22%2F%3E%3C%2Fsvg%3E");-webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%202h8l4%204v16H6zM10%2018v-8h3a2%202%200%200%201%200%204h-3%22%2F%3E%3C%2Fsvg%3E")}
 .resource-chip.file .resource-icon{mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%202h8l4%204v16H6zM14%202v5h5M9%2012h6M9%2016h6%22%2F%3E%3C%2Fsvg%3E");-webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%202h8l4%204v16H6zM14%202v5h5M9%2012h6M9%2016h6%22%2F%3E%3C%2Fsvg%3E")}
 .resource-chip.youtube{color:#a52b40;background:#fff0f0}.resource-chip.pdf{color:#934343;background:#fff1ee}.resource-chip.word{color:#315e9b;background:#edf3fd}.resource-chip.excel{color:#286c4b;background:#eaf5ed}.resource-chip.pptx{color:#98572e;background:#fff1e8}.resource-chip.link,.resource-chip.file{color:var(--plan-accent,#28675b);background:var(--plan-soft,#edf5f0)}
+
+/* Unboxed tools sit naturally with the moment rather than looking like fields. */
+.lesson .moment-action,.lesson .moment-action-remove,.lesson .topic-edit-actions button{
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ border-radius:0;padding:5px;filter:none
+}
+.lesson .moment-action:hover,.lesson .topic-edit-actions button:hover{
+ background:transparent!important;filter:none;opacity:.72
+}
+.lesson .moment-action:focus-visible,.lesson .topic-edit-actions button:focus-visible{
+ outline:2px solid currentColor;outline-offset:2px;border-radius:3px
+}
+.resource-chip,.resource-chip.youtube,.resource-chip.pdf,.resource-chip.word,
+.resource-chip.excel,.resource-chip.pptx,.resource-chip.link,.resource-chip.file{
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ border-radius:0;padding:4px 2px
+}
+.resource-chip:hover{text-decoration:underline}
+.topic-edit-actions{gap:5px}
