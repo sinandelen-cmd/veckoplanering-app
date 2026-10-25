@@ -4030,3 +4030,10 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 }
 .resource-chip:hover{text-decoration:underline}
 .topic-edit-actions{gap:5px}
+
+/* Soft distinct icon colours, with no coloured button tiles. */
+.lesson .moment-action[aria-label="Lägg till länk"]{color:#267a86}
+.lesson .moment-action[aria-label="Lägg till moment"]{color:#43825e}
+.lesson .moment-action[aria-label="Lägg till Sida och Uppgift"]{color:#4c70b6}
+.lesson .moment-action[aria-label="Infoga prov eller test"]{color:#8963a6}
+.lesson .moment-action-remove{color:#b5636b}
