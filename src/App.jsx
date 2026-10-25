@@ -2745,7 +2745,7 @@ function WeekDetails({ week, onChange }) {
         const info = resourceInfo(url)
         return <div className="week-link-entry" key={index}>
           {editable && <input type="url" aria-label={`Länk ${index + 1}`} placeholder="Klistra in länk till YouTube, PPTX, PDF, fil..." value={url} onChange={e => updateList('links', links.map((item, i) => i === index ? e.target.value : item))} />}
-          {info && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon">{info.icon}</span><span>{info.label}</span><span className="print-resource-url">{url}</span></a>}
+          {info && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon" aria-hidden="true" /><span>{info.label}</span><span className="print-resource-url">{url}</span></a>}
           {editable && <button type="button" className="remove-small" aria-label={`Ta bort länk ${index + 1}`} onClick={() => updateList('links', links.filter((_, i) => i !== index))}>×</button>}
         </div>
       })}
@@ -2817,7 +2817,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
           <button type="button" onClick={()=>{if(window.confirm('Ta bort provmarkeringen och dess beskrivning? Du kan ångra ändringen.'))changeLesson(i,{...lesson,assessment:null})}}>Ta bort provmarkering</button>
         </div> : <><div>{lesson.assessment.title}</div>{lesson.assessment.description && <p>{lesson.assessment.description}</p>}</>}
       </div>}
-      {editable && !lesson.assessment && <button type="button" className="lesson-add-assessment moment-action" onClick={()=>updateAssessment(i,{type:'Prov',title:'',description:''})} title="Infoga prov eller test" aria-label="Infoga prov eller test"><MomentActionIcon kind="exam"/><small>Prov</small></button>}
+      {editable && !lesson.assessment && <button type="button" className="lesson-add-assessment moment-action" onClick={()=>updateAssessment(i,{type:'Prov',title:'',description:''})} title="Infoga prov eller test" aria-label="Infoga prov eller test"><MomentActionIcon kind="exam"/></button>}
       {(lesson.topics || []).map((topic, j) => ({ topic, j })).filter(({ topic }) => editable || hasStudentTopicContent(topic)).map(({ topic, j }) => {
         const updateTopic = next => changeLesson(i, { ...lesson, topics: (lesson.topics || []).map((item, index) => index === j ? next : item) })
         const pages = Array.isArray(topic.pages) ? topic.pages : []
@@ -2851,7 +2851,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
             </div>)}
           </div>
           {editable && <div className="topic-edit-actions">
-            <button type="button" className="add-detail moment-action" title="Lägg till en rad med Sida och Uppgift" aria-label="Lägg till Sida och Uppgift" onClick={()=>{const length=Math.max(1,pages.length,assignments.length);updateTopic({...topic,pages:[...Array.from({length},(_,i)=>pages[i]??""),""],assignments:[...Array.from({length},(_,i)=>assignments[i]??""),""],hidePages:false,hideAssignments:false})}}><MomentActionIcon kind="pair"/><small>Sida/Uppgift</small></button>
+            <button type="button" className="add-detail moment-action" title="Lägg till en rad med Sida och Uppgift" aria-label="Lägg till Sida och Uppgift" onClick={()=>{const length=Math.max(1,pages.length,assignments.length);updateTopic({...topic,pages:[...Array.from({length},(_,i)=>pages[i]??""),""],assignments:[...Array.from({length},(_,i)=>assignments[i]??""),""],hidePages:false,hideAssignments:false})}}><MomentActionIcon kind="pair"/></button>
             <button type="button" className="secondary" title="Flytta moment uppåt" aria-label={'Flytta moment '+(j+1)+' uppåt'} disabled={j===0} onClick={()=>moveTopic(-1)}>↑</button>
             <button type="button" className="secondary" title="Flytta moment nedåt" aria-label={'Flytta moment '+(j+1)+' nedåt'} disabled={j===(lesson.topics || []).length-1} onClick={()=>moveTopic(1)}>↓</button>
             {topic.hidePages && <button type="button" className="secondary" onClick={()=>updateTopic({...topic,hidePages:false})}>+ Visa Sida</button>}
@@ -2865,16 +2865,16 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
               const changeLink = next => updateTopic({ ...topic, links: links.map((item, index) => index === k ? next : item) })
               return <div className="topic-link" key={k}>
                 {editable && <><input aria-label="Länkens namn" placeholder="Namn" value={label} onChange={e => changeLink({ url, label: e.target.value })} /><input aria-label="Länkadress" placeholder="https://..." value={url} onChange={e => changeLink({ url: e.target.value, label })} /></>}
-                {info && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon">{info.icon}</span>{label || info.label}<span className="print-resource-url">{url}</span></a>}
+                {info && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon" aria-hidden="true" />{label || info.label}<span className="print-resource-url">{url}</span></a>}
                 {editable && <button type="button" className="remove-small" onClick={() => {if (hasDisplayValue(url) && !window.confirm('Ta bort länken? Du kan ångra ändringen.')) return;updateTopic({ ...topic, links: links.filter((_, index) => index !== k) })}}>×</button>}
               </div>
             })}
-            {editable && <button type="button" className="add-detail moment-action" onClick={() => updateTopic({ ...topic, links: [...links, { label: '', url: '' }] })} title="Lägg till länk" aria-label="Lägg till länk"><MomentActionIcon kind="link"/><small>Länk</small></button>}
+            {editable && <button type="button" className="add-detail moment-action" onClick={() => updateTopic({ ...topic, links: [...links, { label: '', url: '' }] })} title="Lägg till länk" aria-label="Lägg till länk"><MomentActionIcon kind="link"/></button>}
           </div>}
-          {editable && <button type="button" className="remove-small moment-action moment-action-remove" title="Ta bort moment" aria-label="Ta bort moment" onClick={() => { if (!(topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm('Ta bort momentet och allt innehåll?')) changeLesson(i, { ...lesson, topics: (lesson.topics || []).filter((_, index) => index !== j) }) }}><MomentActionIcon kind="remove"/><small>Ta bort</small></button>}
+          {editable && <button type="button" className="remove-small moment-action moment-action-remove" title="Ta bort moment" aria-label="Ta bort moment" onClick={() => { if (!(topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm('Ta bort momentet och allt innehåll?')) changeLesson(i, { ...lesson, topics: (lesson.topics || []).filter((_, index) => index !== j) }) }}><MomentActionIcon kind="remove"/></button>}
         </div>
       })}
-      {editable && <button type="button" className="secondary moment-action" onClick={() => changeLesson(i, { ...lesson, topics: [...(lesson.topics || []), { name: '', pages: [], assignments: [], links: [] }] })} title="Lägg till moment" aria-label="Lägg till moment"><MomentActionIcon kind="plus"/><small>Moment</small></button>}
+      {editable && <button type="button" className="secondary moment-action" onClick={() => changeLesson(i, { ...lesson, topics: [...(lesson.topics || []), { name: '', pages: [], assignments: [], links: [] }] })} title="Lägg till moment" aria-label="Lägg till moment"><MomentActionIcon kind="plus"/></button>}
     </section>)}
     {editable && !lockLessons && (entryType !== 'dag' || WEEKDAYS.some(day => !lessons.some(lesson => lesson.name === day))) && <button type="button" className="secondary" onClick={() => {
       if (entryType === 'dag') {
