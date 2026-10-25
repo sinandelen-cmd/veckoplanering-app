@@ -24,5 +24,19 @@ export function teacherWeekGroups(weeks,now=Date.now()){
  for(const group of groups.values())group.past.reverse()
  return [...groups.values()]
 }
+// Chapter headings may repeat, but future dates must never jump backwards
+// when a chapter occurs again later in the plan (including a later year).
+export function teacherWeekSections(weeks,now=Date.now()){
+ const groups=teacherWeekGroups(weeks,now),sections=[],historyShown=new Set()
+ const future=groups.flatMap(group=>group.current).sort((a,b)=>a.week.weekStart.localeCompare(b.week.weekStart))
+ for(const item of future){
+  const chapter=String(item.week.chapter||'Övriga veckor').trim()
+  if(sections.at(-1)?.chapter===chapter){sections.at(-1).current.push(item);continue}
+  const past=historyShown.has(chapter)?[]:groups.find(group=>group.chapter===chapter)?.past||[]
+  sections.push({chapter,current:[item],past});historyShown.add(chapter)
+ }
+ for(const group of groups)if(!historyShown.has(group.chapter)&&group.past.length)sections.push({...group,current:[]})
+ return sections
+}
 export function chapterColor(chapter){let hash=0;for(const char of String(chapter||'Övriga veckor').trim().toLocaleLowerCase('sv-SE'))hash=(hash*31+char.codePointAt(0))>>>0;return 'hsl('+hash%360+' 65% 92%)'}
 
