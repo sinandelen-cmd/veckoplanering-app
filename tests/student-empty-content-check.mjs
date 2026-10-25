@@ -134,7 +134,7 @@ console.log('PASS: actual StudentView moment allocation, delayed-week visibility
 const independentRows=render(LessonDetails,{week:week([lesson({topics:[topic({name:'Oberoende',pages:['1','2'],assignments:['3']})]})]),onChange:()=>{}})
 assert.equal((independentRows.match(/aria-label="Sida rad /g)||[]).length,2)
 assert.equal((independentRows.match(/aria-label="Uppgift rad /g)||[]).length,1)
-const noTasks=render(LessonDetails,{week:week([lesson({topics:[topic({name:'Bara sida',pages:['1'],assignments:[]})]})]),onChange:()=>{}})
+const noTasks=render(LessonDetails,{week:week([lesson({topics:[topic({name:'Bara sida',pages:['1'],assignments:[],assignmentsRemoved:true})]})]),onChange:()=>{}})
 assert.equal((noTasks.match(/aria-label="Uppgift rad /g)||[]).length,0)
 const pendingLink={url:'https://example.org/draft.pdf',label:'Utkast',editing:true}
 const pendingTeacher=render(LessonDetails,{week:week([lesson({topics:[topic({name:'Lektion',links:[pendingLink]})]})]),onChange:()=>{}})
@@ -163,3 +163,4 @@ try {
 } finally {
   fs.rmSync(directory,{recursive:true,force:true})
 }
+
