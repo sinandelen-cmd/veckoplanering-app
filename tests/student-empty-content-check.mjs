@@ -131,6 +131,11 @@ const selectedA = render(ClassSchedules,{plan:schedulePlan,onChange:()=>{},selec
 assert.match(selectedA, /class-mini-chip active" aria-pressed="true"[^>]*>8A</)
 console.log('PASS: actual StudentView moment allocation, delayed-week visibility and controlled teacher class selection')
 
+const independentRows=render(LessonDetails,{week:week([lesson({topics:[topic({name:'Oberoende',pages:['1','2'],assignments:['3']})]})]),onChange:()=>{}})
+assert.equal((independentRows.match(/aria-label="Sida rad /g)||[]).length,2)
+assert.equal((independentRows.match(/aria-label="Uppgift rad /g)||[]).length,1)
+const noTasks=render(LessonDetails,{week:week([lesson({topics:[topic({name:'Bara sida',pages:['1'],assignments:[]})]})]),onChange:()=>{}})
+assert.equal((noTasks.match(/aria-label="Uppgift rad /g)||[]).length,0)
 console.log('PASS: actual lesson/week renderers, visible page/assignment fields, filled data, assessment-only lessons, links, editor controls and immutable teacher data')
 `
 const directory = fs.mkdtempSync(path.join(process.cwd(), '.student-readonly-test-'))

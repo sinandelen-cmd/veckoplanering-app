@@ -2855,7 +2855,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
             <div className="topic-name">{editable ? <textarea aria-label="Momentets namn" placeholder="Exempel: Procent – tryck Enter för ny rad" rows={Math.max(2, String(topic.name || '').split('\n').length)} value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong className="topic-name-display">{hasDisplayValue(topic.name) ? topic.name : 'Moment'}</strong>}</div>
             {visibleFields.map(field => <div className={`topic-column ${field}`} key={field}>
               <div className="topic-fixed-heading"><h5>{field === 'pages' ? 'Sida' : 'Uppgift'}</h5>{editable && <button type="button" className="remove-small remove-topic-column moment-action" title={`Dölj hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan`} aria-label={`Dölj hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan`} onClick={() => { if ((field === 'pages' ? pages : assignments).some(value => String(value).trim()) && !window.confirm(`Dölj hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan? Innehållet sparas och kan visas igen.`)) return; updateTopic({ ...topic, [field === 'pages' ? 'hidePages' : 'hideAssignments']: true }) }}><MomentActionIcon kind="hide"/></button>}</div>
-              {Array.from({ length: rows }, (_, row) => <div className="topic-cell" key={row}>
+              {Array.from({ length: editable ? (field === "pages" ? pages.length : assignments.length) : Math.max(1,lastFilledRow(field === "pages" ? pages : assignments)) }, (_, row) => <div className="topic-cell" key={row}>
                 {editable ? <><input aria-label={`${(field === 'pages' ? topic.pagesLabel : topic.assignmentsLabel)?.trim() || (field === 'pages' ? 'Sida' : 'Uppgift')} rad ${row + 1}`} value={(field === 'pages' ? pages : assignments)[row] || ''} onChange={e => {
                   const next = [...(field === 'pages' ? pages : assignments)]
                   while (next.length <= row) next.push('')
@@ -2867,7 +2867,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
             </div>)}
           </div>
           {editable && <div className="topic-edit-actions">
-            <button type="button" className="add-detail moment-action" title="Lägg till en rad med Sida och Uppgift" aria-label="Lägg till Sida och Uppgift" onClick={()=>{const length=Math.max(1,pages.length,assignments.length);updateTopic({...topic,pages:[...Array.from({length},(_,i)=>pages[i]??""),""],assignments:[...Array.from({length},(_,i)=>assignments[i]??""),""],hidePages:false,hideAssignments:false})}}><MomentActionIcon kind="pair"/></button>
+            <button type="button" className="add-detail moment-action" title="Lägg till en rad med Sida och Uppgift" aria-label="Lägg till Sida och Uppgift" onClick={()=>{updateTopic({...topic,pages:[...pages,""],assignments:[...assignments,""],hidePages:false,hideAssignments:false})}}><MomentActionIcon kind="pair"/></button>
             <button type="button" className="secondary" title="Flytta moment uppåt" aria-label={'Flytta moment '+(j+1)+' uppåt'} disabled={j===0} onClick={()=>moveTopic(-1)}>↑</button>
             <button type="button" className="secondary" title="Flytta moment nedåt" aria-label={'Flytta moment '+(j+1)+' nedåt'} disabled={j===(lesson.topics || []).length-1} onClick={()=>moveTopic(1)}>↓</button>
             {topic.hidePages && <button type="button" className="secondary" onClick={()=>updateTopic({...topic,hidePages:false})}>+ Visa Sida</button>}
