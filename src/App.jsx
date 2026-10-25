@@ -2770,6 +2770,22 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
   return <svg className="moment-action-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[kind] || paths.plus}/></svg>
 }
 
+  const [contextMenu,setContextMenu]=useState(null)
+  const openContextMenu=(event,scope)=>{
+    if(typeof onChange!=='function')return
+    event.preventDefault();event.stopPropagation()
+    const topic=event.target.closest('.topic')
+    const row=event.target.closest('.topic-cell')
+    const column=event.target.closest('.topic-column')
+    let buttons
+    if(topic && (row || column)){
+      buttons=[topic.querySelector('[aria-label="Lägg till Sida och Uppgift"]'),...(row?row.querySelectorAll('button'):column.querySelectorAll('button'))]
+    } else {
+      buttons=[...scope.querySelectorAll('button')].filter(b=>!b.classList.contains('context-trigger') && (b.classList.contains('moment-action') || b.closest('.topic-edit-actions')))
+    }
+    const actions=[...new Map(buttons.filter(Boolean).filter(b=>!b.disabled).map(b=>[b.getAttribute('aria-label')||b.title||b.textContent.trim(),b])).entries()]
+    setContextMenu({x:Math.max(8,Math.min(event.clientX,window.innerWidth-250)),y:Math.max(8,Math.min(event.clientY,window.innerHeight-360)),actions})
+  }
   const lessons = Array.isArray(week?.lessons) ? week.lessons : []
   const editable = typeof onChange === 'function'
   if (!editable && !lessons.some(hasStudentLessonContent)) return null
@@ -2789,9 +2805,9 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
     next[target] = { ...next[target], day: targetDay }
     changeLessons(normalizeLessonOrder(next))
   }
-  return <div className="lessons">
-    {lessons.map((lesson, i) => ({ lesson, i })).filter(({ lesson }) => editable || hasStudentLessonContent(lesson)).sort((a, b) => editable ? a.i - b.i : (WEEKDAYS.indexOf(a.lesson.day || a.lesson.name) + 5) % 5 - (WEEKDAYS.indexOf(b.lesson.day || b.lesson.name) + 5) % 5).map(({ lesson, i }) => <section className="lesson" key={i}>
-      <div className="lesson-heading">
+  return <div className={editable?"lessons context-editing":"lessons"}>
+    {lessons.map((lesson, i) => ({ lesson, i })).filter(({ lesson }) => editable || hasStudentLessonContent(lesson)).sort((a, b) => editable ? a.i - b.i : (WEEKDAYS.indexOf(a.lesson.day || a.lesson.name) + 5) % 5 - (WEEKDAYS.indexOf(b.lesson.day || b.lesson.name) + 5) % 5).map(({ lesson, i }) => <section className="lesson" key={i} onContextMenu={e=>openContextMenu(e,e.currentTarget)}>
+      <div className="lesson-heading">{editable && <button type="button" className="context-trigger" title="Lektionens meny" aria-label="Lektionens meny" onClick={e=>openContextMenu(e,e.currentTarget.closest(".lesson"))}>⋮</button>}
         {editable ? <div className="lesson-edit-heading" style={{ '--lesson-day-color': DAY_COLORS[Math.max(0, WEEKDAYS.indexOf(entryType === 'dag' ? lesson.name : lesson.day)) % DAY_COLORS.length] }}>
           <span className="lesson-number-inline">{entryType === 'dag' ? (lesson.name || WEEKDAYS[i]) : (lesson.day || 'Välj dag')} · {entryType === 'dag' ? `Lektion ${i + 1}` : `Lektion ${i + 1}`}{lessonDayDate(week.weekStart, entryType === 'dag' ? lesson.name : lesson.day) ? ` · ${lessonDayDate(week.weekStart, entryType === 'dag' ? lesson.name : lesson.day)}` : ''}</span>
         </div> : <h4>
@@ -2834,7 +2850,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
         }
         const lastFilledRow = values => values.reduce((last, value, index) => String(value ?? '').trim() ? index + 1 : last, 0)
         const rows = editable ? Math.max(1, pages.length, assignments.length) : Math.max(1, lastFilledRow(pages), lastFilledRow(assignments))
-        return <div className="topic" data-editable={editable || undefined} key={j}>
+        return <div className="topic" data-editable={editable || undefined} key={j} tabIndex={editable?0:undefined} onContextMenu={e=>openContextMenu(e,e.currentTarget)} onKeyDown={e=>{if(e.shiftKey&&e.key==="F10"){const r=e.currentTarget.getBoundingClientRect();openContextMenu({preventDefault:()=>e.preventDefault(),stopPropagation:()=>e.stopPropagation(),target:e.currentTarget,clientX:r.left+10,clientY:r.top+10},e.currentTarget)}}}>
           <div className={`topic-grid ${editable ? '' : 'topic-grid-readonly'} ${visibleFields.includes('pages') ? '' : 'without-pages'} ${visibleFields.includes('assignments') ? '' : 'without-assignments'}`} data-detail-count={visibleFields.length}>
             <div className="topic-name">{editable ? <textarea aria-label="Momentets namn" placeholder="Exempel: Procent – tryck Enter för ny rad" rows={Math.max(2, String(topic.name || '').split('\n').length)} value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong className="topic-name-display">{hasDisplayValue(topic.name) ? topic.name : 'Moment'}</strong>}</div>
             {visibleFields.map(field => <div className={`topic-column ${field}`} key={field}>
@@ -2872,7 +2888,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
             {editable && <button type="button" className="add-detail moment-action" onClick={() => updateTopic({ ...topic, links: [...links, { label: '', url: '' }] })} title="Lägg till länk" aria-label="Lägg till länk"><MomentActionIcon kind="link"/></button>}
           </div>}
           {editable && <button type="button" className="remove-small moment-action moment-action-remove" title="Ta bort moment" aria-label="Ta bort moment" onClick={() => { if (!(topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm('Ta bort momentet och allt innehåll?')) changeLesson(i, { ...lesson, topics: (lesson.topics || []).filter((_, index) => index !== j) }) }}><MomentActionIcon kind="remove"/></button>}
-          {editable && <button type="button" className="secondary moment-action moment-add-corner" title="Lägg till moment efter detta" aria-label="Lägg till moment" onClick={()=>{const topics=[...(lesson.topics || [])];topics.splice(j+1,0,{name:'',pages:[],assignments:[],links:[]});changeLesson(i,{...lesson,topics})}}><MomentActionIcon kind="plus"/></button>}
+          {editable && <button type="button" className="secondary moment-action moment-add-corner" title="Lägg till moment efter detta" aria-label="Lägg till moment" onClick={()=>{if(lockLessons){changeLesson(i,{...lesson,consumeNextMoment:true});return}const topics=[...(lesson.topics || [])];topics.splice(j+1,0,{name:'',pages:[],assignments:[],links:[]});changeLesson(i,{...lesson,topics})}}><MomentActionIcon kind="plus"/></button>}
         </div>
       })}
       {editable && !(lesson.topics || []).length && <button type="button" className="secondary moment-action" onClick={() => changeLesson(i, { ...lesson, topics: [...(lesson.topics || []), { name: '', pages: [], assignments: [], links: [] }] })} title="Lägg till moment" aria-label="Lägg till moment"><MomentActionIcon kind="plus"/></button>}
@@ -2893,6 +2909,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
         changeLessons(normalizeLessonOrder([...lessons, { name: `Lektion ${lessons.length + 1}`, day: nextDay, topics: [] }]))
       }
     }}>{entryType === 'dag' ? `+ Lägg tillbaka ${WEEKDAYS.find(day => !lessons.some(lesson => lesson.name === day)) || 'dag'}` : '+ Lägg till lektion'}</button>}
+    {contextMenu && <div className="moment-menu-backdrop" onMouseDown={()=>setContextMenu(null)} onContextMenu={e=>{e.preventDefault();setContextMenu(null)}}><div role="menu" aria-label="Planeringsmeny" className="moment-context-menu" style={{left:contextMenu.x,top:contextMenu.y}} onMouseDown={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key==="Escape")setContextMenu(null)}}>{contextMenu.actions.map(([label,button])=><button type="button" role="menuitem" key={label} onClick={()=>{setContextMenu(null);button.click()}}>{label}</button>)}<button type="button" role="menuitem" onClick={()=>setContextMenu(null)}>Stäng menyn</button></div></div>}
   </div>
 }
 

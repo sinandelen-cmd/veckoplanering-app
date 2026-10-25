@@ -121,6 +121,11 @@ export function buildClassSchedule(plan, group) {
 export function updateClassLessonContent(plan, className, scheduled, nextLesson) {
   const group = plan.classGroups?.find(item=>item.name===className)
   if (!group || !scheduled) return plan
+  if (nextLesson?.consumeNextMoment === true) {
+    const key=String(scheduled.lessonNumber-1)
+    const count=Math.max(1,scheduled.lesson?.topics?.length || 1)
+    return {...plan,classGroups:plan.classGroups.map(item=>item.name===className?{...item,momentsPerLesson:{...item.momentsPerLesson,[key]:count+1}}:item)}
+  }
   const weeks = JSON.parse(JSON.stringify(Array.isArray(group.weeksData) ? group.weeksData : plan.weeksData || []))
   const anchorWeek = weeks.find(week=>week.weekStart===scheduled.sourceWeekStart)
   const anchorLesson = anchorWeek?.lessons?.[scheduled.index]

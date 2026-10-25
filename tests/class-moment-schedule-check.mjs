@@ -124,3 +124,23 @@ const closedGroup={...slowGroup,schoolClosures:[{type:'Lov',startDate:'2026-10-1
 assert.deepEqual(build(longPlan,closedGroup).flatMap(item=>item.lesson.topics),longTopics,'A long closure must postpone every moment')
 assert.deepEqual(build(longPlan,{...slowGroup,days:[],extraSlots:[]}),[],'A class without teaching slots must terminate')
 console.log('PASS: all 260 moments survive slow pace, distant start and long closure; unscheduled classes terminate')
+
+const queueFixture={startDate:'2026-10-12',weeksData:[{weekStart:'2026-10-12',lessons:[1,2,3,4].map(n=>({topics:[topic(n)]}))}],classGroups:[{name:'Queue A',startDate:'2026-10-12',days:['Måndag','Tisdag','Onsdag','Torsdag']},{name:'Queue B',startDate:'2026-10-12',days:['Måndag','Tisdag','Onsdag','Torsdag']}]}
+const queueBefore=JSON.stringify(queueFixture)
+const queueFirst=build(queueFixture,queueFixture.classGroups[0])[0]
+const queueExpanded=update(queueFixture,'Queue A',queueFirst,{...queueFirst.lesson,consumeNextMoment:true})
+assert.deepEqual(build(queueExpanded,queueExpanded.classGroups[0]).map(x=>x.lesson.topics.map(t=>t.name)),[['Moment 1','Moment 2'],['Moment 3'],['Moment 4']])
+assert.deepEqual(build(queueExpanded,queueExpanded.classGroups[0]).flatMap(x=>x.lesson.topics),queueFixture.weeksData[0].lessons.flatMap(x=>x.topics),'Pulling next moment preserves every resource')
+assert.deepEqual(queueExpanded.classGroups[1],queueFixture.classGroups[1])
+assert.deepEqual(queueExpanded.weeksData,queueFixture.weeksData)
+assert.equal(JSON.stringify(queueFixture),queueBefore)
+const allocated=build(queueExpanded,queueExpanded.classGroups[0])[0]
+const pageRemoved={...allocated.lesson,topics:allocated.lesson.topics.map((t,i)=>i===0?{...t,pages:[]}:t)}
+const pagePlan=update(queueExpanded,'Queue A',allocated,pageRemoved)
+const afterPage=build(pagePlan,pagePlan.classGroups[0])[0].lesson.topics[0]
+assert.deepEqual(afterPage.assignments,allocated.lesson.topics[0].assignments)
+assert.deepEqual(afterPage.links,allocated.lesson.topics[0].links)
+const taskRemoved={...allocated.lesson,topics:allocated.lesson.topics.map((t,i)=>i===0?{...t,assignments:[]}:t)}
+const taskPlan=update(queueExpanded,'Queue A',allocated,taskRemoved)
+assert.deepEqual(build(taskPlan,taskPlan.classGroups[0])[0].lesson.topics[0].pages,allocated.lesson.topics[0].pages)
+console.log('PASS: requesting next queued moment reflows only chosen class; pages and assignments delete independently with links preserved')

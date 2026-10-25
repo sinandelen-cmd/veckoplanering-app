@@ -4054,3 +4054,16 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .lesson .topic[data-editable="true"] .topic-cell{min-height:0!important}
 
 .lesson .topic[data-editable="true"] .topic-cell{height:auto!important}.lesson .topic[data-editable="true"] .topic-cell input{display:block}
+
+.context-editing .topic[data-editable="true"] .moment-action,
+.context-editing .topic-edit-actions,
+.context-editing .topic-cell>.remove-small,
+.context-editing .lesson-add-assessment{display:none!important}
+.context-editing .topic[data-editable="true"]{padding-top:10px;padding-bottom:10px}
+.context-editing .topic-cell input{padding-right:12px!important}
+.context-editing .lesson-heading{position:relative}
+.context-trigger{background:transparent;color:var(--plan-accent,#356e63);font-size:24px;line-height:1;padding:2px 8px;min-height:32px;min-width:32px;margin-left:auto;order:3}
+.moment-menu-backdrop{position:fixed;inset:0;z-index:10000;background:transparent}
+.moment-context-menu{position:fixed;min-width:230px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);overflow:auto;display:grid;padding:6px;background:#fffdf7;border:1px solid #d8dfd7;border-radius:10px;box-shadow:0 8px 28px #19392d33}
+.moment-context-menu button{background:transparent;color:#254c42;text-align:left;min-height:38px;padding:8px 12px;border-radius:6px}
+.moment-context-menu button:hover,.moment-context-menu button:focus-visible{background:#edf5ef;outline:2px solid #759d8b;outline-offset:-2px}
