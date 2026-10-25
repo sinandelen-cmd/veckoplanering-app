@@ -75,7 +75,7 @@ for(const g of demoGroups){
     closure('Studiedag','2026-10-19'),
     closure('Halvdag','2026-10-20',{cancelledLessons:1}),
     {type:'Lov',startDate:'2026-10-22',endDate:'2026-10-23'}
-  ],'2026-10-21']
+  ],'2026-10-26']
  ]
  for(const [label,events,firstDate] of cases){
   const isolatedGroup={...g,schoolClosures:events}
