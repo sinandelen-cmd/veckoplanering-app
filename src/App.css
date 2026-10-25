@@ -4052,3 +4052,5 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 }
 
 .lesson .topic[data-editable="true"] .topic-cell{min-height:0!important}
+
+.lesson .topic[data-editable="true"] .topic-cell{height:auto!important}.lesson .topic[data-editable="true"] .topic-cell input{display:block}
