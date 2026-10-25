@@ -334,7 +334,7 @@ assert.match(app, /onDeleteWeek=\{weekStart =>/)
 assert.match(app, /Vill du radera vecka/)
 
 assert.match(app, /Kontroll före publicering/)
-assert.match(app, /currentStudentWeekStart = mondayOf\(new Date\(\)\)/)
+assert.match(app, /currentStudentWeekStart = mondayDate\(stockholmDate\(clock\)\)/)
 assert.match(app, /const currentStudentWeek = studentWeeks\.find\(week => week\.weekStart === currentStudentWeekStart\)/)
 assert.match(app, /const jumpStudentWeek = currentStudentWeek \|\| upcomingStudentWeek/)
 assert.match(css, /\.publication-readiness/)

@@ -3928,3 +3928,15 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
   .planning-layout.view-teacher .week-card .topic-grid:not(.topic-grid-readonly)[data-detail-count] {grid-template-columns:minmax(0,1fr)}
   .topic-grid:not(.topic-grid-readonly) .topic-name {grid-column:1/-1}
 }
+
+.teacher-fold-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+.teacher-chapter-group{background:var(--chapter-color);border-radius:14px;padding:12px;margin-bottom:16px}
+.teacher-chapter-group>h3{margin:4px 0 12px}
+.teacher-week-fold{border:1px solid #c9d8d1;border-radius:10px;margin:8px 0;background:rgba(255,255,255,.7)}
+.teacher-week-fold>summary{cursor:pointer;padding:12px;display:list-item}
+.teacher-week-fold>summary span{margin-left:12px;font-size:.85rem}
+.teacher-week-fold>.chapter-week-group{padding:8px}
+.teacher-chapter-group .week-card{background:var(--chapter-color)}
+.teacher-past-weeks>summary{cursor:pointer;padding:12px;font-weight:700}
+.topic-edit-actions small,.add-detail small,.lesson-add-assessment small{font-size:.75rem}
+.topic-edit-actions button,.topic-links>.add-detail,.lesson-add-assessment{padding:5px 8px}

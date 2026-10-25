@@ -16,6 +16,8 @@ const functions = ['resourceInfo', 'hasDisplayValue', 'hasStudentTopicContent', 
 const fixture = `import assert from 'node:assert/strict'
 import React, {useState,useEffect} from 'react'
 import ClassSchedules, {buildClassSchedule} from '../src/ClassSchedules.jsx'
+import WeekBoard,{useWeekClock} from '../src/WeekBoard.jsx'
+import {selectStudentWeeks,chapterColor,stockholmDate,mondayDate} from '../src/weekPresentation.js'
 import { renderToStaticMarkup } from 'react-dom/server'
 const WEEKDAYS = ['Måndag','Tisdag','Onsdag','Torsdag','Fredag']
 const DAY_COLORS = ['#fff']
@@ -85,6 +87,9 @@ assert.match(edit,/>Sida</)
 assert.match(edit,/>Uppgift</)
 assert.match(edit,/Lägg till lektion/)
 assert.match(edit,/Momentets namn/)
+assert.match(edit,/Lägg till Sida och Uppgift/)
+assert.match(edit,/Lägg till länk/)
+assert.match(edit,/Infoga prov eller test/)
 
 const weekPages = render(WeekDetails,{week:{pages:['','  ','42'],assignments:[''],links:[]}})
 assert.match(weekPages,/>42</)
