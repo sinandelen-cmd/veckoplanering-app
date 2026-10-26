@@ -1957,8 +1957,33 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     }
     fresh.weeksData = makeWeeks(fresh)
     setBusy(true)
-    setStatus('Skapar grundplanering och veckor…')
+    setStatus('Kontrollerar om grundplaneringen redan finns…')
     try {
+      // Check the server, not only the locally loaded list, including archived plans.
+      const {data: existingRows, error: lookupError} = await supabase.from('veckoplanering')
+        .select('id,content').eq('user_id',session.user.id)
+      if (lookupError) throw lookupError
+      const normalize = value => String(value || '').trim().toLocaleLowerCase('sv-SE').replace(/\\s+/g,' ')
+      const existing = (existingRows || []).find(row => {
+        const old = parseContent(row.content)
+        return old && (old.kind === 'arsplanering-v2' || old.kind === 'arsplanering-v1')
+          && normalize(old.schoolForm) === normalize(fresh.schoolForm)
+          && normalize(old.subject) === normalize(fresh.subject)
+          && normalize(old.grade) === normalize(fresh.grade)
+          && normalize(old.course) === normalize(fresh.course)
+          && normalize(old.textbook) === normalize(fresh.textbook)
+      })
+      if (existing) {
+        const archived = Boolean(parseContent(existing.content)?.archived)
+        setStatus(archived
+          ? 'Den här grundplaneringen finns redan i ditt arkiv. Återanvänd den och lägg till klass i stället för att skapa en dubblett.'
+          : 'Den här grundplaneringen finns redan. Öppna den befintliga planeringen och lägg till klass i stället.')
+        setBookPicker(null)
+        setShowArchive(archived)
+        setTeacherTab('bibliotek')
+        return
+      }
+      setStatus('Skapar grundplanering och veckor…')
       const payload = {kind:'arsplanering-v2',...fresh,published:false,publicSlug:''}
       const {data,error} = await supabase.from('veckoplanering').insert({
         user_id:session.user.id,title:fresh.title,week_start:fresh.startDate,
