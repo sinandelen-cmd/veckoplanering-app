@@ -3874,3 +3874,7 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 /* Keep the single teacher navigation available while scrolling through weeks. */
 #kopplade-klasser { position: sticky; top: 0; z-index: 60; background: var(--page-bg, #fffaf2); border-radius: 12px; }
 #kopplade-klasser > .card { margin: 0; }
+
+/* Sticky toolbar across the teacher plan, including the class preview. */
+#kopplade-klasser { position: sticky !important; top: 0 !important; z-index: 1000 !important; align-self: stretch; isolation: isolate; background: #fffaf4; box-shadow: 0 3px 10px rgba(45,55,60,.08); }
+#kopplade-klasser > .card { background: #fff; }
