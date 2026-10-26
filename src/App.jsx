@@ -1217,7 +1217,7 @@ function TeacherResults({ userId }) {
   </section>
 }
 
-function PublishedStudentPreview({ slug }) {
+function PublishedStudentPreview({ slug, initialClass = "" }) {
   const [publishedPlan, setPublishedPlan] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
@@ -1243,7 +1243,7 @@ function PublishedStudentPreview({ slug }) {
   }, [slug])
   if (loading) return <p role="status">Hämtar det som eleverna ser…</p>
   if (error) return <p role="status">{error}</p>
-  return <StudentView key={slug} plan={publishedPlan} preview publishedOnly initialClass={publishedPlan.classGroups?.[0]?.name || ''} />
+  return <StudentView key={slug} plan={publishedPlan} preview publishedOnly initialClass={initialClass || publishedPlan.classGroups?.[0]?.name || ''} />
 }
 
 function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin, adminContent, pendingCount = 0 }) {
@@ -2038,8 +2038,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     </div>}
 
     
-    {selectedId && !calendarOpen && teacherTab === "arsplan" && <div id="kopplade-klasser"><ClassSchedules plan={{...plan,weeksData:weeks}} publicSlug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} editingClassView={editingClassView} setEditingClassView={setEditingClassView} /></div>}
-    {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && plan.classGroups?.some(g=>g.name===editingClassView) && <section className="editing-selected-class-weekly"><StudentView key={editingClassView} plan={{...sanitizeForStudents({...plan,weeksData:weeks}),classGroups:[plan.classGroups.find(g=>g.name===editingClassView)],published:plan.published,publicSlug:plan.publicSlug}} preview initialClass={editingClassView} hideSelector /></section>}
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && <div id="kopplade-klasser"><div style={{display:"flex",justifyContent:"flex-end",margin:"0 0 8px"}}><button type="button" className="secondary" onClick={()=>{setCalendarOpen(true);setEditingClassView("");window.scrollTo({top:0,behavior:"smooth"})}}>📅 Visa kalenderöversikt</button></div><ClassSchedules plan={{...plan,weeksData:weeks}} publicSlug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} editingClassView={editingClassView} setEditingClassView={setEditingClassView} /></div>}
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && plan.classGroups?.some(g=>g.name===editingClassView) && <section className="editing-selected-class-weekly"><PublishedStudentPreview key={editingClassView} slug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} initialClass={editingClassView} /></section>}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline" style={editingClassView && plan.classGroups?.some(g=>g.name===editingClassView)?{display:"none"}:undefined}>
     <div className="calendar-bulk-visibility" style={{ margin: '8px 0 18px' }}><button type="button" className="secondary" disabled={busy} onClick={() => setAllWeeksVisibility(!weeks.every(week => !week.hidden))} style={{ padding: '13px 20px', fontSize: '1.05rem', fontWeight: 800, background: '#e4f6e9', border: '2px solid #80b69a', borderRadius: 12 }}>{weeks.every(week => !week.hidden) ? '☑ Dölj alla veckor i Elevvy' : '☐ Visa alla veckor i Elevvy'}</button></div>
 <section className="card">
