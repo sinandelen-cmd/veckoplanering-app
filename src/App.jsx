@@ -2045,6 +2045,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
 <section className="card">
       <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
       
+      <p style={{fontSize:13,margin:"0 0 10px"}}>Passerade veckor är dolda här tills du väljer att visa dem. För varje vecka kan du under ”Elevvisning” välja ”Visa manuellt för elever (även passerad vecka)” eller ”Dölj för elever”.</p>
       {pastTeacherWeeks.length > 0 && <button type="button" className="secondary" aria-expanded={showPastTeacherWeeks} onClick={()=>setShowPastTeacherWeeks(v=>!v)} style={{marginBottom:14,padding:"10px 16px",fontWeight:700}}>{showPastTeacherWeeks ? "▴ Dölj tidigare veckor och kapitel" : `▾ Visa tidigare veckor och kapitel (${pastTeacherWeeks.length} veckor)`}</button>}
       <div className="teacher-months">
         {Object.values((showPastTeacherWeeks ? teacherDisplayWeeks : upcomingTeacherWeeks).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((months, item) => {
@@ -2062,7 +2063,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             <label>Elevvisning
               <select aria-label={"Elevvisning vecka "+week.weekNumber} value={week.hidden?"hidden":week.keepVisibleExtra?"extra":"normal"} onChange={e=>updateWeek(index,e.target.value==="hidden"?{hidden:true,keepVisibleExtra:false}:e.target.value==="extra"?{hidden:false,keepVisibleExtra:true}:{hidden:false,keepVisibleExtra:false})}>
                 <option value="normal">Automatisk</option>
-                <option value="extra">Fäst som extra vecka</option>
+                <option value="extra">Visa manuellt för elever (även passerad vecka)</option>
                 <option value="hidden">Dölj för elever</option>
               </select>
             </label>
