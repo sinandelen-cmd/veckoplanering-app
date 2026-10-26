@@ -3914,3 +3914,29 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 /* Narrower control panel, aligned with the planning content. */
 #kopplade-klasser { width: min(100%, 700px) !important; max-width:700px !important; margin-left:0 !important; margin-right:auto !important; }
 #kopplade-klasser > .card { width:100%; box-sizing:border-box; }
+
+/* Keep the desktop Moment | Sida | Uppgift structure on narrow mobile screens.
+   Only scale spacing and typography; never stack or hide topic fields. */
+@media screen and (max-width: 650px) {
+  .planning-layout.view-teacher .week-card .topic-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 4px !important;
+    align-items: start;
+  }
+  .planning-layout.view-teacher .week-card .topic-name {
+    grid-column: auto !important;
+    min-width: 0;
+  }
+  .planning-layout.view-teacher .week-card .topic-grid input,
+  .planning-layout.view-teacher .week-card .topic-grid textarea {
+    min-width: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box;
+    padding: 5px 3px !important;
+    font-size: clamp(10px, 2.8vw, 13px) !important;
+  }
+  .planning-layout.view-teacher .week-card .topic-column h5 {
+    font-size: clamp(10px, 2.7vw, 13px) !important;
+  }
+}
