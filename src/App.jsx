@@ -1987,11 +1987,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         {teacherTab !== 'bibliotek' && teacherTab !== 'arsplan' && <p className="muted">{session.user.email}</p>}
       </div>
       
-      {teacherTab === "arsplan" && <div className="edit-history-actions" aria-label="Redigeringsverktyg">
-        <button type="button" className="secondary" disabled={!historyRef.current.past.length} onClick={undoPlan} title="Ångra senaste ändringen">↶ Ångra</button>
-        <button type="button" className="secondary" disabled={!historyRef.current.future.length} onClick={redoPlan} title="Gör om ändringen">↷ Gör om</button>
-        <button type="button" className="secondary" onClick={() => { if (isDirty && !window.confirm("Du har osparade ändringar. Vill du ändå uppdatera sidan?")) return; window.location.reload() }} title="Ladda om sidan">⟳ Uppdatera</button>
-      </div>}
+      
       {selectedId && teacherTab === "arsplan" && <button type="button" className="secondary" onClick={() => { document.body.classList.add("teacher-plan-print"); const cleanup = () => document.body.classList.remove("teacher-plan-print"); window.addEventListener("afterprint", cleanup, { once: true }); window.print(); setTimeout(cleanup, 1500) }}>🖨️ Skriv ut planeringen</button>}
       {false && selectedId && teacherTab === "arsplan" && <div className="archive-plan-actions" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <button type="button" className="secondary" disabled={busy || !plans.some(row => row.id === selectedId)} style={{ fontSize: '1rem', fontWeight: 850, padding: '13px 18px', borderRadius: 12, background: '#f9e5ed', border: '2px solid #c87e9b', color: '#73394f' }} onClick={() => { const row = plans.find(item => item.id === selectedId); if (row) void setArchived(row, true) }}>🗂 Arkivera planeringen</button>
@@ -2038,13 +2034,15 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     </div>}
 
     
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && <div id="kopplade-klasser" style={{margin:"10px 0 14px"}}><ClassSchedules onOpenCalendar={()=>{setCalendarOpen(true);setEditingClassView("");window.scrollTo({top:0,behavior:"smooth"})}} plan={{...plan,weeksData:weeks}} publicSlug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} editingClassView={editingClassView} setEditingClassView={setEditingClassView} /></div>}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && plan.classGroups?.some(g=>g.name===editingClassView) && <section className="editing-selected-class-weekly"><PublishedStudentPreview key={editingClassView} slug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} initialClass={editingClassView} /></section>}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="calendar-bulk-visibility" style={{ margin: "8px 0 12px", display: editingClassView ? "none" : undefined }}><button type="button" className="secondary" disabled={busy} onClick={() => setAllWeeksVisibility(!weeks.every(week => !week.hidden))} style={{ padding: "13px 20px", fontSize: "1.05rem", fontWeight: 800, background: "#e4f6e9", border: "2px solid #80b69a", borderRadius: 12 }}>{weeks.every(week => !week.hidden) ? "☑ Dölj alla veckor i Elevvy" : "☐ Visa alla veckor i Elevvy"}</button></div>}
-    {selectedId && !calendarOpen && teacherTab === "arsplan" && <div id="kopplade-klasser"><ClassSchedules onOpenCalendar={()=>{setCalendarOpen(true);setEditingClassView("");window.scrollTo({top:0,behavior:"smooth"})}} plan={{...plan,weeksData:weeks}} publicSlug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} editingClassView={editingClassView} setEditingClassView={setEditingClassView} /></div>}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline" style={editingClassView && plan.classGroups?.some(g=>g.name===editingClassView)?{display:"none"}:undefined}>
     
 <section className="card">
       <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
+      <div className="edit-history-actions" aria-label="Redigeringsverktyg" style={{margin:"10px 0"}}><button type="button" className="secondary" disabled={!historyRef.current.past.length} onClick={undoPlan}>↶ Ångra</button><button type="button" className="secondary" disabled={!historyRef.current.future.length} onClick={redoPlan}>↷ Gör om</button></div>
+          {selectedId && !calendarOpen && teacherTab === "arsplan" && <div id="kopplade-klasser" style={{margin:"10px 0 14px"}}><ClassSchedules onOpenCalendar={()=>{setCalendarOpen(true);setEditingClassView("");window.scrollTo({top:0,behavior:"smooth"})}} plan={{...plan,weeksData:weeks}} publicSlug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} editingClassView={editingClassView} setEditingClassView={setEditingClassView} /></div>}
       
       <p style={{fontSize:13,margin:"0 0 10px"}}>Passerade veckor är dolda här tills du väljer att visa dem. För varje vecka kan du under ”Elevvisning” välja ”Visa manuellt för elever (även passerad vecka)” eller ”Dölj för elever”.</p>
       {pastTeacherWeeks.length > 0 && <button type="button" className="secondary" aria-expanded={showPastTeacherWeeks} onClick={()=>setShowPastTeacherWeeks(v=>!v)} style={{marginBottom:14,padding:"10px 16px",fontWeight:700}}>{showPastTeacherWeeks ? "▴ Dölj tidigare veckor och kapitel" : `▾ Visa tidigare veckor och kapitel (${pastTeacherWeeks.length} veckor)`}</button>}
