@@ -1989,7 +1989,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   {adminOpen ? adminContent : <>
     {teacherTab !== "elevvy" && teacherTab !== "mina" && <header className="topbar">
       <div className="teacher-header-identity">
-        {teacherTab === 'arsplan' && openedFromLibrary && <button type="button" className="secondary" onClick={returnToPlanningTree} style={{marginRight:12,whiteSpace:"nowrap"}}>← Tillbaka till träddiagrammet</button>
+        {teacherTab === 'arsplan' && openedFromLibrary && <button type="button" className="secondary plan-home-button" onClick={returnToPlanningTree} title="Tillbaka till träddiagrammet">⌂ Startsida</button>
         <nav className="teacher-breadcrumb" aria-label="Du är här">
           {false && <button type="button" onClick={() => { setTeacherTab("mina"); setCalendarOpen(false) }}>Startsida</button>}
           {false && teacherTab === "bibliotek" && <><span aria-hidden="true">›</span><span aria-current="page">Mina planeringar</span></>}
