@@ -813,18 +813,10 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
         + (topic.pages?.length || 0) * 8 + (topic.assignments?.length || 0) * 10
         + (topic.links?.length || 0) * 10, 0), 0))
   const studentWeeks = Array.isArray(selectedClass ? classWeeks : plan?.weeksData) ? [...(selectedClass ? classWeeks : plan.weeksData)]
-    .filter(week => week && ((preview && !publishedOnly) || !week.hidden) && (week.keepVisibleExtra === true || (week.weekStart || '') >= mondayOf(new Date())) && ((preview && !publishedOnly) || !week.hideDate || week.hideDate > toIsoDate(new Date())))
+    .filter(week => week && !week.hidden && (week.keepVisibleExtra === true || ((week.weekStart || '') >= addWeeks(mondayOf(new Date()), -1) && (week.weekStart || '') <= mondayOf(new Date()))) && (!week.publishDate || week.publishDate <= toIsoDate(new Date())) && (!week.hideDate || week.hideDate > toIsoDate(new Date())))
     .sort((a, b) => weekContentScore(b) - weekContentScore(a))
     .filter((week, index, weeks) => weeks.findIndex(other => (other.weekStart || `number-${other.weekNumber}`) === (week.weekStart || `number-${week.weekNumber}`)) === index)
     .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || ''))
-    .filter((week, index, all) => {
-      if (plan?.autoReleaseWeeks !== true || week.keepVisibleExtra === true) return true
-      // Visa innevarande och kommande veckor, inte de sista veckorna i hela årsplaneringen.
-      const todayWeek = mondayOf(new Date())
-      const upcoming = all.filter(item => (item.weekStart || '') >= todayWeek && !item.keepVisibleExtra)
-      const count = Math.max(1, Math.min(12, Number(plan?.visibleWeekCount) || 2))
-      return upcoming.slice(0, count).includes(week)
-    })
     .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || '')) : []
   const currentStudentWeekStart = mondayOf(new Date())
   const currentStudentWeek = studentWeeks.find(week => week.weekStart === currentStudentWeekStart)
