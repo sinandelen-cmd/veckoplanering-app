@@ -48,7 +48,7 @@ export function buildClassSchedule(plan, group) {
   })
 }
 
-export default function ClassSchedules({ plan, onChange, publicSlug = "", editingClassView = "", setEditingClassView, onOpenCalendar }) {
+export default function ClassSchedules({ plan, onChange, publicSlug = "", editingClassView = "", setEditingClassView, onOpenCalendar, onUndo, onRedo, canUndo, canRedo, onToggleWeeks, allWeeksHidden, weeksBusy }) {
   const groups = Array.isArray(plan.classGroups) ? plan.classGroups : []
   const [name, setName] = React.useState('')
   const [addingClass, setAddingClass] = React.useState(false)
@@ -111,6 +111,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
       <button type="button" className="class-mini-schema" disabled={!groups.length} aria-expanded={showClassMenu} onClick={()=>{setShowClassMenu(v=>!v);setCompare(false);setShowClassDetails(false)}}>▦ Schema</button><button type="button" className="class-mini-schema" onClick={async()=>{if(!publicSlug){window.alert("Elevlänken är inte publicerad ännu. Lägg till lektionsinnehåll och kontrollera att planeringen är publicerad.");return}const url=window.location.origin+"/elev/"+encodeURIComponent(publicSlug)+(editingClassView?"?klass="+encodeURIComponent(editingClassView):"");try{await navigator.clipboard.writeText(url);window.alert("Elevlänken har kopierats:\n"+url)}catch{window.prompt("Kopiera elevlänken:",url)}}}>🔗 Elevlänk</button>
     </div>
     
+    <div className="class-toolbar-actions" style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginTop:10}}><button type="button" className="secondary" disabled={!canUndo} onClick={onUndo}>↶ Ångra</button><button type="button" className="secondary" disabled={!canRedo} onClick={onRedo}>↷ Gör om</button><button type="button" className="secondary" disabled={weeksBusy} onClick={onToggleWeeks} style={{background:"#e4f6e9",border:"1px solid #80b69a",fontWeight:700}}>{allWeeksHidden ? "☑ Dölj alla veckor i Elevvy" : "☐ Visa alla veckor i Elevvy"}</button></div>
     {addingClass && <div className="class-mini-new"><label>Ny klass <input value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addClass();if(name.trim())setAddingClass(false)}}} placeholder="T.ex. EK26A" /></label><button type="button" disabled={!name.trim()||groups.some(g=>g.name.toLocaleLowerCase('sv')===name.trim().toLocaleLowerCase('sv'))} onClick={()=>{addClass();setAddingClass(false);setShowClassMenu(true)}}>Lägg till</button></div>}
     {unscheduledGroups.length>0 && <p role="alert" className="class-mini-warning">Välj lektionsdagar för {unscheduledGroups.map(g=>g.name).join(', ')} via Schema.</p>}
     {showClassMenu && group && <div className="class-mini-panel">
