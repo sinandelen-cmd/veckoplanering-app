@@ -817,7 +817,14 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     .sort((a, b) => weekContentScore(b) - weekContentScore(a))
     .filter((week, index, weeks) => weeks.findIndex(other => (other.weekStart || `number-${other.weekNumber}`) === (week.weekStart || `number-${week.weekNumber}`)) === index)
     .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || ''))
-    .filter((week, index, all) => plan?.autoReleaseWeeks !== true || week.keepVisibleExtra === true || index >= all.length - Math.max(1, Math.min(12, Number(plan?.visibleWeekCount) || 2)))
+    .filter((week, index, all) => {
+      if (plan?.autoReleaseWeeks !== true || week.keepVisibleExtra === true) return true
+      // Visa innevarande och kommande veckor, inte de sista veckorna i hela årsplaneringen.
+      const todayWeek = mondayOf(new Date())
+      const upcoming = all.filter(item => (item.weekStart || '') >= todayWeek && !item.keepVisibleExtra)
+      const count = Math.max(1, Math.min(12, Number(plan?.visibleWeekCount) || 2))
+      return upcoming.slice(0, count).includes(week)
+    })
     .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || '')) : []
   const currentStudentWeekStart = mondayOf(new Date())
   const currentStudentWeek = studentWeeks.find(week => week.weekStart === currentStudentWeekStart)
