@@ -48,7 +48,7 @@ export function buildClassSchedule(plan, group) {
   })
 }
 
-export default function ClassSchedules({ plan, onChange, publicSlug = "", editingClassView = "", setEditingClassView, onOpenCalendar, onUndo, onRedo, canUndo, canRedo, onSetAllDisplayMode, allWeeksDisplayMode, weeksBusy }) {
+export default function ClassSchedules({ plan, onChange, publicSlug = "", editingClassView = "", setEditingClassView, onOpenCalendar, onGoHome, onUndo, onRedo, canUndo, canRedo, onSetAllDisplayMode, allWeeksDisplayMode, weeksBusy }) {
   const groups = Array.isArray(plan.classGroups) ? plan.classGroups : []
   const [name, setName] = React.useState('')
   const [addingClass, setAddingClass] = React.useState(false)
@@ -103,7 +103,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
     <div className="class-schedule-intro"><details className="class-schedule-help"><summary>ⓘ Så fungerar det</summary><p>Skriv lektionsinnehållet en gång. Lägg sedan till dina klasser och välj deras lektionsdagar. Alla klasser följer samma innehåll i rätt ordning, men i sin egen takt.</p><p>Exempel: 8A har lektioner måndag, onsdag och fredag medan 8B har tisdag och torsdag.</p></details></div>
     <div className="class-mini-row">
       
-      <div className="class-mini-chips"><button type="button" className={"class-mini-chip"+(!editingClassView?" active":"")} onClick={()=>setEditingClassView?.("")} aria-pressed={!editingClassView}>📘 Grundplanering</button>{groups.map((g,i)=><button type="button" key={i} className={'class-mini-chip'+(editingClassView===g.name?' active':'')} aria-pressed={editingClassView===g.name} onClick={()=>{setSelected(i);setEditingClassView?.(g.name);setCompare(false);setShowClassDetails(false)}}>{g.name}</button>)}
+      <div className="class-mini-chips"><button type="button" className="class-mini-chip plan-toolbar-home" onClick={onGoHome} title="Tillbaka till träddiagrammet">⌂ Startsida</button><button type="button" className={"class-mini-chip"+(!editingClassView?" active":"")} onClick={()=>setEditingClassView?.("")} aria-pressed={!editingClassView}>📘 Grundplanering</button>{groups.map((g,i)=><button type="button" key={i} className={'class-mini-chip'+(editingClassView===g.name?' active':'')} aria-pressed={editingClassView===g.name} onClick={()=>{setSelected(i);setEditingClassView?.(g.name);setCompare(false);setShowClassDetails(false)}}>{g.name}</button>)}
         {groups.length>0 && <button type="button" className="class-mini-add" onClick={()=>{if(!window.confirm('Ta bort klassen '+groups[selected]?.name+'?'))return;onChange({...plan,classGroups:groups.filter((_,i)=>i!==selected)});if(editingClassView===groups[selected]?.name)setEditingClassView?.('');setSelected(0)}}>− Ta bort klass</button>}
         <button type="button" className="class-mini-add" onClick={()=>setAddingClass(v=>!v)} aria-expanded={addingClass}>+ Klass</button>
       </div>
