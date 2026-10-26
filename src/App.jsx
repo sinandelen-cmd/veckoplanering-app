@@ -1217,6 +1217,35 @@ function TeacherResults({ userId }) {
   </section>
 }
 
+function PublishedStudentPreview({ slug }) {
+  const [publishedPlan, setPublishedPlan] = useState(null)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    let cancelled = false
+    setPublishedPlan(null)
+    setError('')
+    setLoading(true)
+    if (!slug) { setLoading(false); setError('Publicera planeringen först för att förhandsgranska elevlänken.'); return }
+    supabase.rpc('get_public_annual_plan', { slug_value: slug }).maybeSingle().then(({data, error: requestError}) => {
+      if (cancelled) return
+      if (requestError || !data) setError('Kunde inte hämta elevens publicerade planering.')
+      else {
+        try {
+          const content = JSON.parse(data.published_content || '{}')
+          if (!Array.isArray(content.weeksData)) throw new Error('Missing weeks')
+          setPublishedPlan(sanitizeForStudents(content))
+        } catch { setError('Den publicerade planeringen kunde inte läsas.') }
+      }
+      setLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [slug])
+  if (loading) return <p role="status">Hämtar det som eleverna ser…</p>
+  if (error) return <p role="status">{error}</p>
+  return <StudentView key={slug} plan={publishedPlan} preview publishedOnly initialClass={publishedPlan.classGroups?.[0]?.name || ''} />
+}
+
 function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin, adminContent, pendingCount = 0 }) {
   const [editingClassView,setEditingClassView] = useState('')
   const [plan, setPlan] = useState(emptyPlan())
@@ -2337,7 +2366,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
 
     </div>
     <div className="teacher-tab-panel" id="panel-elevvy" role="tabpanel" aria-labelledby="tab-elevvy" hidden={teacherTab !== "elevvy"}>
-    {previewStudents && <section className="student-preview-clean" id="elevvy"><StudentView plan={{...sanitizeForStudents({ ...plan, weeksData: weeks }),published:plan.published,publicSlug:plan.publicSlug}} preview publishedOnly /></section>}
+    {previewStudents && <section className="student-preview-clean" id="elevvy"><PublishedStudentPreview slug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} /></section>}
 
     </div>
     
