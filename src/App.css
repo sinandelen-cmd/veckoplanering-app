@@ -3892,3 +3892,21 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .topbar .teacher-breadcrumb { display:none; }
 #lararvy .topbar > button, #lararvy .topbar > .student-plan-link button { padding: 7px 10px !important; font-size: .84rem !important; }
 .plan-toolbar-home { background:#eef8f5 !important; border-color:#b9d6d1 !important; }
+
+/* Compact, stable navigation panel for all planning and class views. */
+#kopplade-klasser { margin: 6px 0 10px !important; overflow-anchor: none; }
+#kopplade-klasser > .card { padding: 10px 14px !important; display:flex; flex-direction:column; gap:6px; }
+#kopplade-klasser .class-schedule-intro { margin:0 !important; }
+#kopplade-klasser .class-mini-row { margin:0 !important; gap:6px !important; align-items:center; flex-wrap:wrap; }
+#kopplade-klasser .class-mini-chips { gap:5px !important; }
+#kopplade-klasser .class-mini-chip,
+#kopplade-klasser .class-mini-schema,
+#kopplade-klasser .class-mini-add { padding:6px 9px !important; min-height:30px; font-size:.83rem !important; }
+#kopplade-klasser .class-toolbar-actions { display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin:0 !important; }
+#kopplade-klasser .class-toolbar-actions > button { padding:5px 9px !important; font-size:.8rem; }
+#kopplade-klasser .class-bulk-visibility { display:inline-flex; align-items:center; gap:7px; font-size:.82rem; font-weight:650; }
+#kopplade-klasser .class-bulk-visibility select { max-width:270px; min-height:31px; padding:4px 8px; font-size:.82rem; border-radius:7px; }
+#kopplade-klasser .class-schedule-help summary { padding:4px 7px; font-size:.8rem; }
+#kopplade-klasser .class-mini-closures { margin:0 !important; }
+.editing-selected-class-weekly, .expanded-weeks-inline { overflow-anchor:none; }
+@media(max-width:650px) { #kopplade-klasser > .card {padding:8px !important} #kopplade-klasser .class-bulk-visibility select {max-width:175px} }
