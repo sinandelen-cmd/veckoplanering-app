@@ -813,7 +813,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
         + (topic.pages?.length || 0) * 8 + (topic.assignments?.length || 0) * 10
         + (topic.links?.length || 0) * 10, 0), 0))
   const studentWeeks = Array.isArray(selectedClass ? classWeeks : plan?.weeksData) ? [...(selectedClass ? classWeeks : plan.weeksData)]
-    .filter(week => week && (preview || !week.hidden) && (preview || (week.weekStart || '') <= toIsoDate(new Date())) && (preview || !week.hideDate || week.hideDate > toIsoDate(new Date())))
+    .filter(week => week && (preview || !week.hidden) && (week.keepVisibleExtra === true || (week.weekStart || '') >= mondayOf(new Date())) && (preview || !week.hideDate || week.hideDate > toIsoDate(new Date())))
     .sort((a, b) => weekContentScore(b) - weekContentScore(a))
     .filter((week, index, weeks) => weeks.findIndex(other => (other.weekStart || `number-${other.weekNumber}`) === (week.weekStart || `number-${week.weekNumber}`)) === index)
     .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || ''))
