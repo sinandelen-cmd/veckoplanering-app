@@ -3885,3 +3885,10 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .teacher-header-identity:has(.plan-home-button) h1 { margin:0; }
 .plan-home-button { white-space:nowrap; border:1px solid #b9d6d1; background:#eef8f5; color:#14564e; border-radius:9px; padding:9px 13px; font-weight:750; }
 @media(max-width:700px){.teacher-header-identity:has(.plan-home-button){gap:8px}.plan-home-button{padding:7px 10px}}
+
+/* Compact title bar; home navigation belongs to the persistent toolbar. */
+#lararvy .topbar { padding: 4px 0 6px !important; gap: 8px !important; align-items: center; }
+#lararvy .topbar .teacher-header-identity h1 { font-size: clamp(1.2rem, 2vw, 1.55rem); line-height:1.15; margin:0; }
+#lararvy .topbar .teacher-breadcrumb { display:none; }
+#lararvy .topbar > button, #lararvy .topbar > .student-plan-link button { padding: 7px 10px !important; font-size: .84rem !important; }
+.plan-toolbar-home { background:#eef8f5 !important; border-color:#b9d6d1 !important; }
