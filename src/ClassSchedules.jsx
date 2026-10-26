@@ -48,7 +48,7 @@ export function buildClassSchedule(plan, group) {
   })
 }
 
-export default function ClassSchedules({ plan, onChange, publicSlug = "", editingClassView = "", setEditingClassView }) {
+export default function ClassSchedules({ plan, onChange, publicSlug = "", editingClassView = "", setEditingClassView, onOpenCalendar }) {
   const groups = Array.isArray(plan.classGroups) ? plan.classGroups : []
   const [name, setName] = React.useState('')
   const [addingClass, setAddingClass] = React.useState(false)
@@ -107,6 +107,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
         {groups.length>0 && <button type="button" className="class-mini-add" onClick={()=>{if(!window.confirm('Ta bort klassen '+groups[selected]?.name+'?'))return;onChange({...plan,classGroups:groups.filter((_,i)=>i!==selected)});if(editingClassView===groups[selected]?.name)setEditingClassView?.('');setSelected(0)}}>− Ta bort klass</button>}
         <button type="button" className="class-mini-add" onClick={()=>setAddingClass(v=>!v)} aria-expanded={addingClass}>+ Klass</button>
       </div>
+      {onOpenCalendar && <button type="button" className="class-mini-chip" onClick={onOpenCalendar}>📅 Kalendervy</button>}
       <button type="button" className="class-mini-schema" disabled={!groups.length} aria-expanded={showClassMenu} onClick={()=>{setShowClassMenu(v=>!v);setCompare(false);setShowClassDetails(false)}}>▦ Schema</button>{publicSlug && <button type="button" className="class-mini-schema" onClick={async()=>{const url=window.location.origin+"/elev/"+encodeURIComponent(publicSlug)+(editingClassView?"?klass="+encodeURIComponent(editingClassView):"");try{await navigator.clipboard.writeText(url)}catch{window.prompt("Kopiera elevlänk",url)}}}>🔗 Elevlänk</button>}
     </div>
     
