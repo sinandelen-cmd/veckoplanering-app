@@ -1945,7 +1945,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const bookChoices = bookPicker ? booksForSubject(bookPicker.school, bookPicker.subject).filter(book => [book.title,book.publisher,book.subject,book.levels].some(value => value.toLocaleLowerCase('sv').includes(bookQuery.toLocaleLowerCase('sv')))) : []
   const matchingBookPlan = name => {
     if (!bookPicker || !String(name || '').trim()) return null
-    const norm = value => String(value || '').trim().toLocaleLowerCase('sv-SE').replace(/\\s+/g, ' ')
+    const norm = value => String(value || '').trim().toLocaleLowerCase('sv-SE').replace(/\s+/g, ' ')
     const schoolForm = bookPicker.school === 'Gymnasiet' ? 'Gymnasieskola' : 'Grundskola'
     return plans.find(row => {
       const old = parseContent(row.content)
@@ -1963,11 +1963,13 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     const archived = Boolean(parseContent(existing.content)?.archived)
     setBookPicker(null)
     setShowArchive(archived)
-    setStatus(archived
-      ? 'Den här planeringen finns redan i ditt arkiv! Återanvänd den istället.'
-      : 'Planeringen finns redan! Öppna planeringen och lägg till klass.')
-    if (!archived) loadPlan(existing)
-    else setTeacherTab('bibliotek')
+    if (!archived) {
+      loadPlan(existing)
+      setStatus('Planeringen finns redan! Den befintliga grundplaneringen har öppnats. Lägg till klass där.')
+    } else {
+      setTeacherTab('bibliotek')
+      setStatus('Den här planeringen finns redan i ditt arkiv! Återanvänd den istället.')
+    }
   }
   const confirmBook = async name => {
     const item = bookPicker
@@ -1989,7 +1991,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       const {data: existingRows, error: lookupError} = await supabase.from('veckoplanering')
         .select('id,content').eq('user_id',session.user.id)
       if (lookupError) throw lookupError
-      const normalize = value => String(value || '').trim().toLocaleLowerCase('sv-SE').replace(/\\s+/g,' ')
+      const normalize = value => String(value || '').trim().toLocaleLowerCase('sv-SE').replace(/\s+/g,' ')
       const existing = (existingRows || []).find(row => {
         const old = parseContent(row.content)
         return old && (old.kind === 'arsplanering-v2' || old.kind === 'arsplanering-v1')
