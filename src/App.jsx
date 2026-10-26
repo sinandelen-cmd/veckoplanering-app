@@ -1243,7 +1243,7 @@ function PublishedStudentPreview({ slug, initialClass = "" }) {
   }, [slug])
   if (loading) return <p role="status">Hämtar det som eleverna ser…</p>
   if (error) return <p role="status">{error}</p>
-  return <StudentView key={slug} plan={publishedPlan} preview publishedOnly initialClass={initialClass || publishedPlan.classGroups?.[0]?.name || ''} />
+  return <StudentView key={slug} plan={publishedPlan} preview hideSelector={Boolean(initialClass)} publishedOnly initialClass={initialClass || publishedPlan.classGroups?.[0]?.name || ''} />
 }
 
 function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin, adminContent, pendingCount = 0 }) {
