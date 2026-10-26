@@ -1467,6 +1467,18 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     }) }))
   }
 
+  function setAllWeeksDisplayMode(mode) {
+    if (!["normal", "extra", "hidden"].includes(mode) || busy) return
+    const label = mode === "extra" ? "visa alla veckor för elever, även passerade" : mode === "hidden" ? "dölja alla veckor för elever" : "återställa automatisk elevvisning för alla veckor"
+    if (!window.confirm("Vill du " + label + "? Det påverkar samtliga veckor.")) return
+    setPlan(p => ({ ...p, weeksData: displayWeeks(p).map(week => ({
+      ...week,
+      hidden: mode === "hidden",
+      keepVisibleExtra: mode === "extra"
+    })) }))
+    setStatus("Elevvisning för alla veckor har ändrats. Ändringen sparas automatiskt.")
+  }
+
   function setAllWeeksVisibility(visible) {
     setPlan(p => ({ ...p, weeksData: displayWeeks(p).map(week => ({ ...week, hidden: !visible })) }))
     setStatus(visible ? 'Alla veckor visas nu i Elevvy. Ändringen sparas automatiskt.' : 'Alla veckor är nu dolda i Elevvy. Ändringen sparas automatiskt.')
@@ -2034,7 +2046,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     </div>}
 
     
-    {selectedId && !calendarOpen && teacherTab === "arsplan" && <div id="kopplade-klasser" style={{margin:"10px 0 14px"}}><ClassSchedules onOpenCalendar={()=>{setCalendarOpen(true);setEditingClassView("");window.scrollTo({top:0,behavior:"smooth"})}} plan={{...plan,weeksData:weeks}} publicSlug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} editingClassView={editingClassView} setEditingClassView={setEditingClassView} onUndo={undoPlan} onRedo={redoPlan} canUndo={historyRef.current.past.length>0} canRedo={historyRef.current.future.length>0} onToggleWeeks={()=>setAllWeeksVisibility(!weeks.every(week=>!week.hidden))} allWeeksHidden={weeks.every(week=>!week.hidden)} weeksBusy={busy} /></div>}
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && <div id="kopplade-klasser" style={{margin:"10px 0 14px"}}><ClassSchedules onOpenCalendar={()=>{setCalendarOpen(true);setEditingClassView("");window.scrollTo({top:0,behavior:"smooth"})}} plan={{...plan,weeksData:weeks}} publicSlug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} editingClassView={editingClassView} setEditingClassView={setEditingClassView} onUndo={undoPlan} onRedo={redoPlan} canUndo={historyRef.current.past.length>0} canRedo={historyRef.current.future.length>0} onSetAllDisplayMode={setAllWeeksDisplayMode} allWeeksDisplayMode={weeks.every(w=>w.hidden)?"hidden":weeks.every(w=>!w.hidden&&w.keepVisibleExtra)?"extra":weeks.every(w=>!w.hidden&&!w.keepVisibleExtra)?"normal":""} weeksBusy={busy} /></div>}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && plan.classGroups?.some(g=>g.name===editingClassView) && <section className="editing-selected-class-weekly"><PublishedStudentPreview key={editingClassView} slug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} initialClass={editingClassView} /></section>}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline" style={editingClassView && plan.classGroups?.some(g=>g.name===editingClassView)?{display:"none"}:undefined}>
     
