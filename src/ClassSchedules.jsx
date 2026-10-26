@@ -48,7 +48,7 @@ export function buildClassSchedule(plan, group) {
   })
 }
 
-export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
+export default function ClassSchedules({ plan, onChange, publicSlug = "", editingClassView = "", setEditingClassView }) {
   const groups = Array.isArray(plan.classGroups) ? plan.classGroups : []
   const [name, setName] = React.useState('')
   const [addingClass, setAddingClass] = React.useState(false)
@@ -103,12 +103,13 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "" }) {
     <div className="class-schedule-intro"><div><h2>Klasser och schema</h2><p className="muted">Samma planering för flera klasser – varje klass följer sitt eget schema.</p></div><details className="class-schedule-help"><summary>ⓘ Så fungerar det</summary><p>Skriv lektionsinnehållet en gång. Lägg sedan till dina klasser och välj deras lektionsdagar. Alla klasser följer samma innehåll i rätt ordning, men i sin egen takt.</p><p>Exempel: 8A har lektioner måndag, onsdag och fredag medan 8B har tisdag och torsdag.</p></details></div>
     <div className="class-mini-row">
       <strong className="class-mini-label">Klasser</strong>
-      <div className="class-mini-chips">{groups.map((g,i)=><button type="button" key={i} className={'class-mini-chip'+(selected===i?' active':'')} aria-pressed={selected===i} onClick={()=>{setSelected(i);setCompare(false);setShowClassDetails(false)}}>{g.name}</button>)}
+      <div className="class-mini-chips"><button type="button" className={"class-mini-chip"+(!editingClassView?" active":"")} onClick={()=>setEditingClassView?.("")}>📘 Grundplanering</button>{groups.map((g,i)=><button type="button" key={i} className={'class-mini-chip'+(selected===i?' active':'')} aria-pressed={selected===i} onClick={()=>{setSelected(i);setEditingClassView?.(g.name);setCompare(false);setShowClassDetails(false)}}>{g.name}</button>)}
         {groups.length>0 && <button type="button" className="class-mini-add" onClick={()=>{if(!window.confirm('Ta bort klassen '+groups[selected]?.name+'?'))return;onChange({...plan,classGroups:groups.filter((_,i)=>i!==selected)});setSelected(0)}}>− Ta bort klass</button>}
         <button type="button" className="class-mini-add" onClick={()=>setAddingClass(v=>!v)} aria-expanded={addingClass}>+ Klass</button>
       </div>
       <button type="button" className="class-mini-schema" disabled={!groups.length} aria-expanded={showClassMenu} onClick={()=>{setShowClassMenu(v=>!v);setCompare(false);setShowClassDetails(false)}}>▦ Schema</button>
     </div>
+    {publicSlug && <div className="class-mini-link"><button type="button" className="secondary" onClick={async()=>{const url=window.location.origin+"/elev/"+encodeURIComponent(publicSlug)+(editingClassView?"?klass="+encodeURIComponent(editingClassView):"");try{await navigator.clipboard.writeText(url)}catch{window.prompt("Kopiera elevlänk",url)}}}>🔗 Kopiera elevlänk</button></div>}
     {addingClass && <div className="class-mini-new"><label>Ny klass <input value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addClass();if(name.trim())setAddingClass(false)}}} placeholder="T.ex. EK26A" /></label><button type="button" disabled={!name.trim()||groups.some(g=>g.name.toLocaleLowerCase('sv')===name.trim().toLocaleLowerCase('sv'))} onClick={()=>{addClass();setAddingClass(false);setShowClassMenu(true)}}>Lägg till</button></div>}
     {unscheduledGroups.length>0 && <p role="alert" className="class-mini-warning">Välj lektionsdagar för {unscheduledGroups.map(g=>g.name).join(', ')} via Schema.</p>}
     {showClassMenu && group && <div className="class-mini-panel">
