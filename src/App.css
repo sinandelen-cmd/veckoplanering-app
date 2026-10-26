@@ -3910,3 +3910,7 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #kopplade-klasser .class-mini-closures { margin:0 !important; }
 .editing-selected-class-weekly, .expanded-weeks-inline { overflow-anchor:none; }
 @media(max-width:650px) { #kopplade-klasser > .card {padding:8px !important} #kopplade-klasser .class-bulk-visibility select {max-width:175px} }
+
+/* Narrower control panel, aligned with the planning content. */
+#kopplade-klasser { width: min(100%, 1050px) !important; max-width:1050px !important; margin-left:0 !important; margin-right:auto !important; }
+#kopplade-klasser > .card { width:100%; box-sizing:border-box; }
