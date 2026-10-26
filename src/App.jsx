@@ -1272,7 +1272,6 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [simpleSetup, setSimpleSetup] = useState(true)
   const [simpleMore, setSimpleMore] = useState(false)
   const [teacherTab, setTeacherTab] = useState("mina")
-  const [showPastTeacherWeeks, setShowPastTeacherWeeks] = useState(false)
   const [creatingFromBranch, setCreatingFromBranch] = useState(false)
   // Layouten är responsiv i CSS; ingen automatisk utzoomning av mappträdet.
   const boardTreeRef = useRef(null)
@@ -1359,7 +1358,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
 
 
   const weeks = displayWeeks(plan)
-  const teacherDisplayWeeks = weeks.map((week, index) => ({week, index})).filter(({week}) => showPastTeacherWeeks || !week.weekStart || week.weekStart >= mondayOf(new Date()))
+  const teacherDisplayWeeks = weeks.map((week, index) => ({week, index})) // Grundplaneringen visar alltid alla veckor, även passerade
   const visibleTeacherWeeks = weeks.filter(week => week && !week.hidden)
   const weeksWithContent = visibleTeacherWeeks.filter(week => Boolean(
     String(week.content || '').trim() || String(week.chapter || '').trim() ||
@@ -2042,7 +2041,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     <div className="calendar-bulk-visibility" style={{ margin: '8px 0 18px' }}><button type="button" className="secondary" disabled={busy} onClick={() => setAllWeeksVisibility(!weeks.every(week => !week.hidden))} style={{ padding: '13px 20px', fontSize: '1.05rem', fontWeight: 800, background: '#e4f6e9', border: '2px solid #80b69a', borderRadius: 12 }}>{weeks.every(week => !week.hidden) ? '☑ Dölj alla veckor i Elevvy' : '☐ Visa alla veckor i Elevvy'}</button></div>
 <section className="card">
       <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
-      <div style={{marginBottom:12}}><button type="button" className="secondary" onClick={() => setShowPastTeacherWeeks(value => !value)}>{showPastTeacherWeeks ? "Dölj tidigare veckor" : "Visa tidigare veckor"}</button></div>
+      
       <div className="teacher-months">
         {Object.values(teacherDisplayWeeks.slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((months, item) => {
           const monthKey = (item.week.weekStart || '').slice(0, 7)
