@@ -3878,3 +3878,10 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 /* Sticky toolbar across the teacher plan, including the class preview. */
 #kopplade-klasser { position: sticky !important; top: 0 !important; z-index: 1000 !important; align-self: stretch; isolation: isolate; background: #fffaf4; box-shadow: 0 3px 10px rgba(45,55,60,.08); }
 #kopplade-klasser > .card { background: #fff; }
+
+/* Compact start navigation next to the current planning title. */
+.teacher-header-identity:has(.plan-home-button) { display:flex; align-items:center; flex-wrap:wrap; gap:12px; }
+.teacher-header-identity:has(.plan-home-button) .teacher-breadcrumb { display:none; }
+.teacher-header-identity:has(.plan-home-button) h1 { margin:0; }
+.plan-home-button { white-space:nowrap; border:1px solid #b9d6d1; background:#eef8f5; color:#14564e; border-radius:9px; padding:9px 13px; font-weight:750; }
+@media(max-width:700px){.teacher-header-identity:has(.plan-home-button){gap:8px}.plan-home-button{padding:7px 10px}}
