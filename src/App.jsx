@@ -1272,6 +1272,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [simpleSetup, setSimpleSetup] = useState(true)
   const [simpleMore, setSimpleMore] = useState(false)
   const [teacherTab, setTeacherTab] = useState("mina")
+  const [showPastTeacherWeeks, setShowPastTeacherWeeks] = useState(false)
   const [creatingFromBranch, setCreatingFromBranch] = useState(false)
   // Layouten är responsiv i CSS; ingen automatisk utzoomning av mappträdet.
   const boardTreeRef = useRef(null)
@@ -1358,7 +1359,9 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
 
 
   const weeks = displayWeeks(plan)
-  const teacherDisplayWeeks = weeks.map((week, index) => ({week, index})) // Grundplaneringen visar alltid alla veckor, även passerade
+  const teacherDisplayWeeks = weeks.map((week, index) => ({week, index})) // Alla veckor finns kvar; passerade veckor kan fällas ut kapitelvis
+  const pastTeacherWeeks = teacherDisplayWeeks.filter(({week}) => week.weekStart && week.weekStart < mondayOf(new Date()))
+  const upcomingTeacherWeeks = teacherDisplayWeeks.filter(({week}) => !week.weekStart || week.weekStart >= mondayOf(new Date()))
   const visibleTeacherWeeks = weeks.filter(week => week && !week.hidden)
   const weeksWithContent = visibleTeacherWeeks.filter(week => Boolean(
     String(week.content || '').trim() || String(week.chapter || '').trim() ||
@@ -2042,8 +2045,9 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
 <section className="card">
       <div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
       
+      {pastTeacherWeeks.length > 0 && <button type="button" className="secondary" aria-expanded={showPastTeacherWeeks} onClick={()=>setShowPastTeacherWeeks(v=>!v)} style={{marginBottom:14,padding:"10px 16px",fontWeight:700}}>{showPastTeacherWeeks ? "▴ Dölj tidigare veckor och kapitel" : `▾ Visa tidigare veckor och kapitel (${pastTeacherWeeks.length} veckor)`}</button>}
       <div className="teacher-months">
-        {Object.values(teacherDisplayWeeks.slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((months, item) => {
+        {Object.values((showPastTeacherWeeks ? teacherDisplayWeeks : upcomingTeacherWeeks).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((months, item) => {
           const monthKey = (item.week.weekStart || '').slice(0, 7)
           if (!months[monthKey]) months[monthKey] = { date: new Date(item.week.weekStart + 'T12:00:00'), items: [] }
           months[monthKey].items.push(item)
@@ -2063,14 +2067,24 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
               </select>
             </label>
           </div>
-          <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><label className="student-visibility-toggle week-heading-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever`} /><span>{week.hidden ? "Visa inte i elevvyn" : "Visa i elevvyn"}</span></label><strong style={{ fontSize: "1.45rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 5 }}>Vecka <input type="text" inputMode="numeric" pattern="[0-9]*" aria-label="Ändra veckonummer" key={week.weekStart} style={{ width: "3.3ch", minWidth: 66, fontSize: "1.45rem", fontWeight: 800, padding: "4px 6px" }} defaultValue={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Skriv veckonummer direkt och tryck Enter" onFocus={e => e.target.select()} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') { e.currentTarget.value = String(calendarWeekNumber(week.weekStart) ?? week.weekNumber); e.currentTarget.blur() } }} onBlur={e => {
+          <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><label className="student-visibility-toggle week-heading-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever`} /><span>{week.hidden ? "Visa inte i elevvyn" : "Visa i elevvyn"}</span></label><strong style={{ fontSize: "1.45rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 5 }}>Vecka <input type="text" inputMode="numeric" pattern="[0-9]*" aria-label="Ändra veckonummer" key={`${week.weekStart}-${week.weekNumber}`} style={{ width: "3.3ch", minWidth: 66, fontSize: "1.45rem", fontWeight: 800, padding: "4px 6px" }} defaultValue={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Skriv veckonummer direkt och tryck Enter" onFocus={e => e.target.select()} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') { e.currentTarget.value = String(calendarWeekNumber(week.weekStart) ?? week.weekNumber); e.currentTarget.blur() } }} onBlur={e => {
             const target = Number(e.target.value.trim())
             const current = calendarWeekNumber(week.weekStart)
             if (!/^\\d{1,2}$/.test(e.target.value.trim()) || !Number.isInteger(target) || target < 1 || target > 53 || current === null) { e.target.value = String(current ?? week.weekNumber); return }
             if (target === current) return
             const nextDate = addWeeks(week.weekStart, target - current)
             if (calendarWeekNumber(nextDate) !== target) { setStatus('Veckonumret finns inte vid detta årsskifte.'); e.target.value = String(current); return }
-            shiftAllWeeks(index, target)
+            setPlan(previous => {
+              const source = displayWeeks(previous)
+              const updated = source.map((item, itemIndex) => itemIndex === index ? {
+                ...item,
+                weekStart: nextDate,
+                weekNumber: target,
+                title: !item.title || /^Vecka\\s+\\d+$/i.test(item.title) ? 'Vecka '+target : item.title
+              } : item)
+              return {...previous, weeksData: updated}
+            })
+            setStatus('Vecka '+target+' är ändrad. Lektionerna är kvar.')
           }} /></strong><span style={{ fontSize: "1.15rem", fontWeight: 700 }}>{formatDate(week.weekStart)}</span>
             <button type="button" className="remove-small" disabled={weeks.length <= 1} onClick={() => {
               if (hasWeekWork(week, index) && !window.confirm(`Ta bort vecka ${week.weekNumber} och allt innehåll i veckan?`)) return
