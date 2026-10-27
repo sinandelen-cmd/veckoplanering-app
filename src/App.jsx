@@ -1002,7 +1002,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
         <div className="reference-calendar-scroll">
           <div className="reference-calendar-grid">
             <div className="reference-calendar-weekday">Vecka</div>
-            {['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].map(day => <div className="reference-calendar-weekday" key={day}>{day}</div>)}
+            {Array.from({length: Math.max(5, ...orderedWeeks.map(week => (week.lessons || []).length))}, (_, index) => <div className="reference-calendar-weekday" key={index}>{`Lektion ${index + 1}`}</div>)}
             {orderedWeeks.filter(week => {
               const monday = new Date(week.weekStart + 'T12:00:00')
               const thursday = new Date(monday)
@@ -1014,12 +1014,10 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
               sunday.setDate(sunday.getDate() + 6)
               return <Fragment key={week.weekStart}>
                 <div className="reference-calendar-weeknumber"><strong>v. {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{new Intl.DateTimeFormat('sv-SE',{day:'numeric',month:'short'}).format(monday)} – {new Intl.DateTimeFormat('sv-SE',{day:'numeric',month:'short'}).format(sunday)}</span></div>
-                {['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].map((day,dayIndex) => {
-                  const dayLessons = (week.lessons || []).map((lesson,index) => ({lesson,index})).filter(({lesson,index}) => {
-                    const explicit = String(lesson.day || (entryType === 'dag' ? lesson.name : '')).toLocaleLowerCase('sv-SE')
-                    return explicit ? explicit === day.toLocaleLowerCase('sv-SE') : index === dayIndex
-                  })
-                  return <div className="reference-calendar-cell" key={day}>
+                {Array.from({length: Math.max(5, ...orderedWeeks.map(item => (item.lessons || []).length))}, (_, index) => {
+                  const lesson = (week.lessons || [])[index]
+                  const dayLessons = lesson ? [{lesson,index}] : []
+                  return <div className="reference-calendar-cell" key={index}>
                     {dayLessons.map(({lesson,index}) => {
                       const topics = lesson.topics || []
                       const chapter = week.chapter || 'Planering'
