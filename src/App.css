@@ -5035,3 +5035,31 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  border-radius:10px!important;
  box-shadow:none!important;
 }
+
+/* Permanent fast överdel: verktygsraden och kapitelraden följer viewporten,
+   veckorna scrollar bakom utan att flytta raderna. */
+#lararvy .expanded-weeks-inline>.teacher-year-review>.teacher-year-review-bar{
+ position:fixed!important;
+ top:var(--teacher-review-sticky-top,0px)!important;
+ left:var(--teacher-pinned-left,16px)!important;
+ width:var(--teacher-pinned-width,calc(100% - 32px))!important;
+ box-sizing:border-box!important;
+ z-index:280!important;
+ background:#fff!important;
+ margin:0!important;
+}
+#lararvy .expanded-weeks-inline>.teacher-year-review>.teacher-pinned-chapter-shell{
+ position:fixed!important;
+ top:var(--teacher-pinned-top,220px)!important;
+ left:var(--teacher-pinned-left,16px)!important;
+ width:var(--teacher-pinned-width,calc(100% - 32px))!important;
+ box-sizing:border-box!important;
+ z-index:270!important;
+ background:#fff!important;
+ padding:18px 18px 8px!important;
+ margin:0!important;
+ pointer-events:none!important;
+}
+#lararvy .expanded-weeks-inline>.teacher-year-review>.teacher-months{
+ padding-top:calc(var(--teacher-review-bar-height,48px) + 96px)!important;
+}
