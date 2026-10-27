@@ -4942,3 +4942,36 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .teacher-chapter-section>.chapter-heading{
  top:calc(var(--teacher-review-sticky-top,0px) + var(--teacher-review-bar-height,48px) + 18px)!important;
 }
+
+/* Stabil scrollning: menyraderna ligger kvar, veckorna passerar under dem.
+   En smal täckande kant (18px) döljer innehåll i avståndet mellan raderna. */
+#lararvy .expanded-weeks-inline>.teacher-year-review>.teacher-year-review-bar{
+ z-index:250!important;
+ isolation:isolate!important;
+ background:#fff!important;
+}
+#lararvy .expanded-weeks-inline>.teacher-year-review>.teacher-year-review-bar::after{
+ content:""!important;
+ display:block!important;
+ position:absolute!important;
+ left:0!important;right:0!important;bottom:-18px!important;
+ height:18px!important;
+ background:#fff!important;
+ pointer-events:none!important;
+}
+#lararvy .teacher-months,
+#lararvy .teacher-month-section,
+#lararvy .teacher-month-weeks{
+ overflow:visible!important;
+}
+#lararvy .teacher-chapter-section>.chapter-heading{
+ position:sticky!important;
+ top:calc(var(--teacher-review-sticky-top,0px) + var(--teacher-review-bar-height,48px) + 18px)!important;
+ z-index:200!important;
+ opacity:1!important;
+ background-image:none!important;
+}
+#lararvy .teacher-chapter-section>.chapter-heading.chapter-tone-0{background:#cfe3ff!important}
+#lararvy .teacher-chapter-section>.chapter-heading.chapter-tone-1{background:#e3d6fa!important}
+#lararvy .teacher-chapter-section>.chapter-heading.chapter-tone-2{background:#cceee4!important}
+#lararvy .teacher-chapter-section>.chapter-heading.chapter-tone-3{background:#ffe3c5!important}
