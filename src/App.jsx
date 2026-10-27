@@ -1029,10 +1029,10 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
                         <div className="reference-calendar-lesson-body">
                           <strong>{`Lektion ${index+1}`}{topics[0]?.name ? ` – ${topics[0].name}` : ''}</strong>
                           {topics.map((topic,topicIndex) => <div className="reference-calendar-topic" key={topicIndex}>
-                            {topicIndex > 0 && topic.name && <strong>{topic.name}</strong>}
+                            {topic.name && <strong className="reference-calendar-moment">{topic.name}</strong>}
                             {(topic.pages || []).filter(Boolean).map((value,i) => <span key={`p${i}`}>▤ Sida {value}</span>)}
                             {(topic.assignments || []).filter(Boolean).map((value,i) => <span key={`a${i}`}>▣ Uppgift {value}</span>)}
-                            {(topic.links || []).filter(link => resourceInfo(typeof link === 'string' ? link : link?.url)).map((link,i) => { const url = typeof link === 'string' ? link : link.url; return <a key={`l${i}`} href={url} target="_blank" rel="noopener noreferrer">↗ {(typeof link === 'object' && link.label) || resourceInfo(url)?.label || 'Länk'}</a> })}
+                            {(topic.links || []).filter(link => String(typeof link === 'string' ? link : link?.url || '').trim()).map((link,i) => { const url = typeof link === 'string' ? link : link.url; return <a key={`l${i}`} href={url} target="_blank" rel="noopener noreferrer">↗ {(typeof link === 'object' && link.label) || resourceInfo(url)?.label || 'Länk'}</a> })}
                             {topic.description && <p>{topic.description}</p>}
                           </div>)}
                           {topics.length === 0 && <span className="muted">Ingen planerad aktivitet</span>}
