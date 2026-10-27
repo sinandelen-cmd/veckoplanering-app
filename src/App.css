@@ -5129,3 +5129,20 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
   grid-template-rows:repeat(3,minmax(0,1fr))!important;
  }
 }
+
+/* Kalenderöversikt: samma fullständiga lektionsinnehåll som grundplaneringen.
+   En vecka per rad, flytande bredd från liten skärm till stor TV. */
+#lararvy .calendar-month-row{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:18px!important}
+#lararvy .calendar-month-row>.calendar-week-wrapper{width:100%!important;max-width:none!important;min-width:0!important;padding:14px!important}
+#lararvy .calendar-month-row .calendar-week-tile.calendar-full-week{
+ display:block!important;width:100%!important;max-width:none!important;min-width:0!important;
+ height:auto!important;overflow:visible!important;text-align:left!important;cursor:default!important;
+ padding:18px!important;box-sizing:border-box!important;
+}
+#lararvy .calendar-full-week-content{display:block!important;width:100%!important;min-width:0!important;margin-top:16px!important}
+#lararvy .calendar-full-week-content .lesson-card,
+#lararvy .calendar-full-week-content .lesson-details{max-width:none!important}
+@media(max-width:650px){
+ #lararvy .calendar-month-row>.calendar-week-wrapper{padding:8px!important}
+ #lararvy .calendar-month-row .calendar-week-tile.calendar-full-week{padding:10px!important}
+}
