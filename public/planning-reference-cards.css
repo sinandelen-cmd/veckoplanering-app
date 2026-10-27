@@ -37,3 +37,12 @@
 .planning-layout .lesson .topic-grid>.topic-column{height:100%!important;min-height:145px!important;align-self:stretch!important}
 .planning-layout .lesson .topic-grid>.topic-name>.topic-links-inside-moment{width:100%!important;margin-top:auto!important;position:static!important}
 .planning-layout .lesson .topic-grid>.topic-name>.topic-links-inside-moment .lesson-bare-link{position:static!important}
+
+/* Samtliga åtgärder stannar inne i respektive färgkort. */
+.planning-layout .lesson .topic-grid>.topic-name .moment-card-actions{display:flex!important;gap:12px!important;justify-content:flex-end!important;align-items:center!important;width:100%!important;margin-top:6px!important}
+.planning-layout .lesson .topic-grid>.topic-name .moment-card-actions button{position:static!important;margin:0!important;padding:3px 6px!important;background:transparent!important;border:0!important;min-height:26px!important;font-size:19px!important}
+.planning-layout .lesson .topic-grid>.topic-name .moment-card-actions .lesson-bare-add{color:#009b55!important}
+.planning-layout .lesson .topic-grid>.topic-name .moment-card-actions .lesson-bare-remove{color:#e3313b!important}
+.planning-layout .lesson .topic-grid>.topic-column{display:flex!important;flex-direction:column!important}
+.planning-layout .lesson .topic-grid>.topic-column>.add-detail{align-self:flex-end!important;margin-top:auto!important}
+.planning-layout .lesson .topic-grid>.topic-column .remove-topic-column{position:static!important}
