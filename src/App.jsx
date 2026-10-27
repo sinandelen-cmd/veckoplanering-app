@@ -584,6 +584,13 @@ function sanitizeForStudents(plan) {
   }
 }
 
+function ResourceIcon({ kind, fallback }) {
+  if (kind === 'youtube') return <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="5" fill="#FF0033"/><path d="M10 8l6 4-6 4z" fill="white"/></svg>
+  const types = { pdf: ['#E5252A', 'PDF'], pptx: ['#D24726', 'P'], word: ['#185ABD', 'W'], excel: ['#107C41', 'X'], file: ['#4285F4', '↗'], link: ['#2563EB', '↗'] }
+  const [color, label] = types[kind] || ['#2563EB', fallback || '↗']
+  return <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true"><path d="M5 1h9l6 6v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z" fill={color}/><path d="M14 1v6h6" fill="white" opacity=".65"/><text x="11.5" y="17" textAnchor="middle" fontSize={label.length > 1 ? 6 : 12} fontWeight="bold" fill="white">{label}</text></svg>
+}
+
 function resourceInfo(url) {
   const value = String(url || '').trim()
   try {
@@ -2907,7 +2914,7 @@ function WeekDetails({ week, onChange }) {
         const info = resourceInfo(url)
         return <div className="week-link-entry" key={index}>
           {editable && <input type="url" aria-label={`Länk ${index + 1}`} placeholder="Klistra in länk till YouTube, PPTX, PDF, fil..." value={url} onChange={e => updateList('links', links.map((item, i) => i === index ? e.target.value : item))} />}
-          {info && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon">{info.kind === 'youtube' ? <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="5" fill="#FF0033"/><path d="M10 8l6 4-6 4z" fill="#fff"/></svg> : info.icon}</span><span>{info.label}</span><span className="print-resource-url">{url}</span></a>}
+          {info && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon"><ResourceIcon kind={info.kind} fallback={info.icon} /></span><span>{info.label}</span><span className="print-resource-url">{url}</span></a>}
           {editable && <button type="button" className="remove-small" aria-label={`Ta bort länk ${index + 1}`} onClick={() => updateList('links', links.filter((_, i) => i !== index))}>×</button>}
         </div>
       })}
@@ -2991,7 +2998,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
               const info = resourceInfo(url)
               const changeLink = next => updateTopic({ ...topic, links: links.map((item, index) => index === k ? next : item) })
               return <div className="topic-link topic-link-compact" key={k}>
-                {info && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon">{info.kind === 'youtube' ? <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="5" fill="#FF0033"/><path d="M10 8l6 4-6 4z" fill="#fff"/></svg> : info.icon}</span><span className="resource-label">{label || info.label}</span><span className="print-resource-url">{url}</span></a>}
+                {info && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon"><ResourceIcon kind={info.kind} fallback={info.icon} /></span><span className="resource-label">{label || info.label}</span><span className="print-resource-url">{url}</span></a>}
                 {editable && <details className="topic-link-editor" open={!url.trim()}>
                   <summary aria-label={`Öppna eller stäng redigering av länk ${k + 1}`} title="Länkens meny: redigera eller radera"><span aria-hidden="true">···</span></summary>
                   <div className="topic-link-editor-fields">
