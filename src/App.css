@@ -3965,3 +3965,71 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-more summary{cursor:pointer;color:#24554d;font-weight:650}
 #lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-more .class-toolbar-actions{margin:5px 0}
 @media(max-width:650px){#lararvy .topbar:has(.planning-header-toolbar){max-height:38vh}#lararvy .topbar:has(.planning-header-toolbar) .teacher-header-identity{gap:6px}}
+
+/* Minimal planeringsrad: rubrik, klassflikar och verktyg på samma nivå. */
+#lararvy .topbar:has(.planning-header-toolbar){
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ flex-wrap:wrap!important;column-gap:14px!important;row-gap:4px!important;
+ padding:7px 14px!important;border-bottom:1px solid #e2e9e7;
+ background:#fffdfa!important;box-shadow:0 2px 7px rgba(25,45,42,.08)!important;
+ max-height:unset!important;overflow:visible!important
+}
+#lararvy .topbar:has(.planning-header-toolbar) .teacher-header-identity{
+ flex:0 1 auto!important;min-width:0;gap:0!important
+}
+#lararvy .topbar:has(.planning-header-toolbar) .teacher-header-identity>div:has(.planning-grade-badge){
+ display:flex!important;align-items:center!important;flex-wrap:nowrap!important;
+ gap:9px!important;margin:0!important
+}
+#lararvy .topbar:has(.planning-header-toolbar) .teacher-header-identity>div:has(.planning-grade-badge)>div:first-child{
+ display:flex;align-items:center;gap:7px;flex-wrap:wrap
+}
+#lararvy .topbar:has(.planning-header-toolbar) .teacher-header-identity>div:has(.planning-grade-badge)>div:first-child>p:first-child{display:none}
+#lararvy .topbar:has(.planning-header-toolbar) .teacher-header-identity strong{font-size:17px!important;line-height:1.2}
+#lararvy .topbar:has(.planning-header-toolbar) .planning-grade-badge{
+ padding:3px 7px!important;background:#eff6fa!important;border:1px solid #dce9ef!important;
+ border-radius:7px!important;min-width:0!important;gap:3px!important
+}
+#lararvy .topbar:has(.planning-header-toolbar) .planning-grade-badge>div:first-child{display:none}
+#lararvy .topbar:has(.planning-header-toolbar) .planning-grade-badge>div:last-child{font-size:12px!important}
+#lararvy .topbar:has(.planning-header-toolbar) .planning-header-toolbar{
+ width:auto!important;flex:1 1 440px!important;min-width:0!important
+}
+#lararvy .topbar:has(.planning-header-toolbar) #kopplade-klasser{margin:0!important}
+#lararvy .topbar:has(.planning-header-toolbar) #kopplade-klasser>.card{
+ padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;
+ display:flex;align-items:center;flex-wrap:wrap;gap:5px 10px
+}
+#lararvy .topbar:has(.planning-header-toolbar) .class-schedule-intro{display:none!important}
+#lararvy .topbar:has(.planning-header-toolbar) .class-mini-row{
+ display:flex!important;align-items:center;flex-wrap:wrap;gap:5px!important;margin:0!important
+}
+#lararvy .topbar:has(.planning-header-toolbar) .class-mini-chips{display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+#lararvy .topbar:has(.planning-header-toolbar) .class-mini-chip,
+#lararvy .topbar:has(.planning-header-toolbar) .class-mini-add,
+#lararvy .topbar:has(.planning-header-toolbar) .class-mini-schema{
+ font-size:12px!important;padding:5px 8px!important;min-height:30px!important
+}
+#lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-more{margin:0!important;position:relative}
+#lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-more summary{
+ list-style:none;border:1px solid #dbe5e2;border-radius:8px;padding:5px 9px;
+ background:#fff;white-space:nowrap;font-size:12px;cursor:pointer
+}
+#lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-more summary::-webkit-details-marker{display:none}
+#lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-more[open] .class-toolbar-actions{
+ position:absolute;right:0;top:calc(100% + 5px);z-index:60;min-width:290px;
+ padding:12px;background:#fff;border:1px solid #dce5e2;border-radius:10px;
+ box-shadow:0 8px 25px rgba(0,0,0,.12)
+}
+#lararvy .topbar:has(.planning-header-toolbar) .class-closure-section{margin:0!important}
+#lararvy .topbar:has(.planning-header-toolbar) .class-closure-section>button{font-size:12px;padding:5px 8px!important;min-height:30px!important}
+#lararvy .topbar:has(.planning-header-toolbar)>.student-plan-link{display:none!important}
+#lararvy .topbar:has(.planning-header-toolbar)>button.secondary{
+ font-size:12px!important;padding:5px 9px!important;min-height:30px!important;
+ background:#fff!important;border:1px solid #dbe5e2!important;color:#31544d!important
+}
+@media(max-width:760px){
+ #lararvy .topbar:has(.planning-header-toolbar){gap:5px!important;padding:6px 8px!important}
+ #lararvy .topbar:has(.planning-header-toolbar) .planning-header-toolbar{flex-basis:100%!important}
+ #lararvy .topbar:has(.planning-header-toolbar) .teacher-header-identity{flex:1 1 100%!important}
+}
