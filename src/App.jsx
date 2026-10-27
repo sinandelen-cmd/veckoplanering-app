@@ -2114,11 +2114,13 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline" style={editingClassView && plan.classGroups?.some(g=>g.name===editingClassView)?{display:"none"}:undefined}>
     
 <section className="card teacher-year-review">
-      <div className="teacher-year-review-bar" aria-label="Årsplaneringens verktygsrad"><div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
-      
-
-      <button type="button" className="secondary teacher-all-weeks-toggle" onClick={()=>{setAllWeekContentsOpen(v=>!v);setWeekContentOverrides({})}} aria-label={allWeekContentsOpen ? "Dölj alla veckors innehåll" : "Visa alla veckors innehåll"}>{allWeekContentsOpen ? "▴ Dölj allt innehåll" : "▾ Visa allt innehåll"}</button>
-      {pastTeacherWeeks.length > 0 && <button type="button" className="secondary teacher-past-weeks-toggle" aria-expanded={showPastTeacherWeeks} onClick={()=>setShowPastTeacherWeeks(v=>!v)}>{showPastTeacherWeeks ? "▴ Dölj tidigare veckor" : `▾ Tidigare veckor (${pastTeacherWeeks.length})`}</button>}</div>
+      <div className="teacher-year-review-bar" aria-label="Årsplaneringens verktygsrad">
+        <div className="teacher-review-title"><h2>Årsplanering</h2><span className="count-pill">{weeks.length} veckor</span></div>
+        <div className="teacher-review-actions">
+          <button type="button" className="teacher-all-weeks-toggle" onClick={()=>{setAllWeekContentsOpen(v=>!v);setWeekContentOverrides({})}} aria-expanded={allWeekContentsOpen} aria-label={allWeekContentsOpen ? "Dölj allt veckoinnehåll" : "Visa allt veckoinnehåll"}><span className="teacher-review-arrow" aria-hidden="true">{allWeekContentsOpen ? "▾" : "▸"}</span>{allWeekContentsOpen ? "Dölj allt innehåll" : "Visa allt innehåll"}</button>
+          {pastTeacherWeeks.length > 0 && <button type="button" className="teacher-past-weeks-toggle" aria-expanded={showPastTeacherWeeks} onClick={()=>setShowPastTeacherWeeks(v=>!v)}><span aria-hidden="true">{showPastTeacherWeeks ? "▾" : "▸"}</span>{showPastTeacherWeeks ? "Dölj tidigare veckor" : `Tidigare veckor (${pastTeacherWeeks.length})`}</button>}
+        </div>
+      </div>
       <div className="teacher-months">
         {Object.values((showPastTeacherWeeks ? teacherDisplayWeeks : upcomingTeacherWeeks).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
