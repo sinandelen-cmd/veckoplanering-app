@@ -940,7 +940,7 @@ function nationalExamsForPlan(plan) {
   return NATIONAL_EXAMS_2026_27.filter(item => item.grade === grade && matchesSubject(item))
 }
 
-function CalendarWeekThumbnail({ week, entryType, onOpen }) {
+function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson }) {
   const frame = useRef(null)
   const original = useRef(null)
   const [dimensions, setDimensions] = useState({ scale: 0.25, height: 380 })
@@ -957,9 +957,9 @@ function CalendarWeekThumbnail({ week, entryType, onOpen }) {
     window.addEventListener('resize', resize)
     return () => { observer?.disconnect(); window.removeEventListener('resize', resize) }
   }, [week])
-  return <button type="button" className="calendar-real-week-thumbnail" onClick={onOpen} aria-label={`Öppna vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för redigering`}>
-    <div className="calendar-real-week-label">Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}<span>Förstora ↗</span></div>
-    <div className="calendar-real-week-frame" ref={frame} style={{ height: dimensions.height }}>
+  return <div className="calendar-real-week-thumbnail">
+    <div className="calendar-real-week-label">Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}<button type="button" onClick={onOpen} aria-label="Visa hela veckan">⛶ Förstora veckan</button></div>
+    <div className="calendar-real-week-frame" ref={frame} style={{ height: dimensions.height }} onClick={event => { const lesson = event.target.closest(".lesson"); if (lesson) { const lessons = Array.from(event.currentTarget.querySelectorAll(".lesson")); onOpenLesson(lessons.indexOf(lesson)) } else onOpen() }} role="button" tabIndex={0} aria-label="Välj lektion att redigera" onKeyDown={event => { if (event.key === "Enter") onOpen() }}>
       <div className="calendar-real-week-original" ref={original} style={{ transform: `scale(${dimensions.scale})` }} aria-hidden="true" inert="">
         <article className="calendar-inline-week" style={{ backgroundColor: weekColor(week.weekStart) }}>
           <div className="calendar-inline-week-heading"><h2>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</h2><span>{week.chapter}</span></div>
@@ -967,12 +967,14 @@ function CalendarWeekThumbnail({ week, entryType, onOpen }) {
         </article>
       </div>
     </div>
-  </button>
+  </div>
 }
 
 function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnFirstWeek = false, embedded = false, onOpen, onClose, onUpdateWeek, onSetAllVisibility, onAddWeek, onDeleteWeek, onUndo, canUndo = false, onSave, isDirty, busy, saveStatus, onBackToPrevious, entryType = 'lektion', classGroups = [], classPlan = null, publicSlug = '', onChangeClassGroups, onImportFile, fileImportState = {phase:'idle',message:''} }) {
   // Årsöversikt i nio veckor per sida, tre kolumner och tre rader.
   const [selectedWeekIndex, setSelectedWeekIndex] = useState(null)
+  const [editingCalendarLesson, setEditingCalendarLesson] = useState(null)
+  const [savingCalendarLesson, setSavingCalendarLesson] = useState(false)
   const [overviewPage, setOverviewPage] = useState(0)
   const [showOriginalCalendar, setShowOriginalCalendar] = useState(false)
   const [calendarMonth, setCalendarMonth] = useState(() => { const date = new Date(weeks[0]?.weekStart ? weeks[0].weekStart + 'T12:00:00' : Date.now()); return new Date(date.getFullYear(),date.getMonth(),1) })
@@ -1033,6 +1035,11 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
     {<div className="calendar-class-picker"><div className="calendar-class-buttons"><div className="calendar-class-chip"><button type="button" className={!selectedCalendarClass?'active':''} onClick={()=>setSelectedCalendarClass('')}>📘 Grundplanering</button><button type="button" className="calendar-chip-action" title="Arkivera grundplanering" aria-label="Arkivera grundplanering" onClick={()=>{setSelectedCalendarClass('');window.alert('Arkivera grundplaneringen med arkivikonen vid kursen under Mina planeringar.')}}>▤</button></div>{classGroups.filter(g=>!g.archived).map(g=><div key={g.name} className="calendar-class-chip"><button type="button" className={selectedCalendarClass===g.name?'active':''} onClick={()=>setSelectedCalendarClass(g.name)}>🏫 {g.name}</button><button type="button" className="calendar-chip-action" title={g.archived?'Återställ klass':'Arkivera klass'} aria-label={(g.archived?'Återställ ':'Arkivera ')+g.name} onClick={()=>{onChangeClassGroups?.(classGroups.map(item=>item.name===g.name?{...item,archived:!item.archived}:item));if(selectedCalendarClass===g.name)setSelectedCalendarClass('')}}>{g.archived?'↶':'▤'}</button><button type="button" className="calendar-chip-action calendar-chip-delete" title="Radering är spärrad tills säker lösenordskontroll är införd. Arkivera klassen istället." aria-label={'Radering av '+g.name+' kräver lösenord och är tills vidare spärrad'} disabled>×</button></div>)}</div><button type="button" className="calendar-add-class-toggle" aria-expanded={showQuickClassMatrix} onClick={()=>setShowQuickClassMatrix(v=>!v)}>+ Klass</button><label className={`calendar-upload-file ${fileImportState.phase === "loading" ? "is-loading" : ""}`} title="Ladda upp planeringsfil">{fileImportState.phase === "loading" ? "◌ Läser fil…" : "↥ Ladda upp fil"}<input type="file" accept=".xlsx,.xls,.docx,.doc,.pdf,.txt,.csv,.png,.jpg,.jpeg,.webp" onChange={event=>{const file=event.target.files?.[0];event.target.value='';if(file && fileImportState.phase !== "loading")onImportFile?.(file)}} disabled={fileImportState.phase === "loading"} /></label>{fileImportState.phase !== "idle" && <span className={`calendar-import-feedback ${fileImportState.phase}`} role="status" aria-live="polite">{fileImportState.phase === "loading" ? "◌ " : fileImportState.phase === "success" ? "✓ " : "⚠ "}{fileImportState.message}</span>}<button type="button" className="student-class-copy-link" aria-label="Kopiera elevlänk för vald klass" title="Kopiera elevlänk för vald klass" disabled={!publicSlug} onClick={async()=>{const url=window.location.origin+'/elev/'+encodeURIComponent(publicSlug)+(activeCalendarGroup?'?klass='+encodeURIComponent(activeCalendarGroup.name):'');try{await navigator.clipboard.writeText(url)}catch{window.prompt('Kopiera elevlänk',url)}}}>🔗</button></div>}
     {showQuickClassMatrix && <div className="calendar-quick-matrix"><div className="calendar-quick-header"><strong>Klassernas lektionsdagar</strong><button type="button" className="calendar-quick-close" onClick={()=>setShowQuickClassMatrix(false)}>✕ Stäng</button></div><div className="calendar-quick-add"><label htmlFor="calendar-new-class">Ny klass</label><input id="calendar-new-class" placeholder="T.ex. EK26A" value={newQuickClassName} onChange={e=>setNewQuickClassName(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addQuickClass()}}}/><button type="button" onClick={addQuickClass} disabled={!newQuickClassName.trim()||classGroups.some(g=>g.name.toLocaleLowerCase('sv')===newQuickClassName.trim().toLocaleLowerCase('sv'))}>+ Lägg till</button></div><p>Markera vilka dagar klassen har lektioner. Inga klockslag behövs.</p><div className="calendar-quick-matrix-scroll"><table><thead><tr><th>Klass</th>{quickDays.map(day=><th key={day}>{day.slice(0,3)}</th>)}</tr></thead><tbody>{classGroups.map(g=><tr key={g.name}><th>{g.name}</th>{quickDays.map(day=><td key={day}><input type="checkbox" aria-label={g.name+' '+day} checked={g.days?.includes(day)||false} onChange={()=>toggleQuickDay(g.name,day)}/>{g.days?.includes(day)&&<div className="calendar-day-moments"><button type="button" aria-label={'Minska moment '+g.name+' '+day} disabled={(g.momentsPerDay?.[day]||1)<=1} onClick={()=>onChangeClassGroups?.(classGroups.map(item=>item.name===g.name?{...item,momentsPerDay:{...item.momentsPerDay,[day]:Math.max(1,(item.momentsPerDay?.[day]||1)-1)}}:item))}>−</button><span>{g.momentsPerDay?.[day]||1}</span><button type="button" aria-label={'Öka moment '+g.name+' '+day} onClick={()=>onChangeClassGroups?.(classGroups.map(item=>item.name===g.name?{...item,momentsPerDay:{...item.momentsPerDay,[day]:(item.momentsPerDay?.[day]||1)+1}}:item))}>+</button></div>}</td>)}</tr>)}<tr><th>Ny klass</th>{quickDays.map(day=><td key={day}><input type="checkbox" aria-label={'Ny klass '+day} checked={quickClassDays.includes(day)} onChange={()=>setQuickClassDays(prev=>prev.includes(day)?prev.filter(d=>d!==day):[...prev,day])}/></td>)}</tr></tbody></table></div></div>}
     {activeCalendarGroup && <section className="calendar-selected-class-cards"><StudentView key={activeCalendarGroup.name} plan={{...sanitizeForStudents({...classPlan,weeksData:weeks}),classGroups:[activeCalendarGroup]}} preview initialClass={activeCalendarGroup.name} hideSelector /></section>}
+    {editingCalendarLesson && <div className="calendar-lesson-modal-backdrop" role="presentation"><section className="calendar-lesson-modal" role="dialog" aria-modal="true" aria-label="Redigera lektion">
+      <div className="calendar-lesson-modal-header"><h3>Vecka {calendarWeekNumber(editingCalendarLesson.weekStart)} · Lektion {editingCalendarLesson.lessonIndex + 1}</h3><button type="button" onClick={() => setEditingCalendarLesson(null)}>Stäng</button></div>
+      {(() => { const editWeek = orderedWeeks.find(week => week.weekStart === editingCalendarLesson.weekStart); if (!editWeek) return <p>Veckan finns inte längre.</p>; const originalIndex = weeks.findIndex(week => week.weekStart === editWeek.weekStart); return <LessonDetails week={editWeek} entryType={entryType} onlyLessonIndex={editingCalendarLesson.lessonIndex} onChange={changes => onUpdateWeek?.(originalIndex, changes)} /> })()}
+      <div className="calendar-lesson-modal-footer"><button type="button" className="primary" disabled={savingCalendarLesson || busy} onClick={async () => { setSavingCalendarLesson(true); try { const result = await onSave?.(); if (result !== false) setEditingCalendarLesson(null) } catch (error) { /* Keep dialog open so edits remain accessible */ } finally { setSavingCalendarLesson(false) } }}>{savingCalendarLesson || busy ? 'Sparar…' : '✓ Klar – spara lektionen'}</button>{saveStatus && <span role="status">{saveStatus}</span>}</div>
+    </section></div>}
     {!activeCalendarGroup && <>
     {selectedWeek ? <div className="calendar-week-detail" style={{ backgroundColor: weekColor(selectedWeek.weekStart) }}>
       <p><strong>{(/^Vecka\s+\d+$/i.test(selectedWeek.title || '') ? `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}` : selectedWeek.title) || `Vecka ${calendarWeekNumber(selectedWeek.weekStart) ?? selectedWeek.weekNumber}`}</strong> · {formatDate(selectedWeek.weekStart)}</p>
@@ -1061,7 +1068,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
           const monthStart = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1)
           const monthEnd = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0, 23, 59, 59)
           return start <= monthEnd && end >= monthStart
-        }).map(({ week, index }) => <CalendarWeekThumbnail key={week.weekStart} week={week} entryType={entryType} onOpen={() => { setSelectedWeekIndex(index); setSelectedLessonIndex(null) }} />)}
+        }).map(({ week, index }) => <CalendarWeekThumbnail key={week.weekStart} week={week} entryType={entryType} onOpenLesson={lessonIndex => { if (lessonIndex >= 0) setEditingCalendarLesson({ weekStart: week.weekStart, lessonIndex }) }} onOpen={() => { setSelectedWeekIndex(index); setSelectedLessonIndex(null) }} />)}
       </div>
       {!orderedWeeks.some(week => { const d = new Date(week.weekStart + 'T12:00:00'); const e = new Date(d); e.setDate(e.getDate()+6); return d <= new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,0,23,59,59) && e >= new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1) }) && <p>Inga planerade veckor den här månaden.</p>}
       <p className="muted">Tryck på en vecka för att redigera lektioner, moment, sidor, uppgifter och länkar i full storlek. Ändringarna sparas i samma planering.</p>
@@ -3010,7 +3017,7 @@ function lessonDayDate(weekStart, lessonName) {
   date.setDate(date.getDate() - ((date.getDay() + 6) % 7) + index)
   return formatDate(toIsoDate(date))
 }
-function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 'bara-lektion' }) {
+function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 'bara-lektion', onlyLessonIndex = null }) {
   const lessons = Array.isArray(week?.lessons) ? week.lessons : []
   const editable = typeof onChange === 'function'
   const assessmentTypes = ['Prov','Test','Examination','Nationellt prov (NP)','Diagnos','Läxförhör','Egen benämning']
@@ -3030,7 +3037,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
     changeLessons(normalizeLessonOrder(next))
   }
   return <div className="lessons">
-    {lessons.map((lesson, i) => ({ lesson, i })).sort((a, b) => editable ? a.i - b.i : (WEEKDAYS.indexOf(a.lesson.day || a.lesson.name) + 5) % 5 - (WEEKDAYS.indexOf(b.lesson.day || b.lesson.name) + 5) % 5).map(({ lesson, i }) => <section className="lesson" key={i}>
+    {lessons.map((lesson, i) => ({ lesson, i })).sort((a, b) => editable ? a.i - b.i : (WEEKDAYS.indexOf(a.lesson.day || a.lesson.name) + 5) % 5 - (WEEKDAYS.indexOf(b.lesson.day || b.lesson.name) + 5) % 5).filter(({ i }) => onlyLessonIndex === null || i === onlyLessonIndex).map(({ lesson, i }) => <section className="lesson" key={i}>
       <div className="lesson-heading">
         {editable ? <div className="lesson-edit-heading" style={{ '--lesson-day-color': DAY_COLORS[Math.max(0, WEEKDAYS.indexOf(entryType === 'dag' ? lesson.name : lesson.day)) % DAY_COLORS.length] }}>
           <span className="lesson-number-inline">{entryType === 'dag' ? (lesson.name || WEEKDAYS[i]) : (lesson.day || 'Välj dag')} · {entryType === 'dag' ? `Lektion ${i + 1}` : `Lektion ${i + 1}`}{lessonDayDate(week.weekStart, entryType === 'dag' ? lesson.name : lesson.day) ? ` · ${lessonDayDate(week.weekStart, entryType === 'dag' ? lesson.name : lesson.day)}` : ''}</span>
