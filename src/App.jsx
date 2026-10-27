@@ -2991,7 +2991,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
               const info = resourceInfo(url)
               const changeLink = next => updateTopic({ ...topic, links: links.map((item, index) => index === k ? next : item) })
               return <div className="topic-link topic-link-compact" key={k}>
-                {info && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon">{info.icon}</span>{label || info.label}<span className="print-resource-url">{url}</span></a>}
+                {info && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon">{info.icon}</span><span className="resource-label">{label || info.label}</span><span className="print-resource-url">{url}</span></a>}
                 {editable && <details className="topic-link-editor" open={!url.trim()}>
                   <summary aria-label={`Öppna eller stäng redigering av länk ${k + 1}`} title="Länkens meny: redigera eller radera"><span aria-hidden="true">···</span></summary>
                   <div className="topic-link-editor-fields">
