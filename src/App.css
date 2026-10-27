@@ -4782,3 +4782,43 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  #lararvy .teacher-chapter-section{padding:8px!important}
  #lararvy .teacher-chapter-section>.chapter-heading{padding:11px 12px!important}
 }
+
+/* Extra tydlig separation: veckor är egna kort, kapitel separata grupper. */
+#lararvy .teacher-months{
+ gap:36px!important;
+}
+#lararvy .teacher-chapter-section{
+ padding:16px!important;
+ border:2px solid #c9d6dc!important;
+ border-radius:16px!important;
+ box-shadow:0 5px 16px rgba(35,52,64,.08)!important;
+}
+#lararvy .teacher-chapter-section>.chapter-heading{
+ margin-bottom:20px!important;
+}
+#lararvy .teacher-chapter-section>.teacher-month-weeks{
+ gap:18px!important;
+}
+#lararvy .teacher-chapter-section .chapter-week-group{
+ padding:0!important;
+ margin:0!important;
+ border:0!important;
+}
+#lararvy .teacher-chapter-section .chapter-week-group:last-child{
+ padding:0!important;margin:0!important;
+}
+#lararvy .teacher-chapter-section .teacher-collapsible-week{
+ border:2px solid #cbd5e0!important;
+ border-radius:12px!important;
+ padding:13px!important;
+ box-shadow:0 2px 6px rgba(32,45,61,.045)!important;
+}
+#lararvy .teacher-chapter-section .teacher-week-controls{
+ row-gap:10px!important;
+}
+@media(max-width:650px){
+ #lararvy .teacher-months{gap:26px!important}
+ #lararvy .teacher-chapter-section{padding:10px!important}
+ #lararvy .teacher-chapter-section>.teacher-month-weeks{gap:14px!important}
+ #lararvy .teacher-chapter-section .teacher-collapsible-week{padding:10px!important}
+}
