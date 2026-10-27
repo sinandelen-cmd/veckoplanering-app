@@ -4417,3 +4417,15 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .topic-link-editor>summary{display:inline-flex;align-items:center;justify-content:center;min-width:36px}
 .topic-link-editor[open]>summary{min-width:68px;background:#e9f5ee;border-color:#a9d7ba;color:#245b40}
 @media(max-width:650px){.topic-link-editor>summary{min-width:40px}}
+
+/* Klassredigering: enbart ikon, ingen utdragen knapp. */
+.class-edit-icon-button{
+ display:inline-flex!important;flex:0 0 36px!important;
+ width:36px!important;min-width:36px!important;max-width:36px!important;
+ height:36px!important;min-height:36px!important;
+ align-items:center!important;justify-content:center!important;
+ padding:0!important;margin:0!important;border-radius:8px!important;
+ font-size:19px!important;line-height:1!important;white-space:nowrap!important;
+}
+.class-edit-icon-button[aria-pressed="true"]{color:#246447!important}
+@media(max-width:650px){.class-edit-icon-button{width:40px!important;min-width:40px!important;max-width:40px!important;height:40px!important;min-height:40px!important}}
