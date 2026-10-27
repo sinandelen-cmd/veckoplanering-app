@@ -4626,3 +4626,35 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  #lararvy .teacher-year-review-bar h2{font-size:14px!important}
  #lararvy .teacher-year-review-bar .teacher-past-weeks-toggle{min-height:38px!important}
 }
+
+/* Årsplanering: tunn, klistrad rad direkt under lärarmenyn. */
+#lararvy .expanded-weeks-inline,
+#lararvy .teacher-year-review{overflow:visible!important}
+#lararvy .teacher-year-review-bar{
+ position:sticky!important;top:var(--teacher-review-sticky-top,0px)!important;
+ z-index:90!important;display:flex!important;flex-wrap:nowrap!important;
+ align-items:center!important;justify-content:flex-start!important;
+ gap:8px!important;min-height:38px!important;
+ padding:4px 8px!important;margin:0 0 6px!important;
+ border-radius:7px!important;background:#fff!important;
+}
+#lararvy .teacher-year-review-bar .section-heading{
+ flex:0 1 auto!important;display:flex!important;align-items:center!important;
+ gap:8px!important;min-width:0!important;
+}
+#lararvy .teacher-year-review-bar .section-heading>div{
+ display:flex!important;align-items:center!important;gap:5px!important;
+}
+#lararvy .teacher-year-review-bar .eyebrow{display:none!important}
+#lararvy .teacher-year-review-bar h2{font-size:14px!important;white-space:nowrap!important}
+#lararvy .teacher-year-review-bar .count-pill{
+ font-size:10px!important;white-space:nowrap!important;padding:3px 7px!important;
+}
+#lararvy .teacher-year-review-bar .teacher-past-weeks-toggle{
+ min-height:30px!important;padding:4px 8px!important;
+ font-size:11px!important;white-space:nowrap!important;
+}
+@media(max-width:550px){
+ #lararvy .teacher-year-review-bar{flex-wrap:wrap!important;gap:4px!important}
+ #lararvy .teacher-year-review-bar h2{font-size:13px!important}
+}
