@@ -3948,3 +3948,20 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .topbar .planning-header-toolbar #kopplade-klasser>.card{background:transparent;border:0;box-shadow:none;padding:10px 0 0!important;margin:0!important;border-top:1px solid #e3e8e9;border-radius:0}
 .topbar .planning-header-toolbar .class-schedule-intro{margin-bottom:8px!important}
 @media(max-width:650px){.topbar:has(.planning-header-toolbar){gap:8px}.topbar .planning-header-toolbar #kopplade-klasser>.card{padding-top:10px!important}}
+
+/* Kompakt, fast planeringshuvud. Veckorna scrollar under verktygsraden. */
+#lararvy .topbar:has(.planning-header-toolbar){position:sticky;top:0;z-index:40;background:#fffdf8;box-shadow:0 2px 9px #263f4820;padding:7px 12px!important;gap:5px!important;max-height:45vh;overflow-y:auto;overscroll-behavior:contain}
+#lararvy .topbar:has(.planning-header-toolbar) .teacher-header-identity{display:flex;align-items:center;gap:12px;flex-wrap:wrap;flex:1 1 240px}
+#lararvy .topbar:has(.planning-header-toolbar) .teacher-header-identity>div{margin-top:0!important}
+#lararvy .topbar:has(.planning-header-toolbar) .teacher-header-identity strong{font-size:1.08rem!important}
+#lararvy .topbar:has(.planning-header-toolbar) .teacher-header-identity p{font-size:11px!important;margin:0!important}
+#lararvy .topbar:has(.planning-header-toolbar) .planning-grade-badge{display:flex;align-items:center;gap:5px;white-space:nowrap}
+#lararvy .topbar:has(.planning-header-toolbar) .planning-grade-badge>div:first-child{font-size:10px!important}
+#lararvy .topbar:has(.planning-header-toolbar) .planning-header-toolbar #kopplade-klasser>.card{padding:4px 0 0!important}
+#lararvy .topbar:has(.planning-header-toolbar) .class-schedule-intro{margin:0!important}
+#lararvy .topbar:has(.planning-header-toolbar) .class-mini-row{margin:3px 0!important}
+#lararvy .topbar:has(.planning-header-toolbar) .class-mini-chip,#lararvy .topbar:has(.planning-header-toolbar) .class-mini-add,#lararvy .topbar:has(.planning-header-toolbar) .class-mini-schema{padding:5px 8px}
+#lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-more{margin:3px 0;font-size:12px}
+#lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-more summary{cursor:pointer;color:#24554d;font-weight:650}
+#lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-more .class-toolbar-actions{margin:5px 0}
+@media(max-width:650px){#lararvy .topbar:has(.planning-header-toolbar){max-height:38vh}#lararvy .topbar:has(.planning-header-toolbar) .teacher-header-identity{gap:6px}}
