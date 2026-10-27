@@ -4429,3 +4429,16 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 }
 .class-edit-icon-button[aria-pressed="true"]{color:#246447!important}
 @media(max-width:650px){.class-edit-icon-button{width:40px!important;min-width:40px!important;max-width:40px!important;height:40px!important;min-height:40px!important}}
+
+/* Tydlig grön klar-ikon utan text eller bred knapp. */
+.class-edit-icon-button[aria-pressed="true"]{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:36px!important;min-width:36px!important;max-width:36px!important;
+ height:36px!important;min-height:36px!important;flex:0 0 36px!important;
+ padding:0!important;background:#16803d!important;border:1px solid #116630!important;
+ color:#ffffff!important;font-size:22px!important;font-weight:800!important;
+ box-shadow:0 1px 3px rgba(0,0,0,.13)!important;
+}
+.class-edit-icon-button[aria-pressed="true"]:hover{background:#116630!important}
+.class-edit-icon-button[aria-pressed="true"]:focus-visible{outline:3px solid #75c994!important;outline-offset:2px!important}
+@media(max-width:650px){.class-edit-icon-button[aria-pressed="true"]{width:40px!important;min-width:40px!important;max-width:40px!important;height:40px!important;min-height:40px!important;flex-basis:40px!important}}
