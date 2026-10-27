@@ -4845,3 +4845,22 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  top:calc(var(--teacher-review-sticky-top,140px) + 94px)!important;
  }
 }
+
+/* Täckande, diskret sticky kapitelrubrik: veckornas knappar ska inte synas genom rubriken. */
+#lararvy .teacher-chapter-section>.chapter-heading{
+ isolation:isolate!important;
+ opacity:1!important;
+ backdrop-filter:none!important;
+ background-color:#d3eee5!important;
+ background-image:none!important;
+ color:#185b4b!important;
+ border:1px solid #c3dfd5!important;
+ border-radius:9px!important;
+ box-shadow:0 2px 5px rgba(23,53,47,.09)!important;
+ padding:11px 16px!important;
+ margin-bottom:16px!important;
+}
+#lararvy .teacher-chapter-section>.chapter-heading::before{
+ content:"";position:absolute;inset:0;z-index:-1;
+ background:inherit;border-radius:inherit;pointer-events:none;
+}
