@@ -1283,6 +1283,31 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [showPastTeacherWeeks, setShowPastTeacherWeeks] = useState(false)
   const [allWeekContentsOpen, setAllWeekContentsOpen] = useState(true)
   const [weekContentOverrides, setWeekContentOverrides] = useState({})
+  const [pinnedChapter, setPinnedChapter] = useState(null)
+  useEffect(() => {
+    if (teacherTab !== "arsplan") { setPinnedChapter(null); return undefined }
+    const update = () => {
+      const toolbar = document.querySelector('#lararvy .teacher-year-review-bar')
+      const sections = document.querySelectorAll('#lararvy .teacher-chapter-section')
+      if (!toolbar || !sections.length) { setPinnedChapter(null); return }
+      const boundary = toolbar.getBoundingClientRect().bottom + 18
+      let found = null
+      for (const section of sections) {
+        const rect = section.getBoundingClientRect()
+        const heading = section.querySelector(':scope > .chapter-heading')
+        if (heading && rect.top < boundary && rect.bottom > boundary) {
+          found = { name: heading.textContent.trim(), tone: heading.className.match(/chapter-tone-\\d+/)?.[0] || '' }
+          break
+        }
+      }
+      setPinnedChapter(prev => prev?.name === found?.name && prev?.tone === found?.tone ? prev : found)
+    }
+    update()
+    window.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', update)
+    return () => { window.removeEventListener('scroll', update); window.removeEventListener('resize', update) }
+  }, [teacherTab, showPastTeacherWeeks])
+
   useEffect(() => {
     if (teacherTab !== "arsplan") return undefined
     const updateHeight = () => {
@@ -2139,6 +2164,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           {pastTeacherWeeks.length > 0 && <button type="button" className="teacher-past-weeks-toggle" aria-expanded={showPastTeacherWeeks} onClick={()=>setShowPastTeacherWeeks(v=>!v)}><span aria-hidden="true">{showPastTeacherWeeks ? "▾" : "▸"}</span>{showPastTeacherWeeks ? "Dölj tidigare veckor" : `Tidigare veckor (${pastTeacherWeeks.length})`}</button>}
         </div>
       </div>
+      {pinnedChapter && <div className="teacher-pinned-chapter-shell" aria-label="Aktuellt kapitel"><div className={`teacher-pinned-chapter-heading ${pinnedChapter.tone}`}>{pinnedChapter.name}</div></div>}
       <div className="teacher-months">
         {Object.values((showPastTeacherWeeks ? teacherDisplayWeeks : upcomingTeacherWeeks).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
