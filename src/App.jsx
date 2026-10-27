@@ -2132,7 +2132,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           {week.chapter?.trim() && (displayIndex === 0 || week.chapter !== ordered[displayIndex - 1]?.week.chapter) && <h3 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h3>}
           <article className="week-card" id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
           <button type="button" className="teacher-week-collapse-toggle" aria-expanded={weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen} onClick={()=>{const key=week.weekStart || `${index}`;setWeekContentOverrides(prev=>({...prev,[key]:!(prev[key] ?? allWeekContentsOpen)}))}}>{(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) ? "▴ Dölj vecka " : "▾ Visa vecka "}{calendarWeekNumber(week.weekStart) ?? week.weekNumber}</button>
-          {(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) && <div className="teacher-week-collapsible-content">
+          <div className="teacher-week-collapsible-content" hidden={!(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen)}>
           <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",marginBottom:10,padding:"8px 10px",background:"#fff9e9",borderRadius:9}}>
             <label>Elevvisning
               <select aria-label={"Elevvisning vecka "+week.weekNumber} value={week.hidden?"hidden":week.keepVisibleExtra?"extra":"normal"} onChange={e=>updateWeek(index,e.target.value==="hidden"?{hidden:true,keepVisibleExtra:false}:e.target.value==="extra"?{hidden:false,keepVisibleExtra:true}:{hidden:false,keepVisibleExtra:false})}>
