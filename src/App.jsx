@@ -3005,11 +3005,12 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
               </div>
             })}
             {editable && <button type="button" className="add-detail lesson-bare-icon lesson-bare-link" title="Lägg till länk" aria-label="Lägg till länk" onClick={() => updateTopic({ ...topic, links: [...links, { label: '', url: '' }] })}>🔗</button>}
+
+          </div>
             <div className="moment-card-actions">
 {editable && <button type="button" className="remove-small lesson-bare-icon lesson-bare-remove" title="Ta bort moment" aria-label="Ta bort moment" onClick={() => { if (!(topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm('Ta bort momentet och allt innehåll?')) changeLesson(i, { ...lesson, topics: (lesson.topics || []).filter((_, index) => index !== j) }) }}>×</button>}
 {editable && <button type="button" className="secondary lesson-bare-icon lesson-bare-add" title="Lägg till moment" aria-label="Lägg till moment" onClick={() => changeLesson(i, { ...lesson, topics: [...(lesson.topics || []), { name: '', pages: [], assignments: [], links: [] }] })}>+</button>}
             </div>
-          </div>
 </div>
             {['pages', 'assignments'].filter(field => !topic[field === 'pages' ? 'hidePages' : 'hideAssignments']).map(field => <div className={`topic-column ${field}`} key={field}>
               <div className="topic-fixed-heading"><h5>{field === 'pages' ? 'Sida' : 'Uppgift'}</h5>{editable && <button type="button" className="remove-small remove-topic-column" title={`Ta bort hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan`} aria-label={`Ta bort hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan`} onClick={() => { if ((field === 'pages' ? pages : assignments).some(value => String(value).trim()) && !window.confirm(`Dölj hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan? Innehållet sparas och kan visas igen.`)) return; updateTopic({ ...topic, [field === 'pages' ? 'hidePages' : 'hideAssignments']: true }) }}>× Ta bort ruta</button>}</div>
