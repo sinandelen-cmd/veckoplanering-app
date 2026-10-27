@@ -1,0 +1,23 @@
+/* Ren och luftig månadskalender med fem vardagar. */
+.reference-calendar-scroll{overflow-x:auto;max-width:100%;border-radius:18px;border:1px solid #dce5ef;background:#fff;box-shadow:0 10px 32px rgba(28,49,83,.07)}
+.reference-calendar-grid{display:grid;grid-template-columns:minmax(82px,.62fr) repeat(5,minmax(155px,1fr));gap:1px;background:#e7edf4;min-width:870px}
+.reference-calendar-weekday{position:sticky;top:0;z-index:2;background:#edf4fb!important;color:#29415e!important;text-align:center;font-weight:800;letter-spacing:.025em;padding:15px 8px!important;border:0!important}
+.reference-calendar-weeknumber{background:#f5f8fc!important;padding:16px 9px!important;display:flex;flex-direction:column;align-items:center;gap:7px;color:#34506c}
+.reference-calendar-weeknumber strong{font-size:17px;color:#264567}
+.reference-calendar-weeknumber span{font-size:11px;text-align:center;color:#71849b}
+.reference-calendar-cell{background:#fff!important;min-height:125px;padding:9px!important;display:flex;flex-direction:column;gap:8px}
+.reference-calendar-cell:nth-child(12n + 8),.reference-calendar-cell:nth-child(12n + 9),.reference-calendar-cell:nth-child(12n + 10),.reference-calendar-cell:nth-child(12n + 11),.reference-calendar-cell:nth-child(12n + 12){background:#fcfdff!important}
+.reference-calendar-lesson{border:1px solid #e0e8f1!important;border-radius:12px!important;overflow:hidden;background:#f5f9fe!important;box-shadow:0 2px 6px rgba(32,57,88,.045)}
+.reference-calendar-lesson summary{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:9px 10px!important;font-size:12px!important;font-weight:800!important;cursor:pointer;line-height:1.35}
+.reference-calendar-lesson-body{padding:9px 10px!important;font-size:12px!important;line-height:1.5;color:#30425b}
+.reference-calendar-lesson-body strong{font-size:12px}
+.reference-calendar-topic{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.reference-calendar-topic span{font-size:11px;overflow-wrap:anywhere}
+.reference-calendar-lesson.tone-geometry{background:#edf5ff!important;border-color:#d2e4fb!important}
+.reference-calendar-lesson.tone-algebra{background:#f4efff!important;border-color:#e2d7fb!important}
+.reference-calendar-lesson.tone-relation{background:#eaf8f1!important;border-color:#cfeede!important}
+.reference-calendar-lesson.tone-statistics{background:#fff3e7!important;border-color:#f6dfc6!important}
+.reference-calendar-lesson.tone-probability{background:#fff0f4!important;border-color:#f6d9e3!important}
+.reference-calendar-lesson.tone-other{background:#f1f6fb!important}
+.reference-calendar-lesson:hover{box-shadow:0 5px 13px rgba(32,57,88,.11)}
+@media(max-width:700px){.reference-calendar-grid{min-width:790px;grid-template-columns:75px repeat(5,minmax(143px,1fr))}.reference-calendar-cell{padding:6px!important}.reference-calendar-lesson summary{padding:7px!important}}
