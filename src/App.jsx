@@ -1948,7 +1948,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     if (!bookPicker || !String(name || '').trim()) return null
     const norm = value => String(value || '').trim().toLocaleLowerCase('sv-SE').replace(/\s+/g, ' ')
     const schoolForm = bookPicker.school === 'Gymnasiet' ? 'Gymnasieskola' : 'Grundskola'
-    return plans.find(row => {
+    return [...plans].sort((a,b)=>Number(Boolean(parseContent(a.content)?.archived))-Number(Boolean(parseContent(b.content)?.archived))).find(row => {
       const old = parseContent(row.content)
       return old && (old.kind === 'arsplanering-v2' || old.kind === 'arsplanering-v1')
         && norm(old.schoolForm) === norm(schoolForm)
@@ -1969,7 +1969,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       setStatus('Planeringen finns redan! Den befintliga grundplaneringen har öppnats. Lägg till klass där.')
     } else {
       setTeacherTab('bibliotek')
-      setStatus('Den här planeringen finns redan i ditt arkiv! Återanvänd den istället.')
+      setStatus('Den här planeringen finns redan i ditt arkiv! Återanvänd den istället. Ingen ny dubblett skapades.')
     }
   }
   const confirmBook = async name => {
@@ -1993,7 +1993,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         .select('id,content').eq('user_id',session.user.id)
       if (lookupError) throw lookupError
       const normalize = value => String(value || '').trim().toLocaleLowerCase('sv-SE').replace(/\s+/g,' ')
-      const existing = (existingRows || []).find(row => {
+      const existing = [...(existingRows || [])].sort((a,b)=>Number(Boolean(parseContent(a.content)?.archived))-Number(Boolean(parseContent(b.content)?.archived))).find(row => {
         const old = parseContent(row.content)
         return old && (old.kind === 'arsplanering-v2' || old.kind === 'arsplanering-v1')
           && normalize(old.schoolForm) === normalize(fresh.schoolForm)
