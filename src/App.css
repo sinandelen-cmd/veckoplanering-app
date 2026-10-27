@@ -4516,3 +4516,82 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 }
 .topic-link-editor[open]>summary:hover{background:#116630!important}
 .topic-link-editor[open]>summary:focus-visible{outline:3px solid #7ed29a!important;outline-offset:2px!important}
+
+/* 2026-10: enkel lärarnavigation. Rad 1 = identitet/konto, rad 2 = planering/verktyg. */
+@media screen and (min-width:1100px){
+ #lararvy header.topbar:has(>.planning-header-toolbar){
+  position:sticky!important;top:0!important;z-index:100!important;
+  display:grid!important;grid-template-columns:minmax(0,1fr) auto auto!important;
+  grid-template-rows:auto auto!important;align-items:center!important;
+  gap:6px 12px!important;padding:7px 12px!important;
+  width:100%!important;min-height:0!important;max-height:none!important;overflow:visible!important;
+ }
+ #lararvy header.topbar:has(>.planning-header-toolbar)>.teacher-header-identity{
+  grid-column:1!important;grid-row:1!important;justify-self:start!important;
+  width:auto!important;max-width:100%!important;align-self:center!important;margin:0!important;
+ }
+ #lararvy header.topbar:has(>.planning-header-toolbar)>.planning-inline-navigation{
+  grid-column:2!important;grid-row:1!important;justify-self:end!important;
+  width:auto!important;max-width:none!important;margin:0!important;
+ }
+ #lararvy header.topbar:has(>.planning-header-toolbar)>.planning-print-action{
+  grid-column:3!important;grid-row:1!important;justify-self:end!important;
+  align-self:center!important;position:static!important;margin:0!important;
+ }
+ #lararvy header.topbar:has(>.planning-header-toolbar)>.planning-header-toolbar{
+  grid-column:1/-1!important;grid-row:2!important;display:block!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  height:auto!important;align-self:auto!important;flex-basis:auto!important;
+  margin:0!important;padding:0!important;
+ }
+ #lararvy header.topbar:has(>.planning-header-toolbar) #kopplade-klasser{
+  width:100%!important;margin:0!important;padding:0!important;
+ }
+ #lararvy header.topbar:has(>.planning-header-toolbar) #kopplade-klasser>.card{
+  display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;
+  align-items:center!important;justify-content:flex-start!important;
+  gap:7px 14px!important;width:100%!important;height:auto!important;min-height:0!important;
+  margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;
+  background:transparent!important;
+ }
+ #lararvy header.topbar:has(>.planning-header-toolbar) .class-mini-row{
+  display:flex!important;flex:0 1 auto!important;align-items:center!important;
+  justify-content:flex-start!important;flex-wrap:wrap!important;
+  gap:5px!important;width:auto!important;min-width:0!important;margin:0!important;padding:0!important;
+ }
+ #lararvy header.topbar:has(>.planning-header-toolbar) .class-toolbar-expanded{
+  display:flex!important;flex:1 1 520px!important;width:auto!important;min-width:0!important;
+  margin:0!important;padding:0!important;
+ }
+ #lararvy header.topbar:has(>.planning-header-toolbar) .class-toolbar-expanded .class-toolbar-actions{
+  display:flex!important;flex-direction:row!important;align-items:center!important;
+  justify-content:flex-start!important;flex-wrap:wrap!important;
+  gap:5px!important;width:auto!important;min-width:0!important;margin:0!important;padding:0!important;
+ }
+ #lararvy header.topbar:has(>.planning-header-toolbar) .class-bulk-visibility{
+  display:inline-flex!important;align-items:center!important;gap:5px!important;
+  margin:0!important;font-size:11px!important;
+ }
+ #lararvy header.topbar:has(>.planning-header-toolbar) .class-bulk-visibility select{
+  width:155px!important;max-width:155px!important;min-height:34px!important;
+ }
+ #lararvy header.topbar:has(>.planning-header-toolbar) :is(.class-mini-row button,.class-toolbar-actions button,.class-schedule-help>summary){
+  min-height:34px!important;padding:5px 8px!important;font-size:11px!important;
+ }
+}
+@media screen and (max-width:1099px){
+ #lararvy header.topbar:has(>.planning-header-toolbar){
+  position:sticky!important;top:0!important;z-index:100!important;
+  display:flex!important;flex-wrap:wrap!important;align-items:center!important;
+  gap:6px!important;max-height:none!important;overflow:visible!important;
+ }
+ #lararvy header.topbar:has(>.planning-header-toolbar)>.teacher-header-identity{order:0!important;flex:1 1 220px!important}
+ #lararvy header.topbar:has(>.planning-header-toolbar)>.planning-inline-navigation{order:1!important;flex:0 1 auto!important}
+ #lararvy header.topbar:has(>.planning-header-toolbar)>.planning-print-action{order:2!important;flex:0 1 auto!important}
+ #lararvy header.topbar:has(>.planning-header-toolbar)>.planning-header-toolbar{order:3!important;flex:1 1 100%!important;width:100%!important;margin:0!important}
+ #lararvy header.topbar:has(>.planning-header-toolbar) #kopplade-klasser{margin:0!important}
+ #lararvy header.topbar:has(>.planning-header-toolbar) #kopplade-klasser>.card{
+  display:flex!important;flex-wrap:wrap!important;gap:6px!important;
+  margin:0!important;padding:0!important;min-height:0!important;
+ }
+}
