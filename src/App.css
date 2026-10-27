@@ -4049,3 +4049,52 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-more .class-closure-section>button{font-size:12px}
 @media(max-width:1050px){#lararvy .topbar:has(.planning-header-toolbar){flex-wrap:wrap!important;gap:5px 10px!important}#lararvy .topbar:has(.planning-header-toolbar) .planning-header-toolbar{flex-basis:100%!important;order:3!important}}
 @media(max-width:650px){#lararvy .topbar:has(.planning-header-toolbar){padding:6px!important;max-height:40vh!important;overflow-y:auto!important}#lararvy .topbar:has(.planning-header-toolbar) .planning-print-action{display:none!important}}
+
+/* Enradig lärarnavigering: inga lösa verktyg eller onödiga höga paneler. */
+.topbar:has(.planning-header-toolbar){
+ display:flex!important;flex-direction:row!important;align-items:center!important;
+ justify-content:flex-start!important;flex-wrap:nowrap!important;
+ width:100%!important;max-width:none!important;min-height:48px!important;
+ padding:6px 12px!important;gap:12px!important;
+ position:sticky!important;top:0!important;z-index:50!important;
+ background:#fffdf9!important;border:1px solid #e8ebe8!important;
+ border-radius:0!important;box-shadow:0 2px 8px #263f4810!important;
+ overflow:visible!important;max-height:none!important
+}
+.topbar:has(.planning-header-toolbar) .teacher-header-identity{
+ flex:0 0 auto!important;width:auto!important;min-width:0!important;
+ display:flex!important;align-items:center!important
+}
+.topbar:has(.planning-header-toolbar) .planning-header-toolbar{
+ flex:1 1 auto!important;width:auto!important;min-width:0!important;
+ order:1!important;align-self:center!important
+}
+.topbar:has(.planning-header-toolbar) .planning-print-action{order:2!important;white-space:nowrap!important}
+.topbar:has(.planning-header-toolbar) #kopplade-klasser{margin:0!important;width:100%!important}
+.topbar:has(.planning-header-toolbar) #kopplade-klasser>.card{
+ display:flex!important;flex-direction:row!important;align-items:center!important;
+ flex-wrap:nowrap!important;justify-content:flex-end!important;
+ width:100%!important;gap:8px!important;padding:0!important;margin:0!important;
+ background:transparent!important;border:0!important;box-shadow:none!important
+}
+.topbar:has(.planning-header-toolbar) .class-mini-row{
+ display:flex!important;flex-direction:row!important;align-items:center!important;
+ flex-wrap:nowrap!important;justify-content:flex-end!important;
+ width:auto!important;gap:6px!important;margin:0!important;padding:0!important
+}
+.topbar:has(.planning-header-toolbar) .class-mini-chips{display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:4px!important}
+.topbar:has(.planning-header-toolbar) .class-toolbar-more{flex:0 0 auto!important;align-self:center!important;margin:0!important}
+.topbar:has(.planning-header-toolbar) .class-toolbar-more>summary{white-space:nowrap!important}
+.topbar:has(.planning-header-toolbar) .class-closure-section:not(:has(.class-closure-editor)){display:none!important}
+.topbar:has(.planning-header-toolbar) .class-schedule-intro{display:none!important}
+.topbar:has(.planning-header-toolbar) .teacher-header-identity>div:has(.planning-grade-badge){margin:0!important}
+@media(max-width:1120px){
+ .topbar:has(.planning-header-toolbar){flex-wrap:wrap!important;gap:5px 9px!important}
+ .topbar:has(.planning-header-toolbar) .planning-header-toolbar{flex:1 1 100%!important;order:3!important}
+ .topbar:has(.planning-header-toolbar) #kopplade-klasser>.card{justify-content:flex-start!important;flex-wrap:wrap!important}
+ .topbar:has(.planning-header-toolbar) .class-mini-row{flex-wrap:wrap!important;justify-content:flex-start!important}
+}
+@media(max-width:650px){
+ .topbar:has(.planning-header-toolbar){padding:5px 7px!important;max-height:36vh!important;overflow-y:auto!important}
+ .topbar:has(.planning-header-toolbar) .class-mini-chips{overflow-x:auto;max-width:100%;scrollbar-width:thin}
+}
