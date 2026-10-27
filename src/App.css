@@ -4123,3 +4123,46 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 @media(max-width:650px){
  .topbar:has(.planning-inline-navigation) .planning-inline-navigation .planning-home-navigation button{padding:4px 6px!important;font-size:11px!important}
 }
+
+/* Små, synliga knappar: inga verktyg får klippas bort. */
+.topbar:has(.planning-inline-navigation){
+ flex-wrap:wrap!important;gap:4px 8px!important;
+ overflow:visible!important;max-height:none!important;
+ padding:5px 9px!important
+}
+.topbar:has(.planning-inline-navigation) .planning-header-toolbar{
+ min-width:0!important;flex:1 1 auto!important;width:auto!important
+}
+.topbar:has(.planning-inline-navigation) #kopplade-klasser>.card,
+.topbar:has(.planning-inline-navigation) .class-mini-row,
+.topbar:has(.planning-inline-navigation) .class-mini-chips{
+ flex-wrap:wrap!important;overflow:visible!important;max-width:none!important
+}
+.topbar:has(.planning-inline-navigation) .class-mini-chip,
+.topbar:has(.planning-inline-navigation) .class-mini-add,
+.topbar:has(.planning-inline-navigation) .class-mini-schema,
+.topbar:has(.planning-inline-navigation) .planning-print-action,
+.topbar:has(.planning-inline-navigation) .planning-inline-navigation button{
+ font-size:11px!important;line-height:1.15!important;
+ padding:4px 6px!important;min-height:26px!important;
+ border-radius:7px!important;white-space:nowrap!important
+}
+.topbar:has(.planning-inline-navigation) .class-mini-row{gap:4px!important}
+.topbar:has(.planning-inline-navigation) .class-mini-chips{gap:3px!important}
+.topbar:has(.planning-inline-navigation) .class-toolbar-more>summary{
+ font-size:11px!important;line-height:1.15!important;padding:4px 6px!important
+}
+.topbar:has(.planning-inline-navigation) .planning-grade-badge{padding:2px 5px!important}
+.topbar:has(.planning-inline-navigation) .teacher-header-identity strong{font-size:15px!important}
+@media(max-width:1350px){
+ .topbar:has(.planning-inline-navigation) .planning-header-toolbar{
+  order:1!important;flex:1 1 auto!important;width:auto!important
+ }
+ .topbar:has(.planning-inline-navigation) .planning-print-action{order:2!important}
+ .topbar:has(.planning-inline-navigation) .planning-inline-navigation{order:3!important}
+}
+@media(max-width:650px){
+ .topbar:has(.planning-inline-navigation){max-height:none!important;overflow:visible!important}
+ .topbar:has(.planning-inline-navigation) .class-mini-chips{overflow:visible!important}
+ .topbar:has(.planning-inline-navigation) .planning-header-toolbar{flex-basis:100%!important}
+}
