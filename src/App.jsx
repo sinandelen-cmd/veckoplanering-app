@@ -816,8 +816,12 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     .filter(week => week && !week.hidden && (week.keepVisibleExtra === true || ((week.weekStart || '') >= addWeeks(mondayOf(new Date()), -1) && (week.weekStart || '') <= mondayOf(new Date()))) && (!week.publishDate || week.publishDate <= toIsoDate(new Date())) && (!week.hideDate || week.hideDate > toIsoDate(new Date())))
     .sort((a, b) => weekContentScore(b) - weekContentScore(a))
     .filter((week, index, weeks) => weeks.findIndex(other => (other.weekStart || `number-${other.weekNumber}`) === (week.weekStart || `number-${week.weekNumber}`)) === index)
-    .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || ''))
-    .sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || '')) : []
+    .sort((a, b) => {
+      const current = mondayOf(new Date())
+      const previous = addWeeks(current, -1)
+      const rank = week => week.weekStart === current ? 0 : week.weekStart === previous ? 1 : 2
+      return rank(a) - rank(b) || (b.weekStart || '').localeCompare(a.weekStart || '')
+    }) : []
   const currentStudentWeekStart = mondayOf(new Date())
   const currentStudentWeek = studentWeeks.find(week => week.weekStart === currentStudentWeekStart)
   const upcomingStudentWeek = [...studentWeeks].reverse().find(week => week.weekStart >= currentStudentWeekStart)
