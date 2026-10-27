@@ -4208,3 +4208,65 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
     display:inline-flex!important;
   }
 }
+
+/* Elevvyn: samma kompakta, fastsatta rubrik vid scrollning. */
+@media screen {
+  .student-screen-view.student-shell {
+    padding-top:0!important;
+  }
+  .student-screen-view .student-header-simple {
+    position:sticky!important;
+    top:0!important;
+    z-index:45!important;
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:10px!important;
+    min-height:54px!important;
+    margin:0 0 10px!important;
+    padding:7px 12px!important;
+    background:#fffdf9!important;
+    border-bottom:1px solid #e2e9e7!important;
+    box-shadow:0 2px 7px rgba(25,45,42,.08)!important;
+  }
+  .student-screen-view .student-header-simple > div:first-child p {display:none!important}
+  .student-screen-view .student-header-simple h1 {
+    font-size:clamp(18px,2vw,23px)!important;
+    line-height:1.2!important;
+  }
+  .student-screen-view .student-header-simple > div:last-child:not(:first-child){
+    min-width:0!important;
+    padding:4px 9px!important;
+    border-radius:8px!important;
+  }
+  .student-screen-view .student-header-simple > div:last-child:not(:first-child) > div:first-child{
+    font-size:10px!important;
+    letter-spacing:.05em!important;
+  }
+  .student-screen-view .student-header-simple > div:last-child:not(:first-child) > div:last-child{
+    font-size:22px!important;
+    line-height:1.15!important;
+  }
+  .student-screen-view .student-print-action{
+    position:sticky!important;
+    top:0!important;
+    z-index:46!important;
+    display:flex!important;
+    justify-content:flex-end!important;
+    margin:0!important;
+    padding:4px 12px!important;
+    background:#fffdf9!important;
+  }
+  .student-screen-view .student-print-action button{
+    min-height:34px!important;
+    padding:5px 10px!important;
+    font-size:12px!important;
+  }
+  @media(max-width:650px){
+    .student-screen-view .student-header-simple{padding:6px 8px!important;min-height:48px!important}
+    .student-screen-view .student-header-simple h1{font-size:18px!important}
+    .student-screen-view .student-header-simple > div:last-child:not(:first-child) > div:last-child{font-size:19px!important}
+    .student-screen-view .student-print-action button{min-height:40px!important}
+  }
+}
