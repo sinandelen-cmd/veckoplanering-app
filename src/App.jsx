@@ -1283,36 +1283,6 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [showPastTeacherWeeks, setShowPastTeacherWeeks] = useState(false)
   const [allWeekContentsOpen, setAllWeekContentsOpen] = useState(true)
   const [weekContentOverrides, setWeekContentOverrides] = useState({})
-  const [activeStickyChapter, setActiveStickyChapter] = useState("")
-  useEffect(() => {
-    if (teacherTab !== "arsplan" || !selectedId || calendarOpen) {
-      setActiveStickyChapter("")
-      return undefined
-    }
-    const updateChapter = () => {
-      const bar = document.querySelector('#lararvy .teacher-year-review-bar')
-      const sections = [...document.querySelectorAll('#lararvy .teacher-chapter-section')]
-      if (!bar || !sections.length) { setActiveStickyChapter(""); return }
-      const threshold = bar.getBoundingClientRect().bottom + 8
-      let current = ""
-      for (const section of sections) {
-        const rect = section.getBoundingClientRect()
-        if (rect.top <= threshold && rect.bottom > threshold) {
-          current = section.querySelector(':scope > .chapter-heading')?.textContent?.trim() || ""
-          break
-        }
-      }
-      setActiveStickyChapter(previous => previous === current ? previous : current)
-    }
-    updateChapter()
-    window.addEventListener('scroll', updateChapter, { passive: true })
-    window.addEventListener('resize', updateChapter)
-    return () => {
-      window.removeEventListener('scroll', updateChapter)
-      window.removeEventListener('resize', updateChapter)
-    }
-  }, [teacherTab, showPastTeacherWeeks])
-
   const [creatingFromBranch, setCreatingFromBranch] = useState(false)
   // Layouten är responsiv i CSS; ingen automatisk utzoomning av mappträdet.
   const boardTreeRef = useRef(null)
@@ -2145,7 +2115,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     
 <section className="card teacher-year-review">
       <div className="teacher-year-review-bar" aria-label="Årsplaneringens verktygsrad">
-        <div className="teacher-review-title"><h2>Årsplanering</h2><span className="count-pill">{weeks.length} veckor</span>{activeStickyChapter && <span className={`teacher-active-chapter chapter-tone-${chapterTone(activeStickyChapter)}`} aria-label={`Aktuellt kapitel: ${activeStickyChapter}`}>{activeStickyChapter}</span>}</div>
+        <div className="teacher-review-title"><h2>Årsplanering</h2><span className="count-pill">{weeks.length} veckor</span></div>
         <div className="teacher-review-actions">
           <button type="button" className="teacher-all-weeks-toggle" onClick={()=>{setAllWeekContentsOpen(v=>!v);setWeekContentOverrides({})}} aria-expanded={allWeekContentsOpen} aria-label={allWeekContentsOpen ? "Dölj allt veckoinnehåll" : "Visa allt veckoinnehåll"}><span className="teacher-review-arrow" aria-hidden="true">{allWeekContentsOpen ? "▾" : "▸"}</span>{allWeekContentsOpen ? "Dölj allt innehåll" : "Visa allt innehåll"}</button>
           {pastTeacherWeeks.length > 0 && <button type="button" className="teacher-past-weeks-toggle" aria-expanded={showPastTeacherWeeks} onClick={()=>setShowPastTeacherWeeks(v=>!v)}><span aria-hidden="true">{showPastTeacherWeeks ? "▾" : "▸"}</span>{showPastTeacherWeeks ? "Dölj tidigare veckor" : `Tidigare veckor (${pastTeacherWeeks.length})`}</button>}
