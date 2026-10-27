@@ -1,0 +1,7 @@
+/* Använd hela skärmbredden i Grundplaneringen utan att ändra sparad data. */
+html,body,#root{width:100%;min-width:320px;max-width:none}
+.planning-layout{width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important}
+.planning-layout .shell{width:100%!important;max-width:none!important;margin-left:0!important;margin-right:0!important;box-sizing:border-box!important}
+.planning-layout main,.planning-layout .planning-main,.planning-layout .planning-content{max-width:none!important;min-width:0!important;box-sizing:border-box!important}
+.planning-layout .week-card,.planning-layout .topic{max-width:none!important;box-sizing:border-box!important}
+@media(min-width:1200px){.planning-layout .shell{padding-left:clamp(14px,2vw,38px)!important;padding-right:clamp(14px,2vw,38px)!important}}
