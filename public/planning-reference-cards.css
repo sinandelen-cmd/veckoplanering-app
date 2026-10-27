@@ -30,3 +30,10 @@
 .planning-layout .lesson .topic-grid>.topic-name{display:flex!important;flex-direction:column!important;align-self:stretch!important;min-height:126px!important}
 .planning-layout .lesson .topic-grid>.topic-name>.topic-links-inside-moment{margin-top:auto!important;padding-top:14px!important;display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:6px!important}
 .planning-layout .lesson .topic-grid>.topic-name>.topic-links-inside-moment .topic-link{margin:0!important}
+
+/* Matcha referensens tre lika stora kort, även med länkar. */
+.planning-layout .lesson .topic-grid{align-items:stretch!important}
+.planning-layout .lesson .topic-grid>.topic-name,
+.planning-layout .lesson .topic-grid>.topic-column{height:100%!important;min-height:145px!important;align-self:stretch!important}
+.planning-layout .lesson .topic-grid>.topic-name>.topic-links-inside-moment{width:100%!important;margin-top:auto!important;position:static!important}
+.planning-layout .lesson .topic-grid>.topic-name>.topic-links-inside-moment .lesson-bare-link{position:static!important}
