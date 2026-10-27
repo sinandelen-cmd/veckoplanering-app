@@ -4318,3 +4318,19 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .topic-link-compact :is(summary,a,button):focus-visible{outline:2px solid #24554d;outline-offset:2px}
 @media(max-width:650px){.topic-link-editor>summary{min-height:40px;padding:10px}.topic-link-compact .resource-chip{min-height:40px}.topic-link-editor-fields label{flex-basis:100%}}
 @media print{.topic-link-editor{display:none!important}}
+
+/* Alla verktyg synliga – ingen Mer-meny. */
+#lararvy .topbar:has(.planning-header-toolbar){position:sticky!important;top:0!important;z-index:100!important;max-height:none!important;overflow:visible!important}
+#lararvy .topbar:has(.planning-header-toolbar) .planning-header-toolbar{min-width:0!important}
+#lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-expanded{display:flex!important;align-items:center;min-width:0;margin:0!important}
+#lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-expanded .class-toolbar-actions{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:4px!important;margin:0!important}
+#lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-expanded :is(button,.class-schedule-help>summary,select){font-size:11px!important;min-height:32px!important;padding:5px 7px!important;line-height:1.2!important;border-radius:7px!important;white-space:nowrap!important}
+#lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-expanded .class-bulk-visibility{display:inline-flex;align-items:center;gap:4px;font-size:11px;margin:0}
+#lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-expanded .class-bulk-visibility select{max-width:175px}
+#lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-expanded .class-schedule-help{position:relative}
+#lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-expanded .class-schedule-help>summary{cursor:pointer}
+@media(max-width:750px){
+ #lararvy .topbar:has(.planning-header-toolbar){max-height:none!important}
+ #lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-expanded .class-toolbar-actions{gap:5px!important}
+ #lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-expanded :is(button,.class-schedule-help>summary,select){min-height:40px!important}
+}
