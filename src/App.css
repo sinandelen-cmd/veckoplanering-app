@@ -5338,3 +5338,17 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
   box-shadow: none !important; color: #494949 !important;
  }
 }
+
+/* Visa kapitlet endast i den övre fasta raden. Behåll den undre
+   rubriken i DOM för att kapitelväxlingen vid scroll ska fungera. */
+#lararvy .teacher-chapter-section > .chapter-heading {
+  position: static !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
