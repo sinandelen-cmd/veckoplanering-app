@@ -5271,3 +5271,9 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  #lararvy .lesson .topic-grid>.topic-name>.moment-inner-actions .lesson-bare-add{color:#008e51!important;background:#e0f7e9!important}
  #lararvy .lesson .topic-grid>.topic-name>.moment-inner-actions .lesson-bare-remove{color:#d92e42!important;background:#ffebee!important}
 }
+
+/* Subtle add/remove controls */
+.topic .topic-cell > .remove-small { padding: 2px 5px; background: transparent; color: #b77b83; border: 0; }
+.topic .topic-cell > .remove-small:hover { background: #ffe5e8; color: #a52e40; }
+.topic .topic-column > .add-detail.lesson-bare-icon { align-self: flex-end; padding: 2px 6px; background: transparent; color: #75a58a; }
+.topic .topic-column > .add-detail.lesson-bare-icon:hover { background: #dcefe3; color: #14633c; }
