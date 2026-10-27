@@ -5277,3 +5277,23 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .topic .topic-cell > .remove-small:hover { background: #ffe5e8; color: #a52e40; }
 .topic .topic-column > .add-detail.lesson-bare-icon { align-self: flex-end; padding: 2px 6px; background: transparent; color: #75a58a; }
 .topic .topic-column > .add-detail.lesson-bare-icon:hover { background: #dcefe3; color: #14633c; }
+
+/* Vita skrivfält och svart text i Moment, Sida och Uppgift. */
+#lararvy .lesson .topic-grid > .topic-name > textarea,
+#lararvy .lesson .topic-column.pages .topic-cell > input,
+#lararvy .lesson .topic-column.assignments .topic-cell > input {
+  background: #fff !important;
+  color: #111 !important;
+  -webkit-text-fill-color: #111 !important;
+}
+#lararvy .lesson .topic-grid > .topic-name > textarea::placeholder,
+#lararvy .lesson .topic-column .topic-cell > input::placeholder {
+  color: #777 !important;
+  -webkit-text-fill-color: #777 !important;
+}
+#lararvy .lesson .topic-grid > .topic-name > .topic-name-display,
+#lararvy .lesson .topic-column.pages .topic-cell > span,
+#lararvy .lesson .topic-column.assignments .topic-cell > span {
+  background: #fff !important;
+  color: #111 !important;
+}
