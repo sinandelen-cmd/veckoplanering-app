@@ -5359,3 +5359,8 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .chapter-vocabulary-list { display:flex; flex-wrap:wrap; gap:8px; }
 .chapter-vocabulary-term { display:inline-flex; align-items:center; border-radius:8px; padding:8px 12px; font-size:15px; font-weight:800; color:#fff; line-height:1.2; }
 .vocabulary-color-0 { background:#bd1741; } .vocabulary-color-1 { background:#164cb4; } .vocabulary-color-2 { background:#08743c; } .vocabulary-color-3 { background:#6933a8; } .vocabulary-color-4 { background:#955000; } .vocabulary-color-5 { background:#a81c78; } .vocabulary-color-6 { background:#075e71; }
+
+/* Keep colorful vocabulary directly under the pinned chapter title while scrolling. */
+#lararvy .teacher-pinned-chapter-shell .chapter-vocabulary { margin:0!important; padding:7px 12px 9px!important; border-radius:0 0 12px 12px!important; background:#f4f7fb!important; }
+#lararvy .teacher-pinned-chapter-shell .chapter-vocabulary-list { gap:6px!important; }
+#lararvy .teacher-pinned-chapter-shell .chapter-vocabulary-term { color:#fff!important; font-weight:800!important; }
