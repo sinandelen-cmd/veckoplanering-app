@@ -1,0 +1,17 @@
+/* Samma visuella språk som grundplaneringens lektionsrutor, i kompakt kalenderformat. */
+.reference-calendar-lesson{--lesson-accent:#557aa4;background:#fff!important;border:1px solid #dce5ed!important;border-left:4px solid var(--lesson-accent)!important;border-radius:10px!important;box-shadow:0 2px 8px rgba(20,40,70,.06)!important}
+.reference-calendar-lesson.tone-geometry{--lesson-accent:#4384c5}.reference-calendar-lesson.tone-algebra{--lesson-accent:#9065bb}.reference-calendar-lesson.tone-relation{--lesson-accent:#389d7a}.reference-calendar-lesson.tone-statistics{--lesson-accent:#d28c36}.reference-calendar-lesson.tone-probability{--lesson-accent:#c96a87}
+.reference-calendar-lesson summary{background:color-mix(in srgb,var(--lesson-accent) 13%,white)!important;border-bottom:1px solid color-mix(in srgb,var(--lesson-accent) 18%,white);color:#263b54!important;font-size:clamp(11px,.85vw,14px)!important;font-weight:800!important;padding:8px 10px!important}
+.reference-calendar-lesson summary::marker{color:var(--lesson-accent)}
+.reference-calendar-lesson-body{display:flex;flex-direction:column;gap:6px;background:white!important;padding:9px!important;color:#24364d!important}
+.reference-calendar-lesson-body>strong{display:block;font-size:clamp(11px,.85vw,14px)!important;line-height:1.35;padding:0 0 7px;border-bottom:1px solid #e6edf4}
+.reference-calendar-topic{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px!important;margin:0!important}
+.reference-calendar-topic>strong,.reference-calendar-topic>p,.reference-calendar-topic>a{grid-column:1/-1}
+.reference-calendar-topic>strong{padding-top:5px;font-size:12px;color:#294663}
+.reference-calendar-topic>span{display:block!important;background:#f5f8fc;border:1px solid #e5ebf2;border-radius:6px;padding:5px 6px;font-size:clamp(10px,.7vw,12px)!important;line-height:1.3;overflow-wrap:anywhere}
+.reference-calendar-topic>a{display:inline-flex;align-items:center;gap:4px;width:fit-content;max-width:100%;font-size:11px;color:#236a9b;text-decoration:none;background:#eef6ff;padding:4px 7px;border-radius:6px;overflow-wrap:anywhere}
+.reference-calendar-topic>p{font-size:11px;line-height:1.4;margin:2px 0;white-space:pre-wrap}
+.reference-calendar-cell{min-width:0}
+@media(min-width:1600px){.reference-calendar-grid{grid-template-columns:minmax(110px,.6fr) repeat(5,minmax(0,1fr));min-width:0}.reference-calendar-cell{min-height:155px;padding:12px!important}.reference-calendar-lesson-body{padding:12px!important}}
+@media(min-width:2800px){.reference-calendar-grid{grid-template-columns:minmax(160px,.5fr) repeat(5,minmax(0,1fr))}.reference-calendar-cell{min-height:220px;padding:18px!important}.reference-calendar-lesson summary{padding:13px 16px!important;font-size:18px!important}.reference-calendar-lesson-body{padding:16px!important}.reference-calendar-lesson-body>strong{font-size:17px!important}.reference-calendar-topic>span{font-size:15px!important;padding:10px}.reference-calendar-topic>a,.reference-calendar-topic>p{font-size:14px}}
+@media(max-width:1200px){.reference-calendar-grid{grid-template-columns:78px repeat(5,minmax(160px,1fr));min-width:879px}.reference-calendar-topic{grid-template-columns:minmax(0,1fr)}}
