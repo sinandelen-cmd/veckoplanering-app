@@ -3940,3 +3940,11 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
     font-size: clamp(10px, 2.7vw, 13px) !important;
   }
 }
+
+/* En gemensam rubrikyta för grundplanering och klassverktyg. */
+.topbar:has(.planning-header-toolbar){flex-wrap:wrap;align-items:flex-start;gap:12px}
+.topbar .planning-header-toolbar{width:100%;flex-basis:100%;min-width:0}
+.topbar .planning-header-toolbar #kopplade-klasser{margin:0!important}
+.topbar .planning-header-toolbar #kopplade-klasser>.card{background:transparent;border:0;box-shadow:none;padding:10px 0 0!important;margin:0!important;border-top:1px solid #e3e8e9;border-radius:0}
+.topbar .planning-header-toolbar .class-schedule-intro{margin-bottom:8px!important}
+@media(max-width:650px){.topbar:has(.planning-header-toolbar){gap:8px}.topbar .planning-header-toolbar #kopplade-klasser>.card{padding-top:10px!important}}
