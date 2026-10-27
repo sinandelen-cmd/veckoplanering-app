@@ -1026,12 +1026,16 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
                         <summary><span>{chapter}</span><span className="reference-calendar-chevron">⌄</span></summary>
                         <div className="reference-calendar-lesson-body">
                           <strong>{`Lektion ${index+1}`}{topics[0]?.name ? ` – ${topics[0].name}` : ''}</strong>
-                          {topics.map((topic,topicIndex) => <div className="reference-calendar-topic" key={topicIndex}>
-                            {topic.name && <strong className="reference-calendar-moment">{topic.name}</strong>}
-                            {(topic.pages || []).filter(Boolean).map((value,i) => <span key={`p${i}`}>▤ Sida {value}</span>)}
-                            {(topic.assignments || []).filter(Boolean).map((value,i) => <span key={`a${i}`}>▣ Uppgift {value}</span>)}
-                            {(topic.links || []).filter(link => String(typeof link === 'string' ? link : link?.url || '').trim()).map((link,i) => { const url = typeof link === 'string' ? link : link.url; return <a key={`l${i}`} href={url} target="_blank" rel="noopener noreferrer">↗ {(typeof link === 'object' && link.label) || resourceInfo(url)?.label || 'Länk'}</a> })}
-                            {topic.description && <p>{topic.description}</p>}
+                          {topics.map((topic,topicIndex) => <div className="reference-calendar-topic reference-calendar-planning-mini" key={topicIndex}>
+                            <div className="reference-calendar-mini-moment">
+                              {topic.name && <strong>{topic.name}</strong>}
+                              {topic.description && <p>{topic.description}</p>}
+                              <div className="reference-calendar-mini-links">
+                                {(topic.links || []).filter(link => String(typeof link === 'string' ? link : link?.url || '').trim()).map((link,i) => { const url = typeof link === 'string' ? link : link.url; const info = resourceInfo(url); return <a key={i} href={url} target="_blank" rel="noopener noreferrer"><span>{info?.icon || '↗'}</span> {(typeof link === 'object' && link.label) || info?.label || 'Länk'}</a> })}
+                              </div>
+                            </div>
+                            <div className="reference-calendar-mini-pages"><strong>{topic.pagesLabel?.trim() || 'Sida'}</strong><div>{(topic.pages || []).filter(Boolean).map((value,i) => <span key={i}>{value}</span>)}</div></div>
+                            <div className="reference-calendar-mini-assignments"><strong>{topic.assignmentsLabel?.trim() || 'Uppgift'}</strong><div>{(topic.assignments || []).filter(Boolean).map((value,i) => <span key={i}>{value}</span>)}</div></div>
                           </div>)}
                           {topics.length === 0 && <span className="muted">Ingen planerad aktivitet</span>}
                         </div>
