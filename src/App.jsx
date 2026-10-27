@@ -1311,7 +1311,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       window.removeEventListener('scroll', updateChapter)
       window.removeEventListener('resize', updateChapter)
     }
-  }, [teacherTab, selectedId, calendarOpen, showPastTeacherWeeks, weeks.length])
+  }, [teacherTab, showPastTeacherWeeks])
 
   const [creatingFromBranch, setCreatingFromBranch] = useState(false)
   // Layouten är responsiv i CSS; ingen automatisk utzoomning av mappträdet.
