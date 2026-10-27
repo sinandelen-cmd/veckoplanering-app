@@ -4409,3 +4409,11 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
   align-self:end!important;margin:0!important;position:relative!important;z-index:1!important;
  }
 }
+
+/* Länkredigering: penna när stängd, tydlig Klar när öppen. */
+.topic-link-editor>summary .link-edit-open{display:none}
+.topic-link-editor[open]>summary .link-edit-closed{display:none}
+.topic-link-editor[open]>summary .link-edit-open{display:inline;font-weight:700}
+.topic-link-editor>summary{display:inline-flex;align-items:center;justify-content:center;min-width:36px}
+.topic-link-editor[open]>summary{min-width:68px;background:#e9f5ee;border-color:#a9d7ba;color:#245b40}
+@media(max-width:650px){.topic-link-editor>summary{min-width:40px}}
