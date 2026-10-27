@@ -46,3 +46,50 @@
 .planning-layout .lesson .topic-grid>.topic-column{display:flex!important;flex-direction:column!important}
 .planning-layout .lesson .topic-grid>.topic-column>.add-detail{align-self:flex-end!important;margin-top:auto!important}
 .planning-layout .lesson .topic-grid>.topic-column .remove-topic-column{position:static!important}
+
+/* Gemensam vertikal rytm för moment, sidor och uppgifter. */
+.planning-layout .lesson .topic-grid>.topic-name,
+.planning-layout .lesson .topic-grid>.topic-column{
+ box-sizing:border-box!important;
+ justify-content:flex-start!important;
+ min-height:175px!important;
+ height:auto!important;
+}
+.planning-layout .lesson .topic-grid>.topic-name textarea{
+ flex:0 0 auto!important;
+ width:100%!important;
+ min-height:48px!important;
+ margin:0!important;
+ font-size:15px!important;
+ font-weight:600!important;
+ line-height:1.45!important;
+}
+.planning-layout .lesson .topic-grid>.topic-column .topic-fixed-heading{
+ flex:0 0 auto!important;
+ min-height:28px!important;
+ margin:0 0 4px!important;
+}
+.planning-layout .lesson .topic-grid>.topic-column .topic-cell{
+ flex:0 0 auto!important;
+ min-height:34px!important;
+ margin:0!important;
+ display:flex!important;
+ align-items:center!important;
+ gap:6px!important;
+}
+.planning-layout .lesson .topic-grid>.topic-column .topic-cell input{
+ flex:1 1 auto!important;
+ line-height:1.4!important;
+}
+.planning-layout .lesson .topic-grid>.topic-name>.topic-links-inside-moment{
+ margin-top:auto!important;
+ padding-top:10px!important;
+}
+.planning-layout .lesson .topic-grid>.topic-name>.moment-card-actions{
+ flex:0 0 auto!important;
+ margin-top:8px!important;
+}
+.planning-layout .lesson .topic-grid>.topic-column>.add-detail{
+ margin-top:auto!important;
+ align-self:flex-end!important;
+}
