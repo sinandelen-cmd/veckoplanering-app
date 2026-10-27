@@ -4975,3 +4975,40 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .teacher-chapter-section>.chapter-heading.chapter-tone-1{background:#e3d6fa!important}
 #lararvy .teacher-chapter-section>.chapter-heading.chapter-tone-2{background:#cceee4!important}
 #lararvy .teacher-chapter-section>.chapter-heading.chapter-tone-3{background:#ffe3c5!important}
+
+/* Stabil kapitelväxling: den riktiga kapitelrubriken scrollar som vanligt.
+   En separat, helt täckande kapitelrad låses under Årsplanering. */
+#lararvy .teacher-chapter-section>.chapter-heading{
+ position:static!important;
+ top:auto!important;
+ z-index:auto!important;
+}
+#lararvy .teacher-pinned-chapter-shell{
+ position:sticky!important;
+ top:calc(var(--teacher-review-sticky-top,0px) + var(--teacher-review-bar-height,48px))!important;
+ z-index:230!important;
+ background:#fff!important;
+ padding:18px 18px 0!important;
+ margin:0!important;
+ border-left:2px solid #c9d6dc!important;
+ border-right:2px solid #c9d6dc!important;
+ pointer-events:none!important;
+}
+#lararvy .teacher-pinned-chapter-heading{
+ display:block!important;
+ padding:13px 17px!important;
+ min-height:52px!important;
+ box-sizing:border-box!important;
+ border-radius:10px!important;
+ font-size:18px!important;
+ font-weight:800!important;
+ color:#185944!important;
+ background:#cceee4!important;
+}
+#lararvy .teacher-pinned-chapter-heading.chapter-tone-0{background:#cfe3ff!important;color:#162d49!important}
+#lararvy .teacher-pinned-chapter-heading.chapter-tone-1{background:#e3d6fa!important;color:#442879!important}
+#lararvy .teacher-pinned-chapter-heading.chapter-tone-2{background:#cceee4!important;color:#185944!important}
+#lararvy .teacher-pinned-chapter-heading.chapter-tone-3{background:#ffe3c5!important;color:#75401d!important}
+@media(max-width:650px){
+ #lararvy .teacher-pinned-chapter-shell{padding:12px 10px 0!important}
+}
