@@ -1,0 +1,9 @@
+/* Grundplanering: lagom breda Sida- och Uppgift-kolumner för cirka tio tecken. */
+.planning-layout .topic .topic-grid{grid-template-columns:minmax(0,1fr) minmax(88px,11ch) minmax(88px,11ch)!important;gap:10px!important;align-items:start!important}
+.planning-layout .topic .topic-grid.without-pages:not(.without-assignments){grid-template-columns:minmax(0,1fr) minmax(88px,11ch)!important}
+.planning-layout .topic .topic-grid.without-assignments:not(.without-pages){grid-template-columns:minmax(0,1fr) minmax(88px,11ch)!important}
+.planning-layout .topic .topic-grid.without-pages.without-assignments{grid-template-columns:minmax(0,1fr)!important}
+.planning-layout .topic .topic-column{min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
+.planning-layout .topic .topic-column .topic-cell{min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
+.planning-layout .topic .topic-column .topic-cell input,.planning-layout .topic .topic-column .topic-cell span{min-width:0!important;max-width:100%!important;box-sizing:border-box!important;overflow-wrap:anywhere!important;white-space:normal!important}
+@media(max-width:600px){.planning-layout .topic .topic-grid{grid-template-columns:minmax(0,1fr) minmax(75px,10ch) minmax(75px,10ch)!important;gap:5px!important}}
