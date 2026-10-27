@@ -2117,7 +2117,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       <div className="teacher-year-review-bar" aria-label="Årsplaneringens verktygsrad"><div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
       
 
-      <button type="button" className="secondary teacher-all-weeks-toggle" onClick={()=>{setAllWeekContentsOpen(v=>!v);setWeekContentOverrides({})}} aria-label={allWeekContentsOpen ? "Dölj alla veckors innehåll" : "Visa alla veckors innehåll"}>{allWeekContentsOpen ? "▴ Dölj alla veckor" : "▾ Visa alla veckor"}</button>
+      <button type="button" className="secondary teacher-all-weeks-toggle" onClick={()=>{setAllWeekContentsOpen(v=>!v);setWeekContentOverrides({})}} aria-label={allWeekContentsOpen ? "Dölj alla veckors innehåll" : "Visa alla veckors innehåll"}>{allWeekContentsOpen ? "▴ Dölj allt innehåll" : "▾ Visa allt innehåll"}</button>
       {pastTeacherWeeks.length > 0 && <button type="button" className="secondary teacher-past-weeks-toggle" aria-expanded={showPastTeacherWeeks} onClick={()=>setShowPastTeacherWeeks(v=>!v)}>{showPastTeacherWeeks ? "▴ Dölj tidigare veckor" : `▾ Tidigare veckor (${pastTeacherWeeks.length})`}</button>}</div>
       <div className="teacher-months">
         {Object.values((showPastTeacherWeeks ? teacherDisplayWeeks : upcomingTeacherWeeks).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((months, item) => {
@@ -2131,7 +2131,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           {group.items.map(({ week, index }, displayIndex, ordered) => <div className="chapter-week-group" key={`${week.weekNumber}-${index}`}>
           {week.chapter?.trim() && (displayIndex === 0 || week.chapter !== ordered[displayIndex - 1]?.week.chapter) && <h3 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h3>}
           <article className="week-card" id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
-          <button type="button" className="teacher-week-collapse-toggle" aria-expanded={weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen} onClick={()=>{const key=week.weekStart || `${index}`;setWeekContentOverrides(prev=>({...prev,[key]:!(prev[key] ?? allWeekContentsOpen)}))}}>{(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) ? "▴ Dölj vecka " : "▾ Visa vecka "}{calendarWeekNumber(week.weekStart) ?? week.weekNumber}</button>
+          <button type="button" className="teacher-week-collapse-toggle" aria-expanded={weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen} onClick={()=>{const key=week.weekStart || `${index}`;setWeekContentOverrides(prev=>({...prev,[key]:!(prev[key] ?? allWeekContentsOpen)}))}}>{(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) ? "▴ Dölj innehåll – vecka " : "▾ Visa innehåll – vecka "}{calendarWeekNumber(week.weekStart) ?? week.weekNumber}</button>
           <div className="teacher-week-collapsible-content" hidden={!(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen)}>
           <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",marginBottom:10,padding:"8px 10px",background:"#fff9e9",borderRadius:9}}>
             <label>Elevvisning
