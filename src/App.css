@@ -4872,3 +4872,34 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .teacher-chapter-section>.chapter-heading.chapter-tone-1{background:#e3d6fa!important;color:#442879!important}
 #lararvy .teacher-chapter-section>.chapter-heading.chapter-tone-2{background:#cceee4!important;color:#185944!important}
 #lararvy .teacher-chapter-section>.chapter-heading.chapter-tone-3{background:#ffe3c5!important;color:#75401d!important}
+
+/* Scrolllager: övre menyn täcker veckorna, kapitlets egen färgade rubrik
+   ligger direkt under den och nästa kapitel skjuter bort den naturligt. */
+#lararvy .expanded-weeks-inline>.teacher-year-review>.teacher-year-review-bar{
+ position:sticky!important;
+ top:var(--teacher-review-sticky-top,0px)!important;
+ z-index:120!important;
+ background:#fff!important;
+ opacity:1!important;
+ isolation:isolate!important;
+ margin-bottom:0!important;
+ border-radius:8px!important;
+}
+#lararvy .teacher-chapter-section{
+ position:relative!important;
+ overflow:visible!important;
+}
+#lararvy .teacher-chapter-section>.chapter-heading{
+ position:sticky!important;
+ top:calc(var(--teacher-review-sticky-top,0px) + var(--teacher-review-bar-height,48px))!important;
+ z-index:110!important;
+ margin-top:0!important;
+ padding:10px 15px!important;
+ border-radius:8px!important;
+ opacity:1!important;
+ box-shadow:none!important;
+}
+#lararvy .teacher-chapter-section>.chapter-heading::before,
+#lararvy .teacher-chapter-section>.chapter-heading::after{
+ content:none!important;display:none!important;
+}
