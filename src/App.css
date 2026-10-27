@@ -4903,3 +4903,33 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .teacher-chapter-section>.chapter-heading::after{
  content:none!important;display:none!important;
 }
+
+/* Fast trestegsnavigering: huvudmeny > årsplanering > aktiv kapitelrubrik.
+   Endast veckokorten scrollar. Nästa kapitel skjuter bort föregående rubrik. */
+#lararvy header.topbar:has(>.planning-header-toolbar){
+ position:sticky!important;
+ top:0!important;
+ z-index:300!important;
+ background:#fff!important;
+}
+#lararvy .expanded-weeks-inline>.teacher-year-review>.teacher-year-review-bar{
+ position:sticky!important;
+ top:var(--teacher-review-sticky-top,0px)!important;
+ z-index:250!important;
+ background:#fff!important;
+ margin-bottom:0!important;
+}
+#lararvy .teacher-chapter-section{
+ position:relative!important;
+ overflow:visible!important;
+}
+#lararvy .teacher-chapter-section>.chapter-heading{
+ position:sticky!important;
+ top:calc(var(--teacher-review-sticky-top,0px) + var(--teacher-review-bar-height,48px))!important;
+ z-index:200!important;
+ opacity:1!important;
+ background-clip:padding-box!important;
+ box-shadow:none!important;
+}
+#lararvy .teacher-chapter-section>.chapter-heading::before,
+#lararvy .teacher-chapter-section>.chapter-heading::after{content:none!important;display:none!important}
