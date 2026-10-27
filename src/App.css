@@ -4729,3 +4729,15 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .teacher-week-controls .teacher-week-elevvisning select{max-width:270px!important;width:auto!important;min-width:150px!important}
 #lararvy .teacher-week-controls .week-heading-visibility{margin:0!important}
 #lararvy .teacher-collapsible-week.teacher-week-closed{display:block!important}
+
+/* En enda låg verktygsrad utan kort-i-kort. */
+#lararvy .teacher-year-review-bar{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;flex-wrap:wrap!important;padding:9px 12px!important;border:1px solid #e6e8e5!important;border-radius:11px!important;background:#fff!important;box-shadow:0 2px 8px rgba(25,35,30,.05)!important}
+#lararvy .teacher-review-title{display:flex!important;align-items:center!important;gap:10px!important;flex-wrap:wrap!important}
+#lararvy .teacher-review-title h2{font-size:18px!important;line-height:1.3!important;margin:0!important}
+#lararvy .teacher-review-title .count-pill{font-size:12px!important;padding:3px 9px!important}
+#lararvy .teacher-review-actions{display:flex!important;align-items:center!important;gap:8px!important;flex-wrap:wrap!important}
+#lararvy .teacher-review-actions button{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;min-height:35px!important;padding:6px 11px!important;margin:0!important;border-radius:8px!important;font-size:13px!important;font-weight:650!important;line-height:1.3!important;white-space:nowrap!important;box-shadow:none!important}
+#lararvy .teacher-review-actions .teacher-all-weeks-toggle{background:#eaf6f0!important;color:#176048!important;border:1px solid #c3dfd1!important}
+#lararvy .teacher-review-actions .teacher-past-weeks-toggle{background:#fff5dc!important;color:#76512c!important;border:1px solid #f1dfb5!important}
+#lararvy .teacher-review-arrow{font-size:17px!important;line-height:1!important}
+@media(max-width:600px){#lararvy .teacher-year-review-bar{gap:8px!important;padding:8px!important}#lararvy .teacher-review-actions{width:100%!important}#lararvy .teacher-review-actions button{flex:1 1 auto!important;font-size:12px!important}}
