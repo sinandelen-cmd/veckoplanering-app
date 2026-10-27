@@ -4658,3 +4658,14 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  #lararvy .teacher-year-review-bar{flex-wrap:wrap!important;gap:4px!important}
  #lararvy .teacher-year-review-bar h2{font-size:13px!important}
 }
+
+/* Förhindra att Årsplanering-raden klipps av huvudmenyn vid scrollning. */
+#lararvy .expanded-weeks-inline,
+#lararvy .expanded-weeks-inline>.teacher-year-review{
+ overflow:visible!important;transform:none!important;filter:none!important;
+}
+#lararvy .expanded-weeks-inline>.teacher-year-review>.teacher-year-review-bar{
+ position:sticky!important;top:var(--teacher-review-sticky-top,0px)!important;
+ z-index:95!important;isolation:isolate;
+ background:#fff!important;box-shadow:0 2px 7px rgba(0,0,0,.10)!important;
+}
