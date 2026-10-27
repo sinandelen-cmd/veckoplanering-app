@@ -2577,15 +2577,17 @@ function AnnualApp() {
     if (!header) return undefined
     const updateOffset = () => {
       const rect = header.getBoundingClientRect()
-      document.documentElement.style.setProperty('--teacher-review-sticky-top', Math.max(0, Math.ceil(rect.height)) + 'px')
+      document.documentElement.style.setProperty('--teacher-review-sticky-top', Math.max(0, Math.ceil(rect.bottom)) + 'px')
     }
     updateOffset()
     const observer = new ResizeObserver(updateOffset)
     observer.observe(header)
     window.addEventListener('resize', updateOffset)
+    window.addEventListener('scroll', updateOffset, { passive: true })
     return () => {
       observer.disconnect()
       window.removeEventListener('resize', updateOffset)
+      window.removeEventListener('scroll', updateOffset)
       document.documentElement.style.removeProperty('--teacher-review-sticky-top')
     }
   }, [session, selectedId, teacherTab, calendarOpen])
