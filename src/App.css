@@ -4363,3 +4363,49 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  #lararvy .topbar:has(.planning-header-toolbar) .planning-header-toolbar{order:3!important;flex:1 1 100%!important}
  #lararvy .topbar:has(.planning-header-toolbar) #kopplade-klasser{margin:0!important}
 }
+
+/* Två konsekventa, fasta verktygsrader för lärarplaneringen. */
+@media screen and (min-width:1100px){
+ #lararvy .topbar:has(.planning-header-toolbar){
+  position:sticky!important;top:0!important;z-index:100!important;
+  display:grid!important;
+  grid-template-columns:max-content minmax(0,1fr)!important;
+  grid-template-rows:minmax(38px,auto) minmax(38px,auto)!important;
+  align-items:center!important;gap:4px 12px!important;
+  padding:6px 12px!important;max-height:none!important;overflow:visible!important;
+ }
+ #lararvy .topbar:has(.planning-header-toolbar) .teacher-header-identity{
+  grid-column:1!important;grid-row:1!important;margin:0!important;min-width:0!important;
+ }
+ #lararvy .topbar:has(.planning-header-toolbar) .planning-header-toolbar{
+  grid-column:2!important;grid-row:1 / 3!important;min-width:0!important;width:100%!important;
+  align-self:stretch!important;margin:0!important;
+ }
+ #lararvy .topbar:has(.planning-header-toolbar) #kopplade-klasser{
+  height:100%!important;margin:0!important;
+ }
+ #lararvy .topbar:has(.planning-header-toolbar) #kopplade-klasser>.card{
+  display:flex!important;flex-direction:column!important;justify-content:center!important;
+  min-height:100%!important;margin:0!important;padding:0!important;
+ }
+ #lararvy .topbar:has(.planning-header-toolbar) .class-mini-row{
+  display:flex!important;flex-wrap:wrap!important;align-items:center!important;
+  justify-content:flex-start!important;gap:4px!important;margin:0!important;
+ }
+ #lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-expanded{
+  flex:1 1 100%!important;width:100%!important;
+ }
+ #lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-expanded .class-toolbar-actions{
+  display:flex!important;flex-wrap:wrap!important;align-items:center!important;
+  justify-content:flex-start!important;gap:4px!important;
+ }
+ #lararvy .topbar:has(.planning-header-toolbar) .planning-inline-navigation{
+  grid-column:1!important;grid-row:2!important;display:flex!important;
+  width:auto!important;min-width:0!important;justify-content:flex-start!important;
+  margin:0!important;
+ }
+ #lararvy .topbar:has(.planning-header-toolbar) .planning-print-action{
+  grid-column:2!important;grid-row:2!important;justify-self:end!important;
+  align-self:end!important;margin:0!important;position:relative!important;z-index:1!important;
+ }
+}
