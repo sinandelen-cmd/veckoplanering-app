@@ -1016,7 +1016,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
           <button type="button" className="calendar-delete-week" disabled={busy || orderedWeeks.length <= 1} title={`Radera vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`} aria-label={`Radera vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`} onClick={() => onDeleteWeek?.(week.weekStart)}>🗑️ <span>Radera vecka</span></button>
           
           <label className="calendar-week-checkbox" title={week.hidden ? 'Visa vecka för elever' : 'Dölj vecka för elever'}><input type="checkbox" checked={!week.hidden} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever`} onChange={e => { const originalIndex = weeks.findIndex(item => item.weekStart === week.weekStart); if (originalIndex >= 0) onUpdateWeek?.(originalIndex, { hidden: !e.target.checked }) }} /></label>
-          <button type="button" className="calendar-week-tile" onClick={() => { if (embedded) { onOpen?.() } else { setSelectedWeekIndex(index); setSelectedLessonIndex(null) } }} aria-label={`Zooma in vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`}>
+          <div className="calendar-week-tile calendar-full-week">
           
           <strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>
           <span className="calendar-tile-date">{new Intl.DateTimeFormat('sv-SE', { day: 'numeric', month: 'short' }).format(new Date(week.weekStart + 'T12:00:00'))}–{new Intl.DateTimeFormat('sv-SE', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(new Date(week.weekStart + 'T12:00:00').getTime() + 6 * 86400000))}</span>
@@ -1024,9 +1024,8 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
           {nationalExams.filter(exam => exam.date >= week.weekStart && exam.date < addWeeks(week.weekStart, 1)).map(exam => <span key={exam.date + exam.subject + exam.part} className="calendar-holiday">🔒 NP {exam.subject} · {formatDate(exam.date)}</span>)}
           
           {week.chapter && <span className="calendar-tile-chapter">{week.chapter}</span>}
-          <span className="calendar-tile-topics">{topics.slice(0, 3).join(' · ') || week.content || 'Ingen planering inskriven ännu'}</span>
-          <span className="calendar-tile-action">Visa veckan →</span>
-          </button>
+          <div className="calendar-full-week-content">{week.content && <p>{week.content}</p>}<LessonDetails week={week} entryType="lektion" lessonDisplay="dag-och-lektion" /><WeekDetails week={week} /></div>
+          </div>
         </div>
             })}
           </div>
