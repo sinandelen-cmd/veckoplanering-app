@@ -2061,20 +2061,10 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       </div>
       
       
-      {selectedId && teacherTab === "arsplan" && <button type="button" className="secondary" onClick={() => { document.body.classList.add("teacher-plan-print"); const cleanup = () => document.body.classList.remove("teacher-plan-print"); window.addEventListener("afterprint", cleanup, { once: true }); window.print(); setTimeout(cleanup, 1500) }}>🖨️ Skriv ut planeringen</button>}
+      {selectedId && teacherTab === "arsplan" && <button type="button" className="secondary planning-print-action" onClick={() => { document.body.classList.add("teacher-plan-print"); const cleanup = () => document.body.classList.remove("teacher-plan-print"); window.addEventListener("afterprint", cleanup, { once: true }); window.print(); setTimeout(cleanup, 1500) }}>🖨️ Skriv ut planeringen</button>}
       {false && selectedId && teacherTab === "arsplan" && <div className="archive-plan-actions" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <button type="button" className="secondary" disabled={busy || !plans.some(row => row.id === selectedId)} style={{ fontSize: '1rem', fontWeight: 850, padding: '13px 18px', borderRadius: 12, background: '#f9e5ed', border: '2px solid #c87e9b', color: '#73394f' }} onClick={() => { const row = plans.find(item => item.id === selectedId); if (row) void setArchived(row, true) }}>🗂 Arkivera planeringen</button>
         
-      </div>}
-      {selectedId && teacherTab === "arsplan" && <div className="student-plan-link" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-        <button type="button" className="secondary" style={{ background: '#d8f0fc', border: '2px solid #499ac1', color: '#124b6a', fontWeight: 850, fontSize: '1.1rem', padding: '14px 22px', borderRadius: 12 }} onClick={async () => {
-          const row = plans.find(item => item.id === selectedId)
-          const slug = row?.public_slug
-          if (!row?.published || !slug) { setStatus('Den här planeringen saknar ännu en publicerad elevlänk. Lägg till lektionsinnehåll så att planeringen kan publiceras automatiskt.'); return }
-          const url = window.location.origin + '/elev/' + encodeURIComponent(slug)
-          try { await navigator.clipboard.writeText(url); setStatus('Elevlänken för just denna planering har kopierats.') } catch { window.prompt('Kopiera elevlänken:', url) }
-        }}>🔗 Kopiera elevlänk</button>
-
       </div>}
       {false && teacherTab === "new" && <div className="topbar-share-actions">
         <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
