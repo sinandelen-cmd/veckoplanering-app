@@ -4270,3 +4270,35 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
     .student-screen-view .student-print-action button{min-height:40px!important}
   }
 }
+
+/* Elevrubrik: en enda låg, fast rad med klass och utskrift. */
+@media screen {
+ .student-screen-view.student-shell{overflow:visible!important}
+ .student-screen-view .student-header-simple{
+  position:sticky!important;top:0!important;z-index:70!important;
+  display:flex!important;align-items:center!important;justify-content:space-between!important;
+  flex-wrap:nowrap!important;gap:8px!important;
+  min-height:48px!important;padding:6px 10px!important;margin:0 0 10px!important;
+  background:#fffdf9!important;border-bottom:1px solid #e2e9e7!important;
+  box-shadow:0 2px 8px #263f481c!important;
+ }
+ .student-screen-view .student-heading-title{display:flex;align-items:baseline;gap:8px;min-width:0}
+ .student-screen-view .student-heading-title h1{font-size:19px!important;line-height:1.2!important;margin:0!important}
+ .student-screen-view .student-heading-year{font-size:11px;color:#526a81;white-space:nowrap}
+ .student-screen-view .student-heading-actions{display:flex;align-items:center;gap:7px;flex-shrink:0}
+ .student-screen-view .student-class-label{display:flex;align-items:center;gap:5px;min-width:0;padding:4px 8px;border:1px solid #d5e6f7;border-radius:7px;background:#edf6ff;color:#234e75}
+ .student-screen-view .student-class-label span{font-size:9px;font-weight:750;letter-spacing:.05em}
+ .student-screen-view .student-class-label strong{font-size:18px;line-height:1.1}
+ .student-screen-view .student-heading-print{font-size:12px!important;min-height:34px!important;padding:5px 9px!important;white-space:nowrap}
+ @media(max-width:650px){
+  .student-screen-view .student-header-simple{min-height:48px!important;padding:5px 7px!important}
+  .student-screen-view .student-heading-title h1{font-size:17px!important}
+  .student-screen-view .student-heading-year{display:none}
+  .student-screen-view .student-class-label{padding:5px 6px}
+  .student-screen-view .student-class-label strong{font-size:16px}
+  .student-screen-view .student-heading-print{min-height:40px!important;padding:7px 8px!important}
+ }
+}
+@media print {
+ .student-heading-print{display:none!important}
+}
