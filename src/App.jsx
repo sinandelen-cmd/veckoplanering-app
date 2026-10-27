@@ -645,6 +645,28 @@ function Login({ email, password, setEmail, setPassword, onSubmit, onSignUp, sta
   </main>
 }
 
+const CHAPTER_VOCABULARY = [
+  [/geometri|cirkel|area|omkrets|volym/, ['Radie','Diameter','Omkrets','Area','Cirkelbåge','Cirkelsektor','Volym','Cylinder']],
+  [/algebra|uttryck|ekvation|variabel/, ['Variabel','Uttryck','Ekvation','Likhetstecken','Term','Förenkla','Lösning']],
+  [/bråk|bråktal/, ['Täljare','Nämnare','Bråkform','Blandad form','Förkorta','Förlänga','Likvärdiga bråk']],
+  [/procent/, ['Procent','Andel','Helhet','Procenttal','Förändring','Förändringsfaktor']],
+  [/statistik|sannolikhet/, ['Medelvärde','Median','Typvärde','Frekvens','Diagram','Sannolikhet']],
+  [/funktion|graf|koordinat/, ['Koordinat','Koordinatsystem','X-axel','Y-axel','Graf','Funktion','Lutning']],
+  [/taluppfattning|heltal|decimaltal/, ['Positionssystem','Ental','Tiotal','Decimal','Avrundning','Negativa tal']],
+  [/ekonomi|ränta/, ['Budget','Inkomst','Utgift','Ränta','Kapital','Rabatt']],
+  [/skala|proportion/, ['Skala','Förhållande','Proportion','Förstoring','Förminskning']],
+]
+function chapterVocabulary(chapter, weeks = []) {
+  const title = String(chapter || '').toLocaleLowerCase('sv-SE')
+  const lessonText = weeks.map(week => [week.content, ...(week.lessons || []).flatMap(lesson => [lesson.name, ...(lesson.topics || []).map(topic => topic.name)])].join(' ')).join(' ').toLocaleLowerCase('sv-SE')
+  const match = CHAPTER_VOCABULARY.find(([pattern]) => pattern.test(title)) || CHAPTER_VOCABULARY.find(([pattern]) => pattern.test(lessonText))
+  return match ? match[1] : []
+}
+function ChapterVocabulary({ chapter, weeks }) {
+  const words = chapterVocabulary(chapter, weeks)
+  return words.length ? <div className="chapter-vocabulary" aria-label={`Viktiga begrepp i ${chapter}`}><strong>Viktiga begrepp</strong><div className="chapter-vocabulary-list">{words.map((word, index) => <span className={`chapter-vocabulary-term vocabulary-color-${index % 7}`} key={word}>{word}</span>)}</div></div> : null
+}
+
 function chapterTone(chapter) {
   const value = String(chapter || '').trim().toLocaleLowerCase('sv-SE')
   let hash = 0
@@ -860,7 +882,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     {studentWeeks.length === 0 && <p className="card empty" role="status">{plan.autoReleaseWeeks ? "Ingen vecka är publicerad för elever ännu. Nästa vecka visas automatiskt när dess måndag börjar." : "Det finns inga synliga veckor i den här planeringen ännu."}</p>}
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
       {visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
-        {week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}
+        {week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}{week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <ChapterVocabulary chapter={week.chapter} weeks={visibleWeeks.filter(w => w.chapter === week.chapter)} />}
         <article id={"student-week-" + week.weekStart} className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
 
         <div className="week-top student-week-top">
@@ -2214,7 +2236,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           chapters[chapterName].items.push(item)
           return chapters
         }, {})).map(group => <section className="teacher-month-section teacher-chapter-section" key={group.name}>
-          <h3 className={`chapter-heading chapter-tone-${chapterTone(group.name)}`}>{group.name}</h3>
+          <h3 className={`chapter-heading chapter-tone-${chapterTone(group.name)}`}>{group.name}</h3>\n          <ChapterVocabulary chapter={group.name} weeks={group.items.map(item => item.week)} />
           <div className="teacher-month-weeks">
           {group.items.map(({ week, index }) => <div className="chapter-week-group" key={`${week.weekStart || week.weekNumber}-${index}`}>
           <article className={`week-card teacher-collapsible-week ${(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) ? "teacher-week-open" : "teacher-week-closed"}`} id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
