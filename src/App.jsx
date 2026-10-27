@@ -1283,6 +1283,24 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [showPastTeacherWeeks, setShowPastTeacherWeeks] = useState(false)
   const [allWeekContentsOpen, setAllWeekContentsOpen] = useState(true)
   const [weekContentOverrides, setWeekContentOverrides] = useState({})
+  useEffect(() => {
+    if (teacherTab !== "arsplan") return undefined
+    const updateHeight = () => {
+      const bar = document.querySelector('#lararvy .teacher-year-review-bar')
+      if (bar) document.documentElement.style.setProperty('--teacher-review-bar-height', Math.ceil(bar.getBoundingClientRect().height) + 'px')
+    }
+    const observer = new ResizeObserver(updateHeight)
+    const bar = document.querySelector('#lararvy .teacher-year-review-bar')
+    if (bar) observer.observe(bar)
+    updateHeight()
+    window.addEventListener('resize', updateHeight)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', updateHeight)
+      document.documentElement.style.removeProperty('--teacher-review-bar-height')
+    }
+  }, [teacherTab, showPastTeacherWeeks])
+
   const [creatingFromBranch, setCreatingFromBranch] = useState(false)
   // Layouten är responsiv i CSS; ingen automatisk utzoomning av mappträdet.
   const boardTreeRef = useRef(null)
