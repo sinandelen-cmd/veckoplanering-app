@@ -1296,7 +1296,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         const rect = section.getBoundingClientRect()
         const heading = section.querySelector(':scope > .chapter-heading')
         if (heading && rect.top < boundary && rect.bottom > boundary) {
-          found = { name: heading.textContent.trim(), tone: heading.className.match(/chapter-tone-\\d+/)?.[0] || '' }
+          found = { name: heading.textContent.trim(), tone: heading.className.match(/chapter-tone-[0-9]+/)?.[0] || '' }
           break
         }
       }
