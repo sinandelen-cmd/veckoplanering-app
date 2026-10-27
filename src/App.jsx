@@ -910,6 +910,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
   // Årsöversikt i nio veckor per sida, tre kolumner och tre rader.
   const [selectedWeekIndex, setSelectedWeekIndex] = useState(null)
   const [overviewPage, setOverviewPage] = useState(0)
+  const [calendarMonth, setCalendarMonth] = useState(() => { const date = new Date(weeks[0]?.weekStart ? weeks[0].weekStart + 'T12:00:00' : Date.now()); return new Date(date.getFullYear(),date.getMonth(),1) })
   const [selectedLessonIndex, setSelectedLessonIndex] = useState(null)
   const [selectedCalendarClass, setSelectedCalendarClass] = useState('')
   const [showQuickClassMatrix,setShowQuickClassMatrix] = useState(false)
@@ -983,7 +984,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
       <button type="button" className="calendar-delete-week danger" disabled={busy || weeks.length <= 1} onClick={() => { onDeleteWeek?.(selectedWeek.weekStart); setSelectedWeekIndex(null); setSelectedLessonIndex(null) }}>🗑️ Radera vecka</button>
       <button type="button" className="secondary calendar-overview-button" onClick={() => { setSelectedWeekIndex(null); setSelectedLessonIndex(null) }}>← Till översikten</button>
     </div> : <>
-      <p className="calendar-overview-count">{orderedWeeks.length === 1 ? "1 planerad vecka" : orderedWeeks.length + " planerade veckor"} · Veckorna är grupperade efter månad.</p>
+      <p className="calendar-overview-count">{orderedWeeks.length === 1 ? "1 planerad vecka" : orderedWeeks.length + " planerade veckor"} · Visas månad för månad.</p>
       <div className="calendar-overview-history">
         <button type="button" className="secondary" onClick={onUndo} disabled={busy || !canUndo} title="Ångra den senaste ändringen i planeringen">↶ Ångra</button>
       </div>
@@ -991,45 +992,59 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
         <button type="button" className="secondary" disabled={busy} onClick={() => onSetAllVisibility?.(!orderedWeeks.every(week => !week.hidden))} style={{ padding: '12px 18px', fontSize: '1rem', fontWeight: 800, background: '#e4f6e9', border: '2px solid #80b69a', borderRadius: 12 }}>{orderedWeeks.every(week => !week.hidden) ? '☑ Dölj alla veckor i Elevvy' : '☐ Visa alla veckor i Elevvy'}</button>
         <span className="muted">{orderedWeeks.filter(week => !week.hidden).length} av {orderedWeeks.length} veckor visas för elever</span>
       </div>
-      <div className="calendar-months">
-        {Object.values(orderedWeeks.reduce((months, week, index) => {
-          // Visa gränsveckan i båda månaderna, precis som en svensk månadskalender.
-          // Båda korten pekar på samma vecka och samma sparade lektionsinnehåll.
-          const monday = new Date(week.weekStart + 'T12:00:00')
-          if (Number.isNaN(monday.getTime())) return months
-          const sunday = new Date(monday)
-          sunday.setDate(sunday.getDate() + 6)
-          const monthDates = [monday, sunday]
-          for (const date of monthDates) {
-            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-            if (!months[monthKey]) months[monthKey] = { date: new Date(date.getFullYear(), date.getMonth(), 1, 12), weeks: [] }
-            if (!months[monthKey].weeks.some(item => item.index === index)) months[monthKey].weeks.push({ week, index })
-          }
-          return months
-        }, {})).map(group => <section className="calendar-month-section" key={group.date.toISOString()} style={{ backgroundColor: MONTH_PASTELS[group.date.getMonth()], "--month-accent": ["#5089b8","#b96597","#8068b2","#568b69","#b68a32","#b9735a","#548e9b","#a26e9e","#72914d","#b47a43","#7d6ab0","#b76977"][group.date.getMonth()] }}>
-          <h3>{new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeric' }).format(group.date)} · Veckor {calendarWeekNumber(group.weeks[0].week.weekStart)}–{calendarWeekNumber(group.weeks[group.weeks.length - 1].week.weekStart)}</h3>
-          <div className="calendar-month-row" style={{ "--month-week-count": group.weeks.length }}>
-            {group.weeks.map(({ week, index }) => {
-              const date = new Date(week.weekStart + 'T12:00:00')
-              const topics = (week.lessons || []).flatMap(lesson => (lesson.topics || []).map(topic => topic.name).filter(Boolean))
-        return <div className="calendar-week-wrapper" key={`${week.weekStart}-${index}`} style={{ backgroundColor: weekColor(week.weekStart) }}>
-          <button type="button" className="calendar-delete-week" disabled={busy || orderedWeeks.length <= 1} title={`Radera vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`} aria-label={`Radera vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`} onClick={() => onDeleteWeek?.(week.weekStart)}>🗑️ <span>Radera vecka</span></button>
-          
-          <label className="calendar-week-checkbox" title={week.hidden ? 'Visa vecka för elever' : 'Dölj vecka för elever'}><input type="checkbox" checked={!week.hidden} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för elever`} onChange={e => { const originalIndex = weeks.findIndex(item => item.weekStart === week.weekStart); if (originalIndex >= 0) onUpdateWeek?.(originalIndex, { hidden: !e.target.checked }) }} /></label>
-          <div className="calendar-week-tile calendar-full-week">
-          
-          <strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>
-          <span className="calendar-tile-date">{new Intl.DateTimeFormat('sv-SE', { day: 'numeric', month: 'short' }).format(new Date(week.weekStart + 'T12:00:00'))}–{new Intl.DateTimeFormat('sv-SE', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(new Date(week.weekStart + 'T12:00:00').getTime() + 6 * 86400000))}</span>
-          {schoolClosures.filter(item => validSchoolClosure(item) && item.startDate < addWeeks(week.weekStart, 1) && item.endDate >= week.weekStart).map(item => <span key={item.id} className="calendar-holiday">📅 {item.name}{item.verified ? "" : " · ej verifierat"}</span>)}
-          {nationalExams.filter(exam => exam.date >= week.weekStart && exam.date < addWeeks(week.weekStart, 1)).map(exam => <span key={exam.date + exam.subject + exam.part} className="calendar-holiday">🔒 NP {exam.subject} · {formatDate(exam.date)}</span>)}
-          
-          {week.chapter && <span className="calendar-tile-chapter">{week.chapter}</span>}
-          <div className="calendar-full-week-content">{week.content && <p>{week.content}</p>}<LessonDetails week={week} entryType="lektion" lessonDisplay="dag-och-lektion" /><WeekDetails week={week} /></div>
-          </div>
+      <div className="reference-calendar" aria-label="Kalendervy måndag till fredag">
+        <div className="reference-calendar-toolbar">
+          <button type="button" className="secondary" aria-label="Föregående månad" onClick={() => setCalendarMonth(value => new Date(value.getFullYear(), value.getMonth()-1, 1))}>‹</button>
+          <h3>{new Intl.DateTimeFormat('sv-SE',{month:'long',year:'numeric'}).format(calendarMonth)}</h3>
+          <button type="button" className="secondary" aria-label="Nästa månad" onClick={() => setCalendarMonth(value => new Date(value.getFullYear(), value.getMonth()+1, 1))}>›</button>
+          <span className="reference-calendar-mode">Månad</span>
         </div>
+        <div className="reference-calendar-scroll">
+          <div className="reference-calendar-grid">
+            <div className="reference-calendar-weekday">Vecka</div>
+            {['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].map(day => <div className="reference-calendar-weekday" key={day}>{day}</div>)}
+            {orderedWeeks.filter(week => {
+              const monday = new Date(week.weekStart + 'T12:00:00')
+              const thursday = new Date(monday)
+              thursday.setDate(thursday.getDate() + 3)
+              return thursday.getFullYear() === calendarMonth.getFullYear() && thursday.getMonth() === calendarMonth.getMonth()
+            }).map(week => {
+              const monday = new Date(week.weekStart + 'T12:00:00')
+              const sunday = new Date(monday)
+              sunday.setDate(sunday.getDate() + 6)
+              return <Fragment key={week.weekStart}>
+                <div className="reference-calendar-weeknumber"><strong>v. {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span>{new Intl.DateTimeFormat('sv-SE',{day:'numeric',month:'short'}).format(monday)} – {new Intl.DateTimeFormat('sv-SE',{day:'numeric',month:'short'}).format(sunday)}</span></div>
+                {['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].map((day,dayIndex) => {
+                  const dayLessons = (week.lessons || []).map((lesson,index) => ({lesson,index})).filter(({lesson,index}) => {
+                    const explicit = String(lesson.day || (entryType === 'dag' ? lesson.name : '')).toLocaleLowerCase('sv-SE')
+                    return explicit ? explicit === day.toLocaleLowerCase('sv-SE') : index === dayIndex
+                  })
+                  return <div className="reference-calendar-cell" key={day}>
+                    {dayLessons.map(({lesson,index}) => {
+                      const topics = lesson.topics || []
+                      const chapter = week.chapter || 'Planering'
+                      const tone = /geometri/i.test(chapter) ? 'geometry' : /algebra/i.test(chapter) ? 'algebra' : /samband/i.test(chapter) ? 'relation' : /statistik/i.test(chapter) ? 'statistics' : /sannolikhet/i.test(chapter) ? 'probability' : 'other'
+                      return <details className={`reference-calendar-lesson tone-${tone}`} key={index} open>
+                        <summary><span>{chapter}</span><span className="reference-calendar-chevron">⌄</span></summary>
+                        <div className="reference-calendar-lesson-body">
+                          <strong>{`Lektion ${index+1}`}{topics[0]?.name ? ` – ${topics[0].name}` : ''}</strong>
+                          {topics.map((topic,topicIndex) => <div className="reference-calendar-topic" key={topicIndex}>
+                            {topicIndex > 0 && <strong>{topic.name}</strong>}
+                            {(topic.pages || []).filter(Boolean).map((value,i) => <span key={`p${i}`}>▤ Sida {value}</span>)}
+                            {(topic.assignments || []).filter(Boolean).map((value,i) => <span key={`a${i}`}>▣ Uppgift {value}</span>)}
+                            {(topic.links || []).filter(Boolean).map((url,i) => <a key={`l${i}`} href={url} target="_blank" rel="noopener noreferrer">↗ {resourceInfo(url)?.label || 'Länk'}</a>)}
+                            {topic.description && <p>{topic.description}</p>}
+                          </div>)}
+                          {topics.length === 0 && <span className="muted">Ingen planerad aktivitet</span>}
+                        </div>
+                      </details>
+                    })}
+                  </div>
+                })}
+              </Fragment>
             })}
           </div>
-        </section>)}
+        </div>
       </div>
       <div className="calendar-add-week-actions calendar-add-week-bottom"><button type="button" className="primary" disabled={busy || weeks.length >= 52} onClick={() => { onAddWeek?.(); setSelectedWeekIndex(null); setOverviewPage(0) }}>+ Lägg till ny vecka efter sista veckan</button><span className="muted">{weeks.length >= 52 ? 'Maximalt 52 veckor i en planering.' : 'Den nya veckan läggs sist. Spara utkast när du är klar.'}</span></div>
     </>}
