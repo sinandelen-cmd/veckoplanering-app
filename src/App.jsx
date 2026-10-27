@@ -2998,8 +2998,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
               </div>)}
               {editable && <button type="button" className={`add-detail lesson-bare-icon ${field === 'pages' ? 'lesson-bare-page' : 'lesson-bare-task'}`} title={field === 'pages' ? 'Lägg till sida' : 'Lägg till uppgift'} aria-label={field === 'pages' ? 'Lägg till sida' : 'Lägg till uppgift'} onClick={() => updateTopic({ ...topic, [field]: [...(field === 'pages' ? pages : assignments), ''] })}>+</button>}
             </div>)}
-          </div>
-          <div className="topic-links">
+            <div className="topic-links topic-links-inside-moment">
             {links.map((link, k) => {
               const url = typeof link === 'string' ? link : link.url || ''
               const label = typeof link === 'string' ? resourceInfo(link)?.label || '' : link.label || ''
@@ -3018,6 +3017,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
               </div>
             })}
             {editable && <button type="button" className="add-detail lesson-bare-icon lesson-bare-link" title="Lägg till länk" aria-label="Lägg till länk" onClick={() => updateTopic({ ...topic, links: [...links, { label: '', url: '' }] })}>🔗</button>}
+          </div>
           </div>
           {editable && <button type="button" className="remove-small lesson-bare-icon lesson-bare-remove" title="Ta bort moment" aria-label="Ta bort moment" onClick={() => { if (!(topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm('Ta bort momentet och allt innehåll?')) changeLesson(i, { ...lesson, topics: (lesson.topics || []).filter((_, index) => index !== j) }) }}>×</button>}
         </div>
