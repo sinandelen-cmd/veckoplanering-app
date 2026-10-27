@@ -1290,22 +1290,32 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       const toolbar = document.querySelector('#lararvy .teacher-year-review-bar')
       const sections = document.querySelectorAll('#lararvy .teacher-chapter-section')
       if (!toolbar || !sections.length) { setPinnedChapter(null); return }
-      const toolbarRect = toolbar.getBoundingClientRect()
+      const header = document.querySelector('#lararvy header.topbar:has(>.planning-header-toolbar)')
+      const headerBottom = header ? Math.max(0, header.getBoundingClientRect().bottom) : 0
       const reviewRect = toolbar.closest('.teacher-year-review')?.getBoundingClientRect()
-      const boundary = toolbarRect.bottom + 18
+      const toolbarHeight = Math.ceil(toolbar.getBoundingClientRect().height)
+      const boundary = headerBottom + toolbarHeight + 78
       if (reviewRect) {
         document.documentElement.style.setProperty('--teacher-pinned-left', Math.max(0, reviewRect.left) + 'px')
         document.documentElement.style.setProperty('--teacher-pinned-width', Math.min(reviewRect.width, window.innerWidth - Math.max(0, reviewRect.left)) + 'px')
-        document.documentElement.style.setProperty('--teacher-pinned-top', toolbarRect.bottom + 'px')
       }
+      document.documentElement.style.setProperty('--teacher-pinned-top', (headerBottom + toolbarHeight) + 'px')
+      document.documentElement.style.setProperty('--teacher-review-sticky-top', headerBottom + 'px')
       let found = null
       for (const section of sections) {
         const rect = section.getBoundingClientRect()
         const heading = section.querySelector(':scope > .chapter-heading')
-        if (heading && rect.top < boundary && rect.bottom > boundary) {
+        if (heading && rect.top <= boundary && rect.bottom > boundary) {
           found = { name: heading.textContent.trim(), tone: heading.className.match(/chapter-tone-[0-9]+/)?.[0] || '' }
           break
         }
+      }
+      if (!found) {
+        const first = sections[0]
+        const last = sections[sections.length - 1]
+        const candidate = first.getBoundingClientRect().top > boundary ? first : last
+        const heading = candidate.querySelector(':scope > .chapter-heading')
+        if (heading) found = { name: heading.textContent.trim(), tone: heading.className.match(/chapter-tone-[0-9]+/)?.[0] || '' }
       }
       setPinnedChapter(prev => prev?.name === found?.name && prev?.tone === found?.tone ? prev : found)
     }
@@ -2171,7 +2181,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           {pastTeacherWeeks.length > 0 && <button type="button" className="teacher-past-weeks-toggle" aria-expanded={showPastTeacherWeeks} onClick={()=>setShowPastTeacherWeeks(v=>!v)}><span aria-hidden="true">{showPastTeacherWeeks ? "▾" : "▸"}</span>{showPastTeacherWeeks ? "Dölj tidigare veckor" : `Tidigare veckor (${pastTeacherWeeks.length})`}</button>}
         </div>
       </div>
-      {pinnedChapter && <div className="teacher-pinned-chapter-shell" aria-label="Aktuellt kapitel"><div className={`teacher-pinned-chapter-heading ${pinnedChapter.tone}`}>{pinnedChapter.name}</div></div>}
+      {<div className="teacher-pinned-chapter-shell" aria-label="Aktuellt kapitel"><div className={`teacher-pinned-chapter-heading ${pinnedChapter?.tone || ""}`}>{pinnedChapter?.name || "Kapitel"}</div></div>}
       <div className="teacher-months">
         {Object.values((showPastTeacherWeeks ? teacherDisplayWeeks : upcomingTeacherWeeks).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
