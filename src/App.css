@@ -5063,3 +5063,69 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .expanded-weeks-inline>.teacher-year-review>.teacher-months{
  padding-top:calc(var(--teacher-review-bar-height,48px) + 96px)!important;
 }
+
+/* Kalendervy på TV: samma helårsöversikt på små och stora skärmar.
+   Tolv månader i 4x3, alla veckor synliga utan horisontell scroll.
+   Reglerna gäller bara översikten, aldrig en öppnad veckas redigering. */
+#lararvy .calendar-full-year-overview.calendar-overlay{
+ width:100%!important;
+ max-width:none!important;
+ min-width:0!important;
+ box-sizing:border-box!important;
+}
+#lararvy .calendar-full-year-overview .calendar-months{
+ display:grid!important;
+ grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ grid-template-rows:repeat(3,minmax(0,1fr))!important;
+ gap:clamp(4px,.55vw,12px)!important;
+ align-items:stretch!important;
+ width:100%!important;
+ height:clamp(460px,calc(100dvh - 295px),1100px)!important;
+ overflow:visible!important;
+}
+#lararvy .calendar-full-year-overview .calendar-months>.calendar-month-section{
+ grid-column:auto!important;
+ display:flex!important;
+ flex-direction:column!important;
+ min-width:0!important;
+ min-height:0!important;
+ padding:clamp(3px,.5vw,10px)!important;
+ border-left-width:clamp(2px,.3vw,6px)!important;
+ border-radius:clamp(5px,.6vw,12px)!important;
+ overflow:hidden!important;
+}
+#lararvy .calendar-full-year-overview .calendar-month-section>h3{
+ font-size:clamp(9px,.92vw,18px)!important;
+ line-height:1.15!important;
+ margin:0 0 5px!important;
+}
+#lararvy .calendar-full-year-overview .calendar-month-row{
+ display:grid!important;
+ grid-template-columns:repeat(var(--month-week-count,5),minmax(0,1fr))!important;
+ gap:clamp(1px,.15vw,5px)!important;
+ flex:1!important;
+ min-height:0!important;
+ overflow:visible!important;
+}
+#lararvy .calendar-full-year-overview .calendar-week-wrapper{
+ min-width:0!important;
+ min-height:0!important;
+ padding:clamp(2px,.25vw,5px)!important;
+ overflow:hidden!important;
+}
+#lararvy .calendar-full-year-overview .calendar-week-tile{
+ width:100%!important;
+ min-width:0!important;
+ padding:clamp(2px,.25vw,7px)!important;
+ font-size:clamp(8px,.7vw,14px)!important;
+ overflow-wrap:anywhere!important;
+}
+#lararvy .calendar-full-year-overview .calendar-week-tile strong{
+ font-size:clamp(9px,.85vw,17px)!important;
+}
+@media(max-width:700px){
+ #lararvy .calendar-full-year-overview .calendar-months{
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  grid-template-rows:repeat(3,minmax(0,1fr))!important;
+ }
+}
