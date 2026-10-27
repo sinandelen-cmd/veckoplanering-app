@@ -2120,16 +2120,15 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       <button type="button" className="secondary teacher-all-weeks-toggle" onClick={()=>{setAllWeekContentsOpen(v=>!v);setWeekContentOverrides({})}} aria-label={allWeekContentsOpen ? "Dölj alla veckors innehåll" : "Visa alla veckors innehåll"}>{allWeekContentsOpen ? "▴ Dölj allt innehåll" : "▾ Visa allt innehåll"}</button>
       {pastTeacherWeeks.length > 0 && <button type="button" className="secondary teacher-past-weeks-toggle" aria-expanded={showPastTeacherWeeks} onClick={()=>setShowPastTeacherWeeks(v=>!v)}>{showPastTeacherWeeks ? "▴ Dölj tidigare veckor" : `▾ Tidigare veckor (${pastTeacherWeeks.length})`}</button>}</div>
       <div className="teacher-months">
-        {Object.values((showPastTeacherWeeks ? teacherDisplayWeeks : upcomingTeacherWeeks).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((months, item) => {
-          const monthKey = (item.week.weekStart || '').slice(0, 7)
-          if (!months[monthKey]) months[monthKey] = { date: new Date(item.week.weekStart + 'T12:00:00'), items: [] }
-          months[monthKey].items.push(item)
-          return months
-        }, {})).map(group => <section className="teacher-month-section" key={group.date.toISOString()} style={{ backgroundColor: MONTH_PASTELS[group.date.getMonth()] }}>
-          <h3 className="teacher-month-title">{new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeric' }).format(group.date)}</h3>
+        {Object.values((showPastTeacherWeeks ? teacherDisplayWeeks : upcomingTeacherWeeks).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
+          const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
+          if (!chapters[chapterName]) chapters[chapterName] = { name: chapterName, items: [] }
+          chapters[chapterName].items.push(item)
+          return chapters
+        }, {})).map(group => <section className="teacher-month-section teacher-chapter-section" key={group.name}>
+          <h3 className={`chapter-heading chapter-tone-${chapterTone(group.name)}`}>{group.name}</h3>
           <div className="teacher-month-weeks">
-          {group.items.map(({ week, index }, displayIndex, ordered) => <div className="chapter-week-group" key={`${week.weekNumber}-${index}`}>
-          {week.chapter?.trim() && (displayIndex === 0 || week.chapter !== ordered[displayIndex - 1]?.week.chapter) && <h3 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h3>}
+          {group.items.map(({ week, index }) => <div className="chapter-week-group" key={`${week.weekStart || week.weekNumber}-${index}`}>
           <article className={`week-card teacher-collapsible-week ${(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) ? "teacher-week-open" : "teacher-week-closed"}`} id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
           <button type="button" className="teacher-week-collapse-toggle" aria-expanded={weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen} onClick={()=>{const key=week.weekStart || `${index}`;setWeekContentOverrides(prev=>({...prev,[key]:!(prev[key] ?? allWeekContentsOpen)}))}} title={(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) ? "Dölj innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber) : "Visa innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber)} aria-label={(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) ? "Dölj innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber) : "Visa innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber)}><span aria-hidden="true">{(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) ? "▾" : "▸"}</span></button>
           {!(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) && <strong className="teacher-collapsed-week-label">Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>}
