@@ -15,3 +15,31 @@
 .planning-layout .lesson .topic-link{margin:1px 0!important}
 .planning-layout .lesson .add-detail{padding:1px 5px!important;min-height:20px!important}
 }
+
+/* Balanserade proportioner: moment får ca 70 %, sida och uppgift ca 15 % var.
+   Rubriker, fält och knappar ska inte tvingas till lodrät text. */
+@media screen and (min-width:1000px){
+.planning-layout .lesson .topic-grid:not(.without-pages):not(.without-assignments){
+ grid-template-columns:minmax(0,1fr) clamp(135px,15%,180px) clamp(135px,15%,180px)!important;
+ column-gap:clamp(6px,0.8vw,12px)!important;
+ align-items:center!important;
+}
+.planning-layout .lesson .topic-grid.without-pages:not(.without-assignments),
+.planning-layout .lesson .topic-grid.without-assignments:not(.without-pages){
+ grid-template-columns:minmax(0,1fr) clamp(135px,15%,180px)!important;
+}
+.planning-layout .lesson .topic-grid>.topic-name{align-self:center!important}
+.planning-layout .lesson .topic-column .topic-fixed-heading h5{white-space:nowrap!important;word-break:normal!important;font-size:13px!important}
+.planning-layout .lesson .topic-column .topic-cell input{width:100%!important;font-size:13px!important;min-width:0!important}
+.planning-layout .lesson .topic-column .remove-topic-column{font-size:9px!important;line-height:1.15!important}
+.planning-layout .lesson .topic-name textarea{height:auto!important;min-height:38px!important;max-height:140px!important}
+.planning-layout .lesson-heading{gap:6px!important}
+.planning-layout .lesson-heading .lesson-edit-heading{max-width:100%!important}
+}
+@media screen and (max-width:999px){
+.planning-layout .lesson .topic-grid:not(.without-pages):not(.without-assignments){
+ grid-template-columns:minmax(0,1fr) minmax(100px,19%) minmax(100px,19%)!important;
+ gap:5px!important;
+}
+.planning-layout .lesson .topic-grid>.topic-name{align-self:center!important}
+}
