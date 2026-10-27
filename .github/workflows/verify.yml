@@ -1,9 +1,11 @@
 name: Kontrollera årsplanering
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
       - feature/arsplanering-safe-updates-20261013
+      - test/arsplanering-build-20261027
   pull_request:
     branches:
       - main
