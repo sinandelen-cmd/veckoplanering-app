@@ -4098,3 +4098,28 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  .topbar:has(.planning-header-toolbar){padding:5px 7px!important;max-height:36vh!important;overflow-y:auto!important}
  .topbar:has(.planning-header-toolbar) .class-mini-chips{overflow-x:auto;max-width:100%;scrollbar-width:thin}
 }
+
+/* Samma navigationsrad: inga dubbla horisontella menyer. */
+.topbar:has(.planning-inline-navigation){display:flex!important;flex-wrap:nowrap!important;gap:8px!important}
+.topbar:has(.planning-inline-navigation) .teacher-header-identity{order:0!important}
+.topbar:has(.planning-inline-navigation) .planning-header-toolbar{order:1!important;flex:1 1 auto!important}
+.topbar:has(.planning-inline-navigation) .planning-print-action{order:2!important}
+.topbar:has(.planning-inline-navigation) .planning-inline-navigation{order:3!important;flex:0 0 auto!important;margin-left:auto!important}
+.topbar:has(.planning-inline-navigation) .planning-inline-navigation .planning-home-navigation{
+ display:flex!important;position:static!important;align-items:center!important;
+ flex-direction:row!important;gap:5px!important;padding:0!important;
+ margin:0!important;min-height:0!important;background:transparent!important;
+ border:0!important;box-shadow:none!important;width:auto!important
+}
+.topbar:has(.planning-inline-navigation) .planning-inline-navigation .planning-home-navigation button{
+ padding:5px 8px!important;min-height:30px!important;font-size:12px!important;
+ border-radius:8px!important;white-space:nowrap!important
+}
+@media(max-width:1350px){
+ .topbar:has(.planning-inline-navigation){flex-wrap:wrap!important}
+ .topbar:has(.planning-inline-navigation) .planning-header-toolbar{order:3!important;flex-basis:100%!important}
+ .topbar:has(.planning-inline-navigation) .planning-inline-navigation{margin-left:auto!important}
+}
+@media(max-width:650px){
+ .topbar:has(.planning-inline-navigation) .planning-inline-navigation .planning-home-navigation button{padding:4px 6px!important;font-size:11px!important}
+}
