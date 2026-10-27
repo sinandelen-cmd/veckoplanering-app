@@ -4823,26 +4823,27 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  #lararvy .teacher-chapter-section .teacher-collapsible-week{padding:10px!important}
 }
 
-/* Ren sticky kapitelrad: inga vita masker eller utstickande skuggor. */
-#lararvy .teacher-chapter-section{position:relative!important;overflow:visible!important}
-#lararvy .teacher-months,
-#lararvy .teacher-chapter-section>.teacher-month-weeks{overflow:visible!important}
+/* Kapitelrubriker scrollar normalt. Aktuellt kapitel syns i den fasta verktygsraden. */
 #lararvy .teacher-chapter-section>.chapter-heading{
- position:sticky!important;
- top:var(--teacher-review-sticky-top,0px)!important;
- z-index:85!important;
- isolation:isolate!important;
+ position:static!important;
+ top:auto!important;
+ z-index:auto!important;
+ isolation:auto!important;
  margin:0 0 16px!important;
- padding:10px 14px!important;
- border-radius:8px!important;
- border:1px solid rgba(60,75,85,.12)!important;
+ padding:12px 16px!important;
+ border-radius:9px!important;
  box-shadow:none!important;
- opacity:1!important;
- background-image:none!important;
 }
 #lararvy .teacher-chapter-section>.chapter-heading::before,
 #lararvy .teacher-chapter-section>.chapter-heading::after{content:none!important;display:none!important}
-#lararvy .teacher-chapter-section>.chapter-heading.chapter-tone-0{background:#cfe3ff!important;color:#162d49!important}
-#lararvy .teacher-chapter-section>.chapter-heading.chapter-tone-1{background:#e3d6fa!important;color:#442879!important}
-#lararvy .teacher-chapter-section>.chapter-heading.chapter-tone-2{background:#cceee4!important;color:#185944!important}
-#lararvy .teacher-chapter-section>.chapter-heading.chapter-tone-3{background:#ffe3c5!important;color:#75401d!important}
+#lararvy .teacher-review-title .teacher-active-chapter{
+ display:inline-flex!important;align-items:center!important;
+ max-width:220px!important;min-height:28px!important;
+ padding:4px 11px!important;border-radius:7px!important;
+ font-size:12px!important;font-weight:750!important;
+ white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+ box-shadow:none!important;
+}
+@media(max-width:650px){
+ #lararvy .teacher-review-title .teacher-active-chapter{max-width:135px!important}
+}
