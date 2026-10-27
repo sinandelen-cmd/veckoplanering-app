@@ -1,9 +1,10 @@
-/* Grundplanering: lagom breda Sida- och Uppgift-kolumner för cirka tio tecken. */
-.planning-layout .topic .topic-grid{grid-template-columns:minmax(0,1fr) minmax(88px,11ch) minmax(88px,11ch)!important;gap:10px!important;align-items:start!important}
-.planning-layout .topic .topic-grid.without-pages:not(.without-assignments){grid-template-columns:minmax(0,1fr) minmax(88px,11ch)!important}
-.planning-layout .topic .topic-grid.without-assignments:not(.without-pages){grid-template-columns:minmax(0,1fr) minmax(88px,11ch)!important}
+/* Grundplanering: två läsbara sidofält. Håll tillräcklig bredd även för rubriker och knappar. */
+.planning-layout .topic .topic-grid{grid-template-columns:minmax(0,1fr) minmax(125px,150px) minmax(125px,150px)!important;gap:10px!important;align-items:start!important}
+.planning-layout .topic .topic-grid.without-pages:not(.without-assignments),.planning-layout .topic .topic-grid.without-assignments:not(.without-pages){grid-template-columns:minmax(0,1fr) minmax(125px,150px)!important}
 .planning-layout .topic .topic-grid.without-pages.without-assignments{grid-template-columns:minmax(0,1fr)!important}
-.planning-layout .topic .topic-column{min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
-.planning-layout .topic .topic-column .topic-cell{min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
-.planning-layout .topic .topic-column .topic-cell input,.planning-layout .topic .topic-column .topic-cell span{min-width:0!important;max-width:100%!important;box-sizing:border-box!important;overflow-wrap:anywhere!important;white-space:normal!important}
-@media(max-width:600px){.planning-layout .topic .topic-grid{grid-template-columns:minmax(0,1fr) minmax(75px,10ch) minmax(75px,10ch)!important;gap:5px!important}}
+.planning-layout .topic .topic-column{min-width:0!important;box-sizing:border-box!important}
+.planning-layout .topic .topic-column .topic-fixed-heading h5{overflow-wrap:normal!important;word-break:normal!important;white-space:nowrap!important}
+.planning-layout .topic .topic-column .topic-fixed-heading .remove-topic-column{font-size:10px!important;white-space:normal!important;max-width:100%!important}
+.planning-layout .topic .topic-column .topic-cell{min-width:0!important;box-sizing:border-box!important}
+.planning-layout .topic .topic-column .topic-cell input,.planning-layout .topic .topic-column .topic-cell span{min-width:0!important;max-width:100%!important;box-sizing:border-box!important;overflow-wrap:anywhere!important}
+@media(max-width:600px){.planning-layout .topic .topic-grid{grid-template-columns:minmax(0,1fr) minmax(110px,125px) minmax(110px,125px)!important;gap:6px!important}}
