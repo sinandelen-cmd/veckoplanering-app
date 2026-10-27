@@ -1,0 +1,21 @@
+/* 100 % zoom: prioritera att veckans lektioner syns direkt.
+   Bara datorlayout; inga fält eller funktioner döljs. */
+@media screen and (min-width:1000px){
+.planning-layout .shell{padding-top:0!important}
+.planning-layout .topbar{padding:5px 12px!important;margin:0!important;row-gap:3px!important}
+.planning-layout .topbar h1,.planning-layout .topbar h2{font-size:17px!important;line-height:1.15!important;margin:0!important}
+.planning-layout .topbar button,.planning-layout .topbar select{padding:3px 7px!important;min-height:27px!important;font-size:11px!important}
+.planning-layout .topbar .planning-header-toolbar{padding:0!important;gap:4px!important}
+.planning-layout .card{margin-block:5px!important}
+.planning-layout .card>h2:first-child{margin:2px 0 5px!important;font-size:17px!important}
+.planning-layout .week-card{padding:8px 10px!important;margin:6px 0!important}
+.planning-layout .week-top{padding:4px 0!important;gap:6px!important}
+.planning-layout .week-top h2,.planning-layout .week-top h3{font-size:17px!important;line-height:1.15!important;margin:0!important}
+.planning-layout .week-card .lessons{gap:6px!important}
+.planning-layout .week-card .lesson{padding:8px 10px!important;margin:5px 0!important}
+.planning-layout .week-card .topic{padding:5px 8px!important;margin:4px 0!important}
+.planning-layout .week-card .topic-name textarea{min-height:36px!important}
+.planning-layout .week-card .topic-links{margin-top:3px!important}
+.planning-layout .week-card .topic-column .topic-cell{margin-block:2px!important}
+.planning-layout .week-card button{line-height:1.2!important}
+}
