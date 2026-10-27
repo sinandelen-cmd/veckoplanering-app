@@ -2186,7 +2186,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
           </details>
           </div>
-        </article>{weeks.some(other=>other.weekStart>week.weekStart)&&<div className="insert-week-between" style={{display:'flex',justifyContent:'center',padding:'14px 0'}}><button type="button" className="secondary" disabled={weeks.length>=52} onClick={()=>insertBlankWeekAfter(index)}>＋ Lägg till vecka mellan veckorna</button></div>}</div>)}
+          {weeks.some(other=>other.weekStart>week.weekStart) && <div className="insert-week-between teacher-week-insert-inside"><button type="button" className="secondary" disabled={weeks.length>=52} onClick={()=>insertBlankWeekAfter(index)}>＋ Lägg till vecka efter denna</button></div>}
+        </article></div>)}
           </div>
         </section>)}
       </div>
