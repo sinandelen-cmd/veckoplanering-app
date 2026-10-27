@@ -5379,3 +5379,11 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .calendar-real-week-original { width:960px; position:absolute; top:0; left:0; transform-origin:top left; pointer-events:none; }
 .calendar-real-week-original .calendar-inline-week { width:960px; }
 @media(max-width:680px) { .calendar-real-month-gallery {gap:5px;} .calendar-real-week-label {font-size:9px;padding:5px 3px;} .calendar-real-week-label span {font-size:8px;} .calendar-real-month-toolbar h3 {font-size:1.1rem;} }
+
+.calendar-real-week-label button { border:0; background:transparent; color:#1554c0; font-size:11px; font-weight:700; cursor:pointer; }
+.calendar-real-week-frame { cursor:pointer; }
+.calendar-lesson-modal-backdrop { position:fixed; inset:0; z-index:9999; background:rgba(10,22,42,.65); display:flex; align-items:center; justify-content:center; padding:16px; }
+.calendar-lesson-modal { background:white; color:#17253c; border-radius:16px; width:min(1100px,100%); max-height:94vh; overflow:auto; padding:20px; box-shadow:0 20px 70px #0005; }
+.calendar-lesson-modal-header,.calendar-lesson-modal-footer { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:10px 0; }
+.calendar-lesson-modal-footer { justify-content:flex-end; position:sticky; bottom:0; background:white; border-top:1px solid #ddd; }
+.calendar-lesson-modal-footer .primary { background:#16803c; color:white; border:0; border-radius:10px; padding:12px 20px; font-weight:800; cursor:pointer; }
