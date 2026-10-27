@@ -1,0 +1,17 @@
+/* Kompakt datorvy i Grundplaneringen – behåll normal webbläsarzoom. */
+@media screen and (min-width:1000px){
+.planning-layout{font-size:13px!important}
+.planning-layout .topbar{padding-top:7px!important;padding-bottom:7px!important;gap:7px!important}
+.planning-layout .topbar button,.planning-layout .topbar select{font-size:12px!important;padding:5px 9px!important;min-height:30px!important}
+.planning-layout .week-card{padding:12px 14px!important;margin-block:10px!important}
+.planning-layout .week-card h2,.planning-layout .week-card h3{margin-block:5px!important;line-height:1.2!important}
+.planning-layout .week-card input,.planning-layout .week-card select{min-height:28px!important}
+.planning-layout .week-card textarea{min-height:40px!important}
+.planning-layout .topic{padding:8px 10px!important;margin-block:6px!important}
+.planning-layout .topic .topic-grid{gap:8px!important}
+.planning-layout .topic .topic-name textarea{min-height:42px!important;padding:7px 9px!important;font-size:14px!important;line-height:1.3!important}
+.planning-layout .topic .topic-column .topic-cell input{min-height:26px!important;padding:3px 5px!important;font-size:13px!important}
+.planning-layout .topic .topic-column h5{font-size:13px!important;line-height:1.2!important}
+.planning-layout .topic .topic-column .topic-cell{margin-block:3px!important}
+.planning-layout .topic .topic-links{margin-top:5px!important}
+}
