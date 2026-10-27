@@ -4689,3 +4689,14 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .teacher-week-collapse-toggle:focus-visible,
 #lararvy .teacher-year-review-bar .teacher-all-weeks-toggle:focus-visible{outline:3px solid #79c5a7!important;outline-offset:2px!important}
 #lararvy .teacher-week-collapsible-content{min-width:0}
+
+/* Endast pil till vänster om veckans innehåll. */
+#lararvy .teacher-week-collapse-toggle{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:34px!important;min-width:34px!important;max-width:34px!important;
+ height:34px!important;min-height:34px!important;
+ padding:0!important;margin:0 0 6px!important;
+ font-size:20px!important;line-height:1!important;
+ border-radius:8px!important;
+}
+@media(max-width:650px){#lararvy .teacher-week-collapse-toggle{width:40px!important;min-width:40px!important;max-width:40px!important;height:40px!important;min-height:40px!important}}
