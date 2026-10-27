@@ -5297,3 +5297,44 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
   background: #fff !important;
   color: #111 !important;
 }
+
+/* Fristående tydliga resursikoner, utan etikettplattor eller färgade bakgrunder. */
+@media screen {
+ #lararvy .lesson .topic-grid > .topic-name > .moment-inner-links {
+  flex-wrap: nowrap !important; overflow-x: auto; overflow-y: visible;
+  align-items: flex-start !important; gap: 9px !important;
+ }
+ #lararvy .lesson .moment-inner-links .topic-link-compact {
+  flex: 0 0 auto; align-items: center; gap: 3px;
+ }
+ #lararvy .lesson .moment-inner-links .resource-chip {
+  display: inline-flex !important; flex-direction: column !important;
+  justify-content: flex-start !important; align-items: center !important;
+  padding: 0 !important; min-height: 0 !important;
+  background: transparent !important; border: 0 !important;
+  box-shadow: none !important; gap: 2px !important;
+  text-decoration: none !important; max-width: 96px !important;
+ }
+ #lararvy .lesson .moment-inner-links .resource-chip .resource-icon {
+  background: transparent !important; border: 0 !important;
+  border-radius: 0 !important; box-shadow: none !important;
+  width: 25px !important; height: 25px !important;
+  min-width: 25px !important; font-size: 20px !important;
+ }
+ #lararvy .lesson .moment-inner-links .resource-chip.youtube .resource-icon { color: #d7192d !important; }
+ #lararvy .lesson .moment-inner-links .resource-chip.pdf .resource-icon { color: #c91e31 !important; }
+ #lararvy .lesson .moment-inner-links .resource-chip.pptx .resource-icon,
+ #lararvy .lesson .moment-inner-links .resource-chip.powerpoint .resource-icon { color: #c74c0b !important; }
+ #lararvy .lesson .moment-inner-links .resource-chip.word .resource-icon { color: #155ac7 !important; }
+ #lararvy .lesson .moment-inner-links .resource-chip.excel .resource-icon { color: #087f3c !important; }
+ #lararvy .lesson .moment-inner-links .resource-chip .resource-label {
+  display: block; font-size: 10px; font-weight: 650;
+  color: #202020 !important; white-space: nowrap; max-width: 96px;
+  overflow: hidden; text-overflow: ellipsis; text-align: center;
+ }
+ #lararvy .lesson .moment-inner-links .topic-link-editor > summary,
+ #lararvy .lesson .moment-inner-links .lesson-bare-link {
+  background: transparent !important; border: 0 !important;
+  box-shadow: none !important; color: #494949 !important;
+ }
+}
