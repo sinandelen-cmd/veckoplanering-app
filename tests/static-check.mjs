@@ -305,8 +305,9 @@ assert.match(app, /function publicDemoWeek42\(\)/)
 assert.match(app, /\/elev\/demo-vecka-42/)
 assert.match(app, /setStudentPlan\(publicDemoWeek42\(\)\)/)
 
-assert.match(app, /className="calendar-month-row"/)
-assert.match(app, /className="calendar-month-section"/)
+assert.match(app, /className="calendar-chapter-list"/)
+assert.match(app, /className="calendar-full-week-row"/)
+assert.match(app, /<LessonDetails week=\{week\} entryType=\{entryType\} lessonDisplay="dag-och-lektion" \/>/)
 
 // Kollegieinbjudan skjuts upp till en separat release utan databasmigrationer.
 assert.match(app, /false && teacherTab === "new" && shareOpen/)
@@ -324,9 +325,9 @@ assert.doesNotMatch(app, /<div className="a4-demo-controls">/)
 
 assert.match(app, /function ImportantDatesForWeek/)
 
-assert.match(css, /\.calendar-month-row\{[^}]*overflow-x:auto/)
+assert.match(css, /#lararvy \.calendar-chapter-list\{[^}]*flex-direction:column/)
 
-assert.match(app, /className="calendar-delete-week"/)
+assert.match(app, /className="calendar-delete-week danger"/)
 assert.match(app, /onDeleteWeek=\{weekStart =>/)
 assert.match(app, /Vill du radera vecka/)
 
