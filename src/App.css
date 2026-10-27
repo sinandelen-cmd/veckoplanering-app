@@ -4302,3 +4302,19 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 @media print {
  .student-heading-print{display:none!important}
 }
+
+/* Resurslänkar: kompakt läsläge och redigering vid behov. */
+.topic-links{display:flex;align-items:flex-start;flex-wrap:wrap;gap:6px}
+.topic-link.topic-link-compact{display:inline-flex;align-items:center;flex-wrap:wrap;gap:5px;min-width:0;margin:0}
+.topic-link-compact .resource-chip{display:inline-flex;align-items:center;gap:5px;max-width:min(100%,360px);min-height:32px;padding:5px 9px;border-radius:8px;font-size:12px;text-decoration:none;overflow-wrap:anywhere}
+.topic-link-editor{position:relative;min-width:0}
+.topic-link-editor>summary{list-style:none;cursor:pointer;border:1px solid #dbe5e2;border-radius:7px;background:#fff;padding:6px 8px;font-size:12px;min-height:32px;box-sizing:border-box}
+.topic-link-editor>summary::-webkit-details-marker{display:none}
+.topic-link-editor[open]{flex-basis:100%}
+.topic-link-editor-fields{display:flex;flex-wrap:wrap;align-items:end;gap:8px;padding:10px;background:#fff;border:1px solid #dbe5e2;border-radius:9px;margin-top:5px}
+.topic-link-editor-fields label{display:flex;flex-direction:column;gap:4px;font-size:12px;flex:1 1 180px;min-width:0}
+.topic-link-editor-fields input{width:100%;min-width:0;box-sizing:border-box}
+.topic-link-editor-fields .remove-small{min-height:34px}
+.topic-link-compact :is(summary,a,button):focus-visible{outline:2px solid #24554d;outline-offset:2px}
+@media(max-width:650px){.topic-link-editor>summary{min-height:40px;padding:10px}.topic-link-compact .resource-chip{min-height:40px}.topic-link-editor-fields label{flex-basis:100%}}
+@media print{.topic-link-editor{display:none!important}}
