@@ -1,0 +1,7 @@
+/* Varje vecka har en sammanhängande rad: vecka, lektion 1, 2, 3 ... */
+.reference-calendar-grid{grid-template-columns:80px repeat(var(--calendar-lesson-columns,5),minmax(220px,1fr))!important;grid-auto-flow:row!important;min-width:max-content!important}
+.reference-calendar-grid>.reference-calendar-weekday{min-width:220px!important}
+.reference-calendar-grid>.reference-calendar-weekday:first-child{min-width:80px!important}
+.reference-calendar-grid>.reference-calendar-cell{width:220px!important;min-width:220px!important}
+.reference-calendar-grid>.reference-calendar-weeknumber{width:80px!important;min-width:80px!important}
+@media(min-width:1800px){.reference-calendar-grid>.reference-calendar-cell{width:clamp(220px,18vw,390px)!important}.reference-calendar-grid>.reference-calendar-weekday:not(:first-child){min-width:clamp(220px,18vw,390px)!important}}
