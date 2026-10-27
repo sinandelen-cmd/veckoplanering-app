@@ -2051,11 +2051,11 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           {false && teacherTab === "arsplan" && <><span aria-hidden="true">›</span><span aria-current="page">{plan.title?.trim() || "Ny planering"}</span></>}
           {false && teacherTab === "new" && <><span aria-hidden="true">›</span><span aria-current="page">Ny planering</span></>}
         </nav>
-        {teacherTab !== "bibliotek" && <h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Startsida" : (plan.title?.trim() || "Ny planering")}</h1>}
+        {teacherTab !== "bibliotek" && teacherTab !== "arsplan" && <h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Startsida" : (plan.title?.trim() || "Ny planering")}</h1>}
         {teacherTab !== 'bibliotek' && teacherTab !== 'arsplan' && <p className="muted">{session.user.email}</p>}
         {selectedId && teacherTab === 'arsplan' && <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:16,flexWrap:'wrap',marginTop:10}}>
           <div><p style={{margin:'0 0 4px',color:'#526a81'}}>Grundplanering</p><strong style={{fontSize:'clamp(1.3rem,3vw,2rem)'}}>{plan.subject || plan.title}</strong>{(plan.textbook || plan.schoolYear) && <p style={{margin:'5px 0 0',color:'#526a81'}}>{[plan.textbook,plan.schoolYear].filter(Boolean).join(' · ')}</p>}</div>
-          <div style={{minWidth:110,textAlign:'center',padding:'10px 18px',borderRadius:16,background:'#edf6ff',border:'1px solid #d5e6f7'}}><div style={{fontSize:12,fontWeight:750,letterSpacing:'.09em',color:'#526a81'}}>{plan.course ? 'KURS' : 'ÅRSKURS'}</div><div style={{fontSize:'clamp(1.5rem,3vw,2.3rem)',fontWeight:850,color:'#234e75'}}>{plan.course || plan.grade || '—'}</div></div>
+          <div style={{minWidth:110,textAlign:'center',padding:'10px 18px',borderRadius:16,background:'#edf6ff',border:'1px solid #d5e6f7'}}><div style={{fontSize:12,fontWeight:750,letterSpacing:'.09em',color:'#526a81'}}>{['gymnasieskola','anpassad-gymnasieskola','komvux'].includes(String(plan.schoolForm || '').toLocaleLowerCase('sv-SE')) ? 'KURS' : 'ÅRSKURS'}</div><div style={{fontSize:'clamp(1.5rem,3vw,2.3rem)',fontWeight:850,color:'#234e75'}}>{['gymnasieskola','anpassad-gymnasieskola','komvux'].includes(String(plan.schoolForm || '').toLocaleLowerCase('sv-SE')) ? (plan.course || plan.grade || '—') : (plan.grade || plan.course || '—')}</div></div>
         </div>}
 
       </div>
