@@ -287,8 +287,8 @@ assert.match(app, /Elevvy/)
 assert.match(app, /Redigera och importera underlag/)
 
 // Tillfälligt A4-demoinnehåll får inte följa med när läraren byter planering.
-assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(true\); setPreviewStudents\(false\); setA4Demo\(false\); setStatus\(className \?/, 'Sparad planering ska öppnas i kalendervyn och A4-demot nollställas')
-assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(true\); setPreviewStudents\(false\); setA4Demo\(false\); setStatus\(className \?/, 'Sparad planering ska öppnas i kalendervyn och A4-demot nollställas')
+assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(false\); setEditingClassView\(className \|\| ""\); setPreviewStudents\(false\); setA4Demo\(false\); setStatus\(className \?/, 'Sparad planering ska öppna klassvyn och nollställa A4-demot')
+assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(false\); setEditingClassView\(className \|\| ""\); setPreviewStudents\(false\); setA4Demo\(false\); setStatus\(className \?/, 'Sparad planering ska öppna klassvyn och nollställa A4-demot')
 
 assert.match(app, /function insertExampleWeek\(\)/)
 
