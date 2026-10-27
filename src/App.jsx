@@ -2587,6 +2587,25 @@ function AnnualApp() {
   const isAdmin = session?.user?.id === 'fa85f509-bf1c-43c4-bc82-78777232a339'
 
   useEffect(() => {
+    if (teacherTab !== "arsplan") return undefined
+    const updateHeight = () => {
+      const bar = document.querySelector('#lararvy .teacher-year-review-bar')
+      const height = bar ? Math.ceil(bar.getBoundingClientRect().height) : 0
+      document.documentElement.style.setProperty('--teacher-review-bar-height', height + 'px')
+    }
+    updateHeight()
+    const observer = new ResizeObserver(updateHeight)
+    const bar = document.querySelector('#lararvy .teacher-year-review-bar')
+    if (bar) observer.observe(bar)
+    window.addEventListener('resize', updateHeight)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', updateHeight)
+      document.documentElement.style.removeProperty('--teacher-review-bar-height')
+    }
+  }, [teacherTab, session])
+
+  useEffect(() => {
     const header = document.querySelector('#lararvy header.topbar:has(>.planning-header-toolbar)')
     if (!header) return undefined
     const updateOffset = () => {
