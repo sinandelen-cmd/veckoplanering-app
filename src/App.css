@@ -5232,3 +5232,42 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  }
  #lararvy .lesson .topic-links .lesson-bare-link{color:#8b5cf6!important;font-size:18px!important}
 }
+
+
+/* Momentkort: länkar och momentåtgärder hålls inne i den gröna rutan. */
+@media screen {
+ #lararvy .lesson .topic-grid>.topic-name{
+  display:flex!important;
+  flex-direction:column!important;
+  min-height:125px!important;
+  align-self:stretch!important;
+  box-sizing:border-box!important;
+ }
+ #lararvy .lesson .topic-grid>.topic-name>.moment-inner-links{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  gap:5px!important;
+  margin-top:auto!important;
+  padding-top:9px!important;
+  width:100%!important;
+ }
+ #lararvy .lesson .topic-grid>.topic-name>.moment-inner-actions{
+  display:flex!important;
+  justify-content:flex-end!important;
+  align-items:center!important;
+  gap:8px!important;
+  margin-top:6px!important;
+  width:100%!important;
+ }
+ #lararvy .lesson .topic-grid>.topic-name>.moment-inner-actions button{
+  position:static!important;
+  margin:0!important;
+  min-width:26px!important;
+  min-height:26px!important;
+  padding:3px 6px!important;
+  border-radius:7px!important;
+ }
+ #lararvy .lesson .topic-grid>.topic-name>.moment-inner-actions .lesson-bare-add{color:#008e51!important;background:#e0f7e9!important}
+ #lararvy .lesson .topic-grid>.topic-name>.moment-inner-actions .lesson-bare-remove{color:#d92e42!important;background:#ffebee!important}
+}
