@@ -4870,3 +4870,31 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .teacher-chapter-section>.chapter-heading{
  box-shadow:0 -110px 0 0 #fff,0 3px 8px rgba(28,44,52,.10)!important;
 }
+
+/* Sticky kapitel: maskera området ovanför rubriken och återställ kapitelns egna färger. */
+#lararvy .teacher-chapter-section>.chapter-heading{
+ position:sticky!important;
+ top:calc(var(--teacher-review-sticky-top,0px) + 50px)!important;
+ z-index:100!important;
+ isolation:isolate!important;
+ background-image:none!important;
+ box-shadow:0 2px 5px rgba(25,40,50,.10)!important;
+}
+#lararvy .teacher-chapter-section>.chapter-heading::before{
+ content:""!important;
+ position:absolute!important;
+ left:-2px!important;right:-2px!important;
+ top:-85px!important;height:85px!important;
+ background:#fff!important;
+ border-radius:0!important;
+ z-index:-1!important;
+ pointer-events:none!important;
+}
+#lararvy .teacher-chapter-section>.chapter-heading.chapter-tone-0{background-color:#cfe3ff!important;color:#162d49!important;border-color:#b7d5f5!important}
+#lararvy .teacher-chapter-section>.chapter-heading.chapter-tone-1{background-color:#e3d6fa!important;color:#442879!important;border-color:#d1b9f1!important}
+#lararvy .teacher-chapter-section>.chapter-heading.chapter-tone-2{background-color:#cceee4!important;color:#185944!important;border-color:#afe0d1!important}
+#lararvy .teacher-chapter-section>.chapter-heading.chapter-tone-3{background-color:#ffe3c5!important;color:#75401d!important;border-color:#f0cfa6!important}
+@media(max-width:650px){
+ #lararvy .teacher-chapter-section>.chapter-heading{top:calc(var(--teacher-review-sticky-top,0px) + 82px)!important}
+ #lararvy .teacher-chapter-section>.chapter-heading::before{top:-110px!important;height:110px!important}
+}
