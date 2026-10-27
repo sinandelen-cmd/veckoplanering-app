@@ -2590,7 +2590,7 @@ function AnnualApp() {
       window.removeEventListener('scroll', updateOffset)
       document.documentElement.style.removeProperty('--teacher-review-sticky-top')
     }
-  }, [session, selectedId, teacherTab, calendarOpen])
+  }, [session])
 
   useEffect(() => {
     if (!session?.user?.id) { setAccess(null); setAccessLoading(false); return }
