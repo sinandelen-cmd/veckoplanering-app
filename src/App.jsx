@@ -2573,6 +2573,24 @@ function AnnualApp() {
   const isAdmin = session?.user?.id === 'fa85f509-bf1c-43c4-bc82-78777232a339'
 
   useEffect(() => {
+    const header = document.querySelector('#lararvy header.topbar:has(>.planning-header-toolbar)')
+    if (!header) return undefined
+    const updateOffset = () => {
+      const rect = header.getBoundingClientRect()
+      document.documentElement.style.setProperty('--teacher-review-sticky-top', Math.max(0, Math.ceil(rect.height)) + 'px')
+    }
+    updateOffset()
+    const observer = new ResizeObserver(updateOffset)
+    observer.observe(header)
+    window.addEventListener('resize', updateOffset)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', updateOffset)
+      document.documentElement.style.removeProperty('--teacher-review-sticky-top')
+    }
+  }, [session, selectedId, teacherTab, calendarOpen])
+
+  useEffect(() => {
     if (!session?.user?.id) { setAccess(null); setAccessLoading(false); return }
     let cancelled = false
     setAccessLoading(true)
