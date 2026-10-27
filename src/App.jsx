@@ -835,10 +835,16 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   const previewClassSelector = preview && !hideSelector && plan?.classGroups?.length>0 && <div className="student-preview-classbar"><div className="student-preview-class-buttons">{plan.classGroups.map(g=><button key={g.name} type="button" className={previewClass===g.name?'active':''} onClick={()=>setPreviewClass(g.name)}>🏫 {g.name}</button>)}</div><button type="button" className="student-class-copy-link" aria-label={linkCopied ? "Elevlänken kopierad" : "Kopiera elevlänk för "+(previewClass || "grundplaneringen")} title={linkCopied ? "Elevlänken kopierad" : "Kopiera elevlänk för "+(previewClass || "grundplaneringen")} disabled={!plan?.published||!plan?.publicSlug} onClick={async()=>{const url=window.location.origin+'/elev/'+encodeURIComponent(plan.publicSlug)+(previewClass?'?klass='+encodeURIComponent(previewClass):'');try{await navigator.clipboard.writeText(url);setLinkCopied(true)}catch{window.prompt('Kopiera elevlänk',url)}}}><span aria-hidden="true">{linkCopied?'✓':'🔗'}</span></button></div>
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
   return <>{previewClassSelector}<main style={planThemeStyle(plan)} className={`shell student-shell ${printPage === null ? "student-screen-view" : "student-print-page"} ${printPage !== null && visibleWeeks.length === 1 ? "student-print-spacious" : ""}`}>
-    {printPage === null && <div className="student-print-action"><button type="button" className="secondary" onClick={() => window.print()}>🖨️ Skriv ut elevvyn</button></div>}
-    <header className="student-header student-header-simple" style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:16,flexWrap:'wrap',marginBottom:20}}>
-      <div><p style={{margin:'0 0 4px',color:'#526a81'}}>Din planering</p><h1 style={{fontSize:'clamp(2rem,5vw,3.6rem)',fontWeight:900,lineHeight:1.12,margin:0}}>{plan.subject || plan.title}</h1>{plan.schoolYear && <p style={{margin:'8px 0 0',color:'#526a81'}}>Läsåret {plan.schoolYear}</p>}</div>
-      {selectedClass && <div style={{flexShrink:0,minWidth:105,textAlign:'center',padding:'12px 20px',borderRadius:18,background:'#edf6ff',border:'1px solid #d5e6f7'}}><div style={{fontSize:13,fontWeight:750,letterSpacing:'.1em',color:'#526a81'}}>KLASS</div><div style={{fontSize:'clamp(2rem,5vw,3.4rem)',fontWeight:900,lineHeight:1.1,color:'#234e75'}}>{selectedClass.name}</div></div>}
+
+    <header className="student-header student-header-simple">
+      <div className="student-heading-title">
+        <h1>{plan.subject || plan.title}</h1>
+        {plan.schoolYear && <span className="student-heading-year">{plan.schoolYear}</span>}
+      </div>
+      <div className="student-heading-actions">
+        {selectedClass && <div className="student-class-label"><span>KLASS</span><strong>{selectedClass.name}</strong></div>}
+        {printPage === null && <button type="button" className="secondary student-heading-print" onClick={() => window.print()}>🖨️ <span>Skriv ut</span></button>}
+      </div>
     </header>
     {studentWeeks.length === 0 && <p className="card empty" role="status">{plan.autoReleaseWeeks ? "Ingen vecka är publicerad för elever ännu. Nästa vecka visas automatiskt när dess måndag börjar." : "Det finns inga synliga veckor i den här planeringen ännu."}</p>}
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
@@ -2884,10 +2890,16 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
               const label = typeof link === 'string' ? resourceInfo(link)?.label || '' : link.label || ''
               const info = resourceInfo(url)
               const changeLink = next => updateTopic({ ...topic, links: links.map((item, index) => index === k ? next : item) })
-              return <div className="topic-link" key={k}>
-                {editable && <><input aria-label="Länkens namn" placeholder="Namn" value={label} onChange={e => changeLink({ url, label: e.target.value })} /><input aria-label="Länkadress" placeholder="https://..." value={url} onChange={e => changeLink({ url: e.target.value, label })} /></>}
+              return <div className="topic-link topic-link-compact" key={k}>
                 {info && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon">{info.icon}</span>{label || info.label}<span className="print-resource-url">{url}</span></a>}
-                {editable && <button type="button" className="remove-small" onClick={() => updateTopic({ ...topic, links: links.filter((_, index) => index !== k) })}>×</button>}
+                {editable && <details className="topic-link-editor" open={!url.trim()}>
+                  <summary aria-label={`Redigera länk ${k + 1}`}>✎ <span>Redigera</span></summary>
+                  <div className="topic-link-editor-fields">
+                    <label>Namn<input aria-label="Länkens namn" placeholder="Länkens namn" value={label} onChange={e => changeLink({ url, label: e.target.value })} /></label>
+                    <label>Webbadress<input aria-label="Länkadress" placeholder="https://..." value={url} onChange={e => changeLink({ url: e.target.value, label })} /></label>
+                    <button type="button" className="remove-small" aria-label={`Ta bort länk ${k + 1}`} onClick={() => updateTopic({ ...topic, links: links.filter((_, index) => index !== k) })}>× Ta bort</button>
+                  </div>
+                </details>}
               </div>
             })}
             {editable && <button type="button" className="add-detail" onClick={() => updateTopic({ ...topic, links: [...links, { label: '', url: '' }] })}>+ Länk</button>}

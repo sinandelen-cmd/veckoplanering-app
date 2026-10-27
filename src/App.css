@@ -4124,45 +4124,197 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  .topbar:has(.planning-inline-navigation) .planning-inline-navigation .planning-home-navigation button{padding:4px 6px!important;font-size:11px!important}
 }
 
-/* Små, synliga knappar: inga verktyg får klippas bort. */
+/* Kompakt navigering utan att förlora klickytor eller dölja funktioner. */
 .topbar:has(.planning-inline-navigation){
- flex-wrap:wrap!important;gap:4px 8px!important;
- overflow:visible!important;max-height:none!important;
- padding:5px 9px!important
+  flex-wrap:wrap!important;
+  column-gap:8px!important;
+  row-gap:5px!important;
+  max-height:none!important;
+  overflow:visible!important;
+  padding:5px 9px!important;
 }
 .topbar:has(.planning-inline-navigation) .planning-header-toolbar{
- min-width:0!important;flex:1 1 auto!important;width:auto!important
+  min-width:0!important;
+  width:auto!important;
+  flex:1 1 420px!important;
 }
 .topbar:has(.planning-inline-navigation) #kopplade-klasser>.card,
 .topbar:has(.planning-inline-navigation) .class-mini-row,
 .topbar:has(.planning-inline-navigation) .class-mini-chips{
- flex-wrap:wrap!important;overflow:visible!important;max-width:none!important
+  flex-wrap:wrap!important;
+  overflow:visible!important;
+  max-width:none!important;
 }
 .topbar:has(.planning-inline-navigation) .class-mini-chip,
 .topbar:has(.planning-inline-navigation) .class-mini-add,
 .topbar:has(.planning-inline-navigation) .class-mini-schema,
 .topbar:has(.planning-inline-navigation) .planning-print-action,
-.topbar:has(.planning-inline-navigation) .planning-inline-navigation button{
- font-size:11px!important;line-height:1.15!important;
- padding:4px 6px!important;min-height:26px!important;
- border-radius:7px!important;white-space:nowrap!important
+.topbar:has(.planning-inline-navigation) .planning-inline-navigation button,
+.topbar:has(.planning-inline-navigation) .class-toolbar-more>summary{
+  box-sizing:border-box!important;
+  min-height:34px!important;
+  padding:6px 9px!important;
+  font-size:12px!important;
+  line-height:1.2!important;
+  border-radius:7px!important;
+  white-space:nowrap!important;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
 }
 .topbar:has(.planning-inline-navigation) .class-mini-row{gap:4px!important}
-.topbar:has(.planning-inline-navigation) .class-mini-chips{gap:3px!important}
-.topbar:has(.planning-inline-navigation) .class-toolbar-more>summary{
- font-size:11px!important;line-height:1.15!important;padding:4px 6px!important
-}
-.topbar:has(.planning-inline-navigation) .planning-grade-badge{padding:2px 5px!important}
+.topbar:has(.planning-inline-navigation) .class-mini-chips{gap:4px!important}
+.topbar:has(.planning-inline-navigation) .planning-grade-badge{padding:3px 6px!important}
 .topbar:has(.planning-inline-navigation) .teacher-header-identity strong{font-size:15px!important}
-@media(max-width:1350px){
- .topbar:has(.planning-inline-navigation) .planning-header-toolbar{
-  order:1!important;flex:1 1 auto!important;width:auto!important
- }
- .topbar:has(.planning-inline-navigation) .planning-print-action{order:2!important}
- .topbar:has(.planning-inline-navigation) .planning-inline-navigation{order:3!important}
+.topbar:has(.planning-inline-navigation) :is(button,summary):focus-visible{
+  outline:2px solid #24554d!important;
+  outline-offset:2px!important;
+}
+@media(max-width:900px){
+  .topbar:has(.planning-inline-navigation) .planning-header-toolbar{
+    order:2!important;
+    flex:1 1 100%!important;
+  }
+  .topbar:has(.planning-inline-navigation) .planning-print-action{order:3!important}
+  .topbar:has(.planning-inline-navigation) .planning-inline-navigation{
+    order:4!important;
+    margin-left:0!important;
+  }
 }
 @media(max-width:650px){
- .topbar:has(.planning-inline-navigation){max-height:none!important;overflow:visible!important}
- .topbar:has(.planning-inline-navigation) .class-mini-chips{overflow:visible!important}
- .topbar:has(.planning-inline-navigation) .planning-header-toolbar{flex-basis:100%!important}
+  .topbar:has(.planning-inline-navigation) .teacher-header-identity{
+    flex:1 1 auto!important;
+  }
+  .topbar:has(.planning-inline-navigation) .planning-header-toolbar{
+    flex-basis:100%!important;
+  }
+  .topbar:has(.planning-inline-navigation) .planning-inline-navigation,
+  .topbar:has(.planning-inline-navigation) .planning-inline-navigation .planning-home-navigation{
+    width:100%!important;
+    flex-wrap:wrap!important;
+    justify-content:flex-start!important;
+  }
+  .topbar:has(.planning-inline-navigation) .class-mini-chip,
+  .topbar:has(.planning-inline-navigation) .class-mini-add,
+  .topbar:has(.planning-inline-navigation) .class-mini-schema,
+  .topbar:has(.planning-inline-navigation) .planning-print-action,
+  .topbar:has(.planning-inline-navigation) .planning-inline-navigation button,
+  .topbar:has(.planning-inline-navigation) .class-toolbar-more>summary{
+    min-height:40px!important;
+    padding:8px 10px!important;
+    font-size:12px!important;
+  }
+  #lararvy .topbar:has(.planning-inline-navigation) .planning-print-action{
+    display:inline-flex!important;
+  }
 }
+
+/* Elevvyn: samma kompakta, fastsatta rubrik vid scrollning. */
+@media screen {
+  .student-screen-view.student-shell {
+    padding-top:0!important;
+  }
+  .student-screen-view .student-header-simple {
+    position:sticky!important;
+    top:0!important;
+    z-index:45!important;
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:10px!important;
+    min-height:54px!important;
+    margin:0 0 10px!important;
+    padding:7px 12px!important;
+    background:#fffdf9!important;
+    border-bottom:1px solid #e2e9e7!important;
+    box-shadow:0 2px 7px rgba(25,45,42,.08)!important;
+  }
+  .student-screen-view .student-header-simple > div:first-child p {display:none!important}
+  .student-screen-view .student-header-simple h1 {
+    font-size:clamp(18px,2vw,23px)!important;
+    line-height:1.2!important;
+  }
+  .student-screen-view .student-header-simple > div:last-child:not(:first-child){
+    min-width:0!important;
+    padding:4px 9px!important;
+    border-radius:8px!important;
+  }
+  .student-screen-view .student-header-simple > div:last-child:not(:first-child) > div:first-child{
+    font-size:10px!important;
+    letter-spacing:.05em!important;
+  }
+  .student-screen-view .student-header-simple > div:last-child:not(:first-child) > div:last-child{
+    font-size:22px!important;
+    line-height:1.15!important;
+  }
+  .student-screen-view .student-print-action{
+    position:sticky!important;
+    top:0!important;
+    z-index:46!important;
+    display:flex!important;
+    justify-content:flex-end!important;
+    margin:0!important;
+    padding:4px 12px!important;
+    background:#fffdf9!important;
+  }
+  .student-screen-view .student-print-action button{
+    min-height:34px!important;
+    padding:5px 10px!important;
+    font-size:12px!important;
+  }
+  @media(max-width:650px){
+    .student-screen-view .student-header-simple{padding:6px 8px!important;min-height:48px!important}
+    .student-screen-view .student-header-simple h1{font-size:18px!important}
+    .student-screen-view .student-header-simple > div:last-child:not(:first-child) > div:last-child{font-size:19px!important}
+    .student-screen-view .student-print-action button{min-height:40px!important}
+  }
+}
+
+/* Elevrubrik: en enda låg, fast rad med klass och utskrift. */
+@media screen {
+ .student-screen-view.student-shell{overflow:visible!important}
+ .student-screen-view .student-header-simple{
+  position:sticky!important;top:0!important;z-index:70!important;
+  display:flex!important;align-items:center!important;justify-content:space-between!important;
+  flex-wrap:nowrap!important;gap:8px!important;
+  min-height:48px!important;padding:6px 10px!important;margin:0 0 10px!important;
+  background:#fffdf9!important;border-bottom:1px solid #e2e9e7!important;
+  box-shadow:0 2px 8px #263f481c!important;
+ }
+ .student-screen-view .student-heading-title{display:flex;align-items:baseline;gap:8px;min-width:0}
+ .student-screen-view .student-heading-title h1{font-size:19px!important;line-height:1.2!important;margin:0!important}
+ .student-screen-view .student-heading-year{font-size:11px;color:#526a81;white-space:nowrap}
+ .student-screen-view .student-heading-actions{display:flex;align-items:center;gap:7px;flex-shrink:0}
+ .student-screen-view .student-class-label{display:flex;align-items:center;gap:5px;min-width:0;padding:4px 8px;border:1px solid #d5e6f7;border-radius:7px;background:#edf6ff;color:#234e75}
+ .student-screen-view .student-class-label span{font-size:9px;font-weight:750;letter-spacing:.05em}
+ .student-screen-view .student-class-label strong{font-size:18px;line-height:1.1}
+ .student-screen-view .student-heading-print{font-size:12px!important;min-height:34px!important;padding:5px 9px!important;white-space:nowrap}
+ @media(max-width:650px){
+  .student-screen-view .student-header-simple{min-height:48px!important;padding:5px 7px!important}
+  .student-screen-view .student-heading-title h1{font-size:17px!important}
+  .student-screen-view .student-heading-year{display:none}
+  .student-screen-view .student-class-label{padding:5px 6px}
+  .student-screen-view .student-class-label strong{font-size:16px}
+  .student-screen-view .student-heading-print{min-height:40px!important;padding:7px 8px!important}
+ }
+}
+@media print {
+ .student-heading-print{display:none!important}
+}
+
+/* Resurslänkar: kompakt läsläge och redigering vid behov. */
+.topic-links{display:flex;align-items:flex-start;flex-wrap:wrap;gap:6px}
+.topic-link.topic-link-compact{display:inline-flex;align-items:center;flex-wrap:wrap;gap:5px;min-width:0;margin:0}
+.topic-link-compact .resource-chip{display:inline-flex;align-items:center;gap:5px;max-width:min(100%,360px);min-height:32px;padding:5px 9px;border-radius:8px;font-size:12px;text-decoration:none;overflow-wrap:anywhere}
+.topic-link-editor{position:relative;min-width:0}
+.topic-link-editor>summary{list-style:none;cursor:pointer;border:1px solid #dbe5e2;border-radius:7px;background:#fff;padding:6px 8px;font-size:12px;min-height:32px;box-sizing:border-box}
+.topic-link-editor>summary::-webkit-details-marker{display:none}
+.topic-link-editor[open]{flex-basis:100%}
+.topic-link-editor-fields{display:flex;flex-wrap:wrap;align-items:end;gap:8px;padding:10px;background:#fff;border:1px solid #dbe5e2;border-radius:9px;margin-top:5px}
+.topic-link-editor-fields label{display:flex;flex-direction:column;gap:4px;font-size:12px;flex:1 1 180px;min-width:0}
+.topic-link-editor-fields input{width:100%;min-width:0;box-sizing:border-box}
+.topic-link-editor-fields .remove-small{min-height:34px}
+.topic-link-compact :is(summary,a,button):focus-visible{outline:2px solid #24554d;outline-offset:2px}
+@media(max-width:650px){.topic-link-editor>summary{min-height:40px;padding:10px}.topic-link-compact .resource-chip{min-height:40px}.topic-link-editor-fields label{flex-basis:100%}}
+@media print{.topic-link-editor{display:none!important}}

@@ -267,7 +267,7 @@ assert.match(css, /\.teacher-tab-panel\[hidden\] \{ display: none !important; \}
 assert.match(app, /if \(id === 'elevvy'\) \{ setPreviewStudents\(true\); setCalendarOpen\(false\) \}/)
 assert.doesNotMatch(app, /className="teacher-tabs"/, 'Dubbla lärarflikar får inte finnas')
 assert.doesNotMatch(app, /<strong>Sparstatus:<\/strong>/, 'Sparstatus ska inte upprepas')
-assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(true\); setPreviewStudents\(false\); setA4Demo\(false\); setStatus\(className \?/, 'Sparad planering ska öppnas i kalendervyn och A4-demot nollställas')
+assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(false\); setEditingClassView\(className \|\| ""\); setPreviewStudents\(false\); setA4Demo\(false\); setStatus\(className \?/, 'Sparad planering ska öppna rätt klassvy och nollställa A4-demot')
 
 // Huvudmenyn ska undvika dubblering av Mina planeringar på startsidan.
 const nav = fs.readFileSync(new URL('../src/Navigation.jsx', import.meta.url), 'utf8')
@@ -280,15 +280,15 @@ assert.match(app, /onOpenPlan=\{loadPlan\}/)
 assert.match(css, /\.planning-layout/)
 
 assert.doesNotMatch(nav, /sidebar-link[^\n]*>Lärarvy/)
-assert.match(nav, /planning-top-navigation/)
-assert.match(nav, /top-navigation-link[^\n]*Lärarvy<\/button>/)
-assert.match(nav, /top-navigation-link[^\n]*Kalendervy<\/button>/)
-assert.match(nav, /top-navigation-link[^\n]*Elevvy<\/button>/)
+assert.match(nav, /planning-home-navigation/)
+assert.match(app, /Lärarvy/)
+assert.match(app, /Kalendervy/)
+assert.match(app, /Elevvy/)
 assert.match(app, /Redigera och importera underlag/)
 
 // Tillfälligt A4-demoinnehåll får inte följa med när läraren byter planering.
-assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(true\); setPreviewStudents\(false\); setA4Demo\(false\); setStatus\(className \?/, 'Sparad planering ska öppnas i kalendervyn och A4-demot nollställas')
-assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(true\); setPreviewStudents\(false\); setA4Demo\(false\); setStatus\(className \?/, 'Sparad planering ska öppnas i kalendervyn och A4-demot nollställas')
+assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(false\); setEditingClassView\(className \|\| ""\); setPreviewStudents\(false\); setA4Demo\(false\); setStatus\(className \?/, 'Sparad planering ska öppna klassvyn och nollställa A4-demot')
+assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(false\); setEditingClassView\(className \|\| ""\); setPreviewStudents\(false\); setA4Demo\(false\); setStatus\(className \?/, 'Sparad planering ska öppna klassvyn och nollställa A4-demot')
 
 assert.match(app, /function insertExampleWeek\(\)/)
 
