@@ -4669,3 +4669,23 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  z-index:95!important;isolation:isolate;
  background:#fff!important;box-shadow:0 2px 7px rgba(0,0,0,.10)!important;
 }
+
+/* Årsplanering: fäll ihop samtliga veckor eller enskilda veckor. */
+#lararvy .teacher-year-review-bar .teacher-all-weeks-toggle{
+ min-height:30px!important;padding:4px 9px!important;margin:0!important;
+ border-radius:7px!important;font-size:11px!important;font-weight:700!important;
+ white-space:nowrap!important;background:#e8f4ef!important;color:#175c48!important;
+ border:1px solid #b8d9cd!important;
+}
+#lararvy .teacher-week-collapse-toggle{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ min-height:32px!important;padding:5px 10px!important;margin:0 0 8px!important;
+ border-radius:7px!important;background:#e8f4ef!important;color:#175c48!important;
+ border:1px solid #b8d9cd!important;font-size:12px!important;font-weight:700!important;
+ cursor:pointer!important;
+}
+#lararvy .teacher-week-collapse-toggle:hover,
+#lararvy .teacher-year-review-bar .teacher-all-weeks-toggle:hover{background:#d3e9de!important}
+#lararvy .teacher-week-collapse-toggle:focus-visible,
+#lararvy .teacher-year-review-bar .teacher-all-weeks-toggle:focus-visible{outline:3px solid #79c5a7!important;outline-offset:2px!important}
+#lararvy .teacher-week-collapsible-content{min-width:0}
