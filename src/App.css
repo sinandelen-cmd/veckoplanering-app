@@ -4334,3 +4334,32 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  #lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-expanded .class-toolbar-actions{gap:5px!important}
  #lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-expanded :is(button,.class-schedule-help>summary,select){min-height:40px!important}
 }
+
+/* Stabil verktygsrad: konsekvent ordning, inga hoppande grupper. */
+@media screen and (min-width:1000px){
+ #lararvy .topbar:has(.planning-header-toolbar){
+  display:grid!important;
+  grid-template-columns:minmax(180px,auto) minmax(0,1fr) auto!important;
+  grid-template-rows:auto auto!important;
+  align-items:center!important;
+  gap:4px 10px!important;
+  padding:5px 10px!important;
+ }
+ #lararvy .topbar:has(.planning-header-toolbar) .teacher-header-identity{grid-column:1;grid-row:1;min-width:0!important;margin:0!important}
+ #lararvy .topbar:has(.planning-header-toolbar) .planning-inline-navigation{grid-column:2;grid-row:1;min-width:0!important;width:100%!important;margin:0!important;justify-self:stretch}
+ #lararvy .topbar:has(.planning-header-toolbar) .planning-print-action{grid-column:3;grid-row:1;justify-self:end;margin:0!important}
+ #lararvy .topbar:has(.planning-header-toolbar) .planning-header-toolbar{grid-column:1 / -1;grid-row:2;width:100%!important;flex-basis:auto!important;margin:0!important}
+ #lararvy .topbar:has(.planning-header-toolbar) #kopplade-klasser{margin:0!important}
+ #lararvy .topbar:has(.planning-header-toolbar) #kopplade-klasser>.card{padding:0!important;margin:0!important}
+ #lararvy .topbar:has(.planning-header-toolbar) .class-mini-row{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:5px!important;margin:0!important}
+ #lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-expanded{flex:1 1 auto!important}
+ #lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-expanded .class-toolbar-actions{justify-content:flex-start!important;row-gap:5px!important}
+}
+@media screen and (max-width:999px){
+ #lararvy .topbar:has(.planning-header-toolbar){display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:5px!important;padding:6px!important}
+ #lararvy .topbar:has(.planning-header-toolbar) .teacher-header-identity{order:0!important;flex:1 1 160px!important}
+ #lararvy .topbar:has(.planning-header-toolbar) .planning-inline-navigation{order:1!important;flex:1 1 100%!important;margin:0!important}
+ #lararvy .topbar:has(.planning-header-toolbar) .planning-print-action{order:2!important}
+ #lararvy .topbar:has(.planning-header-toolbar) .planning-header-toolbar{order:3!important;flex:1 1 100%!important}
+ #lararvy .topbar:has(.planning-header-toolbar) #kopplade-klasser{margin:0!important}
+}
