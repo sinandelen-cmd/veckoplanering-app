@@ -5146,3 +5146,14 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  #lararvy .calendar-month-row>.calendar-week-wrapper{padding:8px!important}
  #lararvy .calendar-month-row .calendar-week-tile.calendar-full-week{padding:10px!important}
 }
+
+/* Fullständig kalenderlista: använd samma detaljkomponenter som grundplaneringen. */
+#lararvy .calendar-chapter-list{display:flex;flex-direction:column;gap:16px;min-width:0}
+#lararvy .calendar-chapter-heading{margin:22px 0 0;padding:14px 18px;min-width:0;overflow-wrap:anywhere}
+#lararvy .calendar-full-week-row{min-width:0;width:100%;box-sizing:border-box;border:1px solid #d8dce3;border-radius:14px;padding:18px;overflow-wrap:anywhere}
+#lararvy .calendar-full-week-header{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+#lararvy .calendar-full-week-header strong{font-size:1.35rem}
+#lararvy .calendar-full-week-header label{display:inline-flex;align-items:center;gap:8px}
+#lararvy .calendar-full-week-header .calendar-delete-week{width:auto;max-width:100%;margin:0 0 0 auto}
+#lararvy .calendar-full-week-row .lesson-details{min-width:0;max-width:100%}
+@media(max-width:600px){#lararvy .calendar-full-week-row{padding:12px}#lararvy .calendar-full-week-header .calendar-delete-week{margin-left:0}}
