@@ -48,11 +48,12 @@ export function buildClassSchedule(plan, group) {
   })
 }
 
-export default function ClassSchedules({ plan, onChange, publicSlug = "", editingClassView = "", setEditingClassView, onOpenCalendar, onGoHome, onUndo, onRedo, canUndo, canRedo, onSetAllDisplayMode, allWeeksDisplayMode, weeksBusy }) {
+export default function ClassSchedules({ plan, onChange, publicSlug = "", editingClassView = "", setEditingClassView, onSelectClassPreview, onOpenCalendar, onGoHome, onUndo, onRedo, canUndo, canRedo, onSetAllDisplayMode, allWeeksDisplayMode, weeksBusy }) {
   const groups = Array.isArray(plan.classGroups) ? plan.classGroups : []
   const preserveScrollOnClassChange = (className) => {
     const top = window.scrollY
     setEditingClassView?.(className)
+    onSelectClassPreview?.(Boolean(className))
     // Avoid browser scroll anchoring jumping when the annual plan and class preview swap.
     requestAnimationFrame(() => window.scrollTo({ top, behavior: 'instant' }))
   }
@@ -110,14 +111,14 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
     <div className="class-mini-row">
       
       <div className="class-mini-chips"><button type="button" className="class-mini-chip plan-toolbar-home" onClick={onGoHome} title="Tillbaka till träddiagrammet">⌂ Startsida</button><button type="button" className={"class-mini-chip"+(!editingClassView?" active":"")} onClick={()=>preserveScrollOnClassChange("")} aria-pressed={!editingClassView}>📘 Grundplanering</button>{groups.map((g,i)=><button type="button" key={i} className={'class-mini-chip'+(editingClassView===g.name?' active':'')} aria-pressed={editingClassView===g.name} onClick={()=>{setSelected(i);preserveScrollOnClassChange(g.name);setCompare(false);setShowClassDetails(false)}}>{g.name}</button>)}
-        {groups.length>0 && <button type="button" className="class-mini-add" onClick={()=>{if(!window.confirm('Ta bort klassen '+groups[selected]?.name+'?'))return;onChange({...plan,classGroups:groups.filter((_,i)=>i!==selected)});if(editingClassView===groups[selected]?.name)setEditingClassView?.('');setSelected(0)}}>− Ta bort klass</button>}
+        
         <button type="button" className="class-mini-add" onClick={()=>setAddingClass(v=>!v)} aria-expanded={addingClass}>+ Klass</button>
       </div>
       {onOpenCalendar && <button type="button" className="class-mini-chip" onClick={onOpenCalendar}>📅 Kalendervy</button>}
       <button type="button" className="class-mini-schema" disabled={!groups.length} aria-expanded={showClassMenu} onClick={()=>{setShowClassMenu(v=>!v);setCompare(false);setShowClassDetails(false)}}>▦ Schema</button><button type="button" className="class-mini-schema" onClick={async()=>{if(!publicSlug){window.alert("Elevlänken är inte publicerad ännu. Lägg till lektionsinnehåll och kontrollera att planeringen är publicerad.");return}const url=window.location.origin+"/elev/"+encodeURIComponent(publicSlug)+(editingClassView?"?klass="+encodeURIComponent(editingClassView):"");try{await navigator.clipboard.writeText(url);window.alert("Elevlänken har kopierats:\n"+url)}catch{window.prompt("Kopiera elevlänken:",url)}}}>🔗 Elevlänk</button>
     </div>
     
-    <div className="class-toolbar-actions"><button type="button" className="secondary" disabled={!canUndo} onClick={onUndo}>↶ Ångra</button><button type="button" className="secondary" disabled={!canRedo} onClick={onRedo}>↷ Gör om</button><label className="class-bulk-visibility">Elevvisning <select aria-label="Elevvisning för alla veckor" value={allWeeksDisplayMode} disabled={weeksBusy} onChange={e=>onSetAllDisplayMode?.(e.target.value)}><option value="" disabled>Blandade inställningar</option><option value="normal">Automatisk</option><option value="extra">Visa manuellt för elever (även passerade veckor)</option><option value="hidden">Dölj för elever</option></select></label></div>
+    <details className="class-toolbar-more"><summary>⋯ Fler verktyg</summary><div className="class-toolbar-actions"><button type="button" className="secondary" disabled={!canUndo} onClick={onUndo}>↶ Ångra</button><button type="button" className="secondary" disabled={!canRedo} onClick={onRedo}>↷ Gör om</button><label className="class-bulk-visibility">Elevvisning <select aria-label="Elevvisning för alla veckor" value={allWeeksDisplayMode} disabled={weeksBusy} onChange={e=>onSetAllDisplayMode?.(e.target.value)}><option value="" disabled>Blandade inställningar</option><option value="normal">Automatisk</option><option value="extra">Visa manuellt för elever (även passerade veckor)</option><option value="hidden">Dölj för elever</option></select></label></div></details>
     {addingClass && <div className="class-mini-new"><label>Ny klass <input value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addClass();if(name.trim())setAddingClass(false)}}} placeholder="T.ex. EK26A" /></label><button type="button" disabled={!name.trim()||groups.some(g=>g.name.toLocaleLowerCase('sv')===name.trim().toLocaleLowerCase('sv'))} onClick={()=>{addClass();setAddingClass(false);setShowClassMenu(true)}}>Lägg till</button></div>}
     {unscheduledGroups.length>0 && <p role="alert" className="class-mini-warning">Välj lektionsdagar för {unscheduledGroups.map(g=>g.name).join(', ')} via Schema.</p>}
     {showClassMenu && group && <div className="class-mini-panel">
