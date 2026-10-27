@@ -836,9 +836,10 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
   return <>{previewClassSelector}<main style={planThemeStyle(plan)} className={`shell student-shell ${printPage === null ? "student-screen-view" : "student-print-page"} ${printPage !== null && visibleWeeks.length === 1 ? "student-print-spacious" : ""}`}>
     {printPage === null && <div className="student-print-action"><button type="button" className="secondary" onClick={() => window.print()}>🖨️ Skriv ut elevvyn</button></div>}
-    {!preview && <header className="student-header student-header-simple">
-      <h1 style={{ fontSize: 'clamp(2.6rem, 5vw, 4.5rem)', fontWeight: 900, lineHeight: 1.12, margin: '8px 0 24px' }}>{plan.title}</h1>
-    </header>}
+    <header className="student-header student-header-simple" style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:16,flexWrap:'wrap',marginBottom:20}}>
+      <div><p style={{margin:'0 0 4px',color:'#526a81'}}>Din planering</p><h1 style={{fontSize:'clamp(2rem,5vw,3.6rem)',fontWeight:900,lineHeight:1.12,margin:0}}>{plan.subject || plan.title}</h1>{plan.schoolYear && <p style={{margin:'8px 0 0',color:'#526a81'}}>Läsåret {plan.schoolYear}</p>}</div>
+      {selectedClass && <div style={{flexShrink:0,minWidth:105,textAlign:'center',padding:'12px 20px',borderRadius:18,background:'#edf6ff',border:'1px solid #d5e6f7'}}><div style={{fontSize:13,fontWeight:750,letterSpacing:'.1em',color:'#526a81'}}>KLASS</div><div style={{fontSize:'clamp(2rem,5vw,3.4rem)',fontWeight:900,lineHeight:1.1,color:'#234e75'}}>{selectedClass.name}</div></div>}
+    </header>
     {studentWeeks.length === 0 && <p className="card empty" role="status">{plan.autoReleaseWeeks ? "Ingen vecka är publicerad för elever ännu. Nästa vecka visas automatiskt när dess måndag börjar." : "Det finns inga synliga veckor i den här planeringen ännu."}</p>}
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
       {visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
@@ -2052,6 +2053,11 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         </nav>
         {teacherTab !== "bibliotek" && <h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Startsida" : (plan.title?.trim() || "Ny planering")}</h1>}
         {teacherTab !== 'bibliotek' && teacherTab !== 'arsplan' && <p className="muted">{session.user.email}</p>}
+        {selectedId && teacherTab === 'arsplan' && <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:16,flexWrap:'wrap',marginTop:10}}>
+          <div><p style={{margin:'0 0 4px',color:'#526a81'}}>Grundplanering</p><strong style={{fontSize:'clamp(1.3rem,3vw,2rem)'}}>{plan.subject || plan.title}</strong>{(plan.textbook || plan.schoolYear) && <p style={{margin:'5px 0 0',color:'#526a81'}}>{[plan.textbook,plan.schoolYear].filter(Boolean).join(' · ')}</p>}</div>
+          <div style={{minWidth:110,textAlign:'center',padding:'10px 18px',borderRadius:16,background:'#edf6ff',border:'1px solid #d5e6f7'}}><div style={{fontSize:12,fontWeight:750,letterSpacing:'.09em',color:'#526a81'}}>{plan.course ? 'KURS' : 'ÅRSKURS'}</div><div style={{fontSize:'clamp(1.5rem,3vw,2.3rem)',fontWeight:850,color:'#234e75'}}>{plan.course || plan.grade || '—'}</div></div>
+        </div>}
+
       </div>
       
       
