@@ -4720,3 +4720,12 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .teacher-chapter-section>.chapter-heading{display:block!important;margin:0 0 8px!important}
 #lararvy .teacher-chapter-section>.teacher-month-weeks{display:flex!important;flex-direction:column!important;gap:3px!important}
 #lararvy .teacher-chapter-section .chapter-week-group{margin:0!important}
+
+/* Veckopil och elevvisning ligger på samma rad, även när veckan är hopfälld. */
+#lararvy .teacher-week-controls{display:flex!important;align-items:center!important;gap:10px!important;flex-wrap:wrap!important;width:100%}
+#lararvy .teacher-week-controls .teacher-week-collapse-toggle{flex:0 0 34px!important;margin:0!important}
+#lararvy .teacher-week-controls .teacher-week-elevvisning{display:flex!important;align-items:center!important;gap:6px!important;padding:0!important;margin:0!important;background:transparent!important}
+#lararvy .teacher-week-controls .teacher-week-elevvisning label{display:flex!important;align-items:center!important;gap:6px!important;flex-wrap:wrap!important}
+#lararvy .teacher-week-controls .teacher-week-elevvisning select{max-width:270px!important;width:auto!important;min-width:150px!important}
+#lararvy .teacher-week-controls .week-heading-visibility{margin:0!important}
+#lararvy .teacher-collapsible-week.teacher-week-closed{display:block!important}
