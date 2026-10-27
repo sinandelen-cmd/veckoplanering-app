@@ -940,10 +940,41 @@ function nationalExamsForPlan(plan) {
   return NATIONAL_EXAMS_2026_27.filter(item => item.grade === grade && matchesSubject(item))
 }
 
+function CalendarWeekThumbnail({ week, entryType, onOpen }) {
+  const frame = useRef(null)
+  const original = useRef(null)
+  const [dimensions, setDimensions] = useState({ scale: 0.25, height: 380 })
+  useEffect(() => {
+    const resize = () => {
+      if (!frame.current || !original.current) return
+      const scale = frame.current.clientWidth / 960
+      const height = original.current.offsetHeight * scale
+      setDimensions(prev => Math.abs(prev.height - height) > 1 || Math.abs(prev.scale - scale) > 0.001 ? { scale, height } : prev)
+    }
+    resize()
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null
+    if (observer) { observer.observe(frame.current); observer.observe(original.current) }
+    window.addEventListener('resize', resize)
+    return () => { observer?.disconnect(); window.removeEventListener('resize', resize) }
+  }, [week])
+  return <button type="button" className="calendar-real-week-thumbnail" onClick={onOpen} aria-label={`Öppna vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för redigering`}>
+    <div className="calendar-real-week-label">Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}<span>Förstora ↗</span></div>
+    <div className="calendar-real-week-frame" ref={frame} style={{ height: dimensions.height }}>
+      <div className="calendar-real-week-original" ref={original} style={{ transform: `scale(${dimensions.scale})` }} aria-hidden="true" inert="">
+        <article className="calendar-inline-week" style={{ backgroundColor: weekColor(week.weekStart) }}>
+          <div className="calendar-inline-week-heading"><h2>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</h2><span>{week.chapter}</span></div>
+          <LessonDetails week={week} entryType={entryType} onChange={() => {}} />
+        </article>
+      </div>
+    </div>
+  </button>
+}
+
 function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnFirstWeek = false, embedded = false, onOpen, onClose, onUpdateWeek, onSetAllVisibility, onAddWeek, onDeleteWeek, onUndo, canUndo = false, onSave, isDirty, busy, saveStatus, onBackToPrevious, entryType = 'lektion', classGroups = [], classPlan = null, publicSlug = '', onChangeClassGroups, onImportFile, fileImportState = {phase:'idle',message:''} }) {
   // Årsöversikt i nio veckor per sida, tre kolumner och tre rader.
   const [selectedWeekIndex, setSelectedWeekIndex] = useState(null)
   const [overviewPage, setOverviewPage] = useState(0)
+  const [showOriginalCalendar, setShowOriginalCalendar] = useState(false)
   const [calendarMonth, setCalendarMonth] = useState(() => { const date = new Date(weeks[0]?.weekStart ? weeks[0].weekStart + 'T12:00:00' : Date.now()); return new Date(date.getFullYear(),date.getMonth(),1) })
   const [selectedLessonIndex, setSelectedLessonIndex] = useState(null)
   const [selectedCalendarClass, setSelectedCalendarClass] = useState('')
@@ -1017,7 +1048,26 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
       </div>
       <button type="button" className="calendar-delete-week danger" disabled={busy || weeks.length <= 1} onClick={() => { onDeleteWeek?.(selectedWeek.weekStart); setSelectedWeekIndex(null); setSelectedLessonIndex(null) }}>🗑️ Radera vecka</button>
       <button type="button" className="secondary calendar-overview-button" onClick={() => { setSelectedWeekIndex(null); setSelectedLessonIndex(null) }}>← Till översikten</button>
+    </div> : !showOriginalCalendar ? <div className="calendar-real-month-overview">
+      <div className="calendar-real-month-toolbar">
+        <button type="button" onClick={() => setCalendarMonth(date => new Date(date.getFullYear(), date.getMonth() - 1, 1))}>← Föregående månad</button>
+        <h3>{new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeric' }).format(calendarMonth)}</h3>
+        <button type="button" onClick={() => setCalendarMonth(date => new Date(date.getFullYear(), date.getMonth() + 1, 1))}>Nästa månad →</button>
+      </div>
+      <div className="calendar-real-month-gallery">
+        {orderedWeeks.map((week, index) => ({ week, index })).filter(({ week }) => {
+          const start = new Date(week.weekStart + 'T12:00:00')
+          const end = new Date(start); end.setDate(end.getDate() + 6)
+          const monthStart = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1)
+          const monthEnd = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0, 23, 59, 59)
+          return start <= monthEnd && end >= monthStart
+        }).map(({ week, index }) => <CalendarWeekThumbnail key={week.weekStart} week={week} entryType={entryType} onOpen={() => { setSelectedWeekIndex(index); setSelectedLessonIndex(null) }} />)}
+      </div>
+      {!orderedWeeks.some(week => { const d = new Date(week.weekStart + 'T12:00:00'); const e = new Date(d); e.setDate(e.getDate()+6); return d <= new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,0,23,59,59) && e >= new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1) }) && <p>Inga planerade veckor den här månaden.</p>}
+      <p className="muted">Tryck på en vecka för att redigera lektioner, moment, sidor, uppgifter och länkar i full storlek. Ändringarna sparas i samma planering.</p>
+      <button type="button" className="secondary" onClick={() => setShowOriginalCalendar(true)}>Visa tidigare kalenderlayout</button>
     </div> : <>
+      <button type="button" className="secondary" onClick={() => setShowOriginalCalendar(false)}>Visa veckominiatyrer</button>
       <p className="calendar-overview-count">{orderedWeeks.length === 1 ? "1 planerad vecka" : orderedWeeks.length + " planerade veckor"} · Visas månad för månad.</p>
       <div className="calendar-overview-history">
         <button type="button" className="secondary" onClick={onUndo} disabled={busy || !canUndo} title="Ångra den senaste ändringen i planeringen">↶ Ångra</button>
