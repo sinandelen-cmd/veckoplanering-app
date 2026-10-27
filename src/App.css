@@ -4822,3 +4822,26 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  #lararvy .teacher-chapter-section>.teacher-month-weeks{gap:14px!important}
  #lararvy .teacher-chapter-section .teacher-collapsible-week{padding:10px!important}
 }
+
+/* Kapitelrubriken följer veckorna och ersätts av nästa kapitel vid scrollning. */
+#lararvy .teacher-chapter-section{
+ position:relative!important;
+ overflow:visible!important;
+}
+#lararvy .teacher-chapter-section>.chapter-heading{
+ position:sticky!important;
+ top:calc(var(--teacher-review-sticky-top,108px) + 58px)!important;
+ z-index:65!important;
+ box-shadow:0 3px 8px rgba(28,44,52,.12)!important;
+ border:1px solid rgba(70,90,100,.12)!important;
+}
+#lararvy .teacher-months,
+#lararvy .teacher-chapter-section>.teacher-month-weeks,
+#lararvy .teacher-chapter-section .chapter-week-group{
+ overflow:visible!important;
+}
+@media(max-width:650px){
+ #lararvy .teacher-chapter-section>.chapter-heading{
+ top:calc(var(--teacher-review-sticky-top,140px) + 94px)!important;
+ }
+}
