@@ -662,6 +662,11 @@ function chapterVocabulary(chapter, weeks = []) {
   const match = CHAPTER_VOCABULARY.find(([pattern]) => pattern.test(title)) || CHAPTER_VOCABULARY.find(([pattern]) => pattern.test(lessonText))
   return match ? match[1] : []
 }
+function isGeneratedLessonSummary(content, chapter) {
+  const lines = String(content || '').split(/\n/).map(line => line.trim()).filter(Boolean)
+  const prefix = String(chapter || '').trim()
+  return Boolean(prefix && lines.length > 1 && lines.every(line => line.toLocaleLowerCase('sv-SE').startsWith(prefix.toLocaleLowerCase('sv-SE') + ' – ')))
+}
 function ChapterVocabulary({ chapter, weeks }) {
   const words = chapterVocabulary(chapter, weeks)
   return words.length ? <div className="chapter-vocabulary" aria-label={`Viktiga begrepp i ${chapter}`}><strong>Viktiga begrepp</strong><div className="chapter-vocabulary-list">{words.map((word, index) => <span className={`chapter-vocabulary-term vocabulary-color-${index % 7}`} key={word}>{word}</span>)}</div></div> : null
@@ -2228,7 +2233,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           {pastTeacherWeeks.length > 0 && <button type="button" className="teacher-past-weeks-toggle" aria-expanded={showPastTeacherWeeks} onClick={()=>setShowPastTeacherWeeks(v=>!v)}><span aria-hidden="true">{showPastTeacherWeeks ? "▾" : "▸"}</span>{showPastTeacherWeeks ? "Dölj tidigare veckor" : `Tidigare veckor (${pastTeacherWeeks.length})`}</button>}
         </div>
       </div>
-      {<div className="teacher-pinned-chapter-shell" aria-label="Aktuellt kapitel"><div className={`teacher-pinned-chapter-heading ${pinnedChapter?.tone || ""}`}>{pinnedChapter?.name || "Kapitel"}</div></div>}
+      {<div className="teacher-pinned-chapter-shell" aria-label="Aktuellt kapitel"><div className={`teacher-pinned-chapter-heading ${pinnedChapter?.tone || ""}`}>{pinnedChapter?.name || "Kapitel"}</div>{pinnedChapter?.name && <ChapterVocabulary chapter={pinnedChapter.name} weeks={weeks.filter(week => (week.chapter?.trim() || "Utan kapitel") === pinnedChapter.name)} />}</div>}
       <div className="teacher-months">
         {Object.values((showPastTeacherWeeks ? teacherDisplayWeeks : upcomingTeacherWeeks).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
@@ -2236,7 +2241,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           chapters[chapterName].items.push(item)
           return chapters
         }, {})).map(group => <section className="teacher-month-section teacher-chapter-section" key={group.name}>
-          <h3 className={`chapter-heading chapter-tone-${chapterTone(group.name)}`}>{group.name}</h3>\n          <ChapterVocabulary chapter={group.name} weeks={group.items.map(item => item.week)} />
+          <h3 className={`chapter-heading chapter-tone-${chapterTone(group.name)}`}>{group.name}</h3>\n
           <div className="teacher-month-weeks">
           {group.items.map(({ week, index }) => <div className="chapter-week-group" key={`${week.weekStart || week.weekNumber}-${index}`}>
           <article className={`week-card teacher-collapsible-week ${(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) ? "teacher-week-open" : "teacher-week-closed"}`} id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
@@ -2286,7 +2291,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             }}>× Ta bort vecka</button></div>
           <label className="chapter-editor">Kapitel / tema (valfritt)<input value={week.chapter || ''} placeholder="Exempel: Kapitel 5 – Taluppfattning" onChange={e => updateWeek(index, { chapter: e.target.value })} /></label>
           {!/^Vecka\s+\d+$/i.test(week.title || '') && <input className="week-title" aria-label="Egen veckorubrik" value={week.title || ''} onChange={e => updateWeek(index, { title: e.target.value })} />}
-          <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />
+          {!isGeneratedLessonSummary(week.content, week.chapter) && <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />}
           <LessonDetails week={week} entryType={plan.entryType || 'lektion'} onChange={changes => updateWeek(index, changes)} />
           <details className="legacy-week-details" defaultOpen={Boolean(week.pages?.length || week.assignments?.length || week.links?.length)}>
             <summary>Extra veckomaterial (sidor, uppgifter och länkar)</summary>
@@ -2541,7 +2546,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             }}>× Ta bort vecka</button></div>
           <label className="chapter-editor">Kapitel / tema (valfritt)<input value={week.chapter || ''} placeholder="Exempel: Kapitel 5 – Taluppfattning" onChange={e => updateWeek(index, { chapter: e.target.value })} /></label>
           {!/^Vecka\s+\d+$/i.test(week.title || '') && <input className="week-title" aria-label="Egen veckorubrik" value={week.title || ''} onChange={e => updateWeek(index, { title: e.target.value })} />}
-          <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />
+          {!isGeneratedLessonSummary(week.content, week.chapter) && <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />}
           <LessonDetails week={week} entryType={plan.entryType || 'lektion'} onChange={changes => updateWeek(index, changes)} />
           <details className="legacy-week-details" defaultOpen={Boolean(week.pages?.length || week.assignments?.length || week.links?.length)}>
             <summary>Extra veckomaterial (sidor, uppgifter och länkar)</summary>
