@@ -1290,7 +1290,14 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       const toolbar = document.querySelector('#lararvy .teacher-year-review-bar')
       const sections = document.querySelectorAll('#lararvy .teacher-chapter-section')
       if (!toolbar || !sections.length) { setPinnedChapter(null); return }
-      const boundary = toolbar.getBoundingClientRect().bottom + 18
+      const toolbarRect = toolbar.getBoundingClientRect()
+      const reviewRect = toolbar.closest('.teacher-year-review')?.getBoundingClientRect()
+      const boundary = toolbarRect.bottom + 18
+      if (reviewRect) {
+        document.documentElement.style.setProperty('--teacher-pinned-left', Math.max(0, reviewRect.left) + 'px')
+        document.documentElement.style.setProperty('--teacher-pinned-width', Math.min(reviewRect.width, window.innerWidth - Math.max(0, reviewRect.left)) + 'px')
+        document.documentElement.style.setProperty('--teacher-pinned-top', toolbarRect.bottom + 'px')
+      }
       let found = null
       for (const section of sections) {
         const rect = section.getBoundingClientRect()
