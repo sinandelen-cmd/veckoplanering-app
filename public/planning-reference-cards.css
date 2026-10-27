@@ -1,0 +1,27 @@
+/* Färgade planeringskort enligt referensbilden. Endast presentation ändras. */
+.planning-layout .lesson .topic-grid{align-items:stretch!important;gap:10px!important}
+.planning-layout .lesson .topic-grid>.topic-name,
+.planning-layout .lesson .topic-grid>.topic-column{
+ border:0!important;border-radius:11px!important;min-width:0!important;
+ padding:12px!important;box-shadow:none!important;position:relative!important;
+}
+.planning-layout .lesson .topic-grid>.topic-name{background:#e3f0e7!important}
+.planning-layout .lesson .topic-grid>.topic-column.pages{background:#f9e5e9!important}
+.planning-layout .lesson .topic-grid>.topic-column.assignments{background:#e2ebf9!important}
+.planning-layout .lesson .topic-grid .topic-fixed-heading h5{font-size:14px!important;font-weight:650!important;color:#20242a!important}
+.planning-layout .lesson .topic-grid .topic-name textarea,
+.planning-layout .lesson .topic-grid .topic-cell input{
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ color:#20242a!important;padding:3px 0!important;border-radius:0!important;
+}
+.planning-layout .lesson .topic-grid .topic-name textarea:focus,
+.planning-layout .lesson .topic-grid .topic-cell input:focus{outline:2px solid #608eab!important;outline-offset:2px!important}
+.planning-layout .lesson .topic-grid .topic-column .add-detail{color:#009b55!important;background:transparent!important;border:0!important;font-size:19px!important}
+.planning-layout .lesson .topic-grid .topic-column .remove-small{color:#e3313b!important;background:transparent!important;border:0!important}
+.planning-layout .lesson .topic-grid .topic-column .topic-cell{background:transparent!important}
+@media(min-width:1000px){
+.planning-layout .lesson .topic-grid:not(.without-pages):not(.without-assignments){grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.planning-layout .lesson .topic-grid.without-pages:not(.without-assignments),
+.planning-layout .lesson .topic-grid.without-assignments:not(.without-pages){grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:650px){.planning-layout .lesson .topic-grid{grid-template-columns:1fr!important}}
