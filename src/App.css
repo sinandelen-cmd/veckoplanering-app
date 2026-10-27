@@ -4933,3 +4933,12 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 }
 #lararvy .teacher-chapter-section>.chapter-heading::before,
 #lararvy .teacher-chapter-section>.chapter-heading::after{content:none!important;display:none!important}
+
+/* Layout som referensbild 1: luft mellan årsplanering och kapitel,
+   samma mellanrum även när båda raderna är fastlåsta vid scrollning. */
+#lararvy .expanded-weeks-inline>.teacher-year-review>.teacher-year-review-bar{
+ margin-bottom:18px!important;
+}
+#lararvy .teacher-chapter-section>.chapter-heading{
+ top:calc(var(--teacher-review-sticky-top,0px) + var(--teacher-review-bar-height,48px) + 18px)!important;
+}
