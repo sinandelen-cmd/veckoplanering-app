@@ -280,7 +280,7 @@ assert.match(app, /onOpenPlan=\{loadPlan\}/)
 assert.match(css, /\.planning-layout/)
 
 assert.doesNotMatch(nav, /sidebar-link[^\n]*>Lärarvy/)
-assert.match(nav, /planning-top-navigation/)
+assert.match(nav, /planning-home-navigation/)
 assert.match(nav, /top-navigation-link[^\n]*Lärarvy<\/button>/)
 assert.match(nav, /top-navigation-link[^\n]*Kalendervy<\/button>/)
 assert.match(nav, /top-navigation-link[^\n]*Elevvy<\/button>/)
