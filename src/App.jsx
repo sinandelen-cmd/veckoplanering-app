@@ -2112,9 +2112,9 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline" style={editingClassView && plan.classGroups?.some(g=>g.name===editingClassView)?{display:"none"}:undefined}>
     
 <section className="card teacher-year-review">
-      <div className="teacher-year-review-bar"><div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
+      <div className="teacher-year-review-bar" aria-label="Årsplaneringens verktygsrad"><div className="section-heading"><div><p className="eyebrow">GRANSKA</p><h2>Årsplanering</h2></div><span className="count-pill">{weeks.length} veckor</span></div>
       
-      <p style={{fontSize:13,margin:"0 0 10px"}}>Passerade veckor är dolda här tills du väljer att visa dem. För varje vecka kan du under ”Elevvisning” välja ”Visa manuellt för elever (även passerad vecka)” eller ”Dölj för elever”.</p>
+
       {pastTeacherWeeks.length > 0 && <button type="button" className="secondary teacher-past-weeks-toggle" aria-expanded={showPastTeacherWeeks} onClick={()=>setShowPastTeacherWeeks(v=>!v)}>{showPastTeacherWeeks ? "▴ Dölj tidigare veckor" : `▾ Tidigare veckor (${pastTeacherWeeks.length})`}</button>}</div>
       <div className="teacher-months">
         {Object.values((showPastTeacherWeeks ? teacherDisplayWeeks : upcomingTeacherWeeks).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((months, item) => {
