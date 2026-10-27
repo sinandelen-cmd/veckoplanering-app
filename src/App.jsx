@@ -2890,10 +2890,16 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
               const label = typeof link === 'string' ? resourceInfo(link)?.label || '' : link.label || ''
               const info = resourceInfo(url)
               const changeLink = next => updateTopic({ ...topic, links: links.map((item, index) => index === k ? next : item) })
-              return <div className="topic-link" key={k}>
-                {editable && <><input aria-label="Länkens namn" placeholder="Namn" value={label} onChange={e => changeLink({ url, label: e.target.value })} /><input aria-label="Länkadress" placeholder="https://..." value={url} onChange={e => changeLink({ url: e.target.value, label })} /></>}
+              return <div className="topic-link topic-link-compact" key={k}>
                 {info && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon">{info.icon}</span>{label || info.label}<span className="print-resource-url">{url}</span></a>}
-                {editable && <button type="button" className="remove-small" onClick={() => updateTopic({ ...topic, links: links.filter((_, index) => index !== k) })}>×</button>}
+                {editable && <details className="topic-link-editor" open={!url.trim()}>
+                  <summary aria-label={`Redigera länk ${k + 1}`}>✎ <span>Redigera</span></summary>
+                  <div className="topic-link-editor-fields">
+                    <label>Namn<input aria-label="Länkens namn" placeholder="Länkens namn" value={label} onChange={e => changeLink({ url, label: e.target.value })} /></label>
+                    <label>Webbadress<input aria-label="Länkadress" placeholder="https://..." value={url} onChange={e => changeLink({ url: e.target.value, label })} /></label>
+                    <button type="button" className="remove-small" aria-label={`Ta bort länk ${k + 1}`} onClick={() => updateTopic({ ...topic, links: links.filter((_, index) => index !== k) })}>× Ta bort</button>
+                  </div>
+                </details>}
               </div>
             })}
             {editable && <button type="button" className="add-detail" onClick={() => updateTopic({ ...topic, links: [...links, { label: '', url: '' }] })}>+ Länk</button>}
