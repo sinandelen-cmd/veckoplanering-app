@@ -1038,7 +1038,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
     {editingCalendarLesson && <div className="calendar-lesson-modal-backdrop" role="presentation"><section className="calendar-lesson-modal" role="dialog" aria-modal="true" aria-label="Redigera lektion">
       <div className="calendar-lesson-modal-header"><h3>Vecka {calendarWeekNumber(editingCalendarLesson.weekStart)} · Lektion {editingCalendarLesson.lessonIndex + 1}</h3><button type="button" onClick={() => setEditingCalendarLesson(null)}>Stäng</button></div>
       {(() => { const editWeek = orderedWeeks.find(week => week.weekStart === editingCalendarLesson.weekStart); if (!editWeek) return <p>Veckan finns inte längre.</p>; const originalIndex = weeks.findIndex(week => week.weekStart === editWeek.weekStart); return <LessonDetails week={editWeek} entryType={entryType} onlyLessonIndex={editingCalendarLesson.lessonIndex} onChange={changes => onUpdateWeek?.(originalIndex, changes)} /> })()}
-      <div className="calendar-lesson-modal-footer"><button type="button" className="primary" disabled={savingCalendarLesson || busy} onClick={async () => { setSavingCalendarLesson(true); try { const result = await onSave?.(); if (result !== false) setEditingCalendarLesson(null) } catch (error) { /* Keep dialog open so edits remain accessible */ } finally { setSavingCalendarLesson(false) } }}>{savingCalendarLesson || busy ? 'Sparar…' : '✓ Klar – spara lektionen'}</button>{saveStatus && <span role="status">{saveStatus}</span>}</div>
+      <div className="calendar-lesson-modal-footer"><button type="button" className="primary" disabled={savingCalendarLesson || busy} onClick={async () => { setSavingCalendarLesson(true); try { const result = await onSave?.(); if (result === true) setEditingCalendarLesson(null) } catch (error) { /* Keep dialog open so edits remain accessible */ } finally { setSavingCalendarLesson(false) } }}>{savingCalendarLesson || busy ? 'Sparar…' : '✓ Klar – spara lektionen'}</button>{saveStatus && <span role="status">{saveStatus}</span>}</div>
     </section></div>}
     {!activeCalendarGroup && <>
     {selectedWeek ? <div className="calendar-week-detail" style={{ backgroundColor: weekColor(selectedWeek.weekStart) }}>
@@ -1762,7 +1762,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         ? supabase.from('veckoplanering').update(row).eq('id', selectedId).eq('user_id', session.user.id).select('id').single()
         : supabase.from('veckoplanering').insert(row).select('id').single()
       const { data, error } = await query
-      if (error) setStatus(`Kunde inte spara: ${error.message}`)
+      if (error) { setStatus(`Kunde inte spara: ${error.message}`); return false }
       else {
         if (simpleSetup) { setSimpleSetup(false); setTeacherTab('arsplan'); setCalendarOpen(false) }
         setSelectedId(data.id)
@@ -1779,9 +1779,11 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
             ? 'Ändringarna är sparade. Eleverna ser fortfarande den senast publicerade versionen.'
             : 'Planeringen är sparad.'
         setStatus(newerEdits ? `${message} Nya ändringar i redigeraren är ännu inte sparade.` : message)
+        return !newerEdits
       }
     } catch (error) {
       setStatus(`Kunde inte spara: ${error.message || 'Okänt fel'}`)
+      return false
     } finally {
       setBusy(false)
     }
