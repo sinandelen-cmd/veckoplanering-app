@@ -25,3 +25,8 @@
 .planning-layout .lesson .topic-grid.without-assignments:not(.without-pages){grid-template-columns:repeat(2,minmax(0,1fr))!important}
 }
 @media(max-width:650px){.planning-layout .lesson .topic-grid{grid-template-columns:1fr!important}}
+
+/* Länkar hör till momentkortet, längst ned. */
+.planning-layout .lesson .topic-grid>.topic-name{display:flex!important;flex-direction:column!important;align-self:stretch!important;min-height:126px!important}
+.planning-layout .lesson .topic-grid>.topic-name>.topic-links-inside-moment{margin-top:auto!important;padding-top:14px!important;display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:6px!important}
+.planning-layout .lesson .topic-grid>.topic-name>.topic-links-inside-moment .topic-link{margin:0!important}
