@@ -267,7 +267,7 @@ assert.match(css, /\.teacher-tab-panel\[hidden\] \{ display: none !important; \}
 assert.match(app, /if \(id === 'elevvy'\) \{ setPreviewStudents\(true\); setCalendarOpen\(false\) \}/)
 assert.doesNotMatch(app, /className="teacher-tabs"/, 'Dubbla lärarflikar får inte finnas')
 assert.doesNotMatch(app, /<strong>Sparstatus:<\/strong>/, 'Sparstatus ska inte upprepas')
-assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(true\); setPreviewStudents\(false\); setA4Demo\(false\); setStatus\(className \?/, 'Sparad planering ska öppnas i kalendervyn och A4-demot nollställas')
+assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(false\); setEditingClassView\(className \|\| ""\); setPreviewStudents\(false\); setA4Demo\(false\); setStatus\(className \?/, 'Sparad planering ska öppna rätt klassvy och nollställa A4-demot')
 
 // Huvudmenyn ska undvika dubblering av Mina planeringar på startsidan.
 const nav = fs.readFileSync(new URL('../src/Navigation.jsx', import.meta.url), 'utf8')
