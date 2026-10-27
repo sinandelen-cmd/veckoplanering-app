@@ -4033,3 +4033,19 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  #lararvy .topbar:has(.planning-header-toolbar) .planning-header-toolbar{flex-basis:100%!important}
  #lararvy .topbar:has(.planning-header-toolbar) .teacher-header-identity{flex:1 1 100%!important}
 }
+
+/* Slutlig ordning: ämne → klassflikar → kalender/schema → mer. */
+#lararvy .topbar:has(.planning-header-toolbar){display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:12px!important;padding:7px 12px!important;min-height:52px}
+#lararvy .topbar:has(.planning-header-toolbar) .teacher-header-identity{order:0!important;flex:0 0 auto!important}
+#lararvy .topbar:has(.planning-header-toolbar) .planning-header-toolbar{order:1!important;flex:1 1 auto!important;width:auto!important;min-width:0!important}
+#lararvy .topbar:has(.planning-header-toolbar) .planning-print-action{order:2!important;flex:0 0 auto!important}
+#lararvy .topbar:has(.planning-header-toolbar) #kopplade-klasser>.card{display:flex!important;flex-direction:row!important;align-items:center!important;flex-wrap:wrap!important;gap:6px!important}
+#lararvy .topbar:has(.planning-header-toolbar) .class-mini-row{display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:7px!important}
+#lararvy .topbar:has(.planning-header-toolbar) .class-mini-chips{display:flex!important;align-items:center!important;gap:4px!important;flex-wrap:wrap}
+#lararvy .topbar:has(.planning-header-toolbar) .class-mini-chip.active{font-weight:750}
+#lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-more[open] .class-toolbar-actions{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:8px!important;max-height:65vh;overflow:auto}
+#lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-more .class-schedule-help{font-size:12px}
+#lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-more .class-closure-section{margin:0!important}
+#lararvy .topbar:has(.planning-header-toolbar) .class-toolbar-more .class-closure-section>button{font-size:12px}
+@media(max-width:1050px){#lararvy .topbar:has(.planning-header-toolbar){flex-wrap:wrap!important;gap:5px 10px!important}#lararvy .topbar:has(.planning-header-toolbar) .planning-header-toolbar{flex-basis:100%!important;order:3!important}}
+@media(max-width:650px){#lararvy .topbar:has(.planning-header-toolbar){padding:6px!important;max-height:40vh!important;overflow-y:auto!important}#lararvy .topbar:has(.planning-header-toolbar) .planning-print-action{display:none!important}}
