@@ -5364,3 +5364,18 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .teacher-pinned-chapter-shell .chapter-vocabulary { margin:0!important; padding:7px 12px 9px!important; border-radius:0 0 12px 12px!important; background:#f4f7fb!important; }
 #lararvy .teacher-pinned-chapter-shell .chapter-vocabulary-list { gap:6px!important; }
 #lararvy .teacher-pinned-chapter-shell .chapter-vocabulary-term { color:#fff!important; font-weight:800!important; }
+
+/* Real week thumbnails: reuse the existing LessonDetails markup, scaled as one unit. */
+.calendar-real-month-overview { padding: 12px 0 24px; }
+.calendar-real-month-toolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+.calendar-real-month-toolbar h3 { margin:0; text-transform:capitalize; font-size:1.4rem; }
+.calendar-real-month-toolbar button { border:1px solid #c6d2e4; border-radius:9px; background:#fff; padding:10px 12px; cursor:pointer; color:#17437d; font-weight:700; }
+.calendar-real-month-gallery { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; align-items:start; }
+.calendar-real-week-thumbnail { display:block; min-width:0; width:100%; border:1px solid #c7d3e5; border-radius:12px; padding:0; overflow:hidden; background:white; color:inherit; text-align:left; cursor:pointer; box-shadow:0 2px 8px #183b5b18; }
+.calendar-real-week-thumbnail:hover,.calendar-real-week-thumbnail:focus-visible { outline:2px solid #2563eb; outline-offset:2px; }
+.calendar-real-week-label { display:flex; justify-content:space-between; align-items:center; padding:8px 10px; font-weight:800; font-size:13px; background:#e8f0fc; }
+.calendar-real-week-label span { font-size:11px; color:#1554c0; }
+.calendar-real-week-frame { width:100%; position:relative; overflow:hidden; }
+.calendar-real-week-original { width:960px; position:absolute; top:0; left:0; transform-origin:top left; pointer-events:none; }
+.calendar-real-week-original .calendar-inline-week { width:960px; }
+@media(max-width:680px) { .calendar-real-month-gallery {gap:5px;} .calendar-real-week-label {font-size:9px;padding:5px 3px;} .calendar-real-week-label span {font-size:8px;} .calendar-real-month-toolbar h3 {font-size:1.1rem;} }
