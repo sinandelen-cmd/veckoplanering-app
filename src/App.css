@@ -5352,3 +5352,10 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
   opacity: 0 !important;
   pointer-events: none !important;
 }
+
+/* Automatic high-contrast key terms for each chapter */
+.chapter-vocabulary { margin: 10px 0 15px; padding: 10px 12px; border-radius: 12px; background: #f4f7fb; }
+.chapter-vocabulary > strong { display:block; margin-bottom: 9px; font-size: 15px; color:#16233d; }
+.chapter-vocabulary-list { display:flex; flex-wrap:wrap; gap:8px; }
+.chapter-vocabulary-term { display:inline-flex; align-items:center; border-radius:8px; padding:8px 12px; font-size:15px; font-weight:800; color:#fff; line-height:1.2; }
+.vocabulary-color-0 { background:#bd1741; } .vocabulary-color-1 { background:#164cb4; } .vocabulary-color-2 { background:#08743c; } .vocabulary-color-3 { background:#6933a8; } .vocabulary-color-4 { background:#955000; } .vocabulary-color-5 { background:#a81c78; } .vocabulary-color-6 { background:#075e71; }
