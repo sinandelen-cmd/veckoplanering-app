@@ -2993,11 +2993,11 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
               return <div className="topic-link topic-link-compact" key={k}>
                 {info && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon">{info.icon}</span>{label || info.label}<span className="print-resource-url">{url}</span></a>}
                 {editable && <details className="topic-link-editor" open={!url.trim()}>
-                  <summary aria-label={`Öppna eller stäng redigering av länk ${k + 1}`} title="Redigera eller avsluta"><span className="link-edit-closed" aria-hidden="true">✎</span><span className="link-edit-open" aria-hidden="true">✓</span></summary>
+                  <summary aria-label={`Öppna eller stäng redigering av länk ${k + 1}`} title="Länkens meny: redigera eller radera"><span aria-hidden="true">···</span></summary>
                   <div className="topic-link-editor-fields">
                     <label>Namn<input aria-label="Länkens namn" placeholder="Länkens namn" value={label} onChange={e => changeLink({ url, label: e.target.value })} /></label>
                     <label>Webbadress<input aria-label="Länkadress" placeholder="https://..." value={url} onChange={e => changeLink({ url: e.target.value, label })} /></label>
-                    <button type="button" className="remove-small" aria-label={`Ta bort länk ${k + 1}`} onClick={() => updateTopic({ ...topic, links: links.filter((_, index) => index !== k) })}>× Ta bort</button>
+                    <button type="button" className="remove-small" aria-label={`Ta bort länk ${k + 1}`} onClick={() => updateTopic({ ...topic, links: links.filter((_, index) => index !== k) })}>Radera</button>
                   </div>
                 </details>}
               </div>
