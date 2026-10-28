@@ -9,7 +9,7 @@ export default function Navigation({ active = 'mina', onNavigate, selectedId, on
       <button type="button" className={calendarOpen && !adminOpen ? 'active' : ''} onClick={() => calendarOpen ? onNavigate('arsplan') : onToggleCalendar?.()}>Kalendervy</button>
     </div>
     {(planContext || onPrintPlan) && <div className="planning-nav-tools">
-      {planContext && <div className="planning-nav-context" title={[planContext.subject,planContext.textbook,planContext.grade].filter(Boolean).join(" · ")}><span className="planning-nav-context-title">{planContext.subject}</span><span className="planning-nav-context-grade">{planContext.grade}</span>{planContext.textbook && <span className="planning-nav-context-book">{planContext.textbook}</span>}</div>}
+      {planContext && <div className="planning-nav-context" title={[planContext.textbook || planContext.subject, planContext.grade].filter(Boolean).join(" ")}><span className="planning-nav-context-title">{[planContext.textbook || planContext.subject, planContext.grade].filter(Boolean).join(" ")}</span></div>}
       {onPrintPlan && <button type="button" className="planning-nav-print" onClick={onPrintPlan} aria-label="Skriv ut planeringen" title="Skriv ut planeringen">🖨️</button>}
     </div>}
     <div className="planning-unified-right">
