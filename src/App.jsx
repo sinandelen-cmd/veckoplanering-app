@@ -973,16 +973,19 @@ function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson }) {
 function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, busy, saveStatus }) {
   const [expanded, setExpanded] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [visibleWeekCount, setVisibleWeekCount] = useState(2)
   const group = (plan.classGroups || []).find(item => item.name === className)
   const scheduled = useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
   const today = new Date()
   const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
   monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
   const currentStart = [monday.getFullYear(), String(monday.getMonth()+1).padStart(2,'0'), String(monday.getDate()).padStart(2,'0')].join('-')
-  const previousMonday = new Date(monday)
-  previousMonday.setDate(previousMonday.getDate()-7)
-  const previousStart = [previousMonday.getFullYear(), String(previousMonday.getMonth()+1).padStart(2,'0'), String(previousMonday.getDate()).padStart(2,'0')].join('-')
-  const weeks = [previousStart,currentStart].map(start => {
+  const weekStarts = Array.from({length:visibleWeekCount},(_,i)=>{
+    const date=new Date(monday)
+    date.setDate(date.getDate()-7*(visibleWeekCount-1-i))
+    return [date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-')
+  })
+  const weeks = weekStarts.map(start => {
     const source = (plan.weeksData || []).find(w => w.weekStart === start)
     const slots = scheduled.filter(item => item.weekStart === start)
     return {...(source || {}), weekStart:start, weekNumber:calendarWeekNumber(start), lessons:slots.map(item => {
@@ -991,10 +994,10 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
     }), chapter:source?.chapter || ''}
   })
   if (!group) return null
-  return <section className="class-real-two-weeks" aria-label={className+' – föregående och nuvarande vecka'}>
-    <div className="class-real-two-weeks-header"><h2>{className} · Veckoplanering</h2><span>Föregående vecka och nuvarande vecka</span></div>
-    <div className="class-real-two-weeks-grid">{weeks.map((week,i)=><div className="class-real-week-column" key={week.weekStart}>
-      <strong>{i===0?'Föregående vecka':'Nuvarande vecka'}</strong>
+  return <section className="class-real-two-weeks" aria-label={className+' – '+visibleWeekCount+' veckor'}>
+    <div className="class-real-two-weeks-header"><h2>{className} · Veckoplanering</h2><span>{visibleWeekCount} veckor sida vid sida</span><button type="button" className="secondary" onClick={()=>setVisibleWeekCount(n=>n+1)} aria-label="Visa ytterligare en tidigare vecka">+ Visa en vecka till</button>{visibleWeekCount>2 && <button type="button" className="secondary" onClick={()=>setVisibleWeekCount(n=>n-1)}>− Visa en vecka mindre</button>}</div>
+    <div className="class-real-two-weeks-grid" style={{gridTemplateColumns:`repeat(${visibleWeekCount}, minmax(0, 1fr))`}}>{weeks.map((week,i)=><div className="class-real-week-column" key={week.weekStart}>
+      <strong>{i===weeks.length-1?'Nuvarande vecka':`Vecka ${calendarWeekNumber(week.weekStart)}`}</strong>
       <CalendarWeekThumbnail week={week} entryType={plan.entryType || 'lektion'} onOpen={()=>setExpanded({weekStart:week.weekStart,lessonIndex:null})} onOpenLesson={lessonIndex=>setExpanded({weekStart:week.weekStart,lessonIndex})}/>
     </div>)}</div>
     {expanded && <div className="calendar-lesson-modal-backdrop" role="presentation"><section className="calendar-lesson-modal" role="dialog" aria-modal="true" aria-label="Redigera klassens lektion">
