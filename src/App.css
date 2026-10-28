@@ -5579,3 +5579,76 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 @media(max-width:700px){
   #lararvy #kopplade-klasser{top:54px!important}
 }
+
+/* Designval 1: sammanhängande, klickbara flikar i båda nivåerna. */
+.planning-unified-navigation {
+  padding:8px 14px 0!important;
+  align-items:end!important;
+  column-gap:8px!important;
+}
+.planning-unified-left,.planning-unified-center,.planning-unified-right {
+  align-items:end!important;
+  height:100%!important;
+}
+.planning-unified-navigation button {
+  border-radius:10px 10px 0 0!important;
+  padding:11px 14px!important;
+  min-height:42px!important;
+  background:transparent!important;
+  color:#fff!important;
+}
+.planning-unified-navigation button.active {
+  background:#fff!important;
+  color:#304b66!important;
+}
+.planning-unified-navigation button:hover:not(.active){background:#567791!important}
+#lararvy #kopplade-klasser {
+  position:static!important;
+  background:transparent!important;
+}
+#lararvy #kopplade-klasser .class-mini-row {
+  position:sticky!important;
+  top:58px!important;
+  z-index:990!important;
+  display:flex!important;
+  align-items:end!important;
+  background:#fff!important;
+  border-bottom:3px solid #456581!important;
+  border-radius:0!important;
+  padding:8px 10px 0!important;
+  margin:0!important;
+  min-height:56px!important;
+}
+#lararvy #kopplade-klasser .class-mini-chips {
+  display:flex!important;
+  align-items:end!important;
+  gap:3px!important;
+  flex-wrap:nowrap!important;
+}
+#lararvy #kopplade-klasser .class-mini-chip,
+#lararvy #kopplade-klasser .class-mini-add {
+  border-radius:9px 9px 0 0!important;
+  border:1px solid #dbe3eb!important;
+  border-bottom:0!important;
+  background:#eef1f5!important;
+  color:#304b66!important;
+  padding:11px 14px!important;
+  font-weight:700!important;
+  white-space:nowrap!important;
+}
+#lararvy #kopplade-klasser .class-mini-chip.active {
+  background:#456581!important;
+  color:#fff!important;
+  border-color:#456581!important;
+}
+#lararvy #kopplade-klasser .class-mini-add:hover,
+#lararvy #kopplade-klasser .class-mini-chip:hover:not(.active){
+  background:#dce6ef!important;
+}
+@media(max-width:700px){
+  .planning-unified-navigation{padding:6px 4px 0!important}
+  .planning-unified-navigation button{padding:9px 5px!important;font-size:10px!important}
+  #lararvy #kopplade-klasser .class-mini-row{top:54px!important;padding:6px 5px 0!important}
+  #lararvy #kopplade-klasser .class-mini-chip,
+  #lararvy #kopplade-klasser .class-mini-add{padding:9px 10px!important}
+}
