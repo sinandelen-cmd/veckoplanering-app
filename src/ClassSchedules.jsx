@@ -63,6 +63,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
   const [selected, setSelected] = React.useState(0)
   const [showAll, setShowAll] = React.useState(false)
   const [expandedWeek, setExpandedWeek] = React.useState(null)
+  const [classWeekPage, setClassWeekPage] = React.useState(0)
   const [showMatrix, setShowMatrix] = React.useState(true)
   const [showClassMenu, setShowClassMenu] = React.useState(false)
   const [compare, setCompare] = React.useState(false)
@@ -75,10 +76,11 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
   const [closureStart, setClosureStart] = React.useState('')
   const [closureEnd, setClosureEnd] = React.useState('')
   const [closureNote, setClosureNote] = React.useState('')
-  const group = groups[selected]
+  const activeClassIndex = groups.findIndex(g => g.name === editingClassView)
+  const group = activeClassIndex >= 0 ? groups[activeClassIndex] : groups[selected]
   const lessonsPerWeek = group => (group.days || []).length
   const schedule = React.useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
-  const updateGroup = changes => onChange({ ...plan, classGroups: groups.map((g, i) => i === selected ? { ...g, ...changes } : g) })
+  const updateGroup = changes => onChange({ ...plan, classGroups: groups.map((g, i) => i === (activeClassIndex >= 0 ? activeClassIndex : selected) ? { ...g, ...changes } : g) })
   // Tidigare schematider bevaras i datat, men behöver inte redigeras i matrisen.
   const setLessonTime = (classIndex, day, slotIndex, value) => {
     onChange({ ...plan, classGroups: groups.map((row, index) => {
@@ -125,7 +127,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
 
     <div className="class-mini-row">
       
-      <div className="class-mini-chips"><button type="button" className={"class-mini-chip"+(!editingClassView?" active":"")} onClick={()=>preserveScrollOnClassChange("")} aria-pressed={!editingClassView}>📘 Grundplanering</button>{groups.map((g,i)=><button type="button" key={i} className={'class-mini-chip'+(editingClassView===g.name?' active':'')} aria-pressed={editingClassView===g.name} onClick={()=>{setSelected(i);preserveScrollOnClassChange(g.name);setCompare(false);setShowClassDetails(false)}}>{g.name}</button>)}
+      <div className="class-mini-chips"><button type="button" className={"class-mini-chip"+(!editingClassView?" active":"")} onClick={()=>{preserveScrollOnClassChange("");setClassWeekPage(0);setShowClassMenu(false);setShowClosures(false)}} aria-pressed={!editingClassView}>📘 Grundplanering</button>{groups.map((g,i)=><button type="button" key={i} className={'class-mini-chip'+(editingClassView===g.name?' active':'')} aria-pressed={editingClassView===g.name} onClick={()=>{setSelected(i);preserveScrollOnClassChange(g.name);setClassWeekPage(0);setShowClassMenu(false);setShowClosures(false);setCompare(false);setShowClassDetails(false)}}>{g.name}</button>)}
         
         <button type="button" className="class-mini-add" onClick={()=>setAddingClass(v=>!v)} aria-expanded={addingClass}>+ Klass</button>
       </div>
@@ -136,9 +138,9 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
     <div className="class-toolbar-more class-toolbar-expanded"><div className="class-toolbar-actions">{editingClassView && group && <button type="button" className="secondary" aria-expanded={showClassMenu} onClick={()=>setShowClassMenu(v=>!v)}>▦ Ändra schema</button>}{editingClassView && group && <button type="button" className="secondary" aria-expanded={showClosures} onClick={()=>setShowClosures(v=>!v)}>📅 {showClosures?'Dölj':'Lägg till'} studiedag / halvdag / lov för klassen</button>}{editingClassView && groups.some(g => g.name === editingClassView) && <button type="button" className="class-mini-schema" onClick={async()=>{if(!publicSlug){window.alert("Elevlänken är inte publicerad ännu. Lägg till lektionsinnehåll och kontrollera att planeringen är publicerad.");return}const url=window.location.origin+"/elev/"+encodeURIComponent(publicSlug)+(editingClassView?"?klass="+encodeURIComponent(editingClassView):"");try{await navigator.clipboard.writeText(url);window.alert("Elevlänken har kopierats:\n"+url)}catch{window.prompt("Kopiera elevlänken:",url)}}}>🔗 Elevlänk för {editingClassView}</button>}
 </div></div>
     {editingClassView && group && <section className="class-two-week-preview" aria-label={"Två veckor för " + group.name}>
-      <h3>{group.name} – två veckor sida vid sida</h3>
+      <div className="class-two-week-heading"><h3>{group.name} – två veckor sida vid sida</h3><div className="class-two-week-paging"><button type="button" className="secondary" disabled={classWeekPage===0} onClick={()=>setClassWeekPage(p=>Math.max(0,p-1))}>← Föregående</button><button type="button" className="secondary" disabled={(classWeekPage+1)*2>=grouped.length} onClick={()=>setClassWeekPage(p=>p+1)}>Nästa →</button></div></div>
       <div className="class-two-week-grid">
-        {grouped.slice(0,2).map(week => <article className="class-two-week-card" key={week.weekStart}>
+        {grouped.slice(classWeekPage*2,classWeekPage*2+2).map(week => <article className="class-two-week-card" key={week.weekStart}>
           <h4>Vecka {(() => {const d=new Date(week.weekStart+'T12:00:00');d.setDate(d.getDate()+3);const y=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-y)/86400000-3+(y.getDay()+6)%7)/7)})()}</h4>
           <p className="muted">{week.weekStart} · {week.items.length} lektioner</p>
           {week.items.map(item=><div className="class-two-week-lesson" key={item.lessonNumber}>
@@ -151,7 +153,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
     </section>}
     {!editingClassView && <div className="class-base-visibility"><label className="class-bulk-visibility">Elevvisning <select aria-label="Elevvisning för alla veckor" value={allWeeksDisplayMode} disabled={weeksBusy} onChange={e=>onSetAllDisplayMode?.(e.target.value)}><option value="" disabled>Blandade inställningar</option><option value="normal">Automatisk</option><option value="extra">Visa manuellt för elever (även passerade veckor)</option><option value="hidden">Dölj för elever</option></select></label></div>}
     {addingClass && <div className="class-mini-new"><label>Ny klass <input value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addClass();if(name.trim())setAddingClass(false)}}} placeholder="T.ex. EK26A" /></label><button type="button" disabled={!name.trim()||groups.some(g=>g.name.toLocaleLowerCase('sv')===name.trim().toLocaleLowerCase('sv'))} onClick={()=>{addClass();setAddingClass(false);setShowClassMenu(true)}}>Lägg till</button></div>}
-    {unscheduledGroups.length>0 && <p role="alert" className="class-mini-warning">Välj lektionsdagar för {unscheduledGroups.map(g=>g.name).join(', ')} via Schema.</p>}
+    {unscheduledGroups.length>0 && <p role="alert" className="class-mini-warning">Välj lektionsdagar för {unscheduledGroups.map(g=>g.name).join(', ')} under respektive klassflik → Ändra schema.</p>}
     {showClassMenu && group && <div className="class-mini-panel">
       <div className="class-mini-panel-title"><strong>{group.name} · Lektionsdagar</strong><button type="button" className="secondary" onClick={()=>setShowClassMenu(false)} aria-label="Stäng schema">✕</button></div>
       <div className="class-mini-days">{DAYS.map((day,i)=><div key={day} className={'class-mini-day'+((group.days||[]).includes(day)?' checked':'')} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:5}}><label style={{display:'flex',flexDirection:'column',alignItems:'center',gap:5,cursor:'pointer'}}><span>{DAY_SHORT[i]}</span><input type="checkbox" aria-label={group.name+' '+day} checked={(group.days||[]).includes(day)} onChange={e=>updateGroup({days:e.target.checked?[...(group.days||[]),day].sort((x,y)=>DAYS.indexOf(x)-DAYS.indexOf(y)):(group.days||[]).filter(d=>d!==day)})}/></label>{(group.days||[]).includes(day)&&<div style={{display:'flex',alignItems:'center',gap:3,fontSize:12}}><button type="button" aria-label={'Minska moment '+day} disabled={(group.momentsPerDay?.[day]||1)<=1} onClick={()=>updateGroup({momentsPerDay:{...group.momentsPerDay,[day]:Math.max(1,(group.momentsPerDay?.[day]||1)-1)}})} style={{padding:'1px 4px',minWidth:18}}>−</button><strong>{group.momentsPerDay?.[day]||1}</strong><button type="button" aria-label={'Öka moment '+day} onClick={()=>updateGroup({momentsPerDay:{...group.momentsPerDay,[day]:(group.momentsPerDay?.[day]||1)+1}})} style={{padding:'1px 4px',minWidth:18}}>+</button></div>}</div>)}</div>
