@@ -5556,3 +5556,26 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 @media(max-width:700px) {
   .planning-unified-navigation {height:54px!important;min-height:54px!important}
 }
+
+/* Lås klassundermenyn direkt under den fasta huvudmenyn. */
+#lararvy #kopplade-klasser {
+  position:sticky!important;
+  top:58px!important;
+  z-index:990!important;
+  background:#fff!important;
+  margin-top:0!important;
+  margin-bottom:12px!important;
+}
+#lararvy #kopplade-klasser .class-mini-row {
+  position:relative!important;
+  background:#fff!important;
+  min-height:48px!important;
+}
+#lararvy #kopplade-klasser .class-mini-chips {
+  flex-wrap:nowrap!important;
+  overflow-x:auto!important;
+  scrollbar-width:thin;
+}
+@media(max-width:700px){
+  #lararvy #kopplade-klasser{top:54px!important}
+}
