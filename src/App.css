@@ -5711,3 +5711,9 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
   font-weight:600;max-width:100%;
 }
 #lararvy #kopplade-klasser .class-base-visibility select {max-width:240px}
+
+/* Förenklad klassvy: navigering för två veckor utan extra undermeny. */
+#lararvy .class-two-week-heading {display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+#lararvy .class-two-week-heading h3 {margin:0}
+#lararvy .class-two-week-paging {display:flex;gap:8px;flex-wrap:wrap}
+#lararvy #kopplade-klasser .class-toolbar-more:has(.class-toolbar-actions:empty) {display:none!important}
