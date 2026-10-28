@@ -183,7 +183,7 @@ for (const plan of [
 
 const sanitizeForStudentsRuntime = new Function(
   'displayWeeks', 'makeWeeks', 'resourceInfo', 'validSchoolClosure', 'toIsoDate',
-  extractFunction('sanitizeForStudents', 'function resourceInfo') + '; return sanitizeForStudents'
+  extractFunction('sanitizeForStudents', 'function ResourceIcon') + '; return sanitizeForStudents'
 )(
   plan => plan.weeksData,
   () => [],
