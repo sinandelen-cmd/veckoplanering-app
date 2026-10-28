@@ -982,7 +982,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
   const currentStart = [monday.getFullYear(), String(monday.getMonth()+1).padStart(2,'0'), String(monday.getDate()).padStart(2,'0')].join('-')
   const weekStarts = Array.from({length:visibleWeekCount},(_,i)=>{
     const date=new Date(monday)
-    date.setDate(date.getDate()-7*(visibleWeekCount-1-i))
+    date.setDate(date.getDate()+7*(i-(visibleWeekCount===1?0:1)))
     return [date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-')
   })
   const weeks = weekStarts.map(start => {
@@ -995,9 +995,9 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
   })
   if (!group) return null
   return <section className="class-real-two-weeks" aria-label={className+' – '+visibleWeekCount+' veckor'}>
-    <div className="class-real-two-weeks-header"><h2>{className} · Veckoplanering</h2><span>{visibleWeekCount} veckor sida vid sida</span><button type="button" className="secondary" onClick={()=>setVisibleWeekCount(n=>n+1)} aria-label="Visa ytterligare en tidigare vecka">+ Visa en vecka till</button>{visibleWeekCount>2 && <button type="button" className="secondary" onClick={()=>setVisibleWeekCount(n=>n-1)}>− Visa en vecka mindre</button>}</div>
+    <div className="class-real-two-weeks-header"><h2>{className} · Veckoplanering</h2><span>Standard: föregående och nuvarande vecka</span><div className="class-week-count-controls" role="group" aria-label="Antal veckor att visa">{[1,2,3].map(n=><button key={n} type="button" className={visibleWeekCount===n?"active":""} aria-pressed={visibleWeekCount===n} onClick={()=>setVisibleWeekCount(n)}>{n} {n===1?"vecka":"veckor"}</button>)}</div></div>
     <div className="class-real-two-weeks-grid" style={{gridTemplateColumns:`repeat(${visibleWeekCount}, minmax(0, 1fr))`}}>{weeks.map((week,i)=><div className="class-real-week-column" key={week.weekStart}>
-      <strong>{i===weeks.length-1?'Nuvarande vecka':`Vecka ${calendarWeekNumber(week.weekStart)}`}</strong>
+      <strong>{week.weekStart===currentStart?'Nuvarande vecka':`Vecka ${calendarWeekNumber(week.weekStart)}`}</strong>
       <CalendarWeekThumbnail week={week} entryType={plan.entryType || 'lektion'} onOpen={()=>setExpanded({weekStart:week.weekStart,lessonIndex:null})} onOpenLesson={lessonIndex=>setExpanded({weekStart:week.weekStart,lessonIndex})}/>
     </div>)}</div>
     {expanded && <div className="calendar-lesson-modal-backdrop" role="presentation"><section className="calendar-lesson-modal" role="dialog" aria-modal="true" aria-label="Redigera klassens lektion">
