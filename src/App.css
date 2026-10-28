@@ -5866,3 +5866,19 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .teacher-months-focused .week-card .lessons { width:100%!important; min-width:0!important; max-height:none!important; height:auto!important; overflow:visible!important; }
 #lararvy .teacher-months-focused .week-card .lesson { max-height:none!important; height:auto!important; }
 @media(max-width:700px) { #lararvy .teacher-months-focused .week-card { min-width:880px!important; } }
+
+/* Grundplanering: bred, läsbar enveckasvy med samma kortkänsla som klassvyn. */
+#lararvy .expanded-weeks-inline:has(.teacher-months-focused),
+#lararvy .expanded-weeks-inline:has(.teacher-months-focused) > .teacher-year-review { width:100%!important; max-width:none!important; min-width:0!important; box-sizing:border-box!important; }
+#lararvy .teacher-months-focused,
+#lararvy .teacher-months-focused .teacher-month-section,
+#lararvy .teacher-months-focused .teacher-month-weeks,
+#lararvy .teacher-months-focused .chapter-week-group { width:100%!important; max-width:none!important; min-width:0!important; box-sizing:border-box!important; }
+#lararvy .teacher-months-focused .teacher-month-section { padding:clamp(6px,1vw,16px)!important; }
+#lararvy .teacher-months-focused .teacher-month-weeks { display:block!important; overflow-x:auto!important; overflow-y:visible!important; scrollbar-gutter:stable; -webkit-overflow-scrolling:touch; }
+#lararvy .teacher-months-focused .week-card { width:100%!important; max-width:none!important; min-width:880px!important; box-sizing:border-box!important; padding:clamp(10px,1.6vw,22px)!important; background:#f8fbff!important; border:1px solid #cbd9e9!important; border-radius:14px!important; }
+#lararvy .teacher-months-focused .week-card .lessons { display:flex!important; flex-direction:column!important; gap:12px!important; width:100%!important; max-width:none!important; min-width:0!important; height:auto!important; max-height:none!important; overflow:visible!important; }
+#lararvy .teacher-months-focused .week-card .lesson { width:100%!important; max-width:none!important; min-width:0!important; height:auto!important; max-height:none!important; box-sizing:border-box!important; border:1px solid #dce6ef!important; border-radius:10px!important; background:#fff!important; padding:clamp(8px,1vw,16px)!important; }
+#lararvy .teacher-months-focused .week-card input,
+#lararvy .teacher-months-focused .week-card textarea { box-sizing:border-box; max-width:100%; }
+@media(min-width:881px) { #lararvy .teacher-months-focused .week-card { min-width:0!important; } }
