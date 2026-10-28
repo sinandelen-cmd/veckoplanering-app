@@ -104,10 +104,10 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
       const key = String(slot.lessonNumber - 1)
       const parts = (overrides[key]?.text ?? describe(slot.lesson)).split(';').map(x => x.trim()).filter(Boolean)
       if (i === start) carry = parts.pop()
-      else { parts.unshift(carry); carry = parts.pop() }
+      else { const displaced = parts.pop(); parts.unshift(carry); carry = displaced }
       overrides[key] = { text: parts.join('; ') }
     }
-    if (carry) updateGroup({ overrides, pendingMoments: [...(group.pendingMoments || []), carry] })
+    updateGroup({ overrides, pendingMoments: [...(group.pendingMoments || []), ...(carry ? [carry] : [])] })
   }
   const grouped = schedule.reduce((result, item) => {
     const weekStart = iso(monday(item.date))
