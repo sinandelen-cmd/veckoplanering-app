@@ -5771,3 +5771,8 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .class-real-week-column { min-width:0; }
 .class-real-two-weeks-header { display:flex; align-items:center; flex-wrap:wrap; gap:.5rem; }
 .class-real-two-weeks-header h2 { margin-right:auto; }
+
+.class-week-count-controls { display:inline-flex; gap:.25rem; align-items:center; }
+.class-week-count-controls button { background:transparent; color:inherit; border:1px solid currentColor; border-radius:.45rem; padding:.3rem .55rem; font:inherit; cursor:pointer; opacity:.7; }
+.class-week-count-controls button.active { opacity:1; font-weight:700; box-shadow:inset 0 -2px currentColor; }
+.class-week-count-controls button:focus-visible { outline:2px solid currentColor; outline-offset:2px; }
