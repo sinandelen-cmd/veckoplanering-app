@@ -5387,3 +5387,19 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .calendar-lesson-modal-header,.calendar-lesson-modal-footer { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:10px 0; }
 .calendar-lesson-modal-footer { justify-content:flex-end; position:sticky; bottom:0; background:white; border-top:1px solid #ddd; }
 .calendar-lesson-modal-footer .primary { background:#16803c; color:white; border:0; border-radius:10px; padding:12px 20px; font-weight:800; cursor:pointer; }
+
+/* Tydlig övermeny för de fyra planeringsvyerna. */
+.planning-view-tabs{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;background:#3767a8;border-radius:0 0 20px 20px;padding:12px 16px;margin:0 0 12px;position:sticky;top:0;z-index:85}
+.planning-view-tabs button{border:0;border-radius:999px;background:transparent;color:#e2e9f4;padding:10px 20px;font-size:clamp(.9rem,1.6vw,1.2rem);font-weight:700;cursor:pointer}
+.planning-view-tabs button.active{background:#2096ed;color:#fff}
+.planning-view-tabs button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+@media(max-width:600px){.planning-view-tabs{gap:3px;padding:8px 4px;border-radius:0 0 14px 14px}.planning-view-tabs button{padding:9px 11px;font-size:.85rem}}
+
+/* Veckonavigering: tydlig, mobilanpassad och utan att dölja sparade data. */
+.teacher-week-navigation{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;background:#252b33;color:#fff;border-radius:14px;padding:12px;margin:12px 0;position:sticky;top:62px;z-index:80}
+.teacher-week-navigation button{border:1px solid #626b77;background:#4a525d;color:#f5f6f8;border-radius:999px;padding:10px 14px;font-weight:750;min-height:42px;cursor:pointer}
+.teacher-week-navigation button.current{background:#fff;color:#18212d;border-color:#fff}
+.teacher-week-navigation button.all-weeks-active{background:#208ce2;color:#fff;border-color:#208ce2}
+.teacher-week-navigation button:disabled{opacity:.35;cursor:default}
+.teacher-week-navigation button:focus-visible{outline:3px solid #75b8ff;outline-offset:2px}
+@media(max-width:600px){.teacher-week-navigation{gap:4px;padding:8px 5px;top:52px}.teacher-week-navigation button{padding:8px 9px;font-size:12px;min-height:38px}}

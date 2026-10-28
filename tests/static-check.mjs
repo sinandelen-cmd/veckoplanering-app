@@ -170,7 +170,7 @@ for (const value of ['2025/2027', '2026/2028', '2026/2027 extra', '2026-2027-202
 const nationalExamsForPlan = new Function(
   'NATIONAL_EXAMS_2026_27',
   extractFunction('isSchoolYear2026_27', 'function nationalExamsForPlan') +
-  '\n' + extractFunction('nationalExamsForPlan', 'function YearCalendar') +
+  '\n' + extractFunction('nationalExamsForPlan', 'function CalendarWeekThumbnail') +
   '; return nationalExamsForPlan'
 )(NATIONAL_EXAMS_2026_27)
 assert.equal(nationalExamsForPlan({ schoolForm: 'grundskola', schoolYear: '2026/27', grade: '6', subject: 'Matematik' }).length, 2)
@@ -183,7 +183,7 @@ for (const plan of [
 
 const sanitizeForStudentsRuntime = new Function(
   'displayWeeks', 'makeWeeks', 'resourceInfo', 'validSchoolClosure', 'toIsoDate',
-  extractFunction('sanitizeForStudents', 'function resourceInfo') + '; return sanitizeForStudents'
+  extractFunction('sanitizeForStudents', 'function ResourceIcon') + '; return sanitizeForStudents'
 )(
   plan => plan.weeksData,
   () => [],
