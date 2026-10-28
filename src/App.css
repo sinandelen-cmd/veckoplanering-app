@@ -5761,7 +5761,7 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 }
 
 /* Diskret klarikon i lektionsredigeringen – ingen färgad knapp eller textruta. */
-.class-lesson-done-icon { appearance:none; background:transparent; border:0; box-shadow:none; color:inherit; cursor:pointer; font:inherit; font-size:1.55rem; line-height:1; padding:.25rem .4rem; border-radius:.35rem; }
+.class-lesson-done-icon { appearance:none; background:transparent; border:0; box-shadow:none; color:#15803d; cursor:pointer; font:inherit; font-size:1.55rem; font-weight:800; line-height:1; padding:.25rem .4rem; border-radius:.35rem; }
 .class-lesson-done-icon:hover { background:rgba(127,127,127,.10); }
 .class-lesson-done-icon:focus-visible { outline:2px solid currentColor; outline-offset:2px; }
 .class-lesson-done-icon:disabled { opacity:.45; cursor:wait; }
