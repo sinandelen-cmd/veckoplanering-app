@@ -5733,3 +5733,29 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 /* Huvudmenyn behåller samma höjd i alla vyer där den visas. */
 .planning-unified-navigation{box-sizing:border-box!important;min-height:58px!important;height:58px!important}
 @media(max-width:700px){.planning-unified-navigation{min-height:54px!important;height:54px!important}}
+
+/* Klassveckor ska ALLTID ligga i två kolumner, även på smala skärmar. */
+#lararvy .class-real-two-weeks-grid,
+#lararvy .class-real-two-weeks .class-real-two-weeks-grid {
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  grid-auto-flow:row!important;
+  gap:10px!important;
+  align-items:start!important;
+}
+#lararvy .class-real-two-weeks-grid > .class-real-week-column {
+  display:block!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:none!important;
+  grid-column:auto!important;
+}
+#lararvy .class-real-week-column .calendar-real-week-thumbnail,
+#lararvy .class-real-week-column .calendar-real-week-frame {
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+}
+@media(max-width:700px){
+ #lararvy .class-real-two-weeks-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:5px!important}
+}
