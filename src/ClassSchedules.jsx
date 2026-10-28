@@ -97,6 +97,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
   }
   const shiftClassLesson = item => {
     const start = schedule.findIndex(x => x.lessonNumber === item.lessonNumber)
+    if (start < 0) return
     const overrides = { ...(group.overrides || {}) }
     let carry = null
     for (let i = start; i < schedule.length; i++) {
@@ -220,6 +221,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
         </div>)}
       </div>)}
       {group.cancelledDates?.length > 0 && <div><h4>Inställda datum</h4>{group.cancelledDates.map(date=><div key={date}>{date} <button type="button" className="secondary" onClick={()=>updateGroup({cancelledDates:group.cancelledDates.filter(d=>d!==date)})}>Återställ</button></div>)}</div>}
+      {(group.pendingMoments || []).length > 0 && <p role="status"><strong>Moment som väntar på fler lektioner:</strong> {group.pendingMoments.join('; ')}</p>}
       {group.overrides && Object.keys(group.overrides).length>0 && <p className="muted">Egna ändringar är sparade separat för {group.name}. Grundplaneringen och övriga klasser påverkas inte.</p>}
       {grouped.length>8 && <button type="button" className="secondary" onClick={()=>setShowAll(!showAll)}>{showAll?'Visa färre veckor':'Visa alla '+grouped.length+' veckor'}</button>}
       <p className="muted">Ändringarna sparas tillsammans med grundplaneringen när du använder appens vanliga Spara-knapp. Inställda lektioner hoppas inte över.</p>
