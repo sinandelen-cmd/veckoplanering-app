@@ -970,6 +970,36 @@ function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson }) {
   </div>
 }
 
+function ClassTwoWeekCalendar({ plan, className }) {
+  const [expanded, setExpanded] = useState(null)
+  const group = (plan.classGroups || []).find(item => item.name === className)
+  const scheduled = useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
+  const today = new Date()
+  const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
+  const currentStart = [monday.getFullYear(), String(monday.getMonth()+1).padStart(2,'0'), String(monday.getDate()).padStart(2,'0')].join('-')
+  const previousMonday = new Date(monday)
+  previousMonday.setDate(previousMonday.getDate()-7)
+  const previousStart = [previousMonday.getFullYear(), String(previousMonday.getMonth()+1).padStart(2,'0'), String(previousMonday.getDate()).padStart(2,'0')].join('-')
+  const weeks = [previousStart,currentStart].map(start => {
+    const source = (plan.weeksData || []).find(w => w.weekStart === start)
+    const slots = scheduled.filter(item => item.weekStart === start)
+    return {...(source || {}), weekStart:start, weekNumber:calendarWeekNumber(start), lessons:slots.map(item => {
+      const text = item.override?.text
+      return text != null ? {...item.lesson,name:text,topics:[]} : item.lesson
+    }), chapter:source?.chapter || ''}
+  })
+  if (!group) return null
+  return <section className="class-real-two-weeks" aria-label={className+' – föregående och nuvarande vecka'}>
+    <div className="class-real-two-weeks-header"><h2>{className} · Veckoplanering</h2><span>Föregående vecka och nuvarande vecka</span></div>
+    <div className="class-real-two-weeks-grid">{weeks.map((week,i)=><div className="class-real-week-column" key={week.weekStart}>
+      <strong>{i===0?'Föregående vecka':'Nuvarande vecka'}</strong>
+      <CalendarWeekThumbnail week={week} entryType={plan.entryType || 'lektion'} onOpen={()=>setExpanded(week.weekStart)} onOpenLesson={()=>setExpanded(week.weekStart)}/>
+    </div>)}</div>
+    {expanded && <div className="class-real-week-expanded"><button type="button" className="secondary" onClick={()=>setExpanded(null)}>✕ Stäng stor vecka</button><article className="calendar-inline-week"><div className="calendar-inline-week-heading"><h2>Vecka {calendarWeekNumber(expanded)}</h2></div><LessonDetails week={weeks.find(w=>w.weekStart===expanded)} entryType={plan.entryType || 'lektion'} onChange={()=>{}} /></article></div>}
+  </section>
+}
+
 function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnFirstWeek = false, embedded = false, onOpen, onClose, onUpdateWeek, onSetAllVisibility, onAddWeek, onDeleteWeek, onUndo, canUndo = false, onSave, isDirty, busy, saveStatus, onBackToPrevious, entryType = 'lektion', classGroups = [], classPlan = null, publicSlug = '', onChangeClassGroups, onImportFile, fileImportState = {phase:'idle',message:''} }) {
   // Årsöversikt i nio veckor per sida, tre kolumner och tre rader.
   const [selectedWeekIndex, setSelectedWeekIndex] = useState(null)
@@ -2281,7 +2311,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
 
     
 
-    {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && plan.classGroups?.some(g=>g.name===editingClassView) && <section className="editing-selected-class-weekly" aria-label="Förhandsgranska vald klass"><div style={{display:'flex',justifyContent:'flex-end',gap:8,marginBottom:12}}><button type="button" className="btn btn-secondary class-edit-icon-button" title={classStudentPreview ? "Redigera klass " + editingClassView : "Klar – visa elevvy " + editingClassView} aria-label={classStudentPreview ? "Redigera klass " + editingClassView : "Klar – visa elevvy " + editingClassView} onClick={()=>setClassStudentPreview(value=>!value)} aria-pressed={!classStudentPreview}>{classStudentPreview ? "✎" : "✓"}</button></div>{classStudentPreview && <PublishedStudentPreview key={editingClassView} slug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} initialClass={editingClassView} />}</section>}
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && <ClassTwoWeekCalendar plan={{...plan,weeksData:weeks}} className={editingClassView} />}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline" style={editingClassView && plan.classGroups?.some(g=>g.name===editingClassView)?{display:"none"}:undefined}>
     
 <section className="card teacher-year-review">
