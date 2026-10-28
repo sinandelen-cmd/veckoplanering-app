@@ -23,7 +23,7 @@ export function buildClassSchedule(plan, group) {
   const firstDate = group.startDate || plan.startDate || ''
   let lessonNumber = 0
   // Varje klass använder innehållet från rätt grundvecka.
-  // Lektioner från en vecka flyttas aldrig automatiskt till nästa vecka.
+  // Inställda lektioner flyttar innehållet framåt även över veckogränser.
   return (plan.weeksData || []).flatMap(week => {
     if (!week?.weekStart || week.hidden) return []
     const source = Array.isArray(week.lessons) ? week.lessons : []
