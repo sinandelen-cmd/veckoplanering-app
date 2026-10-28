@@ -2,7 +2,7 @@ export default function Navigation({ active = 'mina', onNavigate, selectedId, on
   if (!onNavigate) return <nav className="public-navigation" aria-label="Huvudmeny"><a href="/">Årsplanering</a></nav>
   return <nav className="planning-unified-navigation" aria-label="Huvudnavigation">
     <div className="planning-unified-left">
-      <button type="button" onClick={() => { onCloseAdmin?.(); onNavigate('mina') }}>⌂ Startsida</button>
+      <button type="button" onClick={() => { onCloseAdmin?.(); onNavigate('bibliotek') }}>⌂ Startsida</button>
     </div>
     <div className="planning-unified-center">
       <button type="button" className={active === 'arsplan' && !calendarOpen && !adminOpen ? 'active' : ''} onClick={() => onNavigate('arsplan')}>Planering</button>
