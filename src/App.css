@@ -5813,3 +5813,25 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 }
 #lararvy .class-real-two-weeks-grid > .class-real-week-column { min-width:0!important; width:100%!important; }
 #lararvy .class-real-two-weeks-grid .calendar-real-week-thumbnail { min-width:0!important; width:100%!important; }
+
+/* Huvudmeny: separat verktygsgrupp förhindrar kollision med Administration. */
+.planning-unified-navigation { grid-template-columns:auto minmax(0,1fr) auto auto!important; }
+.planning-unified-navigation .planning-nav-tools { display:flex; align-items:center; justify-content:flex-end; gap:6px; min-width:0; }
+.planning-unified-navigation .planning-nav-context { max-width:150px; }
+.planning-unified-navigation .planning-nav-context-grade { white-space:nowrap; }
+@media(max-width:850px) {
+ .planning-unified-navigation { display:grid!important; grid-template-columns:minmax(0,1fr)!important; gap:0!important; padding:0 8px 5px!important; height:auto!important; }
+ .planning-unified-navigation .planning-unified-left,
+ .planning-unified-navigation .planning-unified-center,
+ .planning-unified-navigation .planning-unified-right { display:flex!important; height:auto!important; justify-content:flex-start!important; min-width:0!important; }
+ .planning-unified-navigation .planning-unified-left { grid-row:1; }
+ .planning-unified-navigation .planning-unified-center { grid-row:2; }
+ .planning-unified-navigation .planning-unified-right { grid-row:3; justify-content:flex-end!important; }
+ .planning-unified-navigation .planning-nav-tools { grid-row:4; justify-content:flex-end!important; min-height:30px; gap:10px; }
+ .planning-unified-navigation .planning-nav-context { flex-direction:row!important; align-items:center; gap:6px; max-width:100%!important; padding:2px 4px!important; }
+ .planning-unified-navigation .planning-nav-context-title,
+ .planning-unified-navigation .planning-nav-context-grade { white-space:nowrap!important; overflow:hidden; text-overflow:ellipsis; font-size:12px!important; }
+ .planning-unified-navigation .planning-nav-context-book { display:none!important; }
+ .planning-unified-navigation button { min-height:34px!important; padding:6px 9px!important; }
+ .planning-unified-navigation .planning-nav-print { padding:3px 7px!important; min-height:30px!important; }
+}
