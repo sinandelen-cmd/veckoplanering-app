@@ -5765,3 +5765,9 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .class-lesson-done-icon:hover { background:rgba(127,127,127,.10); }
 .class-lesson-done-icon:focus-visible { outline:2px solid currentColor; outline-offset:2px; }
 .class-lesson-done-icon:disabled { opacity:.45; cursor:wait; }
+
+/* Antalet synliga klassveckor styrs av gridTemplateColumns i komponenten. */
+.class-real-two-weeks-grid { display:grid !important; width:100%; min-width:0; overflow:visible; }
+.class-real-week-column { min-width:0; }
+.class-real-two-weeks-header { display:flex; align-items:center; flex-wrap:wrap; gap:.5rem; }
+.class-real-two-weeks-header h2 { margin-right:auto; }
