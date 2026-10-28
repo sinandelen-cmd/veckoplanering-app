@@ -1010,7 +1010,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
         })
         onChangeClassGroups?.((plan.classGroups||[]).map(g=>g.name===className?{...g,overrides}:g))
       }}/>
-      <div className="calendar-lesson-modal-footer"><button type="button" className="primary" disabled={saving||busy} onClick={async()=>{setSaving(true);try{const ok=await onSave?.();if(ok===true)setExpanded(null)}finally{setSaving(false)}}}>{saving||busy?"Sparar…":"✅ Klar – spara lektionen"}</button>{saveStatus && <span role="status">{saveStatus}</span>}</div>
+      <div className="calendar-lesson-modal-footer"><button type="button" className="class-lesson-done-icon" aria-label="Klar – spara lektionen" title="Klar – spara lektionen" disabled={saving||busy} onClick={async()=>{setSaving(true);try{const ok=await onSave?.();if(ok===true)setExpanded(null)}finally{setSaving(false)}}}>{saving||busy?"…":"✓"}</button>{saveStatus && <span role="status">{saveStatus}</span>}</div>
     </section></div>}
   </section>
 }
