@@ -5890,3 +5890,9 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .teacher-mobile-week-overview .calendar-real-week-frame { width:100%; min-width:0; overflow:hidden; }
 #lararvy .teacher-months-overview-hidden { display:none!important; }
 @media(min-width:901px) { #lararvy .teacher-mobile-week-overview { max-width:100%; } }
+
+/* Grundplanering: ta bort artificiellt mellanrum mellan begrepp och veckoinnehåll. */
+#lararvy .expanded-weeks-inline > .teacher-year-review > .teacher-pinned-chapter-shell { position:relative!important; top:auto!important; left:auto!important; right:auto!important; width:100%!important; max-width:100%!important; margin:4px 0 8px!important; padding:0!important; z-index:1!important; }
+#lararvy .expanded-weeks-inline > .teacher-year-review > .teacher-months { padding-top:0!important; margin-top:0!important; }
+#lararvy .expanded-weeks-inline > .teacher-year-review > .teacher-week-navigation { margin:4px 0 8px!important; }
+#lararvy .teacher-months-focused .teacher-month-section { margin-top:0!important; }
