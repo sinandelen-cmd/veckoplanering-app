@@ -95,6 +95,20 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
     onChange({ ...plan, classGroups: [...groups, { name: name.trim(), days: [...days], startDate: plan.startDate, cancelledDates: [], overrides: {} }] })
     setSelected(groups.length); setName('')
   }
+  const shiftClassLesson = item => {
+    const start = schedule.findIndex(x => x.lessonNumber === item.lessonNumber)
+    const overrides = { ...(group.overrides || {}) }
+    let carry = null
+    for (let i = start; i < schedule.length; i++) {
+      const slot = schedule[i]
+      const key = String(slot.lessonNumber - 1)
+      const parts = (overrides[key]?.text ?? describe(slot.lesson)).split(';').map(x => x.trim()).filter(Boolean)
+      if (i === start) carry = parts.pop()
+      else { parts.unshift(carry); carry = parts.pop() }
+      overrides[key] = { text: parts.join('; ') }
+    }
+    if (carry) updateGroup({ overrides, pendingMoments: [...(group.pendingMoments || []), carry] })
+  }
   const grouped = schedule.reduce((result, item) => {
     const weekStart = iso(monday(item.date))
     if (!result.length || result[result.length-1].weekStart !== weekStart) result.push({ weekStart, items: [] })
