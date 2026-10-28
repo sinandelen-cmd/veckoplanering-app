@@ -5426,3 +5426,37 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy header.topbar:has(.planning-view-tabs) .planning-print-action{display:none!important}
 #lararvy header.topbar:has(.planning-view-tabs) .planning-header-toolbar button{max-width:100%;white-space:normal}
 @media(max-width:600px){#lararvy header.topbar:has(.planning-view-tabs){padding:6px 5px 10px!important;gap:3px!important}#lararvy header.topbar:has(.planning-view-tabs) .planning-view-tabs button{padding:8px 10px!important}}
+
+
+/* En gemensam rad för Startsida, Administration och Logga ut i det blå fältet. */
+#lararvy header.topbar .planning-home-navigation-inline,
+.planning-layout header.topbar .planning-home-navigation-inline {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  width: auto !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 4px 8px !important;
+  background: transparent !important;
+}
+#lararvy header.topbar .planning-home-navigation-inline > button,
+.planning-layout header.topbar .planning-home-navigation-inline > button {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+@media (max-width: 600px) {
+  #lararvy header.topbar .planning-home-navigation-inline,
+  .planning-layout header.topbar .planning-home-navigation-inline {
+    gap: 4px !important;
+    padding: 3px !important;
+  }
+  #lararvy header.topbar .planning-home-navigation-inline > button,
+  .planning-layout header.topbar .planning-home-navigation-inline > button {
+    font-size: 11px !important;
+    padding: 6px 7px !important;
+  }
+}
