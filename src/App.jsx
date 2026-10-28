@@ -1436,6 +1436,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [shareMessage, setShareMessage] = useState("")
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [focusedTeacherWeek, setFocusedTeacherWeek] = useState(null)
+  const [teacherWeekOverview, setTeacherWeekOverview] = useState(true)
   const [simpleSetup, setSimpleSetup] = useState(true)
   const [simpleMore, setSimpleMore] = useState(false)
   const [teacherTab, setTeacherTab] = useState("mina")
@@ -2349,7 +2350,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         <button type="button" aria-label="Nästa vecka" onClick={() => { const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const next = weeks[Math.min(weeks.length - 1, i < 0 ? 0 : i + 1)]; if (next) setFocusedTeacherWeek(String(next.weekStart || next.weekNumber)) }}>▶</button>
         <button type="button" className={!focusedTeacherWeek ? 'all-weeks-active' : 'all-weeks-button'} onClick={() => setFocusedTeacherWeek(null)}>Alla veckor</button>
       </nav>
-      <div className={`teacher-months ${focusedTeacherWeek ? "teacher-months-focused" : ""}`}>
+      {focusedTeacherWeek && <div className="teacher-mobile-week-overview"><div className="teacher-mobile-week-overview-actions"><strong>Vecka {calendarWeekNumber(weeks.find(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)?.weekStart) || ""} · Helvecksvy</strong><button type="button" className="secondary" aria-expanded={!teacherWeekOverview} onClick={()=>setTeacherWeekOverview(v=>!v)}>{teacherWeekOverview?"Visa och redigera detaljer":"Visa hela veckan"}</button></div>{teacherWeekOverview && <CalendarWeekThumbnail week={weeks.find(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)} entryType={plan.entryType||"lektion"} onOpen={()=>setTeacherWeekOverview(false)} onOpenLesson={()=>setTeacherWeekOverview(false)}/>}</div>}
+      <div className={`teacher-months ${focusedTeacherWeek ? "teacher-months-focused" : ""} ${focusedTeacherWeek && teacherWeekOverview ? "teacher-months-overview-hidden" : ""}`}>
         {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? teacherDisplayWeeks : upcomingTeacherWeeks)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
           if (!chapters[chapterName]) chapters[chapterName] = { name: chapterName, items: [] }
