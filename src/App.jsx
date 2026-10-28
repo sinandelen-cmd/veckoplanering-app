@@ -1386,6 +1386,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [receivedToken, setReceivedToken] = useState("")
   const [shareMessage, setShareMessage] = useState("")
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [focusedTeacherWeek, setFocusedTeacherWeek] = useState(null)
   const [simpleSetup, setSimpleSetup] = useState(true)
   const [simpleMore, setSimpleMore] = useState(false)
   const [teacherTab, setTeacherTab] = useState("mina")
@@ -2293,8 +2294,14 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         </div>
       </div>
       {<div className="teacher-pinned-chapter-shell" aria-label="Aktuellt kapitel"><div className={`teacher-pinned-chapter-heading ${pinnedChapter?.tone || ""}`}>{pinnedChapter?.name || "Kapitel"}</div>{pinnedChapter?.name && <ChapterVocabulary chapter={pinnedChapter.name} weeks={weeks.filter(week => (week.chapter?.trim() || "Utan kapitel") === pinnedChapter.name)} />}</div>}
+      <nav className="teacher-week-navigation" aria-label="Navigera mellan veckor">
+        <button type="button" aria-label="Föregående vecka" onClick={() => { const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const next = weeks[Math.max(0, i < 0 ? 0 : i - 1)]; if (next) setFocusedTeacherWeek(String(next.weekStart || next.weekNumber)) }}>◀</button>
+        {[-1, 0, 1].map(offset => { const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const center = i < 0 ? weeks.findIndex(w => Number(w.weekNumber) === Number(calendarWeekNumber(new Date().toISOString().slice(0,10)))) : i; const w = weeks[center + offset]; return <button type="button" key={offset} className={offset === 0 ? 'current' : 'adjacent'} disabled={!w} onClick={() => w && setFocusedTeacherWeek(String(w.weekStart || w.weekNumber))}>{w ? `Vecka ${calendarWeekNumber(w.weekStart) ?? w.weekNumber}` : '–'}</button> })}
+        <button type="button" aria-label="Nästa vecka" onClick={() => { const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const next = weeks[Math.min(weeks.length - 1, i < 0 ? 0 : i + 1)]; if (next) setFocusedTeacherWeek(String(next.weekStart || next.weekNumber)) }}>▶</button>
+        <button type="button" className={!focusedTeacherWeek ? 'all-weeks-active' : 'all-weeks-button'} onClick={() => setFocusedTeacherWeek(null)}>Alla veckor</button>
+      </nav>
       <div className="teacher-months">
-        {Object.values((showPastTeacherWeeks ? teacherDisplayWeeks : upcomingTeacherWeeks).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
+        {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? teacherDisplayWeeks : upcomingTeacherWeeks)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
           if (!chapters[chapterName]) chapters[chapterName] = { name: chapterName, items: [] }
           chapters[chapterName].items.push(item)
