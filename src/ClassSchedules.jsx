@@ -43,7 +43,7 @@ export function buildClassSchedule(plan, group) {
     return slots.map((slot, index) => {
       const lesson = source[index] || {name:'Lektion '+(index+1),topics:[]}
       lessonNumber++
-      return {...slot,lesson,weekNumber:week.weekNumber,weekTitle:week.title,weekStart:week.weekStart,index,lessonNumber,override:group.overrides?.[String(lessonNumber-1)] || null}
+      return {...slot,lesson:group.overrides?.[String(lessonNumber-1)]?.lesson || lesson,weekNumber:week.weekNumber,weekTitle:week.title,weekStart:week.weekStart,index,lessonNumber,override:group.overrides?.[String(lessonNumber-1)] || null}
     })
   })
 }
