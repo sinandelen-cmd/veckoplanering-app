@@ -5835,3 +5835,15 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  .planning-unified-navigation button { min-height:34px!important; padding:6px 9px!important; }
  .planning-unified-navigation .planning-nav-print { padding:3px 7px!important; min-height:30px!important; }
 }
+
+/* Fast blå huvudmeny och fast klassmeny direkt under den, med korrekt mobilhöjd. */
+.planning-layout .planning-unified-navigation { position:sticky!important; top:0!important; z-index:1200!important; }
+#lararvy header.topbar:has(>.planning-header-toolbar) { position:sticky!important; top:var(--planning-nav-height,58px)!important; z-index:1100!important; background:#fff!important; box-shadow:0 3px 9px rgba(20,42,60,.10)!important; }
+#lararvy header.topbar .planning-header-toolbar { position:relative!important; top:auto!important; }
+#lararvy header.topbar #kopplade-klasser { position:relative!important; top:auto!important; margin:0!important; }
+#lararvy header.topbar #kopplade-klasser .class-mini-row { position:relative!important; top:auto!important; }
+/* Utskriftsikonen längst till höger, med diskret skugga. */
+.planning-unified-navigation .planning-unified-right { justify-content:flex-end!important; }
+.planning-unified-navigation .planning-unified-right .planning-nav-print { order:99!important; flex:0 0 auto!important; margin-left:6px!important; border-radius:10px!important; background:rgba(255,255,255,.12)!important; box-shadow:0 2px 7px rgba(8,25,42,.3)!important; min-width:36px!important; }
+.planning-unified-navigation .planning-unified-right .planning-nav-print:hover { background:rgba(255,255,255,.22)!important; }
+@media(max-width:850px) { .planning-unified-navigation .planning-unified-right .planning-nav-print { margin-left:auto!important; } }
