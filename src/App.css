@@ -5882,3 +5882,11 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .teacher-months-focused .week-card input,
 #lararvy .teacher-months-focused .week-card textarea { box-sizing:border-box; max-width:100%; }
 @media(min-width:881px) { #lararvy .teacher-months-focused .week-card { min-width:0!important; } }
+
+/* Grundplanering: skalanpassad helvecksvy vid 100 % webbläsarzoom; detaljer öppnas separat. */
+#lararvy .teacher-mobile-week-overview { width:100%; min-width:0; box-sizing:border-box; background:#fff; border:1px solid #dce5ed; border-radius:12px; padding:clamp(6px,1.5vw,16px); margin:10px 0; }
+#lararvy .teacher-mobile-week-overview-actions { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+#lararvy .teacher-mobile-week-overview .calendar-real-week-thumbnail { width:100%; min-width:0; max-width:100%; }
+#lararvy .teacher-mobile-week-overview .calendar-real-week-frame { width:100%; min-width:0; overflow:hidden; }
+#lararvy .teacher-months-overview-hidden { display:none!important; }
+@media(min-width:901px) { #lararvy .teacher-mobile-week-overview { max-width:100%; } }
