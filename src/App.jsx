@@ -970,7 +970,7 @@ function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson }) {
   </div>
 }
 
-function ClassTwoWeekCalendar({ plan, className }) {
+function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups }) {
   const [expanded, setExpanded] = useState(null)
   const group = (plan.classGroups || []).find(item => item.name === className)
   const scheduled = useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
@@ -986,7 +986,7 @@ function ClassTwoWeekCalendar({ plan, className }) {
     const slots = scheduled.filter(item => item.weekStart === start)
     return {...(source || {}), weekStart:start, weekNumber:calendarWeekNumber(start), lessons:slots.map(item => {
       const text = item.override?.text
-      return text != null ? {...item.lesson,name:text,topics:[]} : item.lesson
+      return item.override?.lesson || (text != null ? {...item.lesson,name:text,topics:[]} : item.lesson)
     }), chapter:source?.chapter || ''}
   })
   if (!group) return null
@@ -994,9 +994,23 @@ function ClassTwoWeekCalendar({ plan, className }) {
     <div className="class-real-two-weeks-header"><h2>{className} · Veckoplanering</h2><span>Föregående vecka och nuvarande vecka</span></div>
     <div className="class-real-two-weeks-grid">{weeks.map((week,i)=><div className="class-real-week-column" key={week.weekStart}>
       <strong>{i===0?'Föregående vecka':'Nuvarande vecka'}</strong>
-      <CalendarWeekThumbnail week={week} entryType={plan.entryType || 'lektion'} onOpen={()=>setExpanded(week.weekStart)} onOpenLesson={()=>setExpanded(week.weekStart)}/>
+      <CalendarWeekThumbnail week={week} entryType={plan.entryType || 'lektion'} onOpen={()=>setExpanded({weekStart:week.weekStart,lessonIndex:null})} onOpenLesson={lessonIndex=>setExpanded({weekStart:week.weekStart,lessonIndex})}/>
     </div>)}</div>
-    {expanded && <div className="class-real-week-expanded"><button type="button" className="secondary" onClick={()=>setExpanded(null)}>✕ Stäng stor vecka</button><article className="calendar-inline-week"><div className="calendar-inline-week-heading"><h2>Vecka {calendarWeekNumber(expanded)}</h2></div><LessonDetails week={weeks.find(w=>w.weekStart===expanded)} entryType={plan.entryType || 'lektion'} onChange={()=>{}} /></article></div>}
+    {expanded && <div className="calendar-lesson-modal-backdrop" role="presentation"><section className="calendar-lesson-modal" role="dialog" aria-modal="true" aria-label="Redigera klassens lektion">
+      <div className="calendar-lesson-modal-header"><h3>Vecka {calendarWeekNumber(expanded.weekStart)}{expanded.lessonIndex!==null?' · Lektion '+(expanded.lessonIndex+1):''} · {className}</h3><button type="button" onClick={()=>setExpanded(null)}>Stäng</button></div>
+      <LessonDetails week={weeks.find(w=>w.weekStart===expanded.weekStart)} entryType={plan.entryType||'lektion'} onlyLessonIndex={expanded.lessonIndex} onChange={changes=>{
+        const week=weeks.find(w=>w.weekStart===expanded.weekStart)
+        const slots=scheduled.filter(item=>item.weekStart===expanded.weekStart)
+        const overrides={...(group.overrides||{})}
+        ;(changes.lessons||[]).forEach((lesson,i)=>{
+          const slot=slots[i];if(!slot)return
+          const key=String(slot.lessonNumber-1)
+          overrides[key]={...(overrides[key]||{}),lesson}
+        })
+        onChangeClassGroups?.((plan.classGroups||[]).map(g=>g.name===className?{...g,overrides}:g))
+      }}/>
+      <div className="calendar-lesson-modal-footer"><button type="button" className="primary" onClick={()=>setExpanded(null)}>✅ Klar</button></div>
+    </section></div>}
   </section>
 }
 
@@ -2311,7 +2325,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
 
     
 
-    {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && <ClassTwoWeekCalendar plan={{...plan,weeksData:weeks}} className={editingClassView} />}
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && <ClassTwoWeekCalendar plan={{...plan,weeksData:weeks}} className={editingClassView} onChangeClassGroups={groups=>setPlan(previous=>({...previous,classGroups:groups}))} />}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline" style={editingClassView && plan.classGroups?.some(g=>g.name===editingClassView)?{display:"none"}:undefined}>
     
 <section className="card teacher-year-review">
