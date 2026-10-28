@@ -5671,3 +5671,23 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
   gap:8px!important;
   align-items:center!important;
 }
+
+/* Elevvisning på samma horisontella rad som klassflikarna. */
+#lararvy #kopplade-klasser .class-mini-row {gap:10px!important;align-items:end!important}
+#lararvy #kopplade-klasser .class-mini-row .class-bulk-visibility {
+  margin-left:auto!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  flex:0 0 auto!important;
+  white-space:nowrap!important;
+  padding-bottom:6px!important;
+}
+#lararvy #kopplade-klasser .class-mini-row .class-bulk-visibility select {max-width:230px!important}
+.teacher-week-history-actions {display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-right:8px}
+.teacher-week-history-actions button {padding:6px 10px;font-size:.85rem}
+@media(max-width:700px) {
+ #lararvy #kopplade-klasser .class-mini-row {overflow-x:auto!important;flex-wrap:nowrap!important}
+ #lararvy #kopplade-klasser .class-mini-row .class-bulk-visibility {font-size:12px!important}
+ #lararvy #kopplade-klasser .class-mini-row .class-bulk-visibility select {max-width:145px!important}
+}
