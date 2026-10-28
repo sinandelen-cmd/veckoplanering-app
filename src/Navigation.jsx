@@ -5,11 +5,11 @@ export default function Navigation({ active = 'mina', onNavigate, selectedId, on
       <button type="button" onClick={() => { onCloseAdmin?.(); onNavigate('mina') }}>⌂ Startsida</button>
     </div>
     <div className="planning-unified-center">
-      <button type="button" className={active === 'arsplan' && !calendarOpen ? 'active' : ''} onClick={() => onNavigate('arsplan')}>Planering</button>
-      <button type="button" className={calendarOpen ? 'active' : ''} onClick={() => calendarOpen ? onNavigate('arsplan') : onToggleCalendar?.()}>Kalendervy</button>
+      <button type="button" className={active === 'arsplan' && !calendarOpen && !adminOpen ? 'active' : ''} onClick={() => onNavigate('arsplan')}>Planering</button>
+      <button type="button" className={calendarOpen && !adminOpen ? 'active' : ''} onClick={() => calendarOpen ? onNavigate('arsplan') : onToggleCalendar?.()}>Kalendervy</button>
     </div>
     <div className="planning-unified-right">
-      {isAdmin && <button type="button" onClick={onOpenAdmin}>⚙ Administration{pendingCount > 0 ? ' (' + pendingCount + ')' : ''}</button>}
+      {isAdmin && <button type="button" className={adminOpen ? 'active' : ''} onClick={onOpenAdmin}>⚙ Administration{pendingCount > 0 ? ' (' + pendingCount + ')' : ''}</button>}
       <button type="button" onClick={onSignOut}>Logga ut</button>
     </div>
   </nav>
