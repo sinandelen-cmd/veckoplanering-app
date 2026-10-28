@@ -5509,3 +5509,23 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  .planning-unified-left,.planning-unified-center,.planning-unified-right{gap:2px!important}
  .planning-unified-navigation button{font-size:11px!important;padding:7px 5px!important}
 }
+
+/* Huvudmenyn fyller hela skärmbredden även inuti planeringens arbetsyta. */
+#lararvy header.topbar:has(.planning-unified-navigation){
+  width:100vw!important;max-width:none!important;
+  margin-left:calc(50% - 50vw)!important;
+  margin-right:calc(50% - 50vw)!important;
+  border:0!important;border-radius:0!important;
+  box-shadow:none!important;
+}
+#lararvy header.topbar .planning-inline-navigation:has(.planning-unified-navigation){
+  margin:0!important;padding:0!important;
+}
+.planning-unified-navigation{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;flex-wrap:nowrap!important}
+.planning-unified-navigation .planning-unified-left,
+.planning-unified-navigation .planning-unified-center,
+.planning-unified-navigation .planning-unified-right{flex-wrap:nowrap!important}
+@media(max-width:700px){
+ .planning-unified-navigation{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important}
+ .planning-unified-navigation button{padding:7px 4px!important;font-size:10px!important}
+}
