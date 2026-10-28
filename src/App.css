@@ -5798,3 +5798,18 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
  .planning-unified-navigation .planning-nav-context { max-width:95px; }
  .planning-unified-navigation .planning-nav-print { padding:5px!important; }
 }
+
+/* Mobil: exakt 1, 2 eller 3 klassveckor på EN rad som skalade miniatyrer. 
+   Samma specificitet som äldre tvåkolumnsregler så att valda antalet vinner. */
+#lararvy .class-real-two-weeks .class-real-two-weeks-grid,
+#lararvy .class-real-two-weeks-grid {
+  display:grid!important;
+  grid-template-columns:repeat(var(--class-week-columns, 2),minmax(0,1fr))!important;
+  grid-auto-flow:column!important;
+  grid-auto-columns:minmax(0,1fr)!important;
+  width:100%!important;
+  min-width:0!important;
+  gap:clamp(3px,1vw,10px)!important;
+}
+#lararvy .class-real-two-weeks-grid > .class-real-week-column { min-width:0!important; width:100%!important; }
+#lararvy .class-real-two-weeks-grid .calendar-real-week-thumbnail { min-width:0!important; width:100%!important; }
