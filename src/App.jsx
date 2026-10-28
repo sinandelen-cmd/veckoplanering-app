@@ -2358,7 +2358,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
           chapters[chapterName].items.push(item)
           return chapters
         }, {})).map(group => <section className="teacher-month-section teacher-chapter-section" key={group.name}>
-          <h3 className={`chapter-heading chapter-tone-${chapterTone(group.name)}`}>{group.name}</h3>\n
+          <h3 className={`chapter-heading chapter-tone-${chapterTone(group.name)}`}>{group.name}</h3>
           <div className="teacher-month-weeks">
           {group.items.map(({ week, index }) => <div className="chapter-week-group" key={`${week.weekStart || week.weekNumber}-${index}`}>
           <article className={`week-card teacher-collapsible-week ${(focusedTeacherWeek || (weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen)) ? "teacher-week-open" : "teacher-week-closed"}`} id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
