@@ -3,7 +3,7 @@ export default function Navigation({ active = 'mina', onNavigate, onNew, selecte
   return <>
     {selectedId && !adminOpen && (active === 'arsplan' || active === 'elevvy') && <nav className="planning-view-tabs" aria-label="Välj planeringsvy">
       <button type="button" className={active === 'arsplan' && !calendarOpen ? 'active' : ''} aria-current={active === 'arsplan' && !calendarOpen ? 'page' : undefined} onClick={() => onNavigate?.('arsplan')}>Planering</button>
-      <button type="button" className={calendarOpen ? 'active' : ''} aria-current={calendarOpen ? 'page' : undefined} onClick={() => onToggleCalendar?.()}>Kalender</button>
+      <button type="button" className={calendarOpen ? 'active' : ''} aria-current={calendarOpen ? 'page' : undefined} onClick={() => calendarOpen ? onNavigate?.('arsplan') : onToggleCalendar?.()}>Kalender</button>
       <button type="button" className={active === 'elevvy' ? 'active' : ''} aria-current={active === 'elevvy' ? 'page' : undefined} onClick={() => onNavigate?.('elevvy')}>Elevvy</button>
       <button type="button" onClick={() => window.print()}>Utskrift</button>
     </nav>}
