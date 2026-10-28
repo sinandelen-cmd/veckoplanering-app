@@ -5403,3 +5403,15 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .teacher-week-navigation button:disabled{opacity:.35;cursor:default}
 .teacher-week-navigation button:focus-visible{outline:3px solid #75b8ff;outline-offset:2px}
 @media(max-width:600px){.teacher-week-navigation{gap:4px;padding:8px 5px;top:52px}.teacher-week-navigation button{padding:8px 9px;font-size:12px;min-height:38px}}
+
+/* Samla befintliga planeringsknappar i samma blå, fönsterbreda meny utan att flytta deras funktioner. */
+.planning-layout:has(.planning-view-tabs) .topbar{background:#3767a8!important;width:100vw;max-width:none;box-sizing:border-box;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding:0 14px 14px!important;border-radius:0!important;gap:8px}
+.planning-layout:has(.planning-view-tabs) .planning-inline-navigation{width:100%;flex-basis:100%;order:0}
+.planning-layout:has(.planning-view-tabs) .planning-view-tabs{width:100%;margin:0!important;padding:12px 6px 8px;position:relative;top:auto;z-index:auto}
+.planning-layout:has(.planning-view-tabs) .teacher-header-identity{order:1;flex:1 1 240px;min-width:0}
+.planning-layout:has(.planning-view-tabs) .teacher-header-identity strong,.planning-layout:has(.planning-view-tabs) .teacher-header-identity p{color:#fff!important}
+.planning-layout:has(.planning-view-tabs) .planning-header-toolbar{order:3;background:transparent!important;margin:0!important;padding:0!important}
+.planning-layout:has(.planning-view-tabs) .planning-home-navigation{background:transparent!important;box-shadow:none!important;border:0!important;justify-content:center}
+.planning-layout:has(.planning-view-tabs) .planning-home-navigation button,.planning-layout:has(.planning-view-tabs) .planning-header-toolbar button{border-radius:9px}
+.planning-layout:has(.planning-view-tabs) .planning-print-action{display:none!important}
+@media(max-width:600px){.planning-layout:has(.planning-view-tabs) .topbar{padding:0 7px 9px!important}.planning-layout:has(.planning-view-tabs) .planning-view-tabs{gap:2px}.planning-layout:has(.planning-view-tabs) .teacher-header-identity{flex-basis:100%}}
