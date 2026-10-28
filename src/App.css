@@ -5847,3 +5847,11 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .planning-unified-navigation .planning-unified-right .planning-nav-print { order:99!important; flex:0 0 auto!important; margin-left:6px!important; border-radius:10px!important; background:rgba(255,255,255,.12)!important; box-shadow:0 2px 7px rgba(8,25,42,.3)!important; min-width:36px!important; }
 .planning-unified-navigation .planning-unified-right .planning-nav-print:hover { background:rgba(255,255,255,.22)!important; }
 @media(max-width:850px) { .planning-unified-navigation .planning-unified-right .planning-nav-print { margin-left:auto!important; } }
+
+/* Förstorad klassvecka: hela tillgängliga skärmen, med tydlig Minska-knapp. */
+.class-full-week-backdrop { position:fixed; inset:0; z-index:3000; background:rgba(20,36,54,.56); display:flex; align-items:stretch; justify-content:center; padding:clamp(6px,2vw,24px); box-sizing:border-box; }
+.class-full-week-panel { background:#fff; color:#243446; width:100%; max-width:1400px; height:100%; min-height:0; overflow:auto; border-radius:12px; padding:clamp(10px,2vw,24px); box-sizing:border-box; box-shadow:0 15px 45px rgba(0,0,0,.3); }
+.class-full-week-header { display:flex; justify-content:space-between; align-items:center; gap:12px; position:sticky; top:0; z-index:2; background:#fff; padding:8px 0 12px; border-bottom:1px solid #dce5ed; }
+.class-full-week-header h3 { margin:0; }
+.class-full-week-footer { display:flex; justify-content:flex-end; padding:12px; }
+@media(max-width:650px) { .class-full-week-backdrop { padding:0; } .class-full-week-panel { border-radius:0; } .class-full-week-header h3 { font-size:1rem; } }
