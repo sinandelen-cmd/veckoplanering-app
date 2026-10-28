@@ -5776,3 +5776,25 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .class-week-count-controls button { background:transparent; color:inherit; border:1px solid currentColor; border-radius:.45rem; padding:.3rem .55rem; font:inherit; cursor:pointer; opacity:.7; }
 .class-week-count-controls button.active { opacity:1; font-weight:700; box-shadow:inset 0 -2px currentColor; }
 .class-week-count-controls button:focus-visible { outline:2px solid currentColor; outline-offset:2px; }
+
+/* Planidentitet och utskrift i den blå huvudmenyn. */
+.planning-unified-navigation .planning-nav-context { display:flex; flex-direction:column; justify-content:center; align-self:center; min-width:0; max-width:190px; padding:2px 8px; color:#fff; line-height:1.2; }
+.planning-nav-context-title { font-size:.88rem; font-weight:750; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.planning-nav-context-grade { font-size:.74rem; opacity:.9; }
+.planning-nav-context-book { font-size:.68rem; opacity:.8; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.planning-unified-navigation .planning-nav-print { align-self:center!important; border-radius:8px!important; padding:7px!important; min-height:36px!important; font-size:1.15rem!important; }
+/* Tre veckor måste kunna visas; tidigare tvåkolumnslåsning får inte vinna. */
+#lararvy .class-real-two-weeks-grid { grid-template-columns:repeat(var(--class-week-columns,2),minmax(0,1fr))!important; }
+@media(max-width:850px) {
+ .planning-unified-navigation { height:auto!important; min-height:54px!important; flex-wrap:wrap!important; align-items:center!important; padding:5px 8px!important; row-gap:2px!important; }
+ .planning-unified-left,.planning-unified-center,.planning-unified-right { height:auto!important; min-width:0; }
+ .planning-unified-navigation button { padding:8px 7px!important; min-height:36px!important; font-size:.82rem!important; }
+ .planning-unified-navigation .planning-nav-context { max-width:115px; padding:2px 4px; }
+ .planning-nav-context-title { font-size:.75rem; }
+ .planning-nav-context-book { display:none; }
+ .planning-nav-context-grade { font-size:.7rem; }
+}
+@media(max-width:480px) {
+ .planning-unified-navigation .planning-nav-context { max-width:95px; }
+ .planning-unified-navigation .planning-nav-print { padding:5px!important; }
+}
