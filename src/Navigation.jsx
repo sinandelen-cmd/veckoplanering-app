@@ -7,9 +7,9 @@ export default function Navigation({ active = 'mina', onNavigate, onNew, selecte
       <button type="button" className={active === 'elevvy' ? 'active' : ''} aria-current={active === 'elevvy' ? 'page' : undefined} onClick={() => onNavigate?.('elevvy')}>Elevvy</button>
       <button type="button" onClick={() => window.print()}>Utskrift</button>
     </nav>}
-    <nav className="planning-home-navigation" aria-label="Huvudnavigation">
+    <nav className="planning-home-navigation planning-home-navigation-inline" aria-label="Huvudnavigation">
       {active === "bibliotek" && !adminOpen && <div className="nav-plan-search"><label htmlFor="library-plan-search" className="sr-only">Sök planering</label><span className="nav-search-icon" aria-hidden="true">⌕</span><input id="library-plan-search" type="search" placeholder={showArchive ? "Sök i arkivet…" : "Sök planering…"} value={planSearch} onChange={event => onPlanSearchChange?.(event.target.value)} />{planSearch && <button type="button" className="nav-search-clear" onClick={() => onPlanSearchChange?.("")} aria-label="Rensa sökning">×</button>}</div>}
-      {active !== 'mina' && <button type="button" className="planning-home-button" onClick={() => { onCloseAdmin?.(); onNavigate?.('mina') }}>⌂ Startsida</button>}
+      <button type="button" className="planning-home-button" onClick={() => { onCloseAdmin?.(); onNavigate?.('mina') }}>⌂ Startsida</button>
 
       {isAdmin && <button type="button" onClick={onOpenAdmin}>⚙ Administration {pendingCount > 0 ? '(' + pendingCount + ')' : ''}</button>}
       <button type="button" onClick={onSignOut}>Logga ut</button>
