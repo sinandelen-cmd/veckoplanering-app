@@ -210,6 +210,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
             <button type="button" className="secondary" onClick={()=>setEditing(null)}>Avbryt</button>
           </div> : <div className="button-row">
             <button type="button" className="secondary" onClick={()=>{setEditing(item.lessonNumber);setEditText(item.override?.text ?? describe(item.lesson))}}>Ändra bara för {group.name}</button>
+            <button type="button" className="secondary" onClick={()=>{if(window.confirm('Flytta sista momentet framåt för '+group.name+'?'))shiftClassLesson(item)}}>Flytta sista momentet framåt →</button>
             {item.override && <button type="button" className="secondary" onClick={()=>{const overrides={...group.overrides};delete overrides[String(item.lessonNumber-1)];updateGroup({overrides})}}>Återställ grundinnehåll</button>}
             <button type="button" className="secondary" onClick={()=>{
               if (!window.confirm('Ställa in alla lektioner '+item.date+' för '+group.name+'? Innehållet flyttas till nästa tillgängliga lektionstillfälle.')) return
