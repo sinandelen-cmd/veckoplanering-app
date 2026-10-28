@@ -135,6 +135,20 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
     
     <div className="class-toolbar-more class-toolbar-expanded"><div className="class-toolbar-actions">{editingClassView && group && <button type="button" className="secondary" aria-expanded={showClassMenu} onClick={()=>setShowClassMenu(v=>!v)}>▦ Ändra schema</button>}{editingClassView && group && <button type="button" className="secondary" aria-expanded={showClosures} onClick={()=>setShowClosures(v=>!v)}>📅 {showClosures?'Dölj':'Lägg till'} studiedag / halvdag / lov för klassen</button>}{editingClassView && groups.some(g => g.name === editingClassView) && <button type="button" className="class-mini-schema" onClick={async()=>{if(!publicSlug){window.alert("Elevlänken är inte publicerad ännu. Lägg till lektionsinnehåll och kontrollera att planeringen är publicerad.");return}const url=window.location.origin+"/elev/"+encodeURIComponent(publicSlug)+(editingClassView?"?klass="+encodeURIComponent(editingClassView):"");try{await navigator.clipboard.writeText(url);window.alert("Elevlänken har kopierats:\n"+url)}catch{window.prompt("Kopiera elevlänken:",url)}}}>🔗 Elevlänk för {editingClassView}</button>}
 </div></div>
+    {editingClassView && group && <section className="class-two-week-preview" aria-label={"Två veckor för " + group.name}>
+      <h3>{group.name} – två veckor sida vid sida</h3>
+      <div className="class-two-week-grid">
+        {grouped.slice(0,2).map(week => <article className="class-two-week-card" key={week.weekStart}>
+          <h4>Vecka {(() => {const d=new Date(week.weekStart+'T12:00:00');d.setDate(d.getDate()+3);const y=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-y)/86400000-3+(y.getDay()+6)%7)/7)})()}</h4>
+          <p className="muted">{week.weekStart} · {week.items.length} lektioner</p>
+          {week.items.map(item=><div className="class-two-week-lesson" key={item.lessonNumber}>
+            <strong>{item.day} {item.date} · Lektion {item.weekLessonNumber}</strong>
+            <div style={{whiteSpace:"pre-wrap"}}>{item.override?.text ?? describe(item.lesson)}</div>
+          </div>)}
+        </article>)}
+        {grouped.length===0 && <p>Välj klassens lektionsdagar för att visa veckorna.</p>}
+      </div>
+    </section>}
     {addingClass && <div className="class-mini-new"><label>Ny klass <input value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addClass();if(name.trim())setAddingClass(false)}}} placeholder="T.ex. EK26A" /></label><button type="button" disabled={!name.trim()||groups.some(g=>g.name.toLocaleLowerCase('sv')===name.trim().toLocaleLowerCase('sv'))} onClick={()=>{addClass();setAddingClass(false);setShowClassMenu(true)}}>Lägg till</button></div>}
     {unscheduledGroups.length>0 && <p role="alert" className="class-mini-warning">Välj lektionsdagar för {unscheduledGroups.map(g=>g.name).join(', ')} via Schema.</p>}
     {showClassMenu && group && <div className="class-mini-panel">
