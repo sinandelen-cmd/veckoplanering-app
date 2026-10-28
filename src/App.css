@@ -5717,3 +5717,19 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .class-two-week-heading h3 {margin:0}
 #lararvy .class-two-week-paging {display:flex;gap:8px;flex-wrap:wrap}
 #lararvy #kopplade-klasser .class-toolbar-more:has(.class-toolbar-actions:empty) {display:none!important}
+
+/* Klassvyn: två verkliga kalenderveckor, föregående och nuvarande, i full tillgänglig bredd. */
+#lararvy:has(.class-real-two-weeks),.planning-layout:has(.class-real-two-weeks) .shell {max-width:none!important;width:100%!important}
+#lararvy .class-real-two-weeks {width:100%;max-width:none;margin:12px 0;padding:12px;box-sizing:border-box;background:#fff;border:1px solid #dce5ed;border-radius:12px}
+#lararvy .class-real-two-weeks-header {display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+#lararvy .class-real-two-weeks-header h2 {margin:0}
+#lararvy .class-real-two-weeks-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:100%}
+#lararvy .class-real-week-column {min-width:0;overflow:hidden}
+#lararvy .class-real-week-column .calendar-real-week-thumbnail {width:100%;max-width:none}
+#lararvy .class-real-week-column .calendar-real-week-frame {width:100%}
+#lararvy .class-real-week-expanded {margin-top:18px;padding:12px;border:1px solid #dce5ed;border-radius:12px}
+#lararvy .class-real-week-expanded .calendar-inline-week {max-width:none;width:100%}
+@media(max-width:600px){#lararvy .class-real-two-weeks{padding:6px}#lararvy .class-real-two-weeks-grid{gap:6px}#lararvy .class-real-week-column>strong{font-size:12px}}
+/* Huvudmenyn behåller samma höjd i alla vyer där den visas. */
+.planning-unified-navigation{box-sizing:border-box!important;min-height:58px!important;height:58px!important}
+@media(max-width:700px){.planning-unified-navigation{min-height:54px!important;height:54px!important}}
