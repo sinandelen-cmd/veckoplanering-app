@@ -5652,3 +5652,22 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
   #lararvy #kopplade-klasser .class-mini-chip,
   #lararvy #kopplade-klasser .class-mini-add{padding:9px 10px!important}
 }
+
+/* Flikraden är enbart navigation; verktyg hör till den öppna vyn. */
+#lararvy #kopplade-klasser .class-mini-row {justify-content:flex-start!important}
+#lararvy #kopplade-klasser .class-toolbar-more {
+  position:relative!important;
+  top:auto!important;
+  z-index:auto!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  margin:12px 0!important;
+  padding:0!important;
+}
+#lararvy #kopplade-klasser .class-toolbar-actions {
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:8px!important;
+  align-items:center!important;
+}
