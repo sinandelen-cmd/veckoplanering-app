@@ -5700,3 +5700,14 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .class-two-week-card h4 {margin:0 0 6px}
 #lararvy .class-two-week-lesson {margin-top:10px;padding:10px;background:white;border:1px solid #e1e8ef;border-radius:8px;overflow-wrap:anywhere}
 @media(max-width:420px){#lararvy .class-two-week-grid{gap:6px}#lararvy .class-two-week-card{padding:8px}#lararvy .class-two-week-lesson{padding:6px;font-size:12px}}
+
+/* Elevvisning hör till Grundplanering, inte till flikraden eller klassvyerna. */
+#lararvy #kopplade-klasser .class-base-visibility {
+  display:flex;justify-content:flex-end;align-items:center;
+  padding:10px 12px 4px;background:transparent;
+}
+#lararvy #kopplade-klasser .class-base-visibility .class-bulk-visibility {
+  display:inline-flex;align-items:center;gap:10px;
+  font-weight:600;max-width:100%;
+}
+#lararvy #kopplade-klasser .class-base-visibility select {max-width:240px}
