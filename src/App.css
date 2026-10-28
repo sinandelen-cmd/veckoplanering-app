@@ -5896,3 +5896,10 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .expanded-weeks-inline > .teacher-year-review > .teacher-months { padding-top:0!important; margin-top:0!important; }
 #lararvy .expanded-weeks-inline > .teacher-year-review > .teacher-week-navigation { margin:4px 0 8px!important; }
 #lararvy .teacher-months-focused .teacher-month-section { margin-top:0!important; }
+
+/* Tät grundplanering utan onödiga vita mellanrum. */
+#lararvy .expanded-weeks-inline > .teacher-year-review > .teacher-months { padding-top:0!important; margin-top:0!important; }
+#lararvy .expanded-weeks-inline > .teacher-year-review > .teacher-pinned-chapter-shell { margin-bottom:0!important; padding-bottom:0!important; }
+#lararvy .teacher-year-review .teacher-week-navigation { margin-block:4px!important; }
+#lararvy .teacher-year-review .teacher-month-section { margin-top:0!important; padding-top:6px!important; }
+#lararvy .teacher-mobile-week-overview { margin:4px 0!important; padding:6px!important; }
