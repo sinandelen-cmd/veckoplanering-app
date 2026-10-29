@@ -6027,3 +6027,6 @@ body.teacher-fit-mode #lararvy .teacher-default-thumbs .calendar-real-week-frame
 /* Ny vecka i veckoraden, till höger där "Visa allt innehåll" var. */
 #lararvy .teacher-week-navigation .teacher-add-week-inline { margin-left:auto!important; background:#2d7d46!important; color:#fff!important; border:0!important; border-radius:999px!important; min-height:36px!important; padding:6px 14px!important; font-size:14px!important; font-weight:700!important; cursor:pointer; }
 #lararvy .teacher-week-navigation .teacher-add-week-inline:disabled { opacity:.4; cursor:default; }
+
+/* Alla veckor i blå menyn: en egen vy där man scrollar upp och ner. */
+#lararvy .planning-unified-navigation .planning-unified-center button:last-child { background:rgba(255,255,255,.16)!important; }

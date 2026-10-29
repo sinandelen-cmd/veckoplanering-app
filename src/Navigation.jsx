@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-export default function Navigation({ active = 'mina', onNavigate, onToggleCalendar, calendarOpen = false, isAdmin = false, onOpenAdmin, adminOpen = false, pendingCount = 0, onCloseAdmin, onSignOut, planContext, onPrintPlan }) {
+export default function Navigation({ active = 'mina', onAllWeeks, onNavigate, onToggleCalendar, calendarOpen = false, isAdmin = false, onOpenAdmin, adminOpen = false, pendingCount = 0, onCloseAdmin, onSignOut, planContext, onPrintPlan }) {
   const navRef = useRef(null)
   useEffect(() => {
     const nav = navRef.current
@@ -19,6 +19,7 @@ export default function Navigation({ active = 'mina', onNavigate, onToggleCalend
     <div className="planning-unified-center">
       <button type="button" className={active === 'arsplan' && !calendarOpen && !adminOpen ? 'active' : ''} onClick={() => onNavigate('arsplan')}>Planering</button>
       <button type="button" className={calendarOpen && !adminOpen ? 'active' : ''} onClick={() => calendarOpen ? onNavigate('arsplan') : onToggleCalendar?.()}>Månadsvy</button>
+      {onAllWeeks && <button type="button" onClick={onAllWeeks}>Alla veckor</button>}
     </div>
     {planContext && <div className="planning-nav-tools">
       {planContext && <div className="planning-nav-context" title={[planContext.textbook || planContext.subject, planContext.grade].filter(Boolean).join(" ")}><span className="planning-nav-context-title">{[planContext.textbook || planContext.subject, planContext.grade].filter(Boolean).join(" ")}</span></div>}
