@@ -1320,6 +1320,14 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   // Standardvyn visar tre veckor: föregående, nuvarande och nästa (utan att användaren behöver klicka "Alla veckor").
   const defaultWindowFirst = (() => { const first = upcomingTeacherWeeks[0] ? teacherDisplayWeeks.indexOf(upcomingTeacherWeeks[0]) : teacherDisplayWeeks.length; return Math.max(0, first - 1) })()
   useEffect(() => { const fit = !focusedTeacherWeek && !showPastTeacherWeeks; document.body.classList.toggle('teacher-fit-mode', fit); return () => document.body.classList.remove('teacher-fit-mode') }, [focusedTeacherWeek, showPastTeacherWeeks])
+const addNewTeacherWeek = () => setPlan(p => {
+          const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
+          // Välj sista veckan efter datum, inte högsta veckonumret (som nollställs vid nyår).
+          const latest = [...existing].sort((a, b) => (b.weekStart || '').localeCompare(a.weekStart || ''))[0]
+          const nextDate = addWeeks(latest?.weekStart || p.startDate, 1)
+          const newWeek = makeWeeks({ ...p, startWeek: calendarWeekNumber(nextDate), startDate: nextDate, weeks: 1 }, 1)[0]
+          return { ...p, weeks: existing.length + 1, weeksData: [...existing, newWeek] }
+        })
   const windowStart = Math.max(0, Math.min(teacherWindowStart ?? defaultWindowFirst, Math.max(0, teacherDisplayWeeks.length - 3)))
   const defaultTeacherWindow = teacherDisplayWeeks.slice(windowStart, windowStart + 3)
   const visibleTeacherWeeks = weeks.filter(week => week && !week.hidden)
@@ -1951,7 +1959,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       </div>
       {<div className="teacher-pinned-chapter-shell" aria-label="Aktuellt kapitel"><div className={`teacher-pinned-chapter-heading ${pinnedChapter?.tone || ""}`}>{pinnedChapter?.name || "Kapitel"}</div>{pinnedChapter?.name && <ChapterVocabulary chapter={pinnedChapter.name} weeks={weeks.filter(week => (week.chapter?.trim() || "Utan kapitel") === pinnedChapter.name)} />}</div>}
       <nav className="teacher-week-navigation" aria-label="Navigera mellan veckor">
-        <button type="button" className="teacher-all-weeks-toggle teacher-all-weeks-inline" onClick={()=>{setAllWeekContentsOpen(v=>!v);setWeekContentOverrides({})}} aria-expanded={allWeekContentsOpen} aria-label={allWeekContentsOpen ? "Dölj allt veckoinnehåll" : "Visa allt veckoinnehåll"}><span className="teacher-review-arrow" aria-hidden="true">{allWeekContentsOpen ? "▾" : "▸"}</span>{allWeekContentsOpen ? "Dölj allt innehåll" : "Visa allt innehåll"}</button>
+        <button type="button" className="teacher-add-week-inline" disabled={weeks.length >= 52} onClick={addNewTeacherWeek}>+ Ny vecka</button>
         <button type="button" aria-label="Föregående vecka" onClick={() => { if (!focusedTeacherWeek) { setTeacherWindowStart(Math.max(0, windowStart - 1)); return } const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const next = weeks[Math.max(0, i < 0 ? 0 : i - 1)]; if (next) setFocusedTeacherWeek(String(next.weekStart || next.weekNumber)) }}>◀</button>
         {[-1, 0, 1].map(offset => { const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const todayIndex = weeks.findIndex(w => w.weekStart === mondayOf(new Date())); const center = i >= 0 ? i : (todayIndex >= 0 ? todayIndex : 0); const w = weeks[center + offset]; return <button type="button" key={offset} className={offset === 0 ? 'current' : 'adjacent'} disabled={!w} onClick={() => w && setFocusedTeacherWeek(String(w.weekStart || w.weekNumber))}>{w ? `Vecka ${calendarWeekNumber(w.weekStart) ?? w.weekNumber}` : '–'}</button> })}
         <button type="button" aria-label="Nästa vecka" onClick={() => { if (!focusedTeacherWeek) { setTeacherWindowStart(Math.min(Math.max(0, teacherDisplayWeeks.length - 3), windowStart + 1)); return } const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const next = weeks[Math.min(weeks.length - 1, i < 0 ? 0 : i + 1)]; if (next) setFocusedTeacherWeek(String(next.weekStart || next.weekNumber)) }}>▶</button>
@@ -2034,14 +2042,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         </section>)}
       </div>
       <div className="button-row week-add-actions">
-        <button type="button" className="secondary" disabled={weeks.length >= 52} onClick={() => setPlan(p => {
-          const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
-          // Välj sista veckan efter datum, inte högsta veckonumret (som nollställs vid nyår).
-          const latest = [...existing].sort((a, b) => (b.weekStart || '').localeCompare(a.weekStart || ''))[0]
-          const nextDate = addWeeks(latest?.weekStart || p.startDate, 1)
-          const newWeek = makeWeeks({ ...p, startWeek: calendarWeekNumber(nextDate), startDate: nextDate, weeks: 1 }, 1)[0]
-          return { ...p, weeks: existing.length + 1, weeksData: [...existing, newWeek] }
-        })}>+ Lägg till vecka</button>
+        <button type="button" className="secondary" disabled={weeks.length >= 52} onClick={addNewTeacherWeek}>+ Lägg till vecka</button>
       </div>
       <div className="sticky-actions button-row">
         
