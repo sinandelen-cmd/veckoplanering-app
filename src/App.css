@@ -5903,3 +5903,9 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .teacher-year-review .teacher-week-navigation { margin-block:4px!important; }
 #lararvy .teacher-year-review .teacher-month-section { margin-top:0!important; padding-top:6px!important; }
 #lararvy .teacher-mobile-week-overview { margin:4px 0!important; padding:6px!important; }
+
+/* När bara en vecka visas ska den ta hela bredden, så att alla lektioner syns utan att zooma. */
+#lararvy .class-real-two-weeks-grid:has(> .class-real-week-column:only-child),
+#lararvy .class-real-two-weeks .class-real-two-weeks-grid:has(> .class-real-week-column:only-child) {
+  grid-template-columns:minmax(0,1fr)!important;
+}
