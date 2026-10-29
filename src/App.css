@@ -5932,3 +5932,11 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
   top:0;
   z-index:60;
 }
+
+/* Hela sidan (övre menyn och flikarna) ryms i fönstret. Veckorna scrollar inuti sin egen ruta, så att både övre och nedre delen av veckan kan nås. */
+#lararvy .class-real-two-weeks-grid > .class-real-week-column {
+  max-height:calc(100vh - 230px);
+  max-height:calc(100dvh - 230px);
+  overflow-y:auto!important;
+  -webkit-overflow-scrolling:touch;
+}
