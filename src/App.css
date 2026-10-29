@@ -6068,3 +6068,16 @@ body.teacher-fit-mode #lararvy .teacher-default-thumbs { grid-template-columns:r
 /* Vald vecka: lektionerna sida vid sida på en rad. */
 #lararvy .teacher-months-focused .week-card .lessons { display:grid!important; grid-template-columns:repeat(auto-fit,minmax(200px,1fr))!important; gap:10px!important; align-items:start!important; }
 #lararvy .teacher-months-focused .week-card .lesson { min-width:0!important; }
+
+/* Visa för eleven: liten kryssruta med texten "Visa", inget öga. */
+#lararvy .teacher-thumb-wrap { grid-template-columns:auto minmax(0,1fr)!important; }
+#lararvy .teacher-thumb-visibility { width:auto!important; padding:4px 6px!important; font-size:11px!important; gap:4px!important; flex-direction:row!important; }
+#lararvy .teacher-thumb-visibility::before { content:none!important; }
+#lararvy .teacher-thumb-visibility span { display:inline!important; }
+#lararvy .teacher-thumb-visibility input { width:14px!important; height:14px!important; }
+/* Klar-knappen: enkel, som övriga knappar. */
+#lararvy .teacher-week-navigation .teacher-close-week { background:#fff!important; color:#2d4a63!important; border:1px solid #c7d5e2!important; }
+/* Kapitelnamnet syns alltid överst i kapitlet. */
+#lararvy .teacher-chapter-sticky .chapter-heading { display:block!important; margin:0 0 4px!important; }
+/* Vald vecka: lektionerna sida vid sida. */
+#lararvy .teacher-months-focused .lessons { display:grid!important; grid-template-columns:repeat(auto-fit,minmax(260px,1fr))!important; flex-direction:initial!important; gap:10px!important; align-items:start!important; }

@@ -616,6 +616,7 @@ const CHAPTER_VOCABULARY = [
   [/taluppfattning|heltal|decimaltal/, ['Positionssystem','Ental','Tiotal','Decimal','Avrundning','Negativa tal']],
   [/ekonomi|ränta/, ['Budget','Inkomst','Utgift','Ränta','Kapital','Rabatt']],
   [/skala|proportion/, ['Skala','Förhållande','Proportion','Förstoring','Förminskning']],
+  [/^tal\b|talområde|multiplikation|division|addition|subtraktion/, ['Tal','Negativa tal','Multiplikation','Division','Addition','Subtraktion','Positionssystem']],
 ]
 function chapterVocabulary(chapter, weeks = []) {
   const title = String(chapter || '').toLocaleLowerCase('sv-SE')
