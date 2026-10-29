@@ -6065,7 +6065,6 @@ body.teacher-fit-mode #lararvy .teacher-default-thumbs { grid-template-columns:r
 #lararvy .teacher-thumb-visibility input { width:18px; height:18px; }
 /* Klar-ikon: grön bock. */
 #lararvy .teacher-week-navigation .teacher-close-week { background:#2d7d46!important; color:#fff!important; border-color:#2d7d46!important; }
-/* Vald vecka: lektionerna sida vid sida på en rad. */
 #lararvy .teacher-months-focused .week-card .lessons { display:grid!important; grid-template-columns:repeat(auto-fit,minmax(200px,1fr))!important; gap:10px!important; align-items:start!important; }
 #lararvy .teacher-months-focused .week-card .lesson { min-width:0!important; }
 
@@ -6079,8 +6078,6 @@ body.teacher-fit-mode #lararvy .teacher-default-thumbs { grid-template-columns:r
 #lararvy .teacher-week-navigation .teacher-close-week { background:#fff!important; color:#2d4a63!important; border:1px solid #c7d5e2!important; }
 /* Kapitelnamnet syns alltid överst i kapitlet. */
 #lararvy .teacher-chapter-sticky .chapter-heading { display:block!important; margin:0 0 4px!important; }
-/* Vald vecka: lektionerna sida vid sida. */
-#lararvy .teacher-months-focused .lessons { display:grid!important; grid-template-columns:repeat(auto-fit,minmax(260px,1fr))!important; flex-direction:initial!important; gap:10px!important; align-items:start!important; }
 
 /* Visa för eleven: mindre kryssruta. */
 #lararvy .teacher-thumb-visibility { font-size:10px!important; padding:2px 5px!important; }
@@ -6099,8 +6096,3 @@ body.teacher-fit-mode #lararvy .teacher-default-thumbs { height:calc(100dvh - 33
   body.teacher-fit-mode #lararvy .teacher-default-thumbs > * { height:auto!important; overflow:visible!important; }
 }
 
-/* Padda och dator: lektionerna sida vid sida, så många som ryms (upp till fem, mån–fre), och färre på smalare skärmar. */
-@media (min-width:700px) {
-  #lararvy .teacher-months-focused .lessons { grid-template-columns:repeat(auto-fit,minmax(200px,1fr))!important; }
-  #lararvy .teacher-months-focused .lessons > * { min-width:0!important; }
-}
