@@ -1033,11 +1033,9 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
         }).map(({ week, index }) => <CalendarWeekThumbnail key={week.weekStart} week={week} entryType={entryType} onOpenLesson={lessonIndex => { if (lessonIndex >= 0) setEditingCalendarLesson({ weekStart: week.weekStart, lessonIndex }) }} onOpen={() => { setSelectedWeekIndex(index); setSelectedLessonIndex(null) }} />)}
       </div>
       {!orderedWeeks.some(week => { const d = new Date(week.weekStart + 'T12:00:00'); const e = new Date(d); e.setDate(e.getDate()+6); return d <= new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,0,23,59,59) && e >= new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1) }) && <p>Inga planerade veckor den här månaden.</p>}
-      <p className="muted">Tryck på en vecka för att redigera lektioner, moment, sidor, uppgifter och länkar i full storlek. Ändringarna sparas i samma planering.</p>
       <button type="button" className="secondary" onClick={() => setShowOriginalCalendar(true)}>Visa tidigare kalenderlayout</button>
     </div> : <>
       <button type="button" className="secondary" onClick={() => setShowOriginalCalendar(false)}>Visa veckominiatyrer</button>
-      <p className="calendar-overview-count">{orderedWeeks.length === 1 ? "1 planerad vecka" : orderedWeeks.length + " planerade veckor"} · Visas månad för månad.</p>
       <div className="calendar-overview-history">
         <button type="button" className="secondary" onClick={onUndo} disabled={busy || !canUndo} title="Ångra den senaste ändringen i planeringen">↶ Ångra</button>
       </div>
