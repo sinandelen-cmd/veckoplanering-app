@@ -6096,3 +6096,10 @@ body.teacher-fit-mode #lararvy .teacher-default-thumbs { height:calc(100dvh - 33
   body.teacher-fit-mode #lararvy .teacher-default-thumbs > * { height:auto!important; overflow:visible!important; }
 }
 
+
+
+/* Visa för eleven: bara en liten kryssruta, så den tar nästan ingen plats vid veckan. Texten finns kvar för skärmläsare. */
+#lararvy .teacher-thumb-wrap { grid-template-columns:auto minmax(0,1fr)!important; gap:4px!important; }
+#lararvy .teacher-thumb-visibility { padding:0!important; border:0!important; background:transparent!important; gap:0!important; font-size:0!important; width:auto!important; }
+#lararvy .teacher-thumb-visibility span { position:absolute!important; width:1px!important; height:1px!important; overflow:hidden!important; clip:rect(0 0 0 0)!important; }
+#lararvy .teacher-thumb-visibility input { width:14px!important; height:14px!important; margin:0!important; }

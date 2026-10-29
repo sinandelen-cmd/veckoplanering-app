@@ -1992,7 +1992,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       </div>
       {<div className="teacher-pinned-chapter-shell" aria-label="Aktuellt kapitel"><div className={`teacher-pinned-chapter-heading ${pinnedChapter?.tone || ""}`}>{pinnedChapter?.name || "Kapitel"}</div>{pinnedChapter?.name && <ChapterVocabulary chapter={pinnedChapter.name} weeks={weeks.filter(week => (week.chapter?.trim() || "Utan kapitel") === pinnedChapter.name)} />}</div>}
       <nav className="teacher-week-navigation" aria-label="Navigera mellan veckor">
-        <button type="button" className="teacher-all-weeks-inline-toggle" onClick={() => { setFocusedTeacherWeek(null); setShowPastTeacherWeeks(v => !v) }}>{showPastTeacherWeeks ? "Dölj alla veckor" : "Visa alla veckor"}</button>
+        <button type="button" className="teacher-all-weeks-inline-toggle" onClick={() => { setFocusedTeacherWeek(null); setShowPastTeacherWeeks(v => !v) }}>{showPastTeacherWeeks ? "Tillbaka till Grundplanering" : "Visa alla veckor"}</button>
         {focusedTeacherWeek && <button type="button" className="teacher-remove-week" disabled={weeks.length <= 1} onClick={removeFocusedTeacherWeek}>− Ta bort vecka</button>}
         {focusedTeacherWeek && <button type="button" className="teacher-close-week" aria-label="Klar" title="Klar" onClick={() => setFocusedTeacherWeek(null)}>✓</button>}
         <button type="button" className="teacher-add-week-inline" disabled={weeks.length >= 52} onClick={addNewTeacherWeek}>+ Ny vecka</button>
