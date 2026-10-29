@@ -6081,3 +6081,26 @@ body.teacher-fit-mode #lararvy .teacher-default-thumbs { grid-template-columns:r
 #lararvy .teacher-chapter-sticky .chapter-heading { display:block!important; margin:0 0 4px!important; }
 /* Vald vecka: lektionerna sida vid sida. */
 #lararvy .teacher-months-focused .lessons { display:grid!important; grid-template-columns:repeat(auto-fit,minmax(260px,1fr))!important; flex-direction:initial!important; gap:10px!important; align-items:start!important; }
+
+/* Visa för eleven: mindre kryssruta. */
+#lararvy .teacher-thumb-visibility { font-size:10px!important; padding:2px 5px!important; }
+#lararvy .teacher-thumb-visibility input { width:12px!important; height:12px!important; }
+/* Standardvyn: kapitelnamn och begrepp syns överst, och fyra veckor fyller bredden och ryms i höjden. */
+body.teacher-fit-mode #lararvy .teacher-pinned-chapter-shell { display:block!important; position:relative!important; top:auto!important; margin:0 0 6px!important; }
+body.teacher-fit-mode #lararvy .teacher-default-thumbs { height:calc(100dvh - 330px)!important; }
+/* Vald vecka: den lilla förhandsbilden döljs, lektionerna visas i fullt format sida vid sida. */
+#lararvy .teacher-mobile-week-overview { display:none!important; }
+
+
+/* Telefon (under 700 px): sidan får scrolla och veckorna står under varandra i full bredd. */
+@media (max-width:699px) {
+  body.teacher-fit-mode { overflow:auto!important; }
+  body.teacher-fit-mode #lararvy .teacher-default-thumbs { height:auto!important; overflow:visible!important; }
+  body.teacher-fit-mode #lararvy .teacher-default-thumbs > * { height:auto!important; overflow:visible!important; }
+}
+
+/* Padda och dator: lektionerna sida vid sida, så många som ryms (upp till fem, mån–fre), och färre på smalare skärmar. */
+@media (min-width:700px) {
+  #lararvy .teacher-months-focused .lessons { grid-template-columns:repeat(auto-fit,minmax(200px,1fr))!important; }
+  #lararvy .teacher-months-focused .lessons > * { min-width:0!important; }
+}

@@ -606,6 +606,19 @@ function Login({ email, password, setEmail, setPassword, onSubmit, onSignUp, sta
   </main>
 }
 
+// Väljer hur många veckor som ryms bredvid varandra (1–4) så att miniatyrerna blir så stora som möjligt i aktuell skärm.
+function bestThumbCols(width, height) {
+  const ORIGINAL_HEIGHT = 1350
+  if (width < 700) return 1 // telefon: en vecka per rad, sidan får scrolla i höjdled
+  let best = { cols: 1, scale: 0 }
+  for (const cols of [1, 2, 3, 4]) {
+    const rows = Math.ceil(4 / cols)
+    const cellWidth = Math.max(0, width - 40) / cols
+    const scale = Math.min(cellWidth / 960, Math.max(120, (height - 330) / rows) / ORIGINAL_HEIGHT)
+    if (scale > best.scale) best = { cols, scale }
+  }
+  return best.cols
+}
 const CHAPTER_VOCABULARY = [
   [/geometri|cirkel|area|omkrets|volym/, ['Radie','Diameter','Omkrets','Area','Cirkelbåge','Cirkelsektor','Volym','Cylinder']],
   [/algebra|uttryck|ekvation|variabel/, ['Variabel','Uttryck','Ekvation','Likhetstecken','Term','Förenkla','Lösning']],
@@ -869,7 +882,9 @@ function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson }) {
   useEffect(() => {
     const resize = () => {
       if (!frame.current || !original.current) return
-      const fitHeight = Math.max(120, window.innerHeight - 230) / Math.max(1, original.current.offsetHeight)
+      const phone = window.innerWidth < 700
+      const fitRows = Math.ceil(4 / bestThumbCols(window.innerWidth, window.innerHeight))
+      const fitHeight = phone ? Infinity : Math.max(120, (window.innerHeight - 330) / fitRows) / Math.max(1, original.current.offsetHeight)
       const scale = Math.min(frame.current.clientWidth / 960, fitHeight)
       const height = original.current.offsetHeight * scale
       setDimensions(prev => Math.abs(prev.height - height) > 1 || Math.abs(prev.scale - scale) > 0.001 ? { scale, height } : prev)
@@ -1162,6 +1177,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [focusedTeacherWeek, setFocusedTeacherWeek] = useState(null)
   const [teacherWindowStart, setTeacherWindowStart] = useState(null)
+  const [viewport, setViewport] = useState(() => ({ width: typeof window !== 'undefined' ? window.innerWidth : 1200, height: typeof window !== 'undefined' ? window.innerHeight : 800 }))
+  useEffect(() => { const onResize = () => setViewport({ width: window.innerWidth, height: window.innerHeight }); window.addEventListener('resize', onResize); window.addEventListener('orientationchange', onResize); return () => { window.removeEventListener('resize', onResize); window.removeEventListener('orientationchange', onResize) } }, [])
   const [teacherWeekOverview, setTeacherWeekOverview] = useState(true)
   const [simpleSetup, setSimpleSetup] = useState(true)
   const [simpleMore, setSimpleMore] = useState(false)
@@ -1343,6 +1360,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     })
     setFocusedTeacherWeek(null)
   }
+  useEffect(() => { const home = () => { setFocusedTeacherWeek(null); setShowPastTeacherWeeks(false) }; window.addEventListener('planning-home', home); return () => window.removeEventListener('planning-home', home) }, [])
   const windowStart = Math.max(0, Math.min(teacherWindowStart ?? defaultWindowFirst, Math.max(0, teacherDisplayWeeks.length - 4)))
   const defaultTeacherWindow = teacherDisplayWeeks.slice(windowStart, windowStart + 4)
   const visibleTeacherWeeks = weeks.filter(week => week && !week.hidden)
@@ -1983,7 +2001,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         <button type="button" aria-label="Nästa vecka" onClick={() => { if (!focusedTeacherWeek) { setTeacherWindowStart(Math.min(Math.max(0, teacherDisplayWeeks.length - 4), windowStart + 1)); return } const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const next = weeks[Math.min(weeks.length - 1, i < 0 ? 0 : i + 1)]; if (next) setFocusedTeacherWeek(String(next.weekStart || next.weekNumber)) }}>▶</button>
       </nav>
       {focusedTeacherWeek && <div className="teacher-mobile-week-overview"><div className="teacher-mobile-week-overview-actions"><strong>Vecka {calendarWeekNumber(weeks.find(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)?.weekStart) || ""} · Helvecksvy</strong><button type="button" className="secondary" aria-expanded={!teacherWeekOverview} onClick={()=>setTeacherWeekOverview(v=>!v)}>{teacherWeekOverview?"Visa och redigera detaljer":"Visa hela veckan"}</button></div>{teacherWeekOverview && <CalendarWeekThumbnail week={weeks.find(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)} entryType={plan.entryType||"lektion"} onOpen={()=>setTeacherWeekOverview(false)} onOpenLesson={()=>setTeacherWeekOverview(false)}/>}</div>}
-      {!focusedTeacherWeek && !showPastTeacherWeeks && <div className="teacher-default-thumbs" aria-label="Veckor i Grundplanering">{defaultTeacherWindow.map(({week, index}) => { const key = String(week.weekStart || week.weekNumber); return <div className="teacher-thumb-wrap" key={key}><label className="teacher-thumb-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för eleven`} /><span>Visa för eleven</span></label><CalendarWeekThumbnail week={week} entryType={plan?.entryType === "dag" ? "dag" : "lektion"} onOpen={() => setFocusedTeacherWeek(key)} onOpenLesson={() => setFocusedTeacherWeek(key)} /></div> })}</div>}
+      {!focusedTeacherWeek && !showPastTeacherWeeks && <div className="teacher-default-thumbs" aria-label="Veckor i Grundplanering" style={{ gridTemplateColumns: `repeat(${bestThumbCols(viewport.width, viewport.height)}, minmax(0,1fr))` }}>{defaultTeacherWindow.map(({week, index}) => { const key = String(week.weekStart || week.weekNumber); return <div className="teacher-thumb-wrap" key={key}><label className="teacher-thumb-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för eleven`} /><span>Visa för eleven</span></label><CalendarWeekThumbnail week={week} entryType={plan?.entryType === "dag" ? "dag" : "lektion"} onOpen={() => setFocusedTeacherWeek(key)} onOpenLesson={() => setFocusedTeacherWeek(key)} /></div> })}</div>}
       <div className={`teacher-months ${focusedTeacherWeek ? "teacher-months-focused" : ""} ${focusedTeacherWeek && teacherWeekOverview ? "teacher-months-overview-hidden" : ""} ${!focusedTeacherWeek && !showPastTeacherWeeks ? "teacher-months-overview-hidden" : ""}`}>
         {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? teacherDisplayWeeks : defaultTeacherWindow)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           const chapterName = item.week.chapter?.trim() || 'Utan kapitel'

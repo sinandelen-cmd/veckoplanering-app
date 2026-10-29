@@ -17,7 +17,7 @@ export default function Navigation({ active = 'mina', onAllWeeks, onNavigate, on
       <button type="button" onClick={() => { onCloseAdmin?.(); onNavigate('bibliotek') }}>⌂ Startsida</button>
     </div>
     <div className="planning-unified-center">
-      <button type="button" className={active === 'arsplan' && !calendarOpen && !adminOpen ? 'active' : ''} onClick={() => onNavigate('arsplan')}>Planering</button>
+      <button type="button" className={active === 'arsplan' && !calendarOpen && !adminOpen ? 'active' : ''} onClick={() => { window.dispatchEvent(new Event('planning-home')); onNavigate('arsplan') }}>Planering</button>
       <button type="button" className={calendarOpen && !adminOpen ? 'active' : ''} onClick={() => calendarOpen ? onNavigate('arsplan') : onToggleCalendar?.()}>Månadsvy</button>
       {onAllWeeks && <button type="button" onClick={onAllWeeks}>Alla veckor</button>}
     </div>
