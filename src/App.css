@@ -6008,3 +6008,8 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .teacher-year-review-bar { display:none!important; }
 #lararvy .teacher-week-navigation .teacher-all-weeks-inline { margin-left:auto!important; font-size:14px!important; min-height:36px!important; padding:6px 12px!important; }
 #lararvy .teacher-week-navigation { justify-content:flex-start!important; }
+
+/* Kapitel och viktiga begrepp i samma ruta: ett kort med kapitelnamnet överst och begreppen under. */
+#lararvy .teacher-pinned-chapter-shell { border:1px solid #d5e0ea!important; border-radius:12px!important; overflow:hidden!important; background:#f6f9fc!important; margin:6px 0!important; }
+#lararvy .teacher-pinned-chapter-shell .teacher-pinned-chapter-heading { border-radius:0!important; margin:0!important; }
+#lararvy .teacher-pinned-chapter-shell .chapter-vocabulary { background:transparent!important; border:0!important; box-shadow:none!important; margin:0!important; padding:10px!important; }
