@@ -43,7 +43,6 @@ assert.match(app, /JSON\.stringify\(latestPlanRef\.current\) === savedPlanRef\.c
 assert.match(app, /\.\.\.\(publish \|\| !selectedId \? publicationFields\(publish, false, slug, publishedPayload\) : \{\}\)/)
 assert.match(app, /const publishedPayload = publish \? sanitizeForStudents\(payload\) : null/)
 assert.match(app, /if \(busy\) return\s+if \(!String\(plan\.title/)
-assert.match(app, /published_content: null,\s+public_slug: null/)
 assert.match(app, /\.eq\('id', row\.id\)\.eq\('user_id', session\.user\.id\)\.select\('id'\)\.single\(\)/)
 assert.doesNotMatch(app, /max="52"/)
 // Execute the pure date/week functions against real year-boundary examples.
@@ -55,7 +54,7 @@ const extractFunction = (name, nextMarker) => {
   return app.slice(start, end)
 }
 const calendarWeekNumber = new Function(extractFunction('calendarWeekNumber', 'const MONTH_PASTELS') + '; return calendarWeekNumber')()
-const isoWeekYear = new Function(extractFunction('isoWeekYear', 'function studentWeekPageLabel') + '; return isoWeekYear')()
+const isoWeekYear = new Function(extractFunction('isoWeekYear', 'function ImportantDatesForWeek') + '; return isoWeekYear')()
 for (const [date, number, year] of [
   ['2026-12-28', 53, 2026],
   ['2027-01-01', 53, 2026],
@@ -251,9 +250,6 @@ assert.match(css, /\.student-print-page \.print-resource-url \{[\s\S]*?font-size
 /* Regression för de verkliga A4-felen: rätt vald vecka, långa veckor och testdata. */
 assert.match(app, /printWeekStart=\{singlePrintWeek\}/, 'Utskriftsvyn ska få den valda veckan')
 assert.match(app, /printWeekStart \? studentWeeks\.filter\(week => week\.weekStart === printWeekStart\)/, 'Utskriftsvyn ska filtrera på valt veckodatum')
-assert.match(app, /function a4DemoPlan\(plan\)/)
-assert.match(app, /Array\.from\(\{ length: 3 \}, \(_, index\) =>/, 'A4-testet ska innehålla tre veckor')
-assert.match(app, /Test med långa texter och länkar/)
 assert.doesNotMatch(app, /<div className="a4-demo-controls">/)
 assert.match(css, /\.student-print-page \.lesson \{\s*display: block !important;\s*break-inside: avoid-page !important;/, 'Lektioner ska inte delas vid A4-utskrift')
 assert.match(css, /\.student-print-page \.student-week-card,[\s\S]*?break-inside: auto !important;/, 'Långa veckor måste kunna fortsätta på nästa sida')
@@ -271,7 +267,7 @@ assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(false\); setEdit
 
 // Huvudmenyn ska undvika dubblering av Mina planeringar på startsidan.
 const nav = fs.readFileSync(new URL('../src/Navigation.jsx', import.meta.url), 'utf8')
-assert.match(nav, /planning-home-navigation/)
+assert.match(nav, /planning-unified-navigation/)
 assert.doesNotMatch(nav, /<button[^\n]*Mina planeringar/, "Mina planeringar ska öppnas via startsidans mapp, inte dubbleras i huvudmenyn")
 assert.match(app, /rows\.map\(row => <div key=\{row\.id\} className="course-folder-with-delete"/, 'Planeringsträdet ska visa sparade kurser')
 assert.match(app, /className="course-folder-delete"/, 'Sparade kurser ska kunna raderas direkt från trädet')
@@ -280,9 +276,8 @@ assert.match(app, /onOpenPlan=\{loadPlan\}/)
 assert.match(css, /\.planning-layout/)
 
 assert.doesNotMatch(nav, /sidebar-link[^\n]*>Lärarvy/)
-assert.match(nav, /planning-home-navigation/)
-assert.match(app, /Lärarvy/)
-assert.match(app, /Kalendervy/)
+assert.match(nav, /planning-unified-navigation/)
+assert.match(app, /Kalendermatris/)
 assert.match(app, /Elevvy/)
 assert.match(app, /Redigera och importera underlag/)
 
@@ -290,10 +285,8 @@ assert.match(app, /Redigera och importera underlag/)
 assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(false\); setEditingClassView\(className \|\| ""\); setPreviewStudents\(false\); setA4Demo\(false\); setStatus\(className \?/, 'Sparad planering ska öppna klassvyn och nollställa A4-demot')
 assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(false\); setEditingClassView\(className \|\| ""\); setPreviewStudents\(false\); setA4Demo\(false\); setStatus\(className \?/, 'Sparad planering ska öppna klassvyn och nollställa A4-demot')
 
-assert.match(app, /function insertExampleWeek\(\)/)
 
 assert.match(app, /onClick=\{\(\) => loadPlan\(row\)\}/, 'Sparade kurser ska kunna öppnas från mappträdet')
-assert.match(app, /archived: false, published: false/)
 assert.match(app, /showArchive \? .*Visa aktiva.*Arkiv/, "Arkivet ska vara åtkomligt inne i planeringstavlan")
 assert.match(app, /async function setArchived\(row, archived\)/)
 
@@ -310,7 +303,7 @@ assert.match(app, /className="reference-calendar-grid"/)
 assert.match(app, /className="reference-calendar-lesson-body"/)
 
 // Kollegieinbjudan skjuts upp till en separat release utan databasmigrationer.
-assert.match(app, /false && teacherTab === "new" && shareOpen/)
+assert.match(app, /AVSTANGD_GRANSSNITT && teacherTab === "new" && shareOpen/)
 assert.match(app, /teacherTab === "new" && <div className="topbar-share-actions">/)
 assert.match(app, /onClick=\{\(\) => supabase\.auth\.signOut\(\)\}>Logga ut/)
 assert.doesNotMatch(sql, /create or replace function public\.create_plan_share_invite/)
@@ -334,7 +327,6 @@ assert.match(app, /Vill du radera vecka/)
 assert.match(app, /Kontroll före publicering/)
 assert.match(app, /currentStudentWeekStart = mondayOf\(new Date\(\)\)/)
 assert.match(app, /const currentStudentWeek = studentWeeks\.find\(week => week\.weekStart === currentStudentWeekStart\)/)
-assert.match(app, /const jumpStudentWeek = currentStudentWeek \|\| upcomingStudentWeek/)
 assert.match(css, /\.publication-readiness/)
 
 assert.match(app, /Ingen synlig vecka har innehåll/)

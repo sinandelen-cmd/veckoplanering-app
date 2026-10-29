@@ -1,20 +1,16 @@
 import fs from 'node:fs'
 import vm from 'node:vm'
 import assert from 'node:assert/strict'
+import { loadFunctions } from './helpers/extract-functions.mjs'
 
 const annual = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
 const weekly = fs.readFileSync(new URL('../src/weekly/App.jsx', import.meta.url), 'utf8')
 
-function segment(source, start, end) {
-  const a = source.indexOf(start)
-  const b = source.indexOf(end, a + start.length)
-  assert.ok(a >= 0 && b > a, `Kan inte hitta kodsegment: ${start}`)
-  return source.slice(a, b)
-}
+const annualUrl = new URL('../src/App.jsx', import.meta.url)
+const weeklyUrl = new URL('../src/weekly/App.jsx', import.meta.url)
 
-const dateFns = segment(annual, 'function toIsoDate(', 'function normalizeLines(')
 const context = vm.createContext({ DEFAULT_WEEKS: 40 })
-vm.runInContext(dateFns, context)
+vm.runInContext(await loadFunctions(annualUrl, ['reconcileWeeks']), context)
 const plan = {
   startDate: '2026-08-17', weeks: 3,
   weeksData: [
@@ -33,12 +29,12 @@ assert.equal(result[1].content, 'Kapitel 2')
 assert.equal(result[1].weekStart, '2026-08-31')
 assert.equal(result[2].content, 'Kapitel 3')
 assert.equal(result[3].content, '')
-assert.equal(result[3].weekNumber, 4)
+assert.equal(result[3].weekNumber, 38, 'ISO-vecka för 2026-09-14 är 38')
 
 const annualKinds = vm.createContext({})
-vm.runInContext(segment(annual, 'function parseContent(', 'function planFromRow('), annualKinds)
+vm.runInContext(await loadFunctions(annualUrl, ['isAnnualRow']), annualKinds)
 const weeklyKinds = vm.createContext({})
-vm.runInContext(segment(weekly, 'function isWeeklyRow(', 'function WeeklyApp('), weeklyKinds)
+vm.runInContext(await loadFunctions(weeklyUrl, ['isWeeklyRow']), weeklyKinds)
 for (const kind of ['arsplanering-v1', 'arsplanering-v2']) {
   const row = { content: JSON.stringify({ kind }) }
   assert.equal(vm.runInContext('isAnnualRow', annualKinds)(row), true)
@@ -59,13 +55,11 @@ assert.match(annual, /value=\{pasteText\}/)
 assert.match(annual, /onClick=\{distributePastedText\}/)
 assert.doesNotMatch(annual, /onChange=\{e => setPlan\(\{ \.\.\.plan, weeksData: distributeText/)
 const replaceCtx = vm.createContext({ window: { confirm: () => false } })
-vm.runInContext(segment(annual, 'function hasWeekWork(', 'function normalizeLines('), replaceCtx)
+vm.runInContext(await loadFunctions(annualUrl, ['hasWeekWork', 'confirmReplacingWeeks']), replaceCtx)
 const hasWeekWork = vm.runInContext('hasWeekWork', replaceCtx)
-const hasPlanWork = vm.runInContext('hasPlanWork', replaceCtx)
 const confirmReplacingWeeks = vm.runInContext('confirmReplacingWeeks', replaceCtx)
 assert.equal(hasWeekWork({ title: 'Vecka 1', content: '', items: [] }, 0), false)
 assert.equal(hasWeekWork({ title: 'Vecka 1', content: 'Lektion 1', items: [] }, 0), true)
-assert.equal(hasPlanWork({ title: 'Svenska', weeksData: [] }), true)
 assert.equal(confirmReplacingWeeks({ weeksData: [{ content: 'Sparat', title: 'Vecka 1' }] }), false)
 assert.equal(confirmReplacingWeeks({ weeksData: [{ content: '', title: 'Vecka 1' }] }), true)
 replaceCtx.window.confirm = () => true

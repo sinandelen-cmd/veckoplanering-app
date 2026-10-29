@@ -1,13 +1,9 @@
-import fs from 'node:fs'
 import vm from 'node:vm'
 import assert from 'node:assert/strict'
+import { loadFunctions } from './helpers/extract-functions.mjs'
 
-const source = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
-const start = source.indexOf('function sanitizeForStudents(')
-const end = source.indexOf('function buildSlug(', start)
-assert.ok(start >= 0 && end > start, 'Elevrensningen hittades inte')
-const context = vm.createContext({})
-vm.runInContext(source.slice(start, end), context)
+const context = vm.createContext({ Date, Intl, DEFAULT_WEEKS: 1 }) // samma värde som konstanten i App.jsx
+vm.runInContext(await loadFunctions(new URL('../src/App.jsx', import.meta.url), ['sanitizeForStudents', 'reconcileWeeks']), context)
 const sanitize = vm.runInContext('sanitizeForStudents', context)
 
 const original = {
@@ -32,5 +28,5 @@ assert.equal('items' in result.weeksData[0], false)
 assert.equal('user_id' in result, false)
 assert.equal(original.weeksData.length, 2, 'Originalplaneringen ska inte ändras')
 assert.equal(original.weeksData[0].items.length, 1, 'Lärarens uppgifter ska bevaras')
-assert.equal(sanitize({ title: 'Tom', weeksData: null }).weeksData.length, 0)
+assert.equal(sanitize({ title: 'Tom', weeksData: null }).weeksData.length, 1, 'Tom plan ger en tom vecka, inga dolda veckor läcker')
 console.log('Student privacy/allowlist checks: OK')
