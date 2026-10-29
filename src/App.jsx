@@ -606,6 +606,19 @@ function Login({ email, password, setEmail, setPassword, onSubmit, onSignUp, sta
   </main>
 }
 
+// Väljer hur många veckor som ryms bredvid varandra (1–4) så att miniatyrerna blir så stora som möjligt i aktuell skärm.
+function bestThumbCols(width, height) {
+  const ORIGINAL_HEIGHT = 1350
+  if (width < 700) return 1 // telefon: en vecka per rad, sidan får scrolla i höjdled
+  let best = { cols: 1, scale: 0 }
+  for (const cols of [1, 2, 3, 4]) {
+    const rows = Math.ceil(4 / cols)
+    const cellWidth = Math.max(0, width - 40) / cols
+    const scale = Math.min(cellWidth / 960, Math.max(120, (height - 330) / rows) / ORIGINAL_HEIGHT)
+    if (scale > best.scale) best = { cols, scale }
+  }
+  return best.cols
+}
 const CHAPTER_VOCABULARY = [
   [/geometri|cirkel|area|omkrets|volym/, ['Radie','Diameter','Omkrets','Area','Cirkelbåge','Cirkelsektor','Volym','Cylinder']],
   [/algebra|uttryck|ekvation|variabel/, ['Variabel','Uttryck','Ekvation','Likhetstecken','Term','Förenkla','Lösning']],
@@ -616,6 +629,7 @@ const CHAPTER_VOCABULARY = [
   [/taluppfattning|heltal|decimaltal/, ['Positionssystem','Ental','Tiotal','Decimal','Avrundning','Negativa tal']],
   [/ekonomi|ränta/, ['Budget','Inkomst','Utgift','Ränta','Kapital','Rabatt']],
   [/skala|proportion/, ['Skala','Förhållande','Proportion','Förstoring','Förminskning']],
+  [/^tal\b|talområde|multiplikation|division|addition|subtraktion/, ['Tal','Negativa tal','Multiplikation','Division','Addition','Subtraktion','Positionssystem']],
 ]
 function chapterVocabulary(chapter, weeks = []) {
   const title = String(chapter || '').toLocaleLowerCase('sv-SE')
@@ -868,7 +882,10 @@ function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson }) {
   useEffect(() => {
     const resize = () => {
       if (!frame.current || !original.current) return
-      const scale = frame.current.clientWidth / 960
+      const phone = window.innerWidth < 700
+      const fitRows = Math.ceil(4 / bestThumbCols(window.innerWidth, window.innerHeight))
+      const fitHeight = phone ? Infinity : Math.max(120, (window.innerHeight - 330) / fitRows) / Math.max(1, original.current.offsetHeight)
+      const scale = Math.min(frame.current.clientWidth / 960, fitHeight)
       const height = original.current.offsetHeight * scale
       setDimensions(prev => Math.abs(prev.height - height) > 1 || Math.abs(prev.scale - scale) > 0.001 ? { scale, height } : prev)
     }
@@ -894,7 +911,7 @@ function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson }) {
 function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, busy, saveStatus }) {
   const [expanded, setExpanded] = useState(null)
   const [saving, setSaving] = useState(false)
-  const [visibleWeekCount, setVisibleWeekCount] = useState(2)
+  const [visibleWeekCount, setVisibleWeekCount] = useState(3)
   const [expandedFullWeek, setExpandedFullWeek] = useState(null)
   const group = (plan.classGroups || []).find(item => item.name === className)
   const scheduled = useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
@@ -917,7 +934,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
   })
   if (!group) return null
   return <section className="class-real-two-weeks" aria-label={className+' – '+visibleWeekCount+' veckor'}>
-    <div className="class-real-two-weeks-header"><h2>{className} · Veckoplanering</h2><span>Standard: föregående och nuvarande vecka</span><div className="class-week-count-controls" role="group" aria-label="Antal veckor att visa">{[1,2,3].map(n=><button key={n} type="button" className={visibleWeekCount===n?"active":""} aria-pressed={visibleWeekCount===n} onClick={()=>setVisibleWeekCount(n)}>{n} {n===1?"vecka":"veckor"}</button>)}</div></div>
+    <div className="class-real-two-weeks-header"><div className="class-week-count-controls" role="group" aria-label="Antal veckor att visa">{[1,2,3].map(n=><button key={n} type="button" className={visibleWeekCount===n?"active":""} aria-pressed={visibleWeekCount===n} onClick={()=>setVisibleWeekCount(n)}>{n} {n===1?"vecka":"veckor"}</button>)}</div></div>
     <div className="class-real-two-weeks-grid" style={{"--class-week-columns":visibleWeekCount}}>{weeks.map((week,_i)=><div className="class-real-week-column" key={week.weekStart}>
       <strong>{week.weekStart===currentStart?'Nuvarande vecka':`Vecka ${calendarWeekNumber(week.weekStart)}`}</strong>
       <CalendarWeekThumbnail week={week} entryType={plan.entryType || 'lektion'} onOpen={()=>setExpandedFullWeek(week.weekStart)} onOpenLesson={lessonIndex=>setExpanded({weekStart:week.weekStart,lessonIndex})}/>
@@ -1033,11 +1050,9 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
         }).map(({ week, index }) => <CalendarWeekThumbnail key={week.weekStart} week={week} entryType={entryType} onOpenLesson={lessonIndex => { if (lessonIndex >= 0) setEditingCalendarLesson({ weekStart: week.weekStart, lessonIndex }) }} onOpen={() => { setSelectedWeekIndex(index); setSelectedLessonIndex(null) }} />)}
       </div>
       {!orderedWeeks.some(week => { const d = new Date(week.weekStart + 'T12:00:00'); const e = new Date(d); e.setDate(e.getDate()+6); return d <= new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,0,23,59,59) && e >= new Date(calendarMonth.getFullYear(),calendarMonth.getMonth(),1) }) && <p>Inga planerade veckor den här månaden.</p>}
-      <p className="muted">Tryck på en vecka för att redigera lektioner, moment, sidor, uppgifter och länkar i full storlek. Ändringarna sparas i samma planering.</p>
       <button type="button" className="secondary" onClick={() => setShowOriginalCalendar(true)}>Visa tidigare kalenderlayout</button>
     </div> : <>
       <button type="button" className="secondary" onClick={() => setShowOriginalCalendar(false)}>Visa veckominiatyrer</button>
-      <p className="calendar-overview-count">{orderedWeeks.length === 1 ? "1 planerad vecka" : orderedWeeks.length + " planerade veckor"} · Visas månad för månad.</p>
       <div className="calendar-overview-history">
         <button type="button" className="secondary" onClick={onUndo} disabled={busy || !canUndo} title="Ångra den senaste ändringen i planeringen">↶ Ångra</button>
       </div>
@@ -1161,6 +1176,9 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [shareMessage, setShareMessage] = useState("")
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [focusedTeacherWeek, setFocusedTeacherWeek] = useState(null)
+  const [teacherWindowStart, setTeacherWindowStart] = useState(null)
+  const [viewport, setViewport] = useState(() => ({ width: typeof window !== 'undefined' ? window.innerWidth : 1200, height: typeof window !== 'undefined' ? window.innerHeight : 800 }))
+  useEffect(() => { const onResize = () => setViewport({ width: window.innerWidth, height: window.innerHeight }); window.addEventListener('resize', onResize); window.addEventListener('orientationchange', onResize); return () => { window.removeEventListener('resize', onResize); window.removeEventListener('orientationchange', onResize) } }, [])
   const [teacherWeekOverview, setTeacherWeekOverview] = useState(true)
   const [simpleSetup, setSimpleSetup] = useState(true)
   const [simpleMore, setSimpleMore] = useState(false)
@@ -1317,6 +1335,34 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const teacherDisplayWeeks = weeks.map((week, index) => ({week, index})) // Alla veckor finns kvar; passerade veckor kan fällas ut kapitelvis
   const pastTeacherWeeks = teacherDisplayWeeks.filter(({week}) => week.weekStart && week.weekStart < mondayOf(new Date()))
   const upcomingTeacherWeeks = teacherDisplayWeeks.filter(({week}) => !week.weekStart || week.weekStart >= mondayOf(new Date()))
+  // Standardvyn visar tre veckor: föregående, nuvarande och nästa (utan att användaren behöver klicka "Alla veckor").
+  const defaultWindowFirst = (() => { const first = upcomingTeacherWeeks[0] ? teacherDisplayWeeks.indexOf(upcomingTeacherWeeks[0]) : teacherDisplayWeeks.length; return Math.max(0, first - 1) })()
+  useEffect(() => { const fit = !focusedTeacherWeek && !showPastTeacherWeeks; document.body.classList.toggle('teacher-fit-mode', fit); return () => document.body.classList.remove('teacher-fit-mode') }, [focusedTeacherWeek, showPastTeacherWeeks])
+const addNewTeacherWeek = () => setPlan(p => {
+    const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
+    const base = existing.find(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek) || [...existing].sort((a, b) => (b.weekStart || '').localeCompare(a.weekStart || ''))[0]
+    const newStart = addWeeks(base?.weekStart || p.startDate, 1)
+    // Veckor efter den nya flyttas en vecka, så numren (Vecka N) räknas om automatiskt.
+    const shifted = existing.map(w => (w.weekStart && w.weekStart >= newStart) ? { ...w, weekStart: addWeeks(w.weekStart, 1), weekNumber: calendarWeekNumber(addWeeks(w.weekStart, 1)) ?? w.weekNumber } : w)
+    const newWeek = makeWeeks({ ...p, startWeek: calendarWeekNumber(newStart), startDate: newStart, weeks: 1 }, 1)[0]
+    const all = [...shifted, newWeek].sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || ''))
+    return { ...p, weeks: all.length, weeksData: all }
+  })
+  const removeFocusedTeacherWeek = () => {
+    const target = weeks.find(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek)
+    if (!target || weeks.length <= 1) return
+    const index = weeks.indexOf(target)
+    if (hasWeekWork(target, index) && !window.confirm(`Ta bort vecka ${target.weekNumber} och allt innehåll i veckan?`)) return
+    setPlan(p => {
+      const current = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
+      const remaining = current.filter(w => w.weekStart !== target.weekStart || w.weekNumber !== target.weekNumber)
+      return { ...p, weeks: remaining.length, weeksData: remaining, startWeek: Number(remaining[0]?.weekNumber) || p.startWeek }
+    })
+    setFocusedTeacherWeek(null)
+  }
+  useEffect(() => { const home = () => { setFocusedTeacherWeek(null); setShowPastTeacherWeeks(false) }; window.addEventListener('planning-home', home); return () => window.removeEventListener('planning-home', home) }, [])
+  const windowStart = Math.max(0, Math.min(teacherWindowStart ?? defaultWindowFirst, Math.max(0, teacherDisplayWeeks.length - 4)))
+  const defaultTeacherWindow = teacherDisplayWeeks.slice(windowStart, windowStart + 4)
   const visibleTeacherWeeks = weeks.filter(week => week && !week.hidden)
   const weeksWithContent = visibleTeacherWeeks.filter(week => Boolean(
     String(week.content || '').trim() || String(week.chapter || '').trim() ||
@@ -1877,7 +1923,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       setStatus('Kunde inte skapa grundplaneringen: '+(error.message||'Okänt fel'))
     } finally {setBusy(false)}
   }
-  return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}`}>{(teacherTab !== "mina" && teacherTab !== "bibliotek" || adminOpen) && <Navigation onBack={() => restoreNavigation(-1)} onForward={() => restoreNavigation(1)} canBack={navigationIndex > 0} canForward={navigationIndex < navigationHistory.length - 1} active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={id => { if (id === 'bibliotek') { setLibrarySchool(''); setLibrarySubject(''); setLibraryBoardPage(0); setShowArchive(false) } setTeacherTab(id); if (id === 'mina' || id === 'arsplan') setCalendarOpen(false); if (id === 'elevvy') { setPreviewStudents(true); setCalendarOpen(false) } else { setPreviewStudents(false) } }} onOpenExample={openExample} onOpenArchive={() => { setShowArchive(true); setTeacherTab('bibliotek') }} onNew={createPlan} onToggleCalendar={() => { setTeacherTab('arsplan'); setCalendarOpen(true) }} calendarOpen={calendarOpen} isAdmin={isAdmin} adminOpen={adminOpen} onOpenAdmin={onToggleAdmin} onCloseAdmin={() => { if (adminOpen) onToggleAdmin?.() }} onSignOut={() => supabase.auth.signOut()} pendingCount={pendingCount} planSearch={planSearch} onPlanSearchChange={setPlanSearch} showArchive={showArchive} planContext={selectedId && teacherTab === 'arsplan' ? {subject:plan.subject || plan.title, textbook:plan.textbook, grade:plan.grade || plan.course} : null} onPrintPlan={selectedId && teacherTab === 'arsplan' ? () => { document.body.classList.add("teacher-plan-print"); const cleanup = () => document.body.classList.remove("teacher-plan-print"); window.addEventListener("afterprint", cleanup, { once:true }); window.print(); setTimeout(cleanup,1500) } : null} />}<main className={`shell${adminOpen ? " admin-workspace" : ""}`} id="lararvy">
+  return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}`}>{(teacherTab !== "mina" && teacherTab !== "bibliotek" || adminOpen) && <Navigation onAllWeeks={() => { setFocusedTeacherWeek(null); setShowPastTeacherWeeks(true) }} onBack={() => restoreNavigation(-1)} onForward={() => restoreNavigation(1)} canBack={navigationIndex > 0} canForward={navigationIndex < navigationHistory.length - 1} active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={id => { if (id === 'bibliotek') { setLibrarySchool(''); setLibrarySubject(''); setLibraryBoardPage(0); setShowArchive(false) } setTeacherTab(id); if (id === 'mina' || id === 'arsplan') setCalendarOpen(false); if (id === 'elevvy') { setPreviewStudents(true); setCalendarOpen(false) } else { setPreviewStudents(false) } }} onOpenExample={openExample} onOpenArchive={() => { setShowArchive(true); setTeacherTab('bibliotek') }} onNew={createPlan} onToggleCalendar={() => { setTeacherTab('arsplan'); setCalendarOpen(true) }} calendarOpen={calendarOpen} isAdmin={isAdmin} adminOpen={adminOpen} onOpenAdmin={onToggleAdmin} onCloseAdmin={() => { if (adminOpen) onToggleAdmin?.() }} onSignOut={() => supabase.auth.signOut()} pendingCount={pendingCount} planSearch={planSearch} onPlanSearchChange={setPlanSearch} showArchive={showArchive} planContext={selectedId && teacherTab === 'arsplan' ? {subject:plan.subject || plan.title, textbook:plan.textbook, grade:plan.grade || plan.course} : null} onPrintPlan={selectedId && teacherTab === 'arsplan' ? () => { document.body.classList.add("teacher-plan-print"); const cleanup = () => document.body.classList.remove("teacher-plan-print"); window.addEventListener("afterprint", cleanup, { once:true }); window.print(); setTimeout(cleanup,1500) } : null} />}<main className={`shell${adminOpen ? " admin-workspace" : ""}`} id="lararvy">
   {!isAdmin && <UpdateNotices userId={session.user.id} isAdmin={false} />}
   {adminOpen ? adminContent : <>
     {teacherTab !== "elevvy" && teacherTab !== "mina" && <header className="topbar">
@@ -1942,26 +1988,28 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       <div className="teacher-year-review-bar" aria-label="Årsplaneringens verktygsrad">
         <div className="teacher-review-title"><h2>Årsplanering</h2><span className="count-pill">{weeks.length} veckor</span></div>
         <div className="teacher-review-actions">
-          <button type="button" className="teacher-all-weeks-toggle" onClick={()=>{setAllWeekContentsOpen(v=>!v);setWeekContentOverrides({})}} aria-expanded={allWeekContentsOpen} aria-label={allWeekContentsOpen ? "Dölj allt veckoinnehåll" : "Visa allt veckoinnehåll"}><span className="teacher-review-arrow" aria-hidden="true">{allWeekContentsOpen ? "▾" : "▸"}</span>{allWeekContentsOpen ? "Dölj allt innehåll" : "Visa allt innehåll"}</button>
-          {pastTeacherWeeks.length > 0 && <button type="button" className="teacher-past-weeks-toggle" aria-expanded={showPastTeacherWeeks} onClick={()=>setShowPastTeacherWeeks(v=>!v)}><span aria-hidden="true">{showPastTeacherWeeks ? "▾" : "▸"}</span>{showPastTeacherWeeks ? "Dölj tidigare veckor" : `Tidigare veckor (${pastTeacherWeeks.length})`}</button>}
         </div>
       </div>
       {<div className="teacher-pinned-chapter-shell" aria-label="Aktuellt kapitel"><div className={`teacher-pinned-chapter-heading ${pinnedChapter?.tone || ""}`}>{pinnedChapter?.name || "Kapitel"}</div>{pinnedChapter?.name && <ChapterVocabulary chapter={pinnedChapter.name} weeks={weeks.filter(week => (week.chapter?.trim() || "Utan kapitel") === pinnedChapter.name)} />}</div>}
       <nav className="teacher-week-navigation" aria-label="Navigera mellan veckor">
-        <button type="button" aria-label="Föregående vecka" onClick={() => { const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const next = weeks[Math.max(0, i < 0 ? 0 : i - 1)]; if (next) setFocusedTeacherWeek(String(next.weekStart || next.weekNumber)) }}>◀</button>
+        <button type="button" className="teacher-all-weeks-inline-toggle" onClick={() => { setFocusedTeacherWeek(null); setShowPastTeacherWeeks(v => !v) }}>{showPastTeacherWeeks ? "Tillbaka till Grundplanering" : "Visa alla veckor"}</button>
+        {focusedTeacherWeek && <button type="button" className="teacher-remove-week" disabled={weeks.length <= 1} onClick={removeFocusedTeacherWeek}>− Ta bort vecka</button>}
+        {focusedTeacherWeek && <button type="button" className="teacher-close-week" aria-label="Klar" title="Klar" onClick={() => setFocusedTeacherWeek(null)}>✓</button>}
+        <button type="button" className="teacher-add-week-inline" disabled={weeks.length >= 52} onClick={addNewTeacherWeek}>+ Ny vecka</button>
+        <button type="button" aria-label="Föregående vecka" onClick={() => { if (!focusedTeacherWeek) { setTeacherWindowStart(Math.max(0, windowStart - 1)); return } const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const next = weeks[Math.max(0, i < 0 ? 0 : i - 1)]; if (next) setFocusedTeacherWeek(String(next.weekStart || next.weekNumber)) }}>◀</button>
         {[-1, 0, 1].map(offset => { const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const todayIndex = weeks.findIndex(w => w.weekStart === mondayOf(new Date())); const center = i >= 0 ? i : (todayIndex >= 0 ? todayIndex : 0); const w = weeks[center + offset]; return <button type="button" key={offset} className={offset === 0 ? 'current' : 'adjacent'} disabled={!w} onClick={() => w && setFocusedTeacherWeek(String(w.weekStart || w.weekNumber))}>{w ? `Vecka ${calendarWeekNumber(w.weekStart) ?? w.weekNumber}` : '–'}</button> })}
-        <button type="button" aria-label="Nästa vecka" onClick={() => { const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const next = weeks[Math.min(weeks.length - 1, i < 0 ? 0 : i + 1)]; if (next) setFocusedTeacherWeek(String(next.weekStart || next.weekNumber)) }}>▶</button>
-        <button type="button" className={!focusedTeacherWeek ? 'all-weeks-active' : 'all-weeks-button'} onClick={() => setFocusedTeacherWeek(null)}>Alla veckor</button>
+        <button type="button" aria-label="Nästa vecka" onClick={() => { if (!focusedTeacherWeek) { setTeacherWindowStart(Math.min(Math.max(0, teacherDisplayWeeks.length - 4), windowStart + 1)); return } const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const next = weeks[Math.min(weeks.length - 1, i < 0 ? 0 : i + 1)]; if (next) setFocusedTeacherWeek(String(next.weekStart || next.weekNumber)) }}>▶</button>
       </nav>
       {focusedTeacherWeek && <div className="teacher-mobile-week-overview"><div className="teacher-mobile-week-overview-actions"><strong>Vecka {calendarWeekNumber(weeks.find(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)?.weekStart) || ""} · Helvecksvy</strong><button type="button" className="secondary" aria-expanded={!teacherWeekOverview} onClick={()=>setTeacherWeekOverview(v=>!v)}>{teacherWeekOverview?"Visa och redigera detaljer":"Visa hela veckan"}</button></div>{teacherWeekOverview && <CalendarWeekThumbnail week={weeks.find(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)} entryType={plan.entryType||"lektion"} onOpen={()=>setTeacherWeekOverview(false)} onOpenLesson={()=>setTeacherWeekOverview(false)}/>}</div>}
-      <div className={`teacher-months ${focusedTeacherWeek ? "teacher-months-focused" : ""} ${focusedTeacherWeek && teacherWeekOverview ? "teacher-months-overview-hidden" : ""}`}>
-        {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? teacherDisplayWeeks : upcomingTeacherWeeks)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
+      {!focusedTeacherWeek && !showPastTeacherWeeks && <div className="teacher-default-thumbs" aria-label="Veckor i Grundplanering" style={{ gridTemplateColumns: `repeat(${bestThumbCols(viewport.width, viewport.height)}, minmax(0,1fr))` }}>{defaultTeacherWindow.map(({week, index}) => { const key = String(week.weekStart || week.weekNumber); return <div className="teacher-thumb-wrap" key={key}><label className="teacher-thumb-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för eleven`} /><span>Visa för eleven</span></label><CalendarWeekThumbnail week={week} entryType={plan?.entryType === "dag" ? "dag" : "lektion"} onOpen={() => setFocusedTeacherWeek(key)} onOpenLesson={() => setFocusedTeacherWeek(key)} /></div> })}</div>}
+      <div className={`teacher-months ${focusedTeacherWeek ? "teacher-months-focused" : ""} ${focusedTeacherWeek && teacherWeekOverview ? "teacher-months-overview-hidden" : ""} ${!focusedTeacherWeek && !showPastTeacherWeeks ? "teacher-months-overview-hidden" : ""}`}>
+        {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? teacherDisplayWeeks : defaultTeacherWindow)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
           if (!chapters[chapterName]) chapters[chapterName] = { name: chapterName, items: [] }
           chapters[chapterName].items.push(item)
           return chapters
         }, {})).map(group => <section className="teacher-month-section teacher-chapter-section" key={group.name}>
-          <h3 className={`chapter-heading chapter-tone-${chapterTone(group.name)}`}>{group.name}</h3>
+          <div className="teacher-chapter-sticky"><h3 className={`chapter-heading chapter-tone-${chapterTone(group.name)}`}>{group.name}</h3>{group.name !== "Utan kapitel" && <ChapterVocabulary chapter={group.name} weeks={group.items.map(item => item.week)} />}</div>
           <div className="teacher-month-weeks">
           {group.items.map(({ week, index }) => <div className="chapter-week-group" key={`${week.weekStart || week.weekNumber}-${index}`}>
           <article className={`week-card teacher-collapsible-week ${(focusedTeacherWeek || (weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen)) ? "teacher-week-open" : "teacher-week-closed"}`} id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
@@ -2029,14 +2077,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         </section>)}
       </div>
       <div className="button-row week-add-actions">
-        <button type="button" className="secondary" disabled={weeks.length >= 52} onClick={() => setPlan(p => {
-          const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
-          // Välj sista veckan efter datum, inte högsta veckonumret (som nollställs vid nyår).
-          const latest = [...existing].sort((a, b) => (b.weekStart || '').localeCompare(a.weekStart || ''))[0]
-          const nextDate = addWeeks(latest?.weekStart || p.startDate, 1)
-          const newWeek = makeWeeks({ ...p, startWeek: calendarWeekNumber(nextDate), startDate: nextDate, weeks: 1 }, 1)[0]
-          return { ...p, weeks: existing.length + 1, weeksData: [...existing, newWeek] }
-        })}>+ Lägg till vecka</button>
+        <button type="button" className="secondary" disabled={weeks.length >= 52} onClick={addNewTeacherWeek}>+ Lägg till vecka</button>
       </div>
       <div className="sticky-actions button-row">
         
@@ -2404,6 +2445,21 @@ function GymnasiumDemoIndex() {
 }
 
 function AnnualApp() {
+  // Hela planeringsvyn skalas som en film på olika stora skärmar: layouten räknas i en referensbredd och krymps/växer proportionellt.
+  useEffect(() => {
+    const REFERENCE_WIDTH = 1180
+    const update = () => {
+      const scale = Math.min(1, Math.max(0.5, window.innerWidth / REFERENCE_WIDTH))
+      document.documentElement.style.setProperty('--planning-scale', String(scale))
+    }
+    update()
+    window.addEventListener('resize', update)
+    window.addEventListener('orientationchange', update)
+    return () => {
+      window.removeEventListener('resize', update)
+      window.removeEventListener('orientationchange', update)
+    }
+  }, [])
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [studentPlan, setStudentPlan] = useState(null)

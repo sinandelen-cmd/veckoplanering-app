@@ -5903,3 +5903,203 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .teacher-year-review .teacher-week-navigation { margin-block:4px!important; }
 #lararvy .teacher-year-review .teacher-month-section { margin-top:0!important; padding-top:6px!important; }
 #lararvy .teacher-mobile-week-overview { margin:4px 0!important; padding:6px!important; }
+
+/* När bara en vecka visas ska den ta hela bredden, så att alla lektioner syns utan att zooma. */
+#lararvy .class-real-two-weeks-grid:has(> .class-real-week-column:only-child),
+#lararvy .class-real-two-weeks .class-real-two-weeks-grid:has(> .class-real-week-column:only-child) {
+  grid-template-columns:minmax(0,1fr)!important;
+}
+
+/* Två veckor sida vid sida: smalare marginaler och ingen utstickande bredd, så inget klipps bort i liggande läge. */
+#lararvy .class-real-two-weeks-grid > .class-real-week-column {
+  min-width:0!important;
+  max-width:100%!important;
+  overflow-x:auto!important;
+}
+#lararvy .class-real-two-weeks-grid .calendar-inline-week {
+  padding:10px!important;
+  min-width:0!important;
+  max-width:100%!important;
+}
+#lararvy .class-real-two-weeks-grid .calendar-inline-week-heading h2 {
+  font-size:clamp(18px,2.2vw,26px)!important;
+}
+
+/* Huvudmenyn (Startsida, Planering, Månadsvy, Administration, Logga ut) ligger kvar överst när man scrollar. */
+#lararvy .planning-unified-navigation,
+.planning-unified-navigation {
+  position:sticky!important;
+  top:0;
+  z-index:60;
+}
+
+/* Hela sidan (övre menyn och flikarna) ryms i fönstret. Veckorna scrollar inuti sin egen ruta, så att både övre och nedre delen av veckan kan nås. */
+#lararvy .class-real-two-weeks-grid > .class-real-week-column {
+  max-height:calc(100vh - 230px);
+  max-height:calc(100dvh - 230px);
+  overflow-y:auto!important;
+  -webkit-overflow-scrolling:touch;
+}
+
+/* Grundplanering: hela veckan ryms i skärmens bredd oavsett iPad-läge; lektionerna staplas och sidan scrollar vertikalt. */
+#lararvy .teacher-months-focused .teacher-month-weeks { overflow-x:hidden!important; }
+#lararvy .teacher-months-focused .week-card,
+#lararvy .teacher-months-focused .week-card .lesson { min-width:0!important; max-width:100%!important; width:100%!important; }
+@media(max-width:700px) { #lararvy .teacher-months-focused .week-card { min-width:0!important; } }
+
+/* Skalning som en TV: hela planeringsvyn ritas i en fast referensbredd (1180 px) och krymps/växer proportionellt med skärmen (variabeln --planning-scale sätts i App.jsx). */
+#lararvy {
+  width: calc(100% / var(--planning-scale, 1));
+  transform: scale(var(--planning-scale, 1));
+  transform-origin: 0 0;
+}
+
+/* Enkel, samlad övre meny: en rad, jämn höjd, lika knappstil, klumpig text kortas av i stället för att bryta. */
+#lararvy .planning-unified-navigation,
+.planning-unified-navigation {
+  display:flex!important; flex-wrap:nowrap!important; align-items:center!important; justify-content:space-between!important;
+  gap:10px!important; height:56px!important; min-height:56px!important; padding:0 14px!important; box-sizing:border-box!important;
+  background:#456581!important; color:#fff!important;
+}
+.planning-unified-navigation .planning-unified-left,
+.planning-unified-navigation .planning-unified-center,
+.planning-unified-navigation .planning-unified-right { display:flex!important; align-items:center!important; gap:6px!important; flex-wrap:nowrap!important; }
+.planning-unified-navigation button {
+  appearance:none!important; border:0!important; background:transparent!important; color:#fff!important;
+  font:inherit!important; font-size:15px!important; font-weight:600!important; line-height:1!important;
+  padding:9px 12px!important; min-height:40px!important; border-radius:8px!important; white-space:nowrap!important; cursor:pointer!important;
+}
+.planning-unified-navigation button.active { background:#fff!important; color:#2d4a63!important; }
+.planning-unified-navigation button:hover:not(.active) { background:rgba(255,255,255,.14)!important; }
+.planning-unified-navigation .planning-nav-context { max-width:180px!important; min-width:0!important; padding:0 8px!important; font-size:13px!important; font-weight:500!important; opacity:.9; }
+.planning-unified-navigation .planning-nav-context-title { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.planning-unified-navigation .planning-nav-print { min-height:40px!important; padding:6px 10px!important; background:rgba(255,255,255,.12)!important; }
+@media(max-width:700px){
+  .planning-unified-navigation { gap:4px!important; padding:0 8px!important; }
+  .planning-unified-navigation button { font-size:13px!important; padding:8px 8px!important; min-height:38px!important; }
+  .planning-unified-navigation .planning-nav-context { display:none!important; }
+}
+
+/* Tydligare orientering i Grundplanering: ingen knapp för tidigare veckor (veckonavigeringen räcker), och kompakt rubrikrad utan tomt utrymme. */
+#lararvy .teacher-past-weeks-toggle { display:none!important; }
+#lararvy .teacher-year-review .teacher-pinned-chapter-shell { padding:0!important; margin:0 0 6px!important; }
+#lararvy .teacher-year-review .teacher-week-navigation { margin-block:6px!important; }
+#lararvy .teacher-year-review .teacher-month-section { padding-top:4px!important; }
+#lararvy .teacher-year-review .teacher-year-review-bar { min-height:0!important; padding-block:4px!important; }
+
+/* Snyggare nedre delen: sparinformationen blir en diskret rad i stället för en stor flytande ruta. */
+#lararvy .autosave-info, .autosave-info { position:static!important; display:block!important; box-shadow:none!important; background:transparent!important; border:0!important; color:#5d6f82!important; font-size:12px!important; padding:6px 4px!important; margin:4px 0 0!important; text-align:center!important; }
+/* Snyggare veckonavigering: en låg, lugn rad som inte konkurrerar med innehållet. */
+#lararvy .teacher-week-navigation { background:#eef3f8!important; color:#2d4a63!important; border:1px solid #d5e0ea!important; box-shadow:none!important; padding:8px!important; margin:6px 0!important; position:static!important; }
+#lararvy .teacher-week-navigation button { background:#fff!important; color:#2d4a63!important; border:1px solid #c7d5e2!important; min-height:36px!important; padding:6px 12px!important; font-size:14px!important; }
+#lararvy .teacher-week-navigation button.current { background:#2d4a63!important; color:#fff!important; border-color:#2d4a63!important; }
+#lararvy .teacher-week-navigation button.all-weeks-active { background:#208ce2!important; color:#fff!important; border-color:#208ce2!important; }
+
+/* Flikraden: Elevvisning flyttas till höger kant på samma rad som klassflikarna, och hela raden tar skärmens bredd. */
+#lararvy #kopplade-klasser { display:flex!important; flex-wrap:wrap!important; align-items:center!important; justify-content:space-between!important; gap:8px!important; width:100%!important; box-sizing:border-box!important; }
+#lararvy #kopplade-klasser .class-base-visibility { margin-left:auto!important; padding:4px 8px!important; font-size:14px!important; }
+#lararvy #kopplade-klasser .class-base-visibility select { min-height:36px!important; border-radius:8px!important; }
+
+/* Klassvyn: mindre veckoval, elevlänk längst till höger på klassflikarnas rad, ingen extra rubrik. */
+#lararvy .class-week-count-controls button { min-height:32px!important; padding:4px 10px!important; font-size:13px!important; border-radius:8px!important; }
+#lararvy .class-mini-row .class-mini-schema { margin-left:auto!important; min-height:36px!important; font-size:14px!important; white-space:nowrap!important; }
+
+/* Grundplanering: ingen rubrikrad "Årsplanering · N veckor"; Dölj allt innehåll ligger i veckoraden till höger; begrepp direkt under menyn. */
+#lararvy .teacher-year-review-bar { display:none!important; }
+#lararvy .teacher-week-navigation .teacher-all-weeks-inline { margin-left:auto!important; font-size:14px!important; min-height:36px!important; padding:6px 12px!important; }
+#lararvy .teacher-week-navigation { justify-content:flex-start!important; }
+
+/* Kapitel och viktiga begrepp i samma ruta: ett kort med kapitelnamnet överst och begreppen under. */
+#lararvy .teacher-pinned-chapter-shell { border:1px solid #d5e0ea!important; border-radius:12px!important; overflow:hidden!important; background:#f6f9fc!important; margin:6px 0!important; }
+#lararvy .teacher-pinned-chapter-shell .teacher-pinned-chapter-heading { border-radius:0!important; margin:0!important; }
+#lararvy .teacher-pinned-chapter-shell .chapter-vocabulary { background:transparent!important; border:0!important; box-shadow:none!important; margin:0!important; padding:10px!important; }
+
+/* Grundplanering standard: miniatyrer av tre veckor sida vid sida, skalade så att alla syns i stående och liggande läge. */
+#lararvy .teacher-default-thumbs { display:grid!important; grid-template-columns:repeat(3,minmax(0,1fr))!important; gap:10px!important; width:100%!important; box-sizing:border-box!important; align-items:start!important; }
+#lararvy .teacher-default-thumbs > * { min-width:0!important; max-width:100%!important; }
+
+/* Grundplanering standard: allt ryms i fönstret, ingen sidscroll. Miniatyrerna skalas även efter höjden. */
+body.teacher-fit-mode { overflow:hidden!important; }
+body.teacher-fit-mode #lararvy .teacher-default-thumbs { height:calc(100dvh - 250px); align-items:stretch!important; overflow:hidden!important; }
+body.teacher-fit-mode #lararvy .teacher-default-thumbs > * { height:100%; overflow:hidden; }
+body.teacher-fit-mode #lararvy .teacher-default-thumbs .calendar-real-week-frame { overflow:hidden!important; }
+
+/* Ny vecka i veckoraden, till höger där "Visa allt innehåll" var. */
+#lararvy .teacher-week-navigation .teacher-add-week-inline { margin-left:auto!important; background:#2d7d46!important; color:#fff!important; border:0!important; border-radius:999px!important; min-height:36px!important; padding:6px 14px!important; font-size:14px!important; font-weight:700!important; cursor:pointer; }
+#lararvy .teacher-week-navigation .teacher-add-week-inline:disabled { opacity:.4; cursor:default; }
+
+/* Alla veckor i blå menyn: en egen vy där man scrollar upp och ner. */
+#lararvy .planning-unified-navigation .planning-unified-center button:last-child { background:rgba(255,255,255,.16)!important; }
+
+/* Visa/dölj alla veckor i veckoraden. */
+#lararvy .teacher-week-navigation .teacher-all-weeks-inline-toggle { background:#fff!important; color:#2d4a63!important; border:1px solid #c7d5e2!important; border-radius:999px!important; min-height:36px!important; padding:6px 14px!important; font-size:14px!important; font-weight:700!important; cursor:pointer; }
+
+/* Kapitelnamn och viktiga begrepp låses överst medan man scrollar i det kapitlet. */
+#lararvy .teacher-pinned-chapter-shell { display:none!important; }
+#lararvy .teacher-chapter-sticky { position:sticky; top:var(--planning-nav-height, 60px); z-index:5; background:#fff; padding-bottom:4px; box-shadow:0 2px 6px rgba(0,0,0,.06); }
+#lararvy .teacher-chapter-sticky .chapter-vocabulary { background:#f6f9fc; border-radius:0 0 10px 10px; margin:0; padding:8px 12px; }
+
+/* Alla veckor sparas automatiskt, så infotexten behövs inte. */
+#lararvy .autosave-info { display:none!important; }
+/* Fyra veckor sida vid sida i Grundplanering. */
+body.teacher-fit-mode #lararvy .teacher-default-thumbs { grid-template-columns:repeat(4,minmax(0,1fr))!important; height:calc(100dvh - 230px)!important; }
+#lararvy .teacher-default-thumbs { grid-template-columns:repeat(4,minmax(0,1fr))!important; }
+/* Stängknapp (✕) för vald vecka. */
+#lararvy .teacher-week-navigation .teacher-close-week { width:40px!important; height:40px!important; min-height:40px!important; padding:0!important; border-radius:999px!important; border:1px solid #c7d5e2!important; background:#fff!important; color:#2d4a63!important; font-size:18px!important; font-weight:700!important; cursor:pointer; }
+
+/* Minska: ta bort vald vecka från veckoraden. */
+#lararvy .teacher-week-navigation .teacher-remove-week { background:#fff!important; color:#9b2c2c!important; border:1px solid #e3b4b4!important; border-radius:999px!important; min-height:36px!important; padding:6px 14px!important; font-size:14px!important; font-weight:700!important; cursor:pointer; }
+#lararvy .teacher-week-navigation .teacher-remove-week:disabled { opacity:.4; cursor:default; }
+
+/* Ruta till vänster om varje vecka: visa/dölj för eleven. */
+#lararvy .teacher-default-thumbs { grid-template-columns:repeat(4,minmax(0,1fr))!important; }
+#lararvy .teacher-thumb-wrap { display:grid!important; grid-template-columns:auto minmax(0,1fr)!important; gap:6px!important; min-width:0; align-items:start; }
+#lararvy .teacher-thumb-visibility { display:flex; flex-direction:column; align-items:center; gap:6px; padding:8px 6px; background:#fff; border:1px solid #c7d5e2; border-radius:10px; font-size:12px; font-weight:700; color:#2d4a63; writing-mode:horizontal-tb; }
+#lararvy .teacher-thumb-visibility input { width:20px; height:20px; accent-color:#2d7d46; }
+
+/* Visa för eleven: liten ögonikon i stället för en stor ruta. */
+#lararvy .teacher-thumb-wrap { grid-template-columns:34px minmax(0,1fr)!important; }
+#lararvy .teacher-thumb-visibility { width:34px; padding:6px 0; gap:4px; font-size:0; }
+#lararvy .teacher-thumb-visibility::before { content:"👁"; font-size:16px; line-height:1; }
+#lararvy .teacher-thumb-visibility span { display:none; }
+#lararvy .teacher-thumb-visibility input { width:18px; height:18px; }
+/* Klar-ikon: grön bock. */
+#lararvy .teacher-week-navigation .teacher-close-week { background:#2d7d46!important; color:#fff!important; border-color:#2d7d46!important; }
+#lararvy .teacher-months-focused .week-card .lessons { display:grid!important; grid-template-columns:repeat(auto-fit,minmax(200px,1fr))!important; gap:10px!important; align-items:start!important; }
+#lararvy .teacher-months-focused .week-card .lesson { min-width:0!important; }
+
+/* Visa för eleven: liten kryssruta med texten "Visa", inget öga. */
+#lararvy .teacher-thumb-wrap { grid-template-columns:auto minmax(0,1fr)!important; }
+#lararvy .teacher-thumb-visibility { width:auto!important; padding:4px 6px!important; font-size:11px!important; gap:4px!important; flex-direction:row!important; }
+#lararvy .teacher-thumb-visibility::before { content:none!important; }
+#lararvy .teacher-thumb-visibility span { display:inline!important; }
+#lararvy .teacher-thumb-visibility input { width:14px!important; height:14px!important; }
+/* Klar-knappen: enkel, som övriga knappar. */
+#lararvy .teacher-week-navigation .teacher-close-week { background:#fff!important; color:#2d4a63!important; border:1px solid #c7d5e2!important; }
+/* Kapitelnamnet syns alltid överst i kapitlet. */
+#lararvy .teacher-chapter-sticky .chapter-heading { display:block!important; margin:0 0 4px!important; }
+
+/* Visa för eleven: mindre kryssruta. */
+#lararvy .teacher-thumb-visibility { font-size:10px!important; padding:2px 5px!important; }
+#lararvy .teacher-thumb-visibility input { width:12px!important; height:12px!important; }
+/* Standardvyn: kapitelnamn och begrepp syns överst, och fyra veckor fyller bredden och ryms i höjden. */
+body.teacher-fit-mode #lararvy .teacher-pinned-chapter-shell { display:block!important; position:relative!important; top:auto!important; margin:0 0 6px!important; }
+body.teacher-fit-mode #lararvy .teacher-default-thumbs { height:calc(100dvh - 330px)!important; }
+/* Vald vecka: den lilla förhandsbilden döljs, lektionerna visas i fullt format sida vid sida. */
+#lararvy .teacher-mobile-week-overview { display:none!important; }
+
+
+/* Telefon (under 700 px): sidan får scrolla och veckorna står under varandra i full bredd. */
+@media (max-width:699px) {
+  body.teacher-fit-mode { overflow:auto!important; }
+  body.teacher-fit-mode #lararvy .teacher-default-thumbs { height:auto!important; overflow:visible!important; }
+  body.teacher-fit-mode #lararvy .teacher-default-thumbs > * { height:auto!important; overflow:visible!important; }
+}
+
+
+
+/* Visa för eleven: bara en liten kryssruta, så den tar nästan ingen plats vid veckan. Texten finns kvar för skärmläsare. */
+#lararvy .teacher-thumb-wrap { grid-template-columns:auto minmax(0,1fr)!important; gap:4px!important; }
+#lararvy .teacher-thumb-visibility { padding:0!important; border:0!important; background:transparent!important; gap:0!important; font-size:0!important; width:auto!important; }
+#lararvy .teacher-thumb-visibility span { position:absolute!important; width:1px!important; height:1px!important; overflow:hidden!important; clip:rect(0 0 0 0)!important; }
+#lararvy .teacher-thumb-visibility input { width:14px!important; height:14px!important; margin:0!important; }
