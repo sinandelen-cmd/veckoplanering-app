@@ -1321,13 +1321,15 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const defaultWindowFirst = (() => { const first = upcomingTeacherWeeks[0] ? teacherDisplayWeeks.indexOf(upcomingTeacherWeeks[0]) : teacherDisplayWeeks.length; return Math.max(0, first - 1) })()
   useEffect(() => { const fit = !focusedTeacherWeek && !showPastTeacherWeeks; document.body.classList.toggle('teacher-fit-mode', fit); return () => document.body.classList.remove('teacher-fit-mode') }, [focusedTeacherWeek, showPastTeacherWeeks])
 const addNewTeacherWeek = () => setPlan(p => {
-          const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
-          // Välj sista veckan efter datum, inte högsta veckonumret (som nollställs vid nyår).
-          const latest = [...existing].sort((a, b) => (b.weekStart || '').localeCompare(a.weekStart || ''))[0]
-          const nextDate = addWeeks(latest?.weekStart || p.startDate, 1)
-          const newWeek = makeWeeks({ ...p, startWeek: calendarWeekNumber(nextDate), startDate: nextDate, weeks: 1 }, 1)[0]
-          return { ...p, weeks: existing.length + 1, weeksData: [...existing, newWeek] }
-        })
+    const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
+    const base = existing.find(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek) || [...existing].sort((a, b) => (b.weekStart || '').localeCompare(a.weekStart || ''))[0]
+    const newStart = addWeeks(base?.weekStart || p.startDate, 1)
+    // Veckor efter den nya flyttas en vecka, så numren (Vecka N) räknas om automatiskt.
+    const shifted = existing.map(w => (w.weekStart && w.weekStart >= newStart) ? { ...w, weekStart: addWeeks(w.weekStart, 1), weekNumber: calendarWeekNumber(addWeeks(w.weekStart, 1)) ?? w.weekNumber } : w)
+    const newWeek = makeWeeks({ ...p, startWeek: calendarWeekNumber(newStart), startDate: newStart, weeks: 1 }, 1)[0]
+    const all = [...shifted, newWeek].sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || ''))
+    return { ...p, weeks: all.length, weeksData: all }
+  })
   const windowStart = Math.max(0, Math.min(teacherWindowStart ?? defaultWindowFirst, Math.max(0, teacherDisplayWeeks.length - 3)))
   const defaultTeacherWindow = teacherDisplayWeeks.slice(windowStart, windowStart + 3)
   const visibleTeacherWeeks = weeks.filter(week => week && !week.hidden)
@@ -1959,6 +1961,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       </div>
       {<div className="teacher-pinned-chapter-shell" aria-label="Aktuellt kapitel"><div className={`teacher-pinned-chapter-heading ${pinnedChapter?.tone || ""}`}>{pinnedChapter?.name || "Kapitel"}</div>{pinnedChapter?.name && <ChapterVocabulary chapter={pinnedChapter.name} weeks={weeks.filter(week => (week.chapter?.trim() || "Utan kapitel") === pinnedChapter.name)} />}</div>}
       <nav className="teacher-week-navigation" aria-label="Navigera mellan veckor">
+        <button type="button" className="teacher-all-weeks-inline-toggle" onClick={() => { setFocusedTeacherWeek(null); setShowPastTeacherWeeks(v => !v) }}>{showPastTeacherWeeks ? "Dölj alla veckor" : "Visa alla veckor"}</button>
         <button type="button" className="teacher-add-week-inline" disabled={weeks.length >= 52} onClick={addNewTeacherWeek}>+ Ny vecka</button>
         <button type="button" aria-label="Föregående vecka" onClick={() => { if (!focusedTeacherWeek) { setTeacherWindowStart(Math.max(0, windowStart - 1)); return } const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const next = weeks[Math.max(0, i < 0 ? 0 : i - 1)]; if (next) setFocusedTeacherWeek(String(next.weekStart || next.weekNumber)) }}>◀</button>
         {[-1, 0, 1].map(offset => { const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const todayIndex = weeks.findIndex(w => w.weekStart === mondayOf(new Date())); const center = i >= 0 ? i : (todayIndex >= 0 ? todayIndex : 0); const w = weeks[center + offset]; return <button type="button" key={offset} className={offset === 0 ? 'current' : 'adjacent'} disabled={!w} onClick={() => w && setFocusedTeacherWeek(String(w.weekStart || w.weekNumber))}>{w ? `Vecka ${calendarWeekNumber(w.weekStart) ?? w.weekNumber}` : '–'}</button> })}
@@ -1973,7 +1976,7 @@ const addNewTeacherWeek = () => setPlan(p => {
           chapters[chapterName].items.push(item)
           return chapters
         }, {})).map(group => <section className="teacher-month-section teacher-chapter-section" key={group.name}>
-          <h3 className={`chapter-heading chapter-tone-${chapterTone(group.name)}`}>{group.name}</h3>
+          <div className="teacher-chapter-sticky"><h3 className={`chapter-heading chapter-tone-${chapterTone(group.name)}`}>{group.name}</h3>{group.name !== "Utan kapitel" && <ChapterVocabulary chapter={group.name} weeks={group.items.map(item => item.week)} />}</div>
           <div className="teacher-month-weeks">
           {group.items.map(({ week, index }) => <div className="chapter-week-group" key={`${week.weekStart || week.weekNumber}-${index}`}>
           <article className={`week-card teacher-collapsible-week ${(focusedTeacherWeek || (weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen)) ? "teacher-week-open" : "teacher-week-closed"}`} id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
