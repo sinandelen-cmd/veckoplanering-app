@@ -2,7 +2,6 @@ function capitalizeFirstSwedish(value) { return String(value || '').replace(/^(\
 import UpdateNotices from './UpdateNotices.jsx'
 import { groupStudentWeeksForPrint } from './printGroups.js'
 import { Component, Fragment, useEffect, useMemo, useRef, useState } from 'react'
-import { flushSync } from 'react-dom'
 import * as XLSX from 'xlsx'
 import mammoth from 'mammoth'
 import * as pdfjsLib from 'pdfjs-dist'
@@ -10,9 +9,10 @@ import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url'
 import { supabase } from './supabase'
 import './App.css'
 import Navigation from './Navigation.jsx'
-import ClassSchedules, { buildClassSchedule } from './ClassSchedules.jsx'
+import ClassSchedules from './ClassSchedules.jsx'
+import { buildClassSchedule } from './classScheduleUtils.js'
 import { MUNICIPALITIES_BY_COUNTY } from './swedishMunicipalities.js'
-import { NATIONAL_EXAMS_2026_27, NATIONAL_EXAM_PERIODS_2026_27 } from './nationalExams.js'
+import { NATIONAL_EXAMS_2026_27 } from './nationalExams.js'
 
 const APP_TITLE = 'Årsplanering'
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker
@@ -81,31 +81,6 @@ function easterSunday(year) {
   return new Date(year, month - 1, day, 12)
 }
 
-function swedishPublicHolidays(year) {
-  const easter = easterSunday(year)
-  const relative = (offset, name) => {
-    const date = new Date(easter)
-    date.setDate(date.getDate() + offset)
-    return { date: toIsoDate(date), name }
-  }
-  const fixed = (month, day, name) => ({ date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`, name })
-  const weekdayBetween = (month, from, to, weekday, name) => {
-    for (let day = from; day <= to; day++) {
-      const date = new Date(year, month - 1, day, 12)
-      if (date.getDay() === weekday) return { date: toIsoDate(date), name }
-    }
-    return null
-  }
-  return [
-    fixed(1, 1, 'Nyårsdagen'), fixed(1, 6, 'Trettondedag jul'),
-    relative(-2, 'Långfredagen'), relative(0, 'Påskdagen'), relative(1, 'Annandag påsk'),
-    fixed(5, 1, 'Första maj'), relative(39, 'Kristi himmelsfärdsdag'), relative(49, 'Pingstdagen'),
-    fixed(6, 6, 'Sveriges nationaldag'),
-    weekdayBetween(6, 20, 26, 6, 'Midsommardagen'),
-    weekdayBetween(10, 31, 11, 6, 'Alla helgons dag') || weekdayBetween(11, 1, 6, 6, 'Alla helgons dag'),
-    fixed(12, 25, 'Juldagen'), fixed(12, 26, 'Annandag jul'),
-  ].filter(Boolean)
-}
 
 
 function suggestedSchoolClosures(startDate, numberOfWeeks) {
@@ -151,17 +126,10 @@ function validSchoolClosure(item) {
   return validDate(item.startDate) && validDate(item.endDate) && item.startDate <= item.endDate
 }
 
-function publicHolidaysInWeek(weekStart) {
-  const start = new Date(`${weekStart}T12:00:00`)
-  const end = new Date(start)
-  end.setDate(end.getDate() + 6)
-  const from = toIsoDate(start), to = toIsoDate(end)
-  return [...new Set([start.getFullYear(), end.getFullYear()])]
-    .flatMap(swedishPublicHolidays).filter(item => item.date >= from && item.date <= to)
-    .sort((a, b) => a.date.localeCompare(b.date))
-}
 
 // Ljus färgidentitet per planering; befintliga planer får en stabil färg utifrån ID.
+// Gränssnittsdelar som är avstängda tills de är färdiga. Ändra till true för att visa dem.
+const AVSTANGD_GRANSSNITT = false
 const PLAN_THEMES = [
   { id: 'rose', name: 'Rosa', light: '#fff0f2', soft: '#ffe0e6', accent: '#ad5269', ink: '#79364b' },
   { id: 'sun', name: 'Solgul', light: '#fff9e6', soft: '#fff0bd', accent: '#986420', ink: '#704a22' },
@@ -264,13 +232,6 @@ function hasWeekWork(week, index) {
   )
 }
 
-function hasPlanWork(plan) {
-  return Boolean(
-    String(plan.title || '').trim() || String(plan.subject || '').trim() ||
-    String(plan.schoolYear || '').trim() || String(plan.className || '').trim() ||
-    (plan.schoolClosures || []).length > 0 || (plan.weeksData || []).some(hasWeekWork)
-  )
-}
 
 function confirmReplacingWeeks(plan) {
   return !(plan.weeksData || []).some(hasWeekWork) ||
@@ -327,7 +288,7 @@ function unitsFromText(text) {
     if(chapterMatch){chapter=chapterMatch[1].trim();last=null;continue}
     const lessonMatch=line.match(/^(?:lektion|pass)\s*\d+\s*[-–:.]?\s*(.*)$/i)
     if(lessonMatch){if(lessonMatch[1]){last={week,chapter,topic:lessonMatch[1],details:''};units.push(last)}else last=null;continue}
-    if (/^(?:sida|sidor|sid\.|uppgifter|material|länk|mål)\s*[:\-]/i.test(line) && last) {
+    if (/^(?:sida|sidor|sid\.|uppgifter|material|länk|mål)\s*[:-]/i.test(line) && last) {
       last.details=[last.details,line].filter(Boolean).join('\n')
       continue
     }
@@ -725,38 +686,6 @@ function isoWeekYear(dateString) {
   thursday.setUTCDate(thursday.getUTCDate() + 4 - (thursday.getUTCDay() || 7))
   return thursday.getUTCFullYear()
 }
-function studentWeekPageLabel(weeks) {
-  if (!weeks.length) return 'Inga veckor'
-  const format = week => {
-    const number = calendarWeekNumber(week.weekStart) ?? week.weekNumber
-    const year = isoWeekYear(week.weekStart)
-    return `${number}${year ? ` (${year})` : ''}`
-  }
-  return weeks.length === 1 ? `Vecka ${format(weeks[0])}` : `Vecka ${format(weeks[0])}–${format(weeks[weeks.length - 1])}`
-}
-// Endast tillfällig A4-demonstration. Läggs aldrig i lärarens plan eller databasen.
-function a4DemoPlan(plan) {
-  const weeksData = Array.from({ length: 3 }, (_, index) => {
-    const date = new Date(Date.UTC(2026, 9, 12 + index * 7))
-    const weekStart = date.toISOString().slice(0, 10)
-    const long = index === 1
-    const imported = index === 2
-    return {
-      weekStart, weekNumber: 42 + index, title: imported ? 'Test med långa texter och länkar' : long ? 'Innehållsrik testvecka' : 'Exempelvecka',
-      chapter: 'A4-test – endast förhandsvisning',
-      content: imported ? 'Test av längre inklistrade instruktioner, filnamn och länkar. Allt innehåll ska synas i stående A4 utan inre rullning.' : long ? 'Den här veckan innehåller extra många moment för att pröva utskriften.' : 'Kort exempeltext.',
-      lessons: Array.from({ length: long ? 12 : imported ? 3 : 2 }, (_, lessonIndex) => ({
-        name: 'Lektion ' + (lessonIndex + 1),
-        day: ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'][lessonIndex % 5],
-        topics: [{ name: imported ? 'Längre inklistrat moment: Läs instruktionerna noggrant, jämför lösningsmetoder och förklara i flera steg hur du kommer fram till ditt svar. Kontrollera sedan beräkningarna och resonera om alternativa lösningar.' : 'Öva på tal och problemlösning med förklaringar och exempel ' + (lessonIndex + 1),
-          pages: imported ? ['Sidorna 142–149, övning 3a–3f och fördjupning på sidan 150'] : ['42–45'], assignments: imported ? ['Uppgift 1–8: Visa uträkning, motivera varje steg och skriv en tydlig slutsats.', 'Inklistrad instruktion: Lämna in ett dokument med filnamnet Matematik_fordjupning_vecka44_komplett_redovisning.pdf. Beskriv vilka metoder du valde och varför.'] : ['Uppgift 1–8', 'Förklara ditt svar med egna ord'], links: imported ? ['https://example.org/undervisning/matematik/fordjupning/vecka-44/langt-resursnamn'] : [] }],
-      })),
-      pages: [], assignments: [], links: [],
-    }
-  })
-  return { ...plan, title: 'A4-TEST – INTE SPARAD', studentLayout: 'grid', weeksData }
-}
-
 function ImportantDatesForWeek({ week, plan }) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(week?.weekStart || '')) return null
   const monday = new Date(week.weekStart + 'T12:00:00')
@@ -785,8 +714,8 @@ function ImportantDatesForWeek({ week, plan }) {
   </div>
 }
 
-function StudentView({ plan, error, preview = false, printPage = null, printWeekStart = null, initialClass = "", hideSelector = false, publishedOnly = false }) {
-  const [page, setPage] = useState(0)
+function StudentView({ plan, error, preview = false, printPage = null, printWeekStart = null, initialClass = "", hideSelector = false, _publishedOnly = false }) {
+  useState(0)
   const [singlePrintWeek, setSinglePrintWeek] = useState(null)
   const [previewClass, setPreviewClass] = useState(initialClass)
   const [linkCopied, setLinkCopied] = useState(false)
@@ -829,10 +758,6 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
     window.addEventListener('afterprint', clearPrintSelection)
     return () => window.removeEventListener('afterprint', clearPrintSelection)
   }, [printPage])
-  const printOnlyWeek = weekStart => {
-    flushSync(() => setSinglePrintWeek(weekStart))
-    window.print()
-  }
   const gridMode = printPage !== null && plan?.studentLayout !== 'list'
   const columns = Math.max(1, Math.min(3, Number(plan?.studentColumns) || 3))
   const rows = Math.max(1, Math.min(Math.floor(6 / columns), Number(plan?.studentRows) || 2))
@@ -859,15 +784,11 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   const currentStudentWeekStart = mondayOf(new Date())
   const currentStudentWeek = studentWeeks.find(week => week.weekStart === currentStudentWeekStart)
   const upcomingStudentWeek = [...studentWeeks].reverse().find(week => week.weekStart >= currentStudentWeekStart)
-  const jumpStudentWeek = currentStudentWeek || upcomingStudentWeek
-  const pages = Math.max(1, Math.ceil(studentWeeks.length / pageSize))
   // Längre elevveckor får mer plats på A4. Grupperna består alltid av hela veckor.
   const printGroups = singlePrintWeek ? [{ weeks: studentWeeks.filter(week => week.weekStart === singlePrintWeek) }] : groupStudentWeeksForPrint(studentWeeks)
-  const currentPage = printPage === null ? Math.min(page, pages - 1) : printPage
   const visibleWeeks = printPage === null
     ? studentWeeks
     : (printWeekStart ? studentWeeks.filter(week => week.weekStart === printWeekStart) : (printGroups[printPage]?.weeks || []))
-  const pageWeekLabel = studentWeekPageLabel(visibleWeeks)
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
   if (!preview && requestedClass && plan && !selectedClass) return <main className="shell"><section className="card"><h2>Klassen hittades inte</h2><p>Kontrollera elevlänken med din lärare.</p></section></main>
   const previewClassSelector = preview && !hideSelector && plan?.classGroups?.length>0 && <div className="student-preview-classbar"><div className="student-preview-class-buttons">{plan.classGroups.map(g=><button key={g.name} type="button" className={previewClass===g.name?'active':''} onClick={()=>setPreviewClass(g.name)}>🏫 {g.name}</button>)}</div><button type="button" className="student-class-copy-link" aria-label={linkCopied ? "Elevlänken kopierad" : "Kopiera elevlänk för "+(previewClass || "grundplaneringen")} title={linkCopied ? "Elevlänken kopierad" : "Kopiera elevlänk för "+(previewClass || "grundplaneringen")} disabled={!plan?.published||!plan?.publicSlug} onClick={async()=>{const url=window.location.origin+'/elev/'+encodeURIComponent(plan.publicSlug)+(previewClass?'?klass='+encodeURIComponent(previewClass):'');try{await navigator.clipboard.writeText(url);setLinkCopied(true)}catch{window.prompt('Kopiera elevlänk',url)}}}><span aria-hidden="true">{linkCopied?'✓':'🔗'}</span></button></div>
@@ -902,7 +823,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
       </article></div>)}
     </section>
   </main>
-  {false && printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">
+  {AVSTANGD_GRANSSNITT && printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">
     {Array.from({ length: printGroups.length }, (_, index) => <StudentView key={index} plan={plan} preview={preview} printPage={index} printWeekStart={singlePrintWeek} />)}
   </div>}
 </>
@@ -997,7 +918,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
   if (!group) return null
   return <section className="class-real-two-weeks" aria-label={className+' – '+visibleWeekCount+' veckor'}>
     <div className="class-real-two-weeks-header"><h2>{className} · Veckoplanering</h2><span>Standard: föregående och nuvarande vecka</span><div className="class-week-count-controls" role="group" aria-label="Antal veckor att visa">{[1,2,3].map(n=><button key={n} type="button" className={visibleWeekCount===n?"active":""} aria-pressed={visibleWeekCount===n} onClick={()=>setVisibleWeekCount(n)}>{n} {n===1?"vecka":"veckor"}</button>)}</div></div>
-    <div className="class-real-two-weeks-grid" style={{"--class-week-columns":visibleWeekCount}}>{weeks.map((week,i)=><div className="class-real-week-column" key={week.weekStart}>
+    <div className="class-real-two-weeks-grid" style={{"--class-week-columns":visibleWeekCount}}>{weeks.map((week,_i)=><div className="class-real-week-column" key={week.weekStart}>
       <strong>{week.weekStart===currentStart?'Nuvarande vecka':`Vecka ${calendarWeekNumber(week.weekStart)}`}</strong>
       <CalendarWeekThumbnail week={week} entryType={plan.entryType || 'lektion'} onOpen={()=>setExpandedFullWeek(week.weekStart)} onOpenLesson={lessonIndex=>setExpanded({weekStart:week.weekStart,lessonIndex})}/>
     </div>)}</div>
@@ -1020,15 +941,15 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
   </section>
 }
 
-function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnFirstWeek = false, embedded = false, onOpen, onClose, onUpdateWeek, onSetAllVisibility, onAddWeek, onDeleteWeek, onUndo, canUndo = false, onSave, isDirty, busy, saveStatus, onBackToPrevious, entryType = 'lektion', classGroups = [], classPlan = null, publicSlug = '', onChangeClassGroups, onImportFile, fileImportState = {phase:'idle',message:''} }) {
+function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnFirstWeek: _startOnFirstWeek = false, embedded = false, onOpen, onClose: _onClose, onUpdateWeek, onSetAllVisibility, onAddWeek, onDeleteWeek, onUndo, canUndo = false, onSave, isDirty, busy, saveStatus, onBackToPrevious: _onBackToPrevious, entryType = 'lektion', classGroups = [], classPlan = null, publicSlug: _publicSlug = '', onChangeClassGroups, onImportFile: _onImportFile, fileImportState: _fileImportState = {phase:'idle',message:''} }) {
   // Årsöversikt i nio veckor per sida, tre kolumner och tre rader.
   const [selectedWeekIndex, setSelectedWeekIndex] = useState(null)
   const [editingCalendarLesson, setEditingCalendarLesson] = useState(null)
   const [savingCalendarLesson, setSavingCalendarLesson] = useState(false)
-  const [overviewPage, setOverviewPage] = useState(0)
+  useState(0)
   const [showOriginalCalendar, setShowOriginalCalendar] = useState(false)
   const [calendarMonth, setCalendarMonth] = useState(() => { const date = new Date(weeks[0]?.weekStart ? weeks[0].weekStart + 'T12:00:00' : Date.now()); return new Date(date.getFullYear(),date.getMonth(),1) })
-  const [selectedLessonIndex, setSelectedLessonIndex] = useState(null)
+  useState(null)
   const [selectedCalendarClass, setSelectedCalendarClass] = useState('')
   const [showQuickClassMatrix,setShowQuickClassMatrix] = useState(false)
   const [newQuickClassName,setNewQuickClassName] = useState('')
@@ -1045,17 +966,9 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
     onChangeClassGroups?.(classGroups.map(g=>g.name!==className?g:{...g,days:g.days?.includes(day)?g.days.filter(d=>d!==day):[...(g.days||[]),day]}))
   }
   const activeCalendarGroup = classGroups.find(g=>g.name===selectedCalendarClass)
-  const activeCalendarSchedule = activeCalendarGroup ? buildClassSchedule({...classPlan,weeksData:weeks},activeCalendarGroup) : []
   const orderedWeeks = [...weeks].filter(week => week && /^\d{4}-\d{2}-\d{2}$/.test(week.weekStart || '')).sort((a, b) => a.weekStart.localeCompare(b.weekStart))
   const selectedWeek = selectedWeekIndex === null ? null : orderedWeeks[selectedWeekIndex]
-  const pageCount = Math.max(1, Math.ceil(orderedWeeks.length / 9))
-  const currentPage = Math.min(overviewPage, pageCount - 1)
-  const lessons = Array.isArray(selectedWeek?.lessons) ? selectedWeek.lessons : []
   const editSelectedWeek = changes => { const index = weeks.findIndex(week => week.weekStart === selectedWeek?.weekStart); if (index >= 0) onUpdateWeek?.(index, changes) }
-  const back = () => {
-    if (selectedLessonIndex !== null) setSelectedLessonIndex(null)
-    else setSelectedWeekIndex(null)
-  }
   if (embedded) return <section className="calendar-inline-weeks" aria-label="Alla skapade veckor och lektioner">
     {orderedWeeks.map(week => {
       const originalIndex = weeks.findIndex(item => item.weekStart === week.weekStart)
@@ -1087,7 +1000,7 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
     {editingCalendarLesson && <div className="calendar-lesson-modal-backdrop" role="presentation"><section className="calendar-lesson-modal" role="dialog" aria-modal="true" aria-label="Redigera lektion">
       <div className="calendar-lesson-modal-header"><h3>Vecka {calendarWeekNumber(editingCalendarLesson.weekStart)} · Lektion {editingCalendarLesson.lessonIndex + 1}</h3><button type="button" onClick={() => setEditingCalendarLesson(null)}>Stäng</button></div>
       {(() => { const editWeek = orderedWeeks.find(week => week.weekStart === editingCalendarLesson.weekStart); if (!editWeek) return <p>Veckan finns inte längre.</p>; const originalIndex = weeks.findIndex(week => week.weekStart === editWeek.weekStart); return <LessonDetails week={editWeek} entryType={entryType} onlyLessonIndex={editingCalendarLesson.lessonIndex} onChange={changes => onUpdateWeek?.(originalIndex, changes)} /> })()}
-      <div className="calendar-lesson-modal-footer"><button type="button" className="primary" disabled={savingCalendarLesson || busy} onClick={async () => { setSavingCalendarLesson(true); try { const result = await onSave?.(); if (result === true) setEditingCalendarLesson(null) } catch (error) { /* Keep dialog open so edits remain accessible */ } finally { setSavingCalendarLesson(false) } }}>{savingCalendarLesson || busy ? 'Sparar…' : '✓ Klar – spara lektionen'}</button>{saveStatus && <span role="status">{saveStatus}</span>}</div>
+      <div className="calendar-lesson-modal-footer"><button type="button" className="primary" disabled={savingCalendarLesson || busy} onClick={async () => { setSavingCalendarLesson(true); try { const result = await onSave?.(); if (result === true) setEditingCalendarLesson(null) } catch  { /* Keep dialog open so edits remain accessible */ } finally { setSavingCalendarLesson(false) } }}>{savingCalendarLesson || busy ? 'Sparar…' : '✓ Klar – spara lektionen'}</button>{saveStatus && <span role="status">{saveStatus}</span>}</div>
     </section></div>}
     {!activeCalendarGroup && <>
     {selectedWeek ? <div className="calendar-week-detail" style={{ backgroundColor: weekColor(selectedWeek.weekStart) }}>
@@ -1193,194 +1106,6 @@ function YearCalendar({ weeks, schoolClosures = [], nationalExams = [], startOnF
 }
 
 
-function TeacherResults({ userId }) {
-  const [lists, setLists] = useState([])
-  const [selected, setSelected] = useState(null)
-  const [notice, setNotice] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [mode, setMode] = useState('resultat')
-  const [resultHistory, setResultHistory] = useState({ past: [], future: [] })
-  const editSelected = updater => {
-    setSelected(previous => {
-      if (!previous) return previous
-      const next = updater(previous)
-      if (JSON.stringify(next) !== JSON.stringify(previous)) {
-        setResultHistory(history => ({ past: [...history.past.slice(-49), previous], future: [] }))
-      }
-      return next
-    })
-  }
-  const undoResult = () => {
-    if (!resultHistory.past.length) return
-    const previous = resultHistory.past[resultHistory.past.length - 1]
-    setResultHistory(history => ({ past: history.past.slice(0, -1), future: selected ? [selected, ...history.future] : history.future }))
-    setSelected(previous)
-  }
-  const redoResult = () => {
-    if (!resultHistory.future.length) return
-    const next = resultHistory.future[0]
-    setResultHistory(history => ({ past: selected ? [...history.past, selected] : history.past, future: history.future.slice(1) }))
-    setSelected(next)
-  }
-
-  const refresh = async () => {
-    setLoading(true)
-    const { data, error } = await supabase.from('teacher_results').select('*').eq('user_id', userId).order('updated_at', { ascending: false })
-    if (error) setNotice('Kunde inte läsa resultaten: ' + error.message)
-    else { setLists(data || []); setSelected(previous => previous ? (data || []).find(item => item.id === previous.id) || null : (data || []).find(item => item.subject !== 'Mentorskap') || null) }
-    setLoading(false)
-  }
-  useEffect(() => { refresh() }, [userId])
-  const create = async () => {
-    const title = window.prompt(mode === 'mentor' ? 'Namn på mentorskklass' : 'Namn på klass', mode === 'mentor' ? 'Min mentorskklass' : 'Ny klass')
-    if (!title?.trim()) return
-    const { data, error } = await supabase.from('teacher_results').insert({ user_id: userId, title: title.trim(), subject: mode === 'mentor' ? 'Mentorskap' : '' }).select().single()
-    if (error) return setNotice('Kunde inte skapa: ' + error.message)
-    setSelected(data); setResultHistory({past:[],future:[]}); setLists(prev => [data, ...prev]); setNotice('Resultatlistan skapades.')
-  }
-  const save = async () => {
-    if (!selected) return
-    const { data, error } = await supabase.from('teacher_results').update({ title: selected.title, subject: selected.subject, class_name: selected.class_name, results: selected.results, updated_at: new Date().toISOString() }).eq('id', selected.id).eq('user_id', userId).select().single()
-    if (error) return setNotice('Kunde inte spara: ' + error.message)
-    setSelected(data); setLists(prev => prev.map(item => item.id === data.id ? data : item)); setNotice('✓ Resultaten har sparats i Supabase.')
-  }
-  const remove = async () => {
-    if (!selected || !window.confirm('Radera resultatlistan permanent?')) return
-    const { error } = await supabase.from('teacher_results').delete().eq('id', selected.id).eq('user_id', userId)
-    if (error) return setNotice('Kunde inte radera: ' + error.message)
-    setLists(prev => prev.filter(item => item.id !== selected.id)); setSelected(null); setNotice('Resultatlistan raderades.')
-  }
-  const changeRow = (index, field, value) => editSelected(prev => ({ ...prev, results: (prev.results || []).map((row, i) => i === index ? { ...row, [field]: value } : row) }))
-  const pasteStudents = () => {
-    if (!selected) return
-    const pasted = window.prompt('Klistra in elevnamn – ett namn per rad:')
-    if (!pasted?.trim()) return
-    const names = pasted.split(String.fromCharCode(10)).map(name => name.trim()).filter(Boolean)
-    editSelected(prev => ({ ...prev, results: [...(Array.isArray(prev.results) ? prev.results : []), ...names.map(student => ({ student, assessment: '', score: '', comment: '' }))] }))
-    setNotice(names.length + ' elever tillagda. Spara resultat för att behålla ändringarna.')
-  }
-  const addAssessment = () => {
-    if (!selected) return
-    const name = window.prompt('Namn på prov eller kapitel:')
-    if (!name?.trim()) return
-    editSelected(previous => ({ ...previous, results: (previous.results?.length ? previous.results : [{ student: '', assessment: '', score: '', comment: '' }]).map(row => ({ ...row, [name.trim()]: row[name.trim()] ?? '' })) }))
-  }
-  const assessmentColumns = [...new Set((selected?.results || []).flatMap(row => Object.keys(row).filter(key => !['student','assessment','score','comment'].includes(key))))]
-  const [showGradeLimits, setShowGradeLimits] = useState(false)
-  const [chartType, setChartType] = useState('circle')
-  const [gradeLimits, setGradeLimits] = useState({ E: 40, D: 45, C: 50, B: 80, A: 90 })
-  const numeric = value => Math.max(0, Number(value) || 0)
-  const rowsForMatrix = (selected?.results || []).filter(row => !row.__settings)
-  const chapterKeys = [...new Set(rowsForMatrix.flatMap(row => Object.keys(row).filter(key => /^chapter_[0-9]+_E$/.test(key)).map(key => key.split('_')[1])))]
-  const chapters = chapterKeys.length ? chapterKeys : ['1']
-  const chapterMax = (chapter, level) => numeric(rowsForMatrix.find(row => row['chapter_' + chapter + '_max_' + level] !== undefined)?.['chapter_' + chapter + '_max_' + level] ?? ({ E: 20, C: 3, A: 7 })[level])
-  const matrixTotals = row => chapters.reduce((acc, chapter) => {
-    for (const level of ['E', 'C', 'A']) acc[level] += numeric(row['chapter_' + chapter + '_' + level])
-    return acc
-  }, { E: 0, C: 0, A: 0 })
-  const totalMax = chapters.reduce((sum, chapter) => sum + ['E', 'C', 'A'].reduce((n, level) => n + chapterMax(chapter, level), 0), 0)
-  const getGrade = row => {
-    const scores = matrixTotals(row)
-    const sum = scores.E + scores.C + scores.A
-    const percentage = totalMax ? sum / totalMax * 100 : 0
-    const cAvailable = chapters.reduce((n, chapter) => n + chapterMax(chapter, 'C'), 0)
-    const aAvailable = chapters.reduce((n, chapter) => n + chapterMax(chapter, 'A'), 0)
-    if (percentage >= gradeLimits.A && scores.A >= aAvailable * 2 / 3) return 'A'
-    if (percentage >= gradeLimits.B && scores.A >= aAvailable / 3) return 'B'
-    if (percentage >= gradeLimits.C && scores.C + scores.A >= cAvailable * 2 / 3) return 'C'
-    if (percentage >= gradeLimits.D && scores.C + scores.A >= cAvailable / 3) return 'D'
-    return percentage >= gradeLimits.E ? 'E' : 'F'
-  }
-  const gradeCounts = Object.fromEntries(['A','B','C','D','E','F'].map(grade => [grade, rowsForMatrix.filter(row => getGrade(row) === grade).length]))
-  const scoredRows = rowsForMatrix.filter(row => chapters.some(chapter => ['E','C','A'].some(level => row['chapter_' + chapter + '_' + level] !== undefined && row['chapter_' + chapter + '_' + level] !== '')))
-  const meanPercentage = scoredRows.length && totalMax ? Math.round(scoredRows.reduce((sum, row) => { const t = matrixTotals(row); return sum + (t.E + t.C + t.A) / totalMax * 100 }, 0) / scoredRows.length) : 0
-  const updateMatrix = (index, key, value) => editSelected(prev => ({ ...prev, results: (prev.results || []).map((row, i) => i === index ? { ...row, [key]: value } : row) }))
-  const addChapter = () => {
-    if (!selected) return
-    const next = String(Math.max(0, ...chapters.map(Number)) + 1)
-    editSelected(prev => ({ ...prev, results: (prev.results?.length ? prev.results : [{student:'',assessment:'',score:'',comment:''}]).map(row => ({ ...row, ['chapter_' + next + '_E']: '', ['chapter_' + next + '_C']: '', ['chapter_' + next + '_A']: '' })) }))
-  }
-  const exportResults = () => {
-    if (!selected) return
-    const quote = value => '"' + String(value ?? '').replaceAll('"', '""') + '"'
-    const rows = [['Elev', 'Prov / bedömning', 'Resultat', 'Kommentar'], ...(Array.isArray(selected.results) ? selected.results : []).map(row => [row.student, row.assessment, row.score, row.comment])]
-    const csv = '\uFEFF' + rows.map(row => row.map(quote).join(';')).join(String.fromCharCode(13, 10))
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
-    const link = document.createElement('a')
-    link.href = url
-    link.download = (selected.title || 'resultat').replace(/[\\/:*?"<>|]/g, '-') + '.csv'
-    link.click()
-    URL.revokeObjectURL(url)
-  }
-  const filtered = lists.filter(item => mode === 'mentor' ? item.subject === 'Mentorskap' : item.subject !== 'Mentorskap')
-  return <section aria-label="Resultat och mentorskap">
-    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(290px,1fr))',gap:14,marginBottom:18}}>
-      <article style={{background:'#fff',border:'1px solid #e9e1df',borderTop:'3px solid #a23864',borderRadius:12,padding:18,boxShadow:'0 2px 8px #0000000b'}}>
-        <h2 style={{fontSize:19,margin:'0 0 5px'}}>📊 Resultatregistrering</h2>
-        <p style={{fontSize:13,margin:'0 0 12px'}}>Alla klasser och ämnen du undervisar i – en flik per klass.</p>
-        <p style={{fontSize:13}}>{lists.filter(item => item.subject !== 'Mentorskap').length === 0 ? 'Inga klasser ännu. Skapa din första klass – sedan läggs alla dina klasser här som flikar.' : lists.filter(item => item.subject !== 'Mentorskap').length + ' klasser registrerade.'}</p>
-        <button type="button" onClick={() => {setMode('resultat');setSelected(null);setTimeout(() => document.getElementById('resultat-skapa-klass')?.click(),0)}} style={{background:'#98365e',color:'#fff',border:0,borderRadius:7,padding:'10px 16px',fontWeight:700}}>+ Skapa klass</button>
-      </article>
-      <article style={{background:'#fff',border:'1px solid #e9e1df',borderTop:'3px solid #316396',borderRadius:12,padding:18,boxShadow:'0 2px 8px #0000000b'}}>
-        <h2 style={{fontSize:19,margin:'0 0 5px'}}>🧭 Mentorskap</h2>
-        <p style={{fontSize:13,margin:'0 0 12px'}}>Översikt, läget i alla ämnen, närvaro, samtalslogg, incidenter, händelser och utvecklingssamtal.</p>
-        <p style={{fontSize:13}}>{lists.filter(item => item.subject === 'Mentorskap').length === 0 ? 'Ingen mentorskklass ännu. Skapa en klass och kryssa i Jag är mentor.' : lists.filter(item => item.subject === 'Mentorskap').length + ' mentorskklasser registrerade.'}</p>
-        <button type="button" onClick={() => {setMode('mentor');setSelected(null);setTimeout(() => document.getElementById('resultat-skapa-klass')?.click(),0)}} style={{background:'#316396',color:'#fff',border:0,borderRadius:7,padding:'10px 16px',fontWeight:700}}>+ Skapa mentorskklass</button>
-      </article>
-    </div>
-    <div className="card">
-      <h2>{mode === 'mentor' ? '🧭 Mentorskap' : '📊 Resultatregistrering'}</h2>
-      <div className="button-row"><button type="button" className="secondary" onClick={() => {setMode('resultat');setSelected(null)}}>Resultatregistrering</button><button type="button" className="secondary" onClick={() => {setMode('mentor');setSelected(null)}}>Mentorskap</button><button id="resultat-skapa-klass" type="button" onClick={create}>+ Skapa {mode === 'mentor' ? 'mentorskklass' : 'klass'}</button><button type="button" className="secondary" disabled={!resultHistory.past.length} onClick={undoResult}>↶ Ångra</button><button type="button" className="secondary" disabled={!resultHistory.future.length} onClick={redoResult}>↷ Gör om</button><button type="button" className="secondary" disabled={!selected} onClick={pasteStudents}>Klistra in elevlista</button><button type="button" className="secondary" onClick={() => window.print()}>Skriv ut</button><button type="button" className="secondary" disabled={!selected} onClick={exportResults}>Exportera CSV</button><button type="button" className="secondary" onClick={refresh}>↻ Uppdatera</button></div>
-      {notice && <p role="status" className="status">{notice}</p>}
-      {loading ? <p>Laddar…</p> : <div role="tablist" aria-label="Klasser" style={{display:'flex',flexWrap:'wrap',gap:4,margin:'15px 0',borderBottom:'2px solid #98365e'}}>{filtered.length === 0 && <p>Inga klasser ännu.</p>}{filtered.map(item => <button key={item.id} type="button" role="tab" aria-selected={selected?.id === item.id} style={{borderRadius:"8px 8px 0 0",padding:"10px 16px",fontWeight:700,background:selected?.id === item.id ? "#98365e" : "#fff",color:selected?.id === item.id ? "#fff" : "#66334a",border:"1px solid #d9bdc7"}} onClick={() => {setSelected(item);setResultHistory({past:[],future:[]});setNotice('')}}>{item.title}</button>)}</div>}
-    {selected && <div style={{ borderTop: '1px solid #e7d6b5', paddingTop: 18 }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-        <label>Resultatlista<input aria-label="Resultatlistans namn" value={selected.title} onChange={e => editSelected(p => ({ ...p, title: e.target.value }))} /></label>
-        <label>Ämne<input aria-label="Ämne" value={selected.subject || ''} onChange={e => editSelected(p => ({ ...p, subject: e.target.value }))} /></label>
-        <label>Klass<input aria-label="Klass" value={selected.class_name || ''} onChange={e => editSelected(p => ({ ...p, class_name: e.target.value }))} /></label>
-      </div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(105px,1fr)) minmax(240px,3fr)',gap:10,marginTop:20,marginBottom:10}}>
-        {[['ELEVER',rowsForMatrix.length],['KAPITEL',chapters.length],['MEDELRESULTAT',meanPercentage+' %']].map(([label,value]) => <div key={label} style={{background:'#fff',border:'1px solid #dfe3e9',borderRadius:9,padding:12,minHeight:90}}><div style={{fontSize:10,color:'#64748b',fontWeight:800,letterSpacing:'.06em'}}>{label}</div><strong style={{fontSize:22,color:'#17243a'}}>{value}</strong>{label==='MEDELRESULTAT' && <div style={{fontSize:10,color:'#64748b'}}>{scoredRows.length} av {rowsForMatrix.length} elever har poäng</div>}</div>)}
-        <div style={{background:'#fff',border:'1px solid #dfe3e9',borderRadius:9,padding:12}}>
-          <div style={{display:'flex',justifyContent:'space-between',gap:5,flexWrap:'wrap'}}><strong style={{fontSize:10,color:'#64748b'}}>BETYGSFÖRDELNING</strong><div>{[['circle','◉ Cirkel'],['bar','▥ Stapel'],['horizontal','▰ Liggande']].map(([type,label]) => <button type="button" key={type} onClick={() => setChartType(type)} style={{fontSize:10,padding:'3px 6px',border:0,background:chartType===type?'#e8e8ef':'transparent'}}>{label}</button>)}</div></div>
-          {chartType==='circle' ? <div style={{height:75,width:75,borderRadius:'50%',margin:'8px auto',background:rowsForMatrix.length ? 'conic-gradient('+['#2e9860','#91bd65','#ebd584','#f2a65e','#f18a6d','#c94242'].map((color,i) => { const grades=['A','B','C','D','E','F'];const begin=grades.slice(0,i).reduce((sum,g)=>sum+gradeCounts[g],0)/rowsForMatrix.length*100;const finish=begin+gradeCounts[grades[i]]/rowsForMatrix.length*100;return color+' '+begin+'% '+finish+'%' }).join(',')+')' : '#e6e9ed'}}/> : <div style={{display:'flex',flexDirection:chartType==='bar'?'row':'column',gap:4,alignItems:'end',height:75,justifyContent:'center'}}>{['A','B','C','D','E','F'].map((grade,i) => <div key={grade} title={grade+': '+gradeCounts[grade]} style={{background:['#2e9860','#91bd65','#ebd584','#f2a65e','#f18a6d','#c94242'][i],height:chartType==='bar'?Math.max(5,gradeCounts[grade]/Math.max(1,rowsForMatrix.length)*70):10,width:chartType==='bar'?20:Math.max(10,gradeCounts[grade]/Math.max(1,rowsForMatrix.length)*150)}}/>)}</div>}
-          <div style={{display:'flex',gap:5,flexWrap:'wrap',fontSize:10}}>{['A','B','C','D','E','F'].map(grade => <span key={grade}>{grade} {gradeCounts[grade]}</span>)}</div>
-        </div>
-      </div>
-      <div style={{border:'1px solid #dfe3e9',borderRadius:9,marginBottom:14,background:'#fff'}}>
-        <div style={{padding:10,display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:8}}>
-          <strong style={{fontSize:12}}>Betygsgränser　{['E','D','C','B','A'].map(grade => <span key={grade} style={{marginRight:8,background:'#f7ece7',padding:'3px 6px',borderRadius:12}}>{grade} {gradeLimits[grade]} %</span>)}</strong>
-          <button type="button" className="secondary" onClick={() => setShowGradeLimits(value => !value)}>{showGradeLimits?'Dölj':'Ändra'} ▾</button>
-        </div>
-        {showGradeLimits && <div style={{padding:14,borderTop:'1px solid #e5e7eb'}}><p>Välj procentgräns för varje betyg:</p><div style={{display:'flex',flexWrap:'wrap',gap:15}}>{['E','D','C','B','A'].map(grade => <label key={grade} style={{display:'flex',gap:6,alignItems:'center'}}>{grade}<select value={gradeLimits[grade]} onChange={event => setGradeLimits(prev => ({...prev,[grade]:Number(event.target.value)}))}>{Array.from({length:21},(_,i)=>i*5).map(n=><option key={n} value={n}>{n}%</option>)}</select></label>)}</div><p style={{fontSize:12}}>D kräver minst 1/3 av C-poängen, C minst 2/3 av C-poängen, B minst 1/3 av A-poängen och A minst 2/3 av A-poängen.</p></div>}
-      </div>
-      <div style={{overflowX:'auto',border:'1px solid #dfe3e9',borderRadius:9}}>
-        <table style={{borderCollapse:'collapse',width:'100%',minWidth:950,fontSize:12}}>
-          <thead><tr style={{background:'#f1f2f5'}}>
-            <th rowSpan={2} style={{padding:9}}>#</th><th rowSpan={2} style={{padding:9}}>Förnamn</th><th rowSpan={2} style={{padding:9}}>Efternamn</th><th rowSpan={2} style={{padding:9,background:'#f7efe6'}}>● F-varning</th>
-            {chapters.map(chapter => <th colSpan={5} key={chapter} style={{padding:8,background:'#dceaf9',borderLeft:'1px solid #cdd6df'}}>Kapitel {chapter}<div style={{fontWeight:400,marginTop:4}}>Provbrev　 ·　 Skapa meddelande</div></th>)}
-            <th rowSpan={2} style={{padding:9}}><button type="button" className="secondary" onClick={addChapter}>+ Skapa kapitel</button></th><th rowSpan={2}>Graf</th><th rowSpan={2}>Elevprofil</th><th rowSpan={2}>Anpassningar</th>
-          </tr><tr style={{background:'#e7f0fa'}}>{chapters.map(chapter => <Fragment key={chapter}>{['E','C','A'].map(level => <th key={level} style={{padding:6}}>{level}<div><input type="number" min="0" aria-label={'Maxpoäng '+level+' kapitel '+chapter} defaultValue={chapterMax(chapter,level)} style={{width:48,fontSize:11}} onBlur={event => editSelected(prev => ({...prev,results:(prev.results || []).map(row => ({...row,['chapter_'+chapter+'_max_'+level]:event.target.value}))}))}/></div></th>)}<th>Σ</th><th>Betyg</th></Fragment>)}</tr></thead>
-          <tbody>{rowsForMatrix.map((row,i) => {const totals=matrixTotals(row);const sum=totals.E+totals.C+totals.A;const grade=getGrade(row);const index=(selected.results || []).indexOf(row);const nameParts=(row.student || '').trim().split(/\s+/);return <tr key={i} style={{borderTop:'1px solid #dfe3e9',background:i%2?'#f8fafc':'#fff'}}>
-            <td style={{padding:5}}>{i+1}</td><td style={{padding:4}}><input aria-label={'Förnamn '+(i+1)} value={nameParts[0] || ''} onChange={event => updateMatrix(index,'student',[event.target.value,...nameParts.slice(1)].join(' '))} style={{width:95}}/></td><td style={{padding:4}}><input aria-label={'Efternamn '+(i+1)} value={nameParts.slice(1).join(' ')} onChange={event => updateMatrix(index,'student',[nameParts[0] || '',event.target.value].join(' ').trim())} style={{width:110}}/></td>
-            <td style={{textAlign:'center',background:'#fbf6f0'}}>{grade==='F'?<span style={{color:'#c94242',fontWeight:700}}>F-varning</span>:'–'}</td>
-            {chapters.map(chapter => <Fragment key={chapter}>{['E','C','A'].map(level => <td key={level} style={{padding:4,background:'#eef5fc'}}><input type="number" min="0" aria-label={level+'-poäng kapitel '+chapter+' elev '+(i+1)} value={row['chapter_'+chapter+'_'+level] ?? ''} onChange={event => updateMatrix(index,'chapter_'+chapter+'_'+level,event.target.value)} style={{width:52,textAlign:'center'}}/></td>)}<td style={{textAlign:'center',fontWeight:700}}>{sum}</td><td style={{textAlign:'center'}}><strong style={{background:grade==='F'?'#f8c5c5':'#e4f2e8',borderRadius:12,padding:'3px 8px'}}>{grade}</strong></td></Fragment>)}
-            <td></td><td><button type="button" className="secondary" onClick={() => window.alert('Graf för '+(row.student||'eleven')+': '+sum+' av '+totalMax+' poäng')}>▤</button></td><td><button type="button" className="secondary" onClick={() => window.alert('Elev: '+(row.student||'Ej namngiven')+'\\nBetyg: '+grade)}>Elevprofil</button></td><td><input aria-label={'Anpassningar för elev '+(i+1)} value={row.comment || ''} onChange={event => updateMatrix(index,'comment',event.target.value)} style={{width:110}}/></td>
-          </tr>})}
-          {!rowsForMatrix.length && <tr><td colSpan={chapters.length*5+8} style={{padding:20,textAlign:'center'}}>Inga elever ännu. Använd ”Klistra in elevlista” eller ”Lägg till elevresultat”.</td></tr>}
-          </tbody>
-        </table>
-      </div>
-      <div className="button-row" style={{ marginTop: 15 }}>
-        <button type="button" className="secondary" onClick={() => editSelected(p => ({ ...p, results: [...(Array.isArray(p.results) ? p.results : []), { student: '', assessment: '', score: '', comment: '' }] }))}>+ Lägg till elevresultat</button>
-        <button type="button" className="primary" onClick={save}>💾 Spara resultat</button>
-        <button type="button" className="secondary" onClick={remove}>Radera resultatlista</button>
-      </div>
-      <p className="muted">Spara efter ändringar. Du kan även exportera den valda klassens resultat till CSV. Originalmallens övriga funktioner integreras separat.</p>
-    </div>}
-    </div>
-  </section>
-}
 
 function PublishedStudentPreview({ slug, initialClass = "" }) {
   const [publishedPlan, setPublishedPlan] = useState(null)
@@ -1413,7 +1138,7 @@ function PublishedStudentPreview({ slug, initialClass = "" }) {
 
 function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin, adminContent, pendingCount = 0 }) {
   const [editingClassView,setEditingClassView] = useState('')
-  const [classStudentPreview,setClassStudentPreview] = useState(false)
+  const [, setClassStudentPreview] = useState(false)
   const [plan, setPlan] = useState(emptyPlan())
   const [plans, setPlans] = useState([])
   const [showArchive, setShowArchive] = useState(false)
@@ -1424,13 +1149,13 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [librarySubject, setLibrarySubject] = useState('')
   const [editingSubject, setEditingSubject] = useState('')
   const [editingSubjectValue, setEditingSubjectValue] = useState('')
-  const [libraryBoardPage, setLibraryBoardPage] = useState(0)
+  const [, setLibraryBoardPage] = useState(0)
   const [openedFromLibrary, setOpenedFromLibrary] = useState(false)
-  const [showLibraryExamples, setShowLibraryExamples] = useState(false)
-  const [exampleFolder, setExampleFolder] = useState('')
+  useState(false)
+  useState('')
   const [shareOpen, setShareOpen] = useState(false)
   const [shareRecipient, setShareRecipient] = useState("")
-  const [sharePassword, setSharePassword] = useState("")
+  useState("")
   const [shareToken, setShareToken] = useState("")
   const [receivedToken, setReceivedToken] = useState("")
   const [shareMessage, setShareMessage] = useState("")
@@ -1518,7 +1243,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [pendingImport, setPendingImport] = useState(null)
   const [fileImportState, setFileImportState] = useState({phase:'idle',message:''})
   const [previewStudents, setPreviewStudents] = useState(() => window.location.hash === '#elevvy')
-  const [a4Demo, setA4Demo] = useState(false)
+  const [, setA4Demo] = useState(false)
   useEffect(() => {
     const onNavigation = () => {
       if (window.location.hash === '#elevvy') {
@@ -1540,7 +1265,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   useEffect(() => { latestPlanRef.current = plan }, [plan])
   const historyRef = useRef({ past: [], current: JSON.stringify(plan), future: [] })
   const historySkipRef = useRef(false)
-  const [historyVersion, setHistoryVersion] = useState(0)
+  const [, setHistoryVersion] = useState(0)
   useEffect(() => {
     const next = JSON.stringify(plan)
     const history = historyRef.current
@@ -1714,35 +1439,6 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     setStatus(visible ? 'Alla veckor visas nu i Elevvy. Ändringen sparas automatiskt.' : 'Alla veckor är nu dolda i Elevvy. Ändringen sparas automatiskt.')
   }
 
-  function insertExampleWeek() {
-    if (busy) return
-    if (isDirty && !window.confirm('Du har osparade ändringar. Vill du lämna dem och öppna en separat fiktiv vecka 42?')) return
-    const demo = { ...emptyPlan(), title: 'EXEMPEL – Vecka 42: Bråk', subject: 'Matematik', className: 'Årskurs 6',
-      startDate: '2026-10-12', weeks: 1, entryType: 'lektion', lessonsPerWeek: 5, published: false, archived: false }
-    const lessons = [
-      ['Måndag – Vad är ett bråk?', 'Täljare, nämnare och bråk med bilder', '42–43', '1–6', 'https://www.youtube.com/results?search_query=br%C3%A5k+matematik+%C3%A5rskurs+6'],
-      ['Tisdag – Likvärdiga bråk', 'Förlänga och förkorta bråk', '44–45', '7–12', 'https://www.youtube.com/results?search_query=f%C3%B6rl%C3%A4nga+f%C3%B6rkorta+br%C3%A5k'],
-      ['Onsdag – Addera bråk', 'Gemensam nämnare och addition', '46–47', '13–18', 'https://www.youtube.com/results?search_query=addera+br%C3%A5k+gemensam+n%C3%A4mnare'],
-      ['Torsdag – Problemlösning', 'Textuppgifter med bråk i par', '48', '19–22', 'https://www.youtube.com/results?search_query=probleml%C3%B6sning+br%C3%A5k+matematik'],
-      ['Fredag – Repetition och diagnos', 'Repetera och genomför en kort diagnos', '42–48', 'Repetition 1–8', 'https://www.youtube.com/results?search_query=repetition+br%C3%A5k+matematik'],
-    ].map(([name, topic, pages, assignments, url]) => ({
-      name, topics: [{ name: topic, pages: [pages], assignments: [assignments], links: [url] }],
-    }))
-    const week = makeWeeks(demo, 1)[0]
-    demo.weeksData = [{ ...week, title: 'Vecka 42 – Bråk', chapter: 'Matematik: Bråk',
-      content: 'Fiktiv demonstration. Sid- och uppgiftsnummer är påhittade. YouTube-länkar leder till sökresultat. PowerPoint och PDF kan läggas till som egna länkar när filerna finns.',
-      lessons }]
-    setSelectedId(null)
-    try { window.sessionStorage.removeItem(`arsplanering-last-open-${session.user.id}`) } catch { /* Lagring kan vara blockerad */ }
-    setPlan(demo)
-    savedPlanRef.current = JSON.stringify(demo)
-    setSavedRevision(revision => revision + 1)
-    setTeacherTab('arsplan')
-    setCalendarOpen(false)
-    setPreviewStudents(false)
-    setA4Demo(false)
-    setStatus('Fiktiv vecka 42 visas nu i Lärarvy. Den är inte sparad och inga tidigare planeringar har ändrats. PowerPoint och PDF kan läggas till som egna länkar.')
-  }
 
   async function save(publish, automatic = false) {
     if (busy) return
@@ -1852,51 +1548,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     return () => window.clearTimeout(timer)
   }, [plan, selectedId, simpleSetup, busy, isDirty, teacherTab])
 
-  async function publishFromList(row) {
-    if (busy) return
-    const source = planFromRow(row)
-    if (!window.confirm(`Publicera "${row.title}" för elever? Den sparade planeringen blir tillgänglig via elevlänken.`)) return
-    setBusy(true)
-    try {
-      const slug = row.public_slug || buildSlug(source)
-      const payload = { ...source, published: true, publicSlug: slug }
-      const { error } = await supabase.from('veckoplanering').update({
-        ...publicationFields(true, false, slug, sanitizeForStudents(payload)),
-        updated_at: new Date().toISOString(),
-      }).eq('id', row.id).eq('user_id', session.user.id).select('id').single()
-      if (error) throw error
-      if (selectedId === row.id) setPlan(p => ({ ...p, published: true, publicSlug: slug }))
-      await loadPlans()
-      setStatus('Planeringen är publicerad för elever.')
-    } catch (error) {
-      setStatus(`Kunde inte publicera: ${error.message || 'Okänt fel'}`)
-    } finally {
-      setBusy(false)
-    }
-  }
 
-  async function unpublish(row) {
-    if (busy) return
-    setBusy(true)
-    try {
-      // Uppdatera endast publiceringsfält; ändra inte planeringens innehåll.
-      const { error } = await supabase.from('veckoplanering').update({
-        published: false,
-        published_content: null,
-        public_slug: null,
-        updated_at: new Date().toISOString(),
-      }).eq('id', row.id).eq('user_id', session.user.id).select('id').single()
-      // En uppdatering som träffar noll rader får inte rapporteras som lyckad.
-      if (error) throw error
-      if (selectedId === row.id) setPlan(p => ({ ...p, published: false, publicSlug: '' }))
-      const refreshed = await loadPlans()
-      setStatus(refreshed ? 'Planeringen är avpublicerad.' : 'Avpublicerad, men listan kunde inte uppdateras. Ladda om för att kontrollera.')
-    } catch (error) {
-      setStatus(`Kunde inte avpublicera: ${error.message || 'Okänt fel'}`)
-    } finally {
-      setBusy(false)
-    }
-  }
 
   async function importFile(file) {
     if (!file) return
@@ -1960,41 +1612,6 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     finally { setBusy(false) }
   }
 
-  async function clonePlan(row) {
-    if (busy) return
-    const source = planFromRow(row)
-    const now = new Date()
-    const year = now.getFullYear()
-    const startYear = now.getMonth() >= 7 ? year : year - 1
-    const schoolYear = libraryYear === 'alla' ? `${startYear}–${startYear + 1}` : libraryYear
-    const targetYear = Number(schoolYear.match(/\d{4}/)?.[0]) || startYear
-    const subject = source.subject || row.subject || ''
-    const className = source.className || row.class_name || ''
-    const title = `${source.title.replace(/(?:\s*[-–—]?\s*kopia(?:\s*\d+)?)$/i, '').trim()} – kopia`
-    const oldStartYear = Number((source.schoolYear || '').match(/\d{4}/)?.[0])
-    const yearShift = Number.isFinite(oldStartYear) ? targetYear - oldStartYear : 0
-    const shiftDate = date => {
-      if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !yearShift) return date
-      const shifted = new Date(date + 'T12:00:00')
-      shifted.setFullYear(shifted.getFullYear() + yearShift)
-      return shifted.toISOString().slice(0, 10)
-    }
-    setBusy(true)
-    try {
-      const clone = { ...source, startDate: shiftDate(source.startDate), weeksData: Array.isArray(source.weeksData) ? source.weeksData.map(week => ({ ...week, weekStart: shiftDate(week.weekStart), publishDate: '', hideDate: '' })) : source.weeksData, themeId: PLAN_THEMES[(PLAN_THEMES.findIndex(theme => theme.id === planTheme(source, row.id).id) + 1) % PLAN_THEMES.length].id, title, subject, className, schoolYear, archived: false, published: false, publicSlug: '', receivedCopy: Boolean(source.receivedCopy) }
-      const { error } = await supabase.from('veckoplanering').insert({
-        user_id: session.user.id, title, week_start: clone.startDate, content: JSON.stringify(clone), subject, class_name: className, school_year: schoolYear,
-        start_date: clone.startDate, weeks: clone.weeks, published: false, public_slug: null, updated_at: new Date().toISOString(),
-      })
-      if (error) throw error
-      const refreshed = await loadPlans()
-      setStatus(refreshed ? 'En ny aktiv planering har skapats som utkast. Originalet finns kvar i arkivet.' : 'Kopian sparades, men listan kunde inte uppdateras. Ladda om för att kontrollera.')
-    } catch (error) {
-      setStatus(`Kunde inte klona: ${error.message || 'Okänt fel'}`)
-    } finally {
-      setBusy(false)
-    }
-  }
 
   async function setArchived(row, archived) {
     if (busy) return
@@ -2163,17 +1780,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const returnToPlanningTree = () => { setTeacherTab('bibliotek'); setCalendarOpen(false); setOpenedFromLibrary(false); window.scrollTo({ top: 0, behavior: 'smooth' }) }
   const [coursePicker, setCoursePicker] = useState(null)
   const [bookPicker, setBookPicker] = useState(null)
-  const [quickCreateTitle, setQuickCreateTitle] = useState('')
+  useState('')
   const [bookQuery, setBookQuery] = useState('')
-  const createInBranch = (school, subject, grade = '', courseName = '', textbook = '') => {
-    if (JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')) return false
-    const fresh = { ...emptyPlan(), schoolYear: libraryYear === 'alla' ? '' : libraryYear, schoolForm: school === 'Gymnasiet' ? 'Gymnasieskola' : 'Grundskola', subject, grade, textbook, course: courseName || (school === 'Gymnasiet' ? subject : ''), title: courseName ? subject + ' – ' + courseName : grade ? subject + ' – ' + grade : subject, lessonsPerWeek: 5, lessonDays: ['Måndag','Tisdag','Onsdag','Torsdag','Fredag'] }
-    setCreatingFromBranch(true)
-    setSimpleSetup(true); setSimpleMore(false); setPlan(fresh); setSelectedId(null); savedPlanRef.current = JSON.stringify(fresh)
-    setSavedRevision(revision => revision + 1); setTeacherTab('new'); setCalendarOpen(false); setPreviewStudents(false); setA4Demo(false)
-    setStatus('Skapar planering för ' + (grade ? subject + ' – ' + grade : subject) + '…')
-    return true
-  }
   const bookChoices = bookPicker ? booksForSubject(bookPicker.school, bookPicker.subject).filter(book => [book.title,book.publisher,book.subject,book.levels].some(value => value.toLocaleLowerCase('sv').includes(bookQuery.toLocaleLowerCase('sv')))) : []
   const matchingBookPlan = name => {
     if (!bookPicker || !String(name || '').trim()) return null
@@ -2277,14 +1885,10 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       <div className="teacher-header-identity">
         
         <nav className="teacher-breadcrumb" aria-label="Du är här">
-          {false && <button type="button" onClick={() => { setTeacherTab("mina"); setCalendarOpen(false) }}>Startsida</button>}
-          {false && teacherTab === "bibliotek" && <><span aria-hidden="true">›</span><span aria-current="page">Mina planeringar</span></>}
-          {false && teacherTab === "arsplan" && <><span aria-hidden="true">›</span><span aria-current="page">{plan.title?.trim() || "Ny planering"}</span></>}
-          {false && teacherTab === "new" && <><span aria-hidden="true">›</span><span aria-current="page">Ny planering</span></>}
         </nav>
         {teacherTab !== "bibliotek" && teacherTab !== "arsplan" && <h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Startsida" : (plan.title?.trim() || "Ny planering")}</h1>}
         {teacherTab !== 'bibliotek' && teacherTab !== 'arsplan' && <p className="muted">{session.user.email}</p>}
-        {false && selectedId && teacherTab === 'arsplan' && <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:16,flexWrap:'wrap',marginTop:10}}>
+        {AVSTANGD_GRANSSNITT && selectedId && teacherTab === 'arsplan' && <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:16,flexWrap:'wrap',marginTop:10}}>
           <div><p style={{margin:'0 0 4px',color:'#526a81'}}>Grundplanering</p><strong style={{fontSize:'clamp(1.3rem,3vw,2rem)'}}>{plan.subject || plan.title}</strong>{(plan.textbook || plan.schoolYear) && <p style={{margin:'5px 0 0',color:'#526a81'}}>{[plan.textbook,plan.schoolYear].filter(Boolean).join(' · ')}</p>}</div>
           <div className="planning-grade-badge" style={{textAlign:'center',padding:'5px 9px',borderRadius:9,background:'#edf6ff',border:'1px solid #d5e6f7'}}><div style={{fontSize:12,fontWeight:750,letterSpacing:'.09em',color:'#526a81'}}>{['gymnasieskola','anpassad-gymnasieskola','komvux'].includes(String(plan.schoolForm || '').toLocaleLowerCase('sv-SE')) ? 'KURS' : 'ÅRSKURS'}</div><div style={{fontSize:'clamp(.85rem,1.5vw,1.1rem)',fontWeight:850,color:'#234e75'}}>{['gymnasieskola','anpassad-gymnasieskola','komvux'].includes(String(plan.schoolForm || '').toLocaleLowerCase('sv-SE')) ? (plan.course || plan.grade || '—') : (plan.grade || plan.course || '—')}</div></div>
         </div>}
@@ -2292,12 +1896,11 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       </div>
       
       
-      {false && selectedId && teacherTab === "arsplan" && <button type="button" className="secondary planning-print-action" onClick={() => { document.body.classList.add("teacher-plan-print"); const cleanup = () => document.body.classList.remove("teacher-plan-print"); window.addEventListener("afterprint", cleanup, { once: true }); window.print(); setTimeout(cleanup, 1500) }}>🖨️ Skriv ut planeringen</button>}
-      {false && selectedId && teacherTab === "arsplan" && <div className="archive-plan-actions" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+      {AVSTANGD_GRANSSNITT && selectedId && teacherTab === "arsplan" && <div className="archive-plan-actions" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <button type="button" className="secondary" disabled={busy || !plans.some(row => row.id === selectedId)} style={{ fontSize: '1rem', fontWeight: 850, padding: '13px 18px', borderRadius: 12, background: '#f9e5ed', border: '2px solid #c87e9b', color: '#73394f' }} onClick={() => { const row = plans.find(item => item.id === selectedId); if (row) void setArchived(row, true) }}>🗂 Arkivera planeringen</button>
         
       </div>}
-      {false && teacherTab === "new" && <div className="topbar-share-actions">
+      {AVSTANGD_GRANSSNITT && teacherTab === "new" && <div className="topbar-share-actions">
         <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
       </div>}
       <div className="planning-header-toolbar" style={{width:'100%',flexBasis:'100%'}}>
@@ -2305,7 +1908,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       </div>
     </header>}
 
-    {false && teacherTab === "new" && shareOpen && <section className="card colleague-share-panel" aria-label="Klona och dela med kollega">
+    {AVSTANGD_GRANSSNITT && teacherTab === "new" && shareOpen && <section className="card colleague-share-panel" aria-label="Klona och dela med kollega">
       <div className="share-panel-heading"><div><h2>Klona och dela</h2><p className="muted">Kollegan skapar ett eget konto och börjar med en tom planering.</p></div><button type="button" className="secondary" onClick={() => setShareOpen(false)}>Stäng</button></div>
       <div className="colleague-share-grid">
         <form onSubmit={shareWithColleague}>
@@ -2484,7 +2087,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     </section>}
     {status && <section className="card compact-status-card" aria-live="polite"><p className="status">{status}</p></section>}
 
-    {false && !simpleSetup && <div className="unified-planning-form" aria-label="Inställningar och publicering"><h2 className="settings-publication-title">Inställningar och publicering</h2>
+    {AVSTANGD_GRANSSNITT && !simpleSetup && <div className="unified-planning-form" aria-label="Inställningar och publicering"><h2 className="settings-publication-title">Inställningar och publicering</h2>
     <section className="card teacher-settings-card">
       <details className="teacher-settings-details">
         <summary><strong>Grunduppgifter och inställningar</strong><span>Ändra namn, ämne, skolform, läsår och visningsalternativ</span></summary>
@@ -2564,7 +2167,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     </section>
 
 
-    {false && <>
+    {AVSTANGD_GRANSSNITT && <>
     <details className="card optional-planning-section" aria-label="Skollov och studiedagar"><summary><strong>Skollov och studiedagar</strong><span>Lägg till lov och studiedagar vid behov</span></summary><div className="optional-planning-content">
       <h3>Skollov och studiedagar</h3>
       <p>Lägg själv till lov, studiedagar, röda dagar och nationella prov vid behov. Inget läggs in automatiskt.</p>
@@ -2794,7 +2397,7 @@ const GYMNASIUM_DEMO_COURSES = [
 function gymnasiumDemoPlan(course) {
   const plan={...emptyPlan(),title:'DEMO · '+course.course,subject:course.subject,course:course.course,textbook:course.book,schoolForm:'gymnasiet',schoolYear:'2026–2027',startDate:'2026-10-19',weeks:3,lessonsPerWeek:5,studentLayout:'list'}
   const weeks=makeWeeks(plan,3).map((week,wi)=>({...week,lessons:Array.from({length:5},(_,li)=>{const topic=course.topics[(wi*5+li)%course.topics.length];return {name:topic,topics:[{name:topic+' – övningar och diskussion',pagesLabel:'Exempelsidor '+(10+wi*10+li*2)+'–'+(11+wi*10+li*2),assignmentsLabel:'Uppgift '+(li+1)+'–'+(li+4)}]}})}))
-  return sanitizeForStudents({...plan,weeksData:weeks,classGroups:course.classes.map(([name,days],i)=>({name,startDate:'2026-10-19',days,lessonTimes:Object.fromEntries(days.map((day,j)=>[day,[i%2===0?'09:00':'10:15']])),cancelledDates:[],overrides:{}}))})
+  return sanitizeForStudents({...plan,weeksData:weeks,classGroups:course.classes.map(([name,days],i)=>({name,startDate:'2026-10-19',days,lessonTimes:Object.fromEntries(days.map((day,_j)=>[day,[i%2===0?'09:00':'10:15']])),cancelledDates:[],overrides:{}}))})
 }
 function GymnasiumDemoIndex() {
   return <main className="shell gym-demo-index"><section className="card"><p className="eyebrow">SEPARAT DEMOMILJÖ · FIKTIVA UPPGIFTER</p><h1>Gymnasiet – testkurser</h1><p>Fem fiktiva kurser med olika klasser och lektionsscheman. Demot sparar ingenting i ditt konto eller i Supabase.</p><div className="gym-demo-courses">{GYMNASIUM_DEMO_COURSES.map(course=><article className="gym-demo-course" key={course.id}><h2>{course.subject} · {course.course}</h2><p>📘 {course.book}</p><div className="gym-demo-classlinks">{course.classes.map(([name])=><a key={name} href={'/elev/demo-gymnasiet-'+course.id+'?klass='+encodeURIComponent(name)}>🔗 Elevvy {name}</a>)}</div><a href={'/elev/demo-gymnasiet-'+course.id}>Visa gemensam planering →</a></article>)}</div></section></main>
