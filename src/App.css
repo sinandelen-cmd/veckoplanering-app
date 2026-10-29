@@ -5999,3 +5999,12 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy #kopplade-klasser { display:flex!important; flex-wrap:wrap!important; align-items:center!important; justify-content:space-between!important; gap:8px!important; width:100%!important; box-sizing:border-box!important; }
 #lararvy #kopplade-klasser .class-base-visibility { margin-left:auto!important; padding:4px 8px!important; font-size:14px!important; }
 #lararvy #kopplade-klasser .class-base-visibility select { min-height:36px!important; border-radius:8px!important; }
+
+/* Klassvyn: mindre veckoval, elevlänk längst till höger på klassflikarnas rad, ingen extra rubrik. */
+#lararvy .class-week-count-controls button { min-height:32px!important; padding:4px 10px!important; font-size:13px!important; border-radius:8px!important; }
+#lararvy .class-mini-row .class-mini-schema { margin-left:auto!important; min-height:36px!important; font-size:14px!important; white-space:nowrap!important; }
+
+/* Grundplanering: ingen rubrikrad "Årsplanering · N veckor"; Dölj allt innehåll ligger i veckoraden till höger; begrepp direkt under menyn. */
+#lararvy .teacher-year-review-bar { display:none!important; }
+#lararvy .teacher-week-navigation .teacher-all-weeks-inline { margin-left:auto!important; font-size:14px!important; min-height:36px!important; padding:6px 12px!important; }
+#lararvy .teacher-week-navigation { justify-content:flex-start!important; }
