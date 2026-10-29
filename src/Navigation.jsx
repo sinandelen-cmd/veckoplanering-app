@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-export default function Navigation({ active = 'mina', onNavigate, selectedId, onToggleCalendar, calendarOpen = false, isAdmin = false, onOpenAdmin, adminOpen = false, pendingCount = 0, onCloseAdmin, onSignOut, planContext, onPrintPlan }) {
+export default function Navigation({ active = 'mina', onNavigate, onToggleCalendar, calendarOpen = false, isAdmin = false, onOpenAdmin, adminOpen = false, pendingCount = 0, onCloseAdmin, onSignOut, planContext, onPrintPlan }) {
   const navRef = useRef(null)
   useEffect(() => {
     const nav = navRef.current
