@@ -894,7 +894,7 @@ function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson }) {
 function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, busy, saveStatus }) {
   const [expanded, setExpanded] = useState(null)
   const [saving, setSaving] = useState(false)
-  const [visibleWeekCount, setVisibleWeekCount] = useState(2)
+  const [visibleWeekCount, setVisibleWeekCount] = useState(3)
   const [expandedFullWeek, setExpandedFullWeek] = useState(null)
   const group = (plan.classGroups || []).find(item => item.name === className)
   const scheduled = useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
