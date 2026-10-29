@@ -2404,6 +2404,21 @@ function GymnasiumDemoIndex() {
 }
 
 function AnnualApp() {
+  // Hela planeringsvyn skalas som en film på olika stora skärmar: layouten räknas i en referensbredd och krymps/växer proportionellt.
+  useEffect(() => {
+    const REFERENCE_WIDTH = 1180
+    const update = () => {
+      const scale = Math.min(1, Math.max(0.5, window.innerWidth / REFERENCE_WIDTH))
+      document.documentElement.style.setProperty('--planning-scale', String(scale))
+    }
+    update()
+    window.addEventListener('resize', update)
+    window.addEventListener('orientationchange', update)
+    return () => {
+      window.removeEventListener('resize', update)
+      window.removeEventListener('orientationchange', update)
+    }
+  }, [])
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [studentPlan, setStudentPlan] = useState(null)
