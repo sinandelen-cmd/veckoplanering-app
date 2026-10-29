@@ -5924,3 +5924,11 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .class-real-two-weeks-grid .calendar-inline-week-heading h2 {
   font-size:clamp(18px,2.2vw,26px)!important;
 }
+
+/* Huvudmenyn (Startsida, Planering, Månadsvy, Administration, Logga ut) ligger kvar överst när man scrollar. */
+#lararvy .planning-unified-navigation,
+.planning-unified-navigation {
+  position:sticky!important;
+  top:0;
+  z-index:60;
+}
