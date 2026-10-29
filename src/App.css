@@ -6013,3 +6013,7 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .teacher-pinned-chapter-shell { border:1px solid #d5e0ea!important; border-radius:12px!important; overflow:hidden!important; background:#f6f9fc!important; margin:6px 0!important; }
 #lararvy .teacher-pinned-chapter-shell .teacher-pinned-chapter-heading { border-radius:0!important; margin:0!important; }
 #lararvy .teacher-pinned-chapter-shell .chapter-vocabulary { background:transparent!important; border:0!important; box-shadow:none!important; margin:0!important; padding:10px!important; }
+
+/* Grundplanering standard: miniatyrer av tre veckor sida vid sida, skalade så att alla syns i stående och liggande läge. */
+#lararvy .teacher-default-thumbs { display:grid!important; grid-template-columns:repeat(3,minmax(0,1fr))!important; gap:10px!important; width:100%!important; box-sizing:border-box!important; align-items:start!important; }
+#lararvy .teacher-default-thumbs > * { min-width:0!important; max-width:100%!important; }
