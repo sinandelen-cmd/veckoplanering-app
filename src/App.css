@@ -5909,3 +5909,18 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .class-real-two-weeks .class-real-two-weeks-grid:has(> .class-real-week-column:only-child) {
   grid-template-columns:minmax(0,1fr)!important;
 }
+
+/* Två veckor sida vid sida: smalare marginaler och ingen utstickande bredd, så inget klipps bort i liggande läge. */
+#lararvy .class-real-two-weeks-grid > .class-real-week-column {
+  min-width:0!important;
+  max-width:100%!important;
+  overflow-x:auto!important;
+}
+#lararvy .class-real-two-weeks-grid .calendar-inline-week {
+  padding:10px!important;
+  min-width:0!important;
+  max-width:100%!important;
+}
+#lararvy .class-real-two-weeks-grid .calendar-inline-week-heading h2 {
+  font-size:clamp(18px,2.2vw,26px)!important;
+}
