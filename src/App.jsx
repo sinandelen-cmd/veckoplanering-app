@@ -868,7 +868,7 @@ function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson }) {
   useEffect(() => {
     const resize = () => {
       if (!frame.current || !original.current) return
-      const fitHeight = Math.max(120, window.innerHeight - 260) / Math.max(1, original.current.offsetHeight)
+      const fitHeight = Math.max(120, window.innerHeight - 230) / Math.max(1, original.current.offsetHeight)
       const scale = Math.min(frame.current.clientWidth / 960, fitHeight)
       const height = original.current.offsetHeight * scale
       setDimensions(prev => Math.abs(prev.height - height) > 1 || Math.abs(prev.scale - scale) > 0.001 ? { scale, height } : prev)
@@ -1330,8 +1330,20 @@ const addNewTeacherWeek = () => setPlan(p => {
     const all = [...shifted, newWeek].sort((a, b) => (a.weekStart || '').localeCompare(b.weekStart || ''))
     return { ...p, weeks: all.length, weeksData: all }
   })
-  const windowStart = Math.max(0, Math.min(teacherWindowStart ?? defaultWindowFirst, Math.max(0, teacherDisplayWeeks.length - 3)))
-  const defaultTeacherWindow = teacherDisplayWeeks.slice(windowStart, windowStart + 3)
+  const removeFocusedTeacherWeek = () => {
+    const target = weeks.find(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek)
+    if (!target || weeks.length <= 1) return
+    const index = weeks.indexOf(target)
+    if (hasWeekWork(target, index) && !window.confirm(`Ta bort vecka ${target.weekNumber} och allt innehåll i veckan?`)) return
+    setPlan(p => {
+      const current = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
+      const remaining = current.filter(w => w.weekStart !== target.weekStart || w.weekNumber !== target.weekNumber)
+      return { ...p, weeks: remaining.length, weeksData: remaining, startWeek: Number(remaining[0]?.weekNumber) || p.startWeek }
+    })
+    setFocusedTeacherWeek(null)
+  }
+  const windowStart = Math.max(0, Math.min(teacherWindowStart ?? defaultWindowFirst, Math.max(0, teacherDisplayWeeks.length - 4)))
+  const defaultTeacherWindow = teacherDisplayWeeks.slice(windowStart, windowStart + 4)
   const visibleTeacherWeeks = weeks.filter(week => week && !week.hidden)
   const weeksWithContent = visibleTeacherWeeks.filter(week => Boolean(
     String(week.content || '').trim() || String(week.chapter || '').trim() ||
@@ -1962,13 +1974,15 @@ const addNewTeacherWeek = () => setPlan(p => {
       {<div className="teacher-pinned-chapter-shell" aria-label="Aktuellt kapitel"><div className={`teacher-pinned-chapter-heading ${pinnedChapter?.tone || ""}`}>{pinnedChapter?.name || "Kapitel"}</div>{pinnedChapter?.name && <ChapterVocabulary chapter={pinnedChapter.name} weeks={weeks.filter(week => (week.chapter?.trim() || "Utan kapitel") === pinnedChapter.name)} />}</div>}
       <nav className="teacher-week-navigation" aria-label="Navigera mellan veckor">
         <button type="button" className="teacher-all-weeks-inline-toggle" onClick={() => { setFocusedTeacherWeek(null); setShowPastTeacherWeeks(v => !v) }}>{showPastTeacherWeeks ? "Dölj alla veckor" : "Visa alla veckor"}</button>
+        {focusedTeacherWeek && <button type="button" className="teacher-remove-week" disabled={weeks.length <= 1} onClick={removeFocusedTeacherWeek}>− Ta bort vecka</button>}
+        {focusedTeacherWeek && <button type="button" className="teacher-close-week" aria-label="Stäng veckan" title="Stäng" onClick={() => setFocusedTeacherWeek(null)}>✕</button>}
         <button type="button" className="teacher-add-week-inline" disabled={weeks.length >= 52} onClick={addNewTeacherWeek}>+ Ny vecka</button>
         <button type="button" aria-label="Föregående vecka" onClick={() => { if (!focusedTeacherWeek) { setTeacherWindowStart(Math.max(0, windowStart - 1)); return } const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const next = weeks[Math.max(0, i < 0 ? 0 : i - 1)]; if (next) setFocusedTeacherWeek(String(next.weekStart || next.weekNumber)) }}>◀</button>
         {[-1, 0, 1].map(offset => { const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const todayIndex = weeks.findIndex(w => w.weekStart === mondayOf(new Date())); const center = i >= 0 ? i : (todayIndex >= 0 ? todayIndex : 0); const w = weeks[center + offset]; return <button type="button" key={offset} className={offset === 0 ? 'current' : 'adjacent'} disabled={!w} onClick={() => w && setFocusedTeacherWeek(String(w.weekStart || w.weekNumber))}>{w ? `Vecka ${calendarWeekNumber(w.weekStart) ?? w.weekNumber}` : '–'}</button> })}
-        <button type="button" aria-label="Nästa vecka" onClick={() => { if (!focusedTeacherWeek) { setTeacherWindowStart(Math.min(Math.max(0, teacherDisplayWeeks.length - 3), windowStart + 1)); return } const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const next = weeks[Math.min(weeks.length - 1, i < 0 ? 0 : i + 1)]; if (next) setFocusedTeacherWeek(String(next.weekStart || next.weekNumber)) }}>▶</button>
+        <button type="button" aria-label="Nästa vecka" onClick={() => { if (!focusedTeacherWeek) { setTeacherWindowStart(Math.min(Math.max(0, teacherDisplayWeeks.length - 4), windowStart + 1)); return } const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const next = weeks[Math.min(weeks.length - 1, i < 0 ? 0 : i + 1)]; if (next) setFocusedTeacherWeek(String(next.weekStart || next.weekNumber)) }}>▶</button>
       </nav>
       {focusedTeacherWeek && <div className="teacher-mobile-week-overview"><div className="teacher-mobile-week-overview-actions"><strong>Vecka {calendarWeekNumber(weeks.find(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)?.weekStart) || ""} · Helvecksvy</strong><button type="button" className="secondary" aria-expanded={!teacherWeekOverview} onClick={()=>setTeacherWeekOverview(v=>!v)}>{teacherWeekOverview?"Visa och redigera detaljer":"Visa hela veckan"}</button></div>{teacherWeekOverview && <CalendarWeekThumbnail week={weeks.find(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)} entryType={plan.entryType||"lektion"} onOpen={()=>setTeacherWeekOverview(false)} onOpenLesson={()=>setTeacherWeekOverview(false)}/>}</div>}
-      {!focusedTeacherWeek && !showPastTeacherWeeks && <div className="teacher-default-thumbs" aria-label="Veckor i Grundplanering">{defaultTeacherWindow.map(({week}) => { const key = String(week.weekStart || week.weekNumber); return <CalendarWeekThumbnail key={key} week={week} entryType={plan?.entryType === "dag" ? "dag" : "lektion"} onOpen={() => setFocusedTeacherWeek(key)} onOpenLesson={() => setFocusedTeacherWeek(key)} /> })}</div>}
+      {!focusedTeacherWeek && !showPastTeacherWeeks && <div className="teacher-default-thumbs" aria-label="Veckor i Grundplanering">{defaultTeacherWindow.map(({week, index}) => { const key = String(week.weekStart || week.weekNumber); return <div className="teacher-thumb-wrap" key={key}><label className="teacher-thumb-visibility"><input type="checkbox" checked={!week.hidden} onChange={e => updateWeek(index, { hidden: !e.target.checked })} aria-label={`Visa vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber} för eleven`} /><span>Visa för eleven</span></label><CalendarWeekThumbnail week={week} entryType={plan?.entryType === "dag" ? "dag" : "lektion"} onOpen={() => setFocusedTeacherWeek(key)} onOpenLesson={() => setFocusedTeacherWeek(key)} /></div> })}</div>}
       <div className={`teacher-months ${focusedTeacherWeek ? "teacher-months-focused" : ""} ${focusedTeacherWeek && teacherWeekOverview ? "teacher-months-overview-hidden" : ""} ${!focusedTeacherWeek && !showPastTeacherWeeks ? "teacher-months-overview-hidden" : ""}`}>
         {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? teacherDisplayWeeks : defaultTeacherWindow)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
