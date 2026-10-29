@@ -6017,3 +6017,9 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 /* Grundplanering standard: miniatyrer av tre veckor sida vid sida, skalade så att alla syns i stående och liggande läge. */
 #lararvy .teacher-default-thumbs { display:grid!important; grid-template-columns:repeat(3,minmax(0,1fr))!important; gap:10px!important; width:100%!important; box-sizing:border-box!important; align-items:start!important; }
 #lararvy .teacher-default-thumbs > * { min-width:0!important; max-width:100%!important; }
+
+/* Grundplanering standard: allt ryms i fönstret, ingen sidscroll. Miniatyrerna skalas även efter höjden. */
+body.teacher-fit-mode { overflow:hidden!important; }
+body.teacher-fit-mode #lararvy .teacher-default-thumbs { height:calc(100dvh - 250px); align-items:stretch!important; overflow:hidden!important; }
+body.teacher-fit-mode #lararvy .teacher-default-thumbs > * { height:100%; overflow:hidden; }
+body.teacher-fit-mode #lararvy .teacher-default-thumbs .calendar-real-week-frame { overflow:hidden!important; }

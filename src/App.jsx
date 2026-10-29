@@ -868,7 +868,8 @@ function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson }) {
   useEffect(() => {
     const resize = () => {
       if (!frame.current || !original.current) return
-      const scale = frame.current.clientWidth / 960
+      const fitHeight = Math.max(120, window.innerHeight - 260) / Math.max(1, original.current.offsetHeight)
+      const scale = Math.min(frame.current.clientWidth / 960, fitHeight)
       const height = original.current.offsetHeight * scale
       setDimensions(prev => Math.abs(prev.height - height) > 1 || Math.abs(prev.scale - scale) > 0.001 ? { scale, height } : prev)
     }
@@ -1318,6 +1319,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const upcomingTeacherWeeks = teacherDisplayWeeks.filter(({week}) => !week.weekStart || week.weekStart >= mondayOf(new Date()))
   // Standardvyn visar tre veckor: föregående, nuvarande och nästa (utan att användaren behöver klicka "Alla veckor").
   const defaultWindowFirst = (() => { const first = upcomingTeacherWeeks[0] ? teacherDisplayWeeks.indexOf(upcomingTeacherWeeks[0]) : teacherDisplayWeeks.length; return Math.max(0, first - 1) })()
+  useEffect(() => { const fit = !focusedTeacherWeek && !showPastTeacherWeeks; document.body.classList.toggle('teacher-fit-mode', fit); return () => document.body.classList.remove('teacher-fit-mode') }, [focusedTeacherWeek, showPastTeacherWeeks])
   const windowStart = Math.max(0, Math.min(teacherWindowStart ?? defaultWindowFirst, Math.max(0, teacherDisplayWeeks.length - 3)))
   const defaultTeacherWindow = teacherDisplayWeeks.slice(windowStart, windowStart + 3)
   const visibleTeacherWeeks = weeks.filter(week => week && !week.hidden)
