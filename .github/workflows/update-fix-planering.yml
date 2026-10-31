@@ -22,8 +22,16 @@ jobs:
       - run: npm run build
       - name: Uppdatera versionen som visas på fix-planering länken
         run: |
-          # Ta bort radbrytningar som ibland följer med när token kopieras på mobil.
-          export CLOUDFLARE_API_TOKEN="$(printf %s "$CLOUDFLARE_API_TOKEN" | tr -d '\r\n')"
+          # Tolka nyckeln även om användaren kopierat hela Bearer-raden från mobilen.
+          CLOUDFLARE_API_TOKEN="$(node -e '
+            const raw=process.env.CLOUDFLARE_API_TOKEN||"";
+            const bearer=raw.match(/Bearer\s+([A-Za-z0-9_-]{30,})/i);
+            const candidates=raw.match(/[A-Za-z0-9_-]{35,}/g)||[];
+            const token=bearer?.[1] || candidates.find(v=>v.length>=35 && v.length<=100);
+            if(!token){process.stderr.write("Cloudflare-nyckeln i GitHub har fel format.\n");process.exit(1)}
+            process.stdout.write(token);
+          ')"
+          export CLOUDFLARE_API_TOKEN
           npx --yes wrangler@4 versions upload --preview-alias fix-planering
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
