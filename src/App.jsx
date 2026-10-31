@@ -1541,7 +1541,7 @@ const addNewTeacherWeek = () => setPlan(p => {
           savedPlanRef.current = JSON.stringify(restored)
           setSavedRevision(revision => revision + 1)
           setPlan(restored)
-          setStatus('Senast öppnade årsplanering har hämtats igen.')
+          setStatus('')
         }
       } catch { /* Lagring kan vara blockerad */ }
     }
