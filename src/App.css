@@ -5976,3 +5976,32 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
   .class-full-week-panel .class-full-week-footer { padding: 5px 0; }
   .class-full-week-lesson { border-radius: 8px; }
 }
+
+/* Förstorad klassvecka: exakt samma veckokort som miniatyren, bara större.
+   Zooma hela kortet till skärmens tillgängliga bredd OCH höjd. */
+.class-full-week-panel > .class-full-week-thumbnail {
+  display:flex;
+  flex-direction:column;
+  flex:1 1 auto;
+  min-height:0;
+  height:auto;
+  width:100%;
+  overflow:hidden;
+  cursor:default;
+}
+.class-full-week-panel > .class-full-week-thumbnail .calendar-real-week-frame {
+  flex:1 1 auto;
+  min-height:0;
+  height:100%!important;
+  overflow:hidden;
+  cursor:default;
+}
+.class-full-week-panel > .class-full-week-thumbnail .calendar-real-week-original {
+  pointer-events:auto;
+}
+.class-full-week-panel > .class-full-week-thumbnail .calendar-inline-week {
+  margin:0!important;
+}
+.class-full-week-panel > .class-full-week-thumbnail .lesson {
+  cursor:pointer;
+}
