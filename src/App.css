@@ -6842,3 +6842,22 @@ body>.teacher-scroll-context-fixed{display:none!important;}
   grid-template-columns:30px minmax(0,1fr) 30px!important;
  }
 }
+
+
+/* Samma mörkrosa lektionspilar i både grundplanering och klassvyer. */
+#lararvy .lesson-edit-heading-pager>.lesson-heading-prev,
+#lararvy .lesson-edit-heading-pager>.lesson-heading-next,
+.calendar-lesson-modal .lesson-edit-heading-pager>.lesson-heading-prev,
+.calendar-lesson-modal .lesson-edit-heading-pager>.lesson-heading-next{
+ color:#a00055!important;background:transparent!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:30px!important;min-width:30px!important;height:34px!important;
+ border:0!important;box-shadow:none!important;padding:0!important;
+}
+#lararvy .lesson-edit-heading-pager>.lesson-heading-prev svg,
+#lararvy .lesson-edit-heading-pager>.lesson-heading-next svg,
+.calendar-lesson-modal .lesson-edit-heading-pager>.lesson-heading-prev svg,
+.calendar-lesson-modal .lesson-edit-heading-pager>.lesson-heading-next svg{
+ width:23px!important;height:23px!important;stroke-width:2.7!important;
+}
+.calendar-lesson-modal .lesson-edit-heading-pager>button:disabled{opacity:.35!important;}
