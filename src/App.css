@@ -6796,7 +6796,7 @@ body>.teacher-scroll-context-fixed{display:none!important;}
    Kapitel och vecka förblir i en fast överdel och byts vid veckogräns. */
 #lararvy .expanded-weeks-inline>.teacher-year-review:has(>.teacher-active-chapter-bar){
  display:flex!important;flex-direction:column!important;
- height:calc(100dvh - 245px)!important;min-height:350px!important;
+ height:calc(100dvh - 135px)!important;min-height:350px!important;
  overflow:hidden!important;position:relative!important;
 }
 #lararvy .expanded-weeks-inline>.teacher-year-review:has(>.teacher-active-chapter-bar)>.teacher-months{
@@ -6817,7 +6817,7 @@ body>.teacher-scroll-context-fixed{display:none!important;}
 }
 @media(max-width:650px){
  #lararvy .expanded-weeks-inline>.teacher-year-review:has(>.teacher-active-chapter-bar){
-  height:calc(100dvh - 235px)!important;min-height:310px!important;
+  height:calc(100dvh - 125px)!important;min-height:310px!important;
  }
 }
 
