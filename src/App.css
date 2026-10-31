@@ -7263,3 +7263,32 @@ body>.teacher-scroll-context-fixed{display:none!important;}
   padding:6px!important;gap:2px!important;
  }
 }
+
+
+/* Klassplanering: ikonknappar använder planeringens temafärg, utan egna färgade rutor. */
+#lararvy .class-real-two-weeks .lesson-heading-history button,
+#lararvy .class-real-two-weeks .lesson-reorder-controls button,
+#lararvy .class-real-two-weeks .lesson-heading-prev,
+#lararvy .class-real-two-weeks .lesson-heading-next,
+#lararvy .class-real-two-weeks .remove-small,
+#lararvy .class-real-two-weeks .remove-topic-column,
+#lararvy .class-real-two-weeks .lesson-topic-add,
+#lararvy .class-real-two-weeks .class-lesson-done-icon,
+#lararvy .class-real-two-weeks .lesson-heading-history button:hover,
+#lararvy .class-real-two-weeks .lesson-reorder-controls button:hover{
+ background:transparent!important;
+ background-color:transparent!important;
+ border-color:transparent!important;
+ box-shadow:none!important;
+ color:var(--plan-accent, #79524a)!important;
+}
+#lararvy .class-real-two-weeks .lesson-heading-history button:disabled,
+#lararvy .class-real-two-weeks .lesson-reorder-controls button:disabled{
+ opacity:.35!important;
+}
+#lararvy .class-real-two-weeks .lesson-heading-history button:focus-visible,
+#lararvy .class-real-two-weeks .lesson-reorder-controls button:focus-visible,
+#lararvy .class-real-two-weeks .remove-small:focus-visible{
+ outline:2px solid var(--plan-accent, #79524a)!important;
+ outline-offset:2px!important;
+}
