@@ -6489,3 +6489,12 @@ html,body,#root {max-width:100%;overflow-x:clip;}
 #mina-arsplaneringar .school-filter-panel small{color:#617386;line-height:1.4;}
 #mina-arsplaneringar .school-filter-panel button{padding:8px;border:1px solid #b6cddd;border-radius:7px;background:#eaf3fa;}
 @media(max-width:650px){#mina-arsplaneringar .school-filter-panel{left:0;}#mina-arsplaneringar .planning-board-tools{justify-content:flex-start!important;}}
+
+/* Undermeny till Planering i den blå övermenyn. */
+.planning-unified-navigation .planning-nav-dropdown{position:relative;display:flex;align-items:center;min-width:0;}
+.planning-unified-navigation .planning-nav-dropdown>button{white-space:nowrap;}
+.planning-unified-navigation .planning-nav-submenu{position:absolute;top:calc(100% + 8px);left:0;z-index:10000;display:flex;flex-direction:column;align-items:stretch;gap:3px;min-width:205px;max-width:calc(100vw - 20px);padding:8px;background:#fff;border:1px solid #b8cfdf;border-radius:12px;box-shadow:0 12px 28px #17344d35;}
+.planning-unified-navigation .planning-nav-submenu>button{display:block!important;text-align:left!important;width:100%!important;padding:11px 13px!important;color:#25465f!important;background:transparent!important;border:0!important;border-radius:8px!important;font-weight:600!important;white-space:nowrap!important;cursor:pointer;}
+.planning-unified-navigation .planning-nav-submenu>button:hover,.planning-unified-navigation .planning-nav-submenu>button:focus-visible{background:#e4f0f9!important;}
+.planning-layout>.planning-unified-navigation{overflow:visible!important;}
+@media(max-width:650px){.planning-unified-navigation .planning-nav-submenu{left:0;min-width:195px;}}
