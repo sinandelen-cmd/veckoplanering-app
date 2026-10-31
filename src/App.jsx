@@ -1210,32 +1210,30 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [weekContentOverrides, setWeekContentOverrides] = useState({})
   const [pinnedChapter, setPinnedChapter] = useState(null)
 
-  // Kompakt, stabil kapitel- och veckovisare när alla veckor är öppna.
-  // DOM uppdateras bara när kapitlet/veckan faktiskt ändras, utan animation.
+  // Håll aktuellt kapitel och vecka synliga under scrollning åt båda håll.
   useEffect(() => {
-    const indicator = document.querySelector('#lararvy .teacher-scroll-context')
-    if (!showPastTeacherWeeks || teacherTab !== 'arsplan' || !indicator) return undefined
+    if (!showPastTeacherWeeks || teacherTab !== 'arsplan') return undefined
+    const indicator = document.querySelector('.teacher-scroll-context')
+    if (!indicator) return undefined
     const label = indicator.querySelector('.teacher-scroll-context-label')
     let frame = 0
     const update = () => {
       frame = 0
-      const sections = [...document.querySelectorAll('#lararvy .teacher-months .teacher-chapter-section')]
+      const sections = [...document.querySelectorAll('.teacher-months-all-weeks .teacher-chapter-section')]
+      if (!sections.length) { indicator.hidden = true; return }
       const header = document.querySelector('.planning-layout > .planning-unified-navigation')
-      const nav = document.querySelector('#lararvy .teacher-week-navigation')
+      const nav = document.querySelector('.teacher-week-navigation')
       const headerBottom = Math.max(0, header?.getBoundingClientRect().bottom || 0)
       const navRect = nav?.getBoundingClientRect()
-      const navBottom = navRect && navRect.top <= headerBottom + 4 && navRect.bottom > headerBottom ? navRect.bottom : headerBottom
-      const top = Math.max(0, Math.ceil(navBottom)) + 5
+      const navBottom = navRect && navRect.top <= headerBottom + 6 && navRect.bottom > headerBottom ? navRect.bottom : headerBottom
+      const top = Math.max(0, Math.ceil(navBottom)) + 4
       indicator.style.top = top + 'px'
-      const boundary = top + 15
-      const section = sections.find(el => { const rect = el.getBoundingClientRect(); return rect.top <= boundary && rect.bottom > boundary })
-      if (!section) { indicator.hidden = true; return }
-      const heading = section.querySelector('.teacher-chapter-sticky')
-      if (!heading || heading.getBoundingClientRect().top >= boundary) { indicator.hidden = true; return }
-      const groups = [...section.querySelectorAll('.chapter-week-group')]
-      const current = groups.find(el => el.getBoundingClientRect().bottom > boundary) || groups[groups.length - 1]
-      const chapter = section.dataset.chapter || 'Utan kapitel'
-      const week = current?.dataset.week || ''
+      const boundary = top + indicator.getBoundingClientRect().height + 4
+      const activeSection = sections.find(el => el.getBoundingClientRect().bottom > boundary) || sections[sections.length - 1]
+      const groups = [...activeSection.querySelectorAll('.chapter-week-group')]
+      const activeWeek = groups.find(el => el.getBoundingClientRect().bottom > boundary) || groups[groups.length - 1]
+      const chapter = activeSection.dataset.chapter || 'Utan kapitel'
+      const week = activeWeek?.dataset.week || ''
       const next = chapter + (week ? ' · Vecka ' + week : '')
       if (label.textContent !== next) label.textContent = next
       indicator.hidden = false
