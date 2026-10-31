@@ -23,8 +23,6 @@ export default function Navigation({ active = 'mina', onNavigate, onAllWeeks, on
     </div>
     <div className="planning-unified-right">
       {onNew && <button type="button" onClick={onNew}>+ Ny planering</button>}
-      {onBack && <button type="button" aria-label="Tillbaka" disabled={!canBack} onClick={onBack}>←</button>}
-      {onForward && <button type="button" aria-label="Framåt" disabled={!canForward} onClick={onForward}>→</button>}
       {onPrintPlan && <button type="button" aria-label="Skriv ut" onClick={onPrintPlan}>🖨️</button>}
       {isAdmin && <button type="button" onClick={() => choose(onOpenAdmin)}>⚙ Administration{pendingCount > 0 ? ' (' + pendingCount + ')' : ''}</button>}
       <button type="button" onClick={onSignOut}>Logga ut</button>
