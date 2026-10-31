@@ -5,6 +5,7 @@ on:
     paths:
       - .github/workflows/publish-class-week-preview.yml
       - src/App.css
+      - src/App.jsx
 jobs:
   publish-preview:
     runs-on: ubuntu-latest
