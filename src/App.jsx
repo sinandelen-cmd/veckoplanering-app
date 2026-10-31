@@ -940,6 +940,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
   const [saving, setSaving] = useState(false)
   const [visibleWeekCount, setVisibleWeekCount] = useState(3)
   const [expandedFullWeek, setExpandedFullWeek] = useState(null)
+  const [classWeekOffset, setClassWeekOffset] = useState(0)
   const classHistory = useRef({ past: [], future: [] })
   const [, setClassHistoryVersion] = useState(0)
   const applyClassOverrides = (overrides, record = true) => {
@@ -975,7 +976,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
   const currentStart = [monday.getFullYear(), String(monday.getMonth()+1).padStart(2,'0'), String(monday.getDate()).padStart(2,'0')].join('-')
   const weekStarts = Array.from({length:visibleWeekCount},(_,i)=>{
     const date=new Date(monday)
-    date.setDate(date.getDate()+7*(i-(visibleWeekCount===1?0:1)))
+    date.setDate(date.getDate()+7*(i-(visibleWeekCount===1?0:1)+classWeekOffset))
     return [date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-')
   })
   const weeks = weekStarts.map(start => {
@@ -995,7 +996,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
     </div>)}</div>
     {expandedFullWeek && createPortal(<div className="class-full-week-backdrop" role="presentation" style={{position:'fixed',inset:0,zIndex:10000,background:'rgba(22,35,45,.45)',display:'flex',alignItems:'center',justifyContent:'center',padding:8}}>
       <section className="class-full-week-panel" role="dialog" aria-modal="true" aria-label={`Hela vecka ${calendarWeekNumber(expandedFullWeek)} för ${className}`} style={{width:'100%',maxWidth:1100,height:'calc(100dvh - 16px)',maxHeight:'calc(100dvh - 16px)',display:'flex',flexDirection:'column',overflow:'hidden',padding:8,background:'#fff',borderRadius:12}}>
-        <div className="class-full-week-header" style={{flexShrink:0,display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}><h3>{className} · Vecka {calendarWeekNumber(expandedFullWeek)}</h3><button type="button" className="class-week-header-return" aria-label="Stäng veckan och återgå till klassvyn" onClick={()=>{setExpandedFullWeek(null);void onSave?.()}}>✕</button></div>
+        <div className="class-full-week-header" style={{flexShrink:0,display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}><div className="week-modal-navigation" style={{display:"flex",alignItems:"center",gap:6}}><button type="button" aria-label="Föregående vecka" onClick={()=>{const d=new Date(expandedFullWeek+"T12:00:00");d.setDate(d.getDate()-7);setExpandedFullWeek(d.toISOString().slice(0,10));setClassWeekOffset(v=>v-1)}}>◀</button><h3>{className} · Vecka {calendarWeekNumber(expandedFullWeek)}</h3><button type="button" aria-label="Nästa vecka" onClick={()=>{const d=new Date(expandedFullWeek+"T12:00:00");d.setDate(d.getDate()+7);setExpandedFullWeek(d.toISOString().slice(0,10));setClassWeekOffset(v=>v+1)}}>▶</button></div><button type="button" className="class-week-header-return" aria-label="Stäng veckan och återgå till klassvyn" onClick={()=>{setExpandedFullWeek(null);void onSave?.()}}>✕</button></div>
         <ClassWeekFit><article className="calendar-inline-week" style={{backgroundColor:weekColor(expandedFullWeek)}}>
           <div className="calendar-inline-week-heading"><h2>Vecka {calendarWeekNumber(expandedFullWeek)}</h2><span>{weeks.find(w=>w.weekStart===expandedFullWeek)?.chapter}</span></div>
           <LessonDetails week={weeks.find(w=>w.weekStart===expandedFullWeek)} entryType={plan.entryType||'lektion'} onUndo={undoClassLesson} onRedo={redoClassLesson} canUndo={classHistory.current.past.length>0} canRedo={classHistory.current.future.length>0} onChange={changes=>{
@@ -2163,7 +2164,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       {focusedTeacherWeek && createPortal(<div className="class-full-week-backdrop" role="presentation" style={{position:'fixed',inset:0,zIndex:10000,background:'rgba(22,35,45,.45)',display:'flex',alignItems:'center',justifyContent:'center',padding:8}}>
         <section className="class-full-week-panel" role="dialog" aria-modal="true" aria-label="Grundplaneringens helvecksvy" style={{width:'100%',maxWidth:1100,height:'calc(100dvh - 16px)',maxHeight:'calc(100dvh - 16px)',display:'flex',flexDirection:'column',overflow:'hidden',padding:8,background:'#fff',borderRadius:12}}>
           <div className="class-full-week-header" style={{flexShrink:0,display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
-            <h3>Grundplanering · Vecka {calendarWeekNumber(weeks.find(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)?.weekStart)}</h3>
+            <div className="week-modal-navigation" style={{display:"flex",alignItems:"center",gap:6}}><button type="button" aria-label="Föregående vecka" onClick={()=>{const i=weeks.findIndex(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek);if(i>0)setFocusedTeacherWeek(String(weeks[i-1].weekStart||weeks[i-1].weekNumber))}} disabled={weeks.findIndex(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)<=0}>◀</button><h3>Grundplanering · Vecka {calendarWeekNumber(weeks.find(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)?.weekStart)}</h3><button type="button" aria-label="Nästa vecka" onClick={()=>{const i=weeks.findIndex(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek);if(i>=0&&i<weeks.length-1)setFocusedTeacherWeek(String(weeks[i+1].weekStart||weeks[i+1].weekNumber))}} disabled={weeks.findIndex(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)>=weeks.length-1}>▶</button></div>
             <button type="button" className="class-week-header-return" aria-label="Stäng veckan" title="Stäng" onClick={()=>{setFocusedTeacherWeek(null);setFocusedTeacherLesson(null);setTeacherWeekOverview(false)}}>✕</button>
           </div>
           <ClassWeekFit><article className="calendar-inline-week" style={{backgroundColor:weekColor(weeks.find(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)?.weekStart)}}>
