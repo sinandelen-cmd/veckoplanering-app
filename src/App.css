@@ -7980,14 +7980,14 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
   }
 }
 
-/* En centimeters vertikalt avstånd runt skrivfälten. */
+/* En halv centimeters vertikalt avstånd runt skrivfälten. */
 @media screen {
   /* De tre färgpanelerna behåller samma höjd per momentrad. */
   #lararvy .lesson .topic-grid > .topic-name:has(> textarea),
   body > .class-full-week-backdrop .lesson .topic-grid > .topic-name:has(> textarea),
   .calendar-lesson-modal .lesson .topic-grid > .topic-name:has(> textarea) {
-    padding-top:1cm!important;
-    padding-bottom:1cm!important;
+    padding-top:0.5cm!important;
+    padding-bottom:0.5cm!important;
     padding-left:8px!important;
     padding-right:8px!important;
     min-height:0!important;
@@ -7997,8 +7997,8 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
   #lararvy .lesson .topic-grid > .topic-column:has(.topic-cell input),
   body > .class-full-week-backdrop .lesson .topic-grid > .topic-column:has(.topic-cell input),
   .calendar-lesson-modal .lesson .topic-grid > .topic-column:has(.topic-cell input) {
-    padding-top:1cm!important;
-    padding-bottom:1cm!important;
+    padding-top:0.5cm!important;
+    padding-bottom:0.5cm!important;
     padding-left:8px!important;
     padding-right:8px!important;
     min-height:0!important;
