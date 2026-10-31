@@ -7651,3 +7651,34 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
     line-height:1!important;
   }
 }
+
+/* Centrera det vita Moment-fältet lodrätt när Sida/Uppgift får fler rader.
+   CSS-grid ger samma radhöjd åt alla tre färgpaneler; länkar och + stannar nere. */
+@media screen {
+  #lararvy .lesson .topic-grid > .topic-name:has(> textarea),
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-name:has(> textarea),
+  .calendar-lesson-modal .lesson .topic-grid > .topic-name:has(> textarea) {
+    display:flex!important;
+    flex-direction:column!important;
+    align-self:stretch!important;
+    height:100%!important;
+    min-height:0!important;
+    box-sizing:border-box!important;
+  }
+  #lararvy .lesson .topic-grid > .topic-name > textarea,
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-name > textarea,
+  .calendar-lesson-modal .lesson .topic-grid > .topic-name > textarea {
+    flex:0 0 auto!important;
+    align-self:stretch!important;
+    margin-top:auto!important;
+    margin-bottom:auto!important;
+  }
+  #lararvy .lesson .topic-grid > .topic-name > .moment-inner-links,
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-name > .moment-inner-links,
+  .calendar-lesson-modal .lesson .topic-grid > .topic-name > .moment-inner-links {
+    flex:0 0 auto!important;
+    margin-top:0!important;
+    margin-bottom:0!important;
+    padding-top:4px!important;
+  }
+}
