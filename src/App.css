@@ -7442,3 +7442,29 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
     flex-basis:36px!important;width:36px!important;min-width:36px!important;max-width:36px!important;height:36px!important;min-height:36px!important;
   }
 }
+
+/* Skrivfält ska vara vita även i helvecksvyer som visas i en portal utanför #lararvy. */
+@media screen {
+  .planning-layout.view-teacher .topic-grid .topic-name textarea,
+  .planning-layout.view-teacher .topic-grid .topic-name input,
+  .planning-layout.view-teacher .topic-grid .topic-column .topic-cell input,
+  body > .class-full-week-backdrop .topic-grid .topic-name textarea,
+  body > .class-full-week-backdrop .topic-grid .topic-name input,
+  body > .class-full-week-backdrop .topic-grid .topic-column .topic-cell input,
+  .class-full-week-panel .topic-grid .topic-name textarea,
+  .class-full-week-panel .topic-grid .topic-name input,
+  .class-full-week-panel .topic-grid .topic-column .topic-cell input,
+  .calendar-lesson-modal .topic-grid .topic-name textarea,
+  .calendar-lesson-modal .topic-grid .topic-column .topic-cell input {
+    background-color:#fff!important;
+    color:#111!important;
+    -webkit-text-fill-color:#111!important;
+    opacity:1!important;
+  }
+  body > .class-full-week-backdrop .topic-grid :is(input,textarea)::placeholder,
+  .planning-layout.view-teacher .topic-grid :is(input,textarea)::placeholder {
+    color:#777!important;
+    -webkit-text-fill-color:#777!important;
+    opacity:1!important;
+  }
+}
