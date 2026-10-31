@@ -2997,7 +2997,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
 
             <div className="moment-inner-actions">
 {editable && (lesson.topics || []).length > 1 && <button type="button" className="remove-small lesson-bare-icon lesson-bare-remove" title="Ta bort moment" aria-label="Ta bort moment" onClick={() => { if (!(topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm('Ta bort momentet och allt innehåll?')) changeLesson(i, { ...lesson, topics: (lesson.topics || []).filter((_, index) => index !== j) }) }}><PlanningActionIcon name="trash" /></button>}
-{editable && <button type="button" className="secondary lesson-bare-icon lesson-bare-add" title="Lägg till moment" aria-label="Lägg till moment" onClick={() => changeLesson(i, { ...lesson, topics: [...(lesson.topics || []), { name: '', pages: [], assignments: [], links: [] }] })}>+</button>}
+{editable && <button type="button" className="secondary lesson-bare-icon lesson-bare-add topic-corner-add" title="Lägg till moment" aria-label="Lägg till moment" onClick={() => changeLesson(i, { ...lesson, topics: [...(lesson.topics || []), { name: '', pages: [], assignments: [], links: [] }] })}>+</button>}
             </div></div>
             {editable && (topic.hidePages || topic.hideAssignments) && <div className="topic-restore-columns">
               {topic.hidePages && <button type="button" className="secondary" onClick={() => updateTopic({ ...topic, hidePages: false })}>+ Sida</button>}
@@ -3013,7 +3013,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
                   updateTopic({ ...topic, [field]: next })
                 }} /><button className="remove-small" type="button" aria-label={`Ta bort ${field === "pages" ? "sida" : "uppgift"} på rad ${row + 1}`} onClick={() => updateTopic({ ...topic, [field]: (field === 'pages' ? pages : assignments).filter((_, index) => index !== row) })}><PlanningActionIcon name="trash" /></button></> : <span>{(field === 'pages' ? pages : assignments)[row] || ' '}</span>}
               </div>)}
-              {editable && <button type="button" className={`add-detail lesson-bare-icon ${field === 'pages' ? 'lesson-bare-page' : 'lesson-bare-task'}`} title={field === 'pages' ? 'Lägg till sida' : 'Lägg till uppgift'} aria-label={field === 'pages' ? 'Lägg till sida' : 'Lägg till uppgift'} onClick={() => updateTopic({ ...topic, [field]: Array.from({ length: rows + 1 }, (_, index) => (field === 'pages' ? pages : assignments)[index] || '') })}>+</button>}
+              {editable && <button type="button" className={`add-detail lesson-bare-icon topic-corner-add ${field === 'pages' ? 'lesson-bare-page' : 'lesson-bare-task'}`} title={field === 'pages' ? 'Lägg till sida' : 'Lägg till uppgift'} aria-label={field === 'pages' ? 'Lägg till sida' : 'Lägg till uppgift'} onClick={() => updateTopic({ ...topic, [field]: Array.from({ length: rows + 1 }, (_, index) => (field === 'pages' ? pages : assignments)[index] || '') })}>+</button>}
             </div>)}
           </div>
         </div>
