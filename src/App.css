@@ -7132,3 +7132,62 @@ body>.teacher-scroll-context-fixed{display:none!important;}
   width:100%!important;max-width:100%!important;
  }
 }
+
+
+/* Kompakt helvecka i klassvyn: fler lektioner syns utan separata fönster.
+   Behåll fullständig redigering och tillåt scroll om innehållet inte ryms. */
+.class-full-week-panel.class-full-week-compact>.class-full-week-header{
+ padding:7px 12px!important;min-height:42px!important;
+}
+.class-full-week-panel.class-full-week-compact>.class-full-week-header h3{
+ font-size:15px!important;line-height:1.2!important;margin:0!important;
+}
+.class-full-week-panel.class-full-week-compact>.lessons{
+ gap:6px!important;padding:6px 8px 12px!important;
+}
+.class-full-week-panel.class-full-week-compact>.lessons>.lesson{
+ padding:7px!important;margin:0!important;border-radius:9px!important;
+}
+.class-full-week-panel.class-full-week-compact .lesson-heading{
+ gap:5px!important;margin:0 0 4px!important;padding:0!important;
+}
+.class-full-week-panel.class-full-week-compact .lesson-edit-heading{
+ min-height:34px!important;padding:6px 9px!important;
+ font-size:14px!important;line-height:1.2!important;
+}
+.class-full-week-panel.class-full-week-compact .lesson-reorder-controls{
+ gap:3px!important;
+}
+.class-full-week-panel.class-full-week-compact .lesson-reorder-controls button,
+.class-full-week-panel.class-full-week-compact .remove-small{
+ width:28px!important;height:28px!important;min-width:28px!important;
+ padding:4px!important;
+}
+.class-full-week-panel.class-full-week-compact .lesson-examination-row{
+ margin:2px 0!important;padding:0!important;
+}
+.class-full-week-panel.class-full-week-compact .lesson-content{
+ gap:7px!important;margin:4px 0!important;padding:4px 0!important;
+}
+.class-full-week-panel.class-full-week-compact .lesson-topic,
+.class-full-week-panel.class-full-week-compact .lesson-pages,
+.class-full-week-panel.class-full-week-compact .lesson-exercises{
+ padding:7px!important;
+}
+.class-full-week-panel.class-full-week-compact .lesson input{
+ min-height:30px!important;padding:4px 7px!important;
+}
+.class-full-week-panel.class-full-week-compact .lesson textarea{
+ min-height:40px!important;
+}
+.class-full-week-panel.class-full-week-compact>.class-full-week-footer{
+ padding:5px 10px max(6px,env(safe-area-inset-bottom,6px))!important;
+}
+@media(max-width:650px){
+ .class-full-week-panel.class-full-week-compact>.lessons{
+  gap:5px!important;padding:5px 6px 10px!important;
+ }
+ .class-full-week-panel.class-full-week-compact>.lessons>.lesson{
+  padding:6px!important;
+ }
+}
