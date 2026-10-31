@@ -8202,3 +8202,117 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
     box-sizing:border-box!important;
   }
 }
+
+
+/* iPhone: återställ den kompakta skalan från godkänd testvy.
+   zoom förändrar även layoutbredden och undviker klippta knappar vid mobilbredd. */
+@media screen and (max-width:650px) {
+  .planning-layout.view-teacher {
+    zoom:0.65!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+  }
+  /* En enda faktisk rad i övermenyn: titel och kontroller får egna celler. */
+  .planning-layout.view-teacher > nav.planning-original-top,
+  .planning-layout.view-teacher > nav.planning-original-top.planning-admin-navigation {
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1.25fr) auto!important;
+    grid-template-rows:auto!important;
+    align-items:center!important;
+    justify-content:stretch!important;
+    column-gap:6px!important;
+    row-gap:0!important;
+    flex-wrap:nowrap!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:40px!important;
+    padding:5px 8px!important;
+    margin:0!important;
+    top:0!important;
+    left:auto!important;
+    position:relative!important;
+    overflow:visible!important;
+    box-sizing:border-box!important;
+  }
+  .planning-layout.view-teacher > nav.planning-original-top > .planning-unified-left,
+  .planning-layout.view-teacher > nav.planning-original-top > .planning-unified-center,
+  .planning-layout.view-teacher > nav.planning-original-top > .planning-unified-right {
+    display:flex!important;
+    position:static!important;
+    height:auto!important;
+    min-height:0!important;
+    width:auto!important;
+    max-width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+    padding:0!important;
+    flex:0 1 auto!important;
+    align-items:center!important;
+    flex-wrap:nowrap!important;
+    overflow:visible!important;
+    transform:none!important;
+  }
+  .planning-layout.view-teacher > nav.planning-original-top > .planning-unified-left {
+    grid-column:1!important;
+    grid-row:1!important;
+    order:initial!important;
+    justify-content:flex-start!important;
+  }
+  .planning-layout.view-teacher > nav.planning-original-top > .planning-unified-center {
+    grid-column:2!important;
+    grid-row:1!important;
+    order:initial!important;
+    justify-content:center!important;
+  }
+  .planning-layout.view-teacher > nav.planning-original-top > .planning-unified-right {
+    grid-column:3!important;
+    grid-row:1!important;
+    order:initial!important;
+    justify-content:flex-end!important;
+    gap:2px!important;
+  }
+  .planning-layout.view-teacher > nav.planning-original-top button {
+    min-height:32px!important;
+    max-width:100%!important;
+    padding:5px 6px!important;
+    font-size:12px!important;
+    line-height:1.2!important;
+    font-weight:650!important;
+    border-radius:6px!important;
+    white-space:nowrap!important;
+    flex:0 0 auto!important;
+  }
+  .planning-layout.view-teacher > nav.planning-original-top .planning-active-plan-title {
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+    font-size:12px!important;
+    line-height:1.35!important;
+    text-align:center!important;
+  }
+  /* Veckonavigeringen kan svepas, men tvingar aldrig planeringen att bli bredare. */
+  #lararvy .teacher-week-navigation {
+    display:flex!important;
+    align-items:center!important;
+    flex-wrap:nowrap!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    max-width:100%!important;
+    min-width:0!important;
+    gap:5px!important;
+    padding:6px!important;
+    scrollbar-width:none!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  #lararvy .teacher-week-navigation::-webkit-scrollbar {display:none!important;}
+  #lararvy .teacher-week-navigation > button {
+    flex:0 0 auto!important;
+    white-space:nowrap!important;
+    min-height:33px!important;
+    font-size:12px!important;
+  }
+}
