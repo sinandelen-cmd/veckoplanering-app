@@ -6400,3 +6400,15 @@ html,body,#root {max-width:100%;overflow-x:clip;}
  .planning-original-top button {flex:0 0 auto!important;}
  #lararvy #teacher-year-calendar {max-width:100%!important;min-width:0!important;overflow-x:auto!important;}
 }
+
+/* Personlig ämnesmeny B – snabbval utan extra sidbyten. */
+#lararvy .personal-subject-bar{margin:12px 0;padding:14px;background:#f2f7fc;border:1px solid #c9dbe9;border-radius:12px;display:grid;gap:10px;}
+#lararvy .personal-subject-head{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#294e6d;}
+#lararvy .personal-subject-head button{border:1px solid #bdd0e0;border-radius:8px;background:white;padding:8px 12px;cursor:pointer;}
+#lararvy .personal-subject-choices{display:flex;flex-wrap:wrap;gap:8px;}
+#lararvy .personal-subject-choices button{border:1px solid #b9cfdf;border-radius:9px;background:white;color:#294b68;font-weight:700;padding:10px 14px;cursor:pointer;}
+#lararvy .personal-subject-choices button.selected{background:#315a7a;color:white;border-color:#315a7a;}
+#lararvy .personal-customize{background:white;border:1px solid #d6e1eb;border-radius:10px;padding:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+#lararvy .personal-customize p{flex:1 0 100%;margin:0;color:#526a7f;font-size:13px;}
+#lararvy .personal-customize label{display:inline-flex;align-items:center;gap:5px;font-size:13px;padding:6px;}
+#lararvy .personal-customize button{border:1px solid #a9c8dd;background:#e1effa;border-radius:8px;padding:8px 12px;}
