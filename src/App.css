@@ -6167,3 +6167,7 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
     display:flex!important; flex-direction:column!important;
   }
 }
+
+/* Startsidan har ingen övermeny förrän Planering öppnas. */
+.planning-layout.view-home > .shell { grid-row:1 / 3!important; }
+@media(max-width:750px) { .planning-layout.view-home > .shell { width:100%!important; } }
