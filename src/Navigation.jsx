@@ -4,7 +4,7 @@ export default function Navigation({ active = 'mina', onNavigate, onAllWeeks, on
   const [planningMenuOpen, setPlanningMenuOpen] = useState(false)
   if (!onNavigate) return <nav className="public-navigation" aria-label="Huvudmeny"><a href="/">Årsplanering</a></nav>
   const choose = action => { setPlanningMenuOpen(false); action() }
-  return <nav className="planning-unified-navigation planning-original-top" aria-label="Huvudnavigation">
+  return <nav className={`planning-unified-navigation planning-original-top${adminOpen ? " planning-admin-navigation" : ""}`} aria-label="Huvudnavigation">
     <div className="planning-unified-left">
       <button type="button" onClick={() => choose(() => { onCloseAdmin?.(); if (onPrevious) onPrevious(); else onNavigate('mina') })}>← {previousLabel}</button>
     </div>
