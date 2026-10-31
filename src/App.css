@@ -7721,3 +7721,31 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
     min-height:20px!important;
   }
 }
+
+/* Centrera Moment + länkar som en grupp när Sida/Uppgift har fler rader.
+   Länkarna stannar direkt under skrivfältet och plus ligger kvar nere till höger. */
+@media screen {
+  #lararvy .lesson .topic-grid > .topic-name:has(> textarea),
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-name:has(> textarea),
+  .calendar-lesson-modal .lesson .topic-grid > .topic-name:has(> textarea) {
+    justify-content:center!important;
+    align-items:stretch!important;
+    padding-bottom:30px!important;
+  }
+  #lararvy .lesson .topic-grid > .topic-name > textarea,
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-name > textarea,
+  .calendar-lesson-modal .lesson .topic-grid > .topic-name > textarea {
+    margin-top:0!important;
+    margin-bottom:0!important;
+    flex-grow:0!important;
+    flex-shrink:0!important;
+  }
+  #lararvy .lesson .topic-grid > .topic-name > .moment-inner-links,
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-name > .moment-inner-links,
+  .calendar-lesson-modal .lesson .topic-grid > .topic-name > .moment-inner-links {
+    margin-top:3px!important;
+    margin-bottom:0!important;
+    flex-grow:0!important;
+    flex-shrink:0!important;
+  }
+}
