@@ -7565,3 +7565,89 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
     position:static!important;
   }
 }
+
+
+/* Momentets länkade resurser ligger längst ned, till vänster om mini-plustecknet. */
+@media screen {
+  #lararvy .lesson .topic-grid > .topic-name > .moment-inner-links,
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-name > .moment-inner-links,
+  .calendar-lesson-modal .lesson .topic-grid > .topic-name > .moment-inner-links {
+    display:flex!important;
+    flex-direction:row!important;
+    flex-wrap:nowrap!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    gap:5px!important;
+    margin-top:auto!important;
+    margin-bottom:0!important;
+    padding:4px 0 0!important;
+    padding-right:30px!important;
+    max-width:100%!important;
+    min-height:24px!important;
+    width:100%!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    scrollbar-width:none!important;
+    box-sizing:border-box!important;
+  }
+  #lararvy .lesson .topic-grid > .topic-name > .moment-inner-links::-webkit-scrollbar,
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-name > .moment-inner-links::-webkit-scrollbar,
+  .calendar-lesson-modal .lesson .topic-grid > .topic-name > .moment-inner-links::-webkit-scrollbar {display:none}
+  #lararvy .lesson .moment-inner-links .topic-link-compact,
+  body > .class-full-week-backdrop .lesson .moment-inner-links .topic-link-compact,
+  .calendar-lesson-modal .lesson .moment-inner-links .topic-link-compact {
+    flex:0 0 auto!important;
+    display:inline-flex!important;
+    align-items:center!important;
+    gap:2px!important;
+  }
+  #lararvy .lesson .moment-inner-links .resource-chip,
+  body > .class-full-week-backdrop .lesson .moment-inner-links .resource-chip,
+  .calendar-lesson-modal .lesson .moment-inner-links .resource-chip {
+    display:inline-flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    gap:2px!important;
+    min-height:20px!important;
+    max-width:112px!important;
+    padding:1px 2px!important;
+    background:transparent!important;
+    border:0!important;
+    box-shadow:none!important;
+    text-decoration:none!important;
+  }
+  #lararvy .lesson .moment-inner-links .resource-chip .resource-icon,
+  body > .class-full-week-backdrop .lesson .moment-inner-links .resource-chip .resource-icon,
+  .calendar-lesson-modal .lesson .moment-inner-links .resource-chip .resource-icon {
+    width:18px!important;
+    height:18px!important;
+    min-width:18px!important;
+    min-height:18px!important;
+    font-size:15px!important;
+    padding:0!important;
+  }
+  #lararvy .lesson .moment-inner-links .resource-chip .resource-label,
+  body > .class-full-week-backdrop .lesson .moment-inner-links .resource-chip .resource-label,
+  .calendar-lesson-modal .lesson .moment-inner-links .resource-chip .resource-label {
+    display:inline-block!important;
+    font-size:9px!important;
+    font-weight:500!important;
+    line-height:1.15!important;
+    color:#50615b!important;
+    max-width:85px!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    text-align:left!important;
+  }
+  #lararvy .lesson .moment-inner-links .topic-link-editor > summary,
+  #lararvy .lesson .moment-inner-links .lesson-bare-link,
+  body > .class-full-week-backdrop .lesson .moment-inner-links .topic-link-editor > summary,
+  body > .class-full-week-backdrop .lesson .moment-inner-links .lesson-bare-link {
+    min-height:20px!important;
+    min-width:20px!important;
+    padding:1px 3px!important;
+    font-size:13px!important;
+    line-height:1!important;
+  }
+}
