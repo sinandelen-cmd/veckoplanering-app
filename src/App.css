@@ -6498,3 +6498,9 @@ html,body,#root {max-width:100%;overflow-x:clip;}
 .planning-unified-navigation .planning-nav-submenu>button:hover,.planning-unified-navigation .planning-nav-submenu>button:focus-visible{background:#e4f0f9!important;}
 .planning-layout>.planning-unified-navigation{overflow:visible!important;}
 @media(max-width:650px){.planning-unified-navigation .planning-nav-submenu{left:0;min-width:195px;}}
+
+/* Visa/Stäng alla veckor som en enda tydlig kontroll i grundplaneringens högra hörn. */
+#lararvy .teacher-week-navigation{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:8px!important;}
+#lararvy .teacher-week-navigation .teacher-all-weeks-inline-toggle{order:99!important;margin-left:auto!important;white-space:nowrap!important;min-height:40px!important;}
+#lararvy .teacher-week-navigation .teacher-all-weeks-inline-toggle[aria-pressed="true"]{background:#e3f1e9!important;border-color:#93c7aa!important;color:#22563b!important;}
+@media(max-width:650px){#lararvy .teacher-week-navigation .teacher-all-weeks-inline-toggle{margin-left:auto!important;font-size:13px!important;padding:8px 10px!important;}}
