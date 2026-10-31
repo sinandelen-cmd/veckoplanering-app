@@ -992,23 +992,13 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
     <div className="class-real-two-weeks-header"><div className="class-week-count-controls" role="group" aria-label="Antal veckor att visa">{[1,2,3].map(n=><button key={n} type="button" className={visibleWeekCount===n?"active":""} aria-pressed={visibleWeekCount===n} onClick={()=>setVisibleWeekCount(n)}>{n} {n===1?"vecka":"veckor"}</button>)}</div></div>
     <div className="class-real-two-weeks-grid" style={{"--class-week-columns":visibleWeekCount}}>{weeks.map((week,_i)=><div className="class-real-week-column" key={week.weekStart}>
       <strong>{week.weekStart===currentStart?'Nuvarande vecka':`Vecka ${calendarWeekNumber(week.weekStart)}`}</strong>
-      <article className="calendar-inline-week class-detailed-week" style={{backgroundColor:weekColor(week.weekStart)}}>
-        <div className="calendar-inline-week-heading"><h2>Vecka {calendarWeekNumber(week.weekStart)}</h2><span>{week.chapter}</span></div>
-        <LessonDetails week={week} entryType={plan.entryType || 'lektion'}
-          onUndo={undoClassLesson} onRedo={redoClassLesson}
-          canUndo={classHistory.current.past.length > 0} canRedo={classHistory.current.future.length > 0}
-          onChange={changes => {
-            const slots = scheduled.filter(item => item.weekStart === week.weekStart)
-            const overrides = {...(group.overrides || {})}
-            ;(changes.lessons || []).forEach((lesson, index) => {
-              const slot = slots[index]
-              if (!slot) return
-              const key = String(slot.lessonNumber - 1)
-              overrides[key] = {...(overrides[key] || {}), lesson}
-            })
-            applyClassOverrides(overrides)
-          }} />
-      </article>
+      <CalendarWeekThumbnail classWeekView week={week} entryType={plan.entryType || 'lektion'} onOpen={()=>setExpandedFullWeek(week.weekStart)} onOpenLesson={lessonIndex=>setExpanded({weekStart:week.weekStart,lessonIndex})}/><div className="class-responsive-week-lessons" aria-label={`Lektioner vecka ${calendarWeekNumber(week.weekStart)}`}>
+        {(week.lessons || []).length ? (week.lessons || []).map((lesson,lessonIndex) => <button type="button" key={lessonIndex} className="class-responsive-lesson" onClick={()=>setExpanded({weekStart:week.weekStart,lessonIndex})}>
+          <strong>{lesson.day || WEEKDAYS[lessonIndex % WEEKDAYS.length]} · Lektion {lessonIndex+1}</strong>
+          <span>{(lesson.topics || []).map(topic=>topic.name).filter(Boolean).join(' · ') || lesson.name || 'Öppna lektionen'}</span>
+        </button>) : <p className="class-responsive-empty">Inga lektioner inlagda denna vecka.</p>}
+        <button type="button" className="class-responsive-open" onClick={()=>setExpandedFullWeek(week.weekStart)}>Öppna hela veckan</button>
+      </div>
     </div>)}</div>
     {expandedFullWeek && createPortal(<div className="class-full-week-backdrop" role="presentation" style={{position:'fixed',inset:0,zIndex:10000,background:'rgba(22,35,45,.45)',display:'flex',alignItems:'center',justifyContent:'center',padding:8}}>
       <section className="class-full-week-panel" role="dialog" aria-modal="true" aria-label={`Hela vecka ${calendarWeekNumber(expandedFullWeek)} för ${className}`} style={{width:'100%',maxWidth:1100,height:'calc(100dvh - 16px)',maxHeight:'calc(100dvh - 16px)',display:'flex',flexDirection:'column',overflow:'hidden',padding:8,background:'#fff',borderRadius:12}}>
