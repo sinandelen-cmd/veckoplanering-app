@@ -1235,7 +1235,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       const boundary = top + 38
       const first = sections[0].getBoundingClientRect()
       const last = sections[sections.length - 1].getBoundingClientRect()
-      if (first.top > boundary || last.bottom <= boundary) { indicator.style.display = 'none'; return }
+      if (last.bottom <= boundary) { indicator.style.display = 'none'; return }
       const section = sections.find(el => el.getBoundingClientRect().bottom > boundary) || sections[sections.length - 1]
       const groups = [...section.querySelectorAll('.chapter-week-group')]
       const current = groups.find(el => el.getBoundingClientRect().bottom > boundary) || groups[groups.length - 1]
