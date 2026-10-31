@@ -7375,3 +7375,8 @@ body > .class-full-week-backdrop .week-modal-navigation button.current{backgroun
 body > .class-full-week-backdrop .week-modal-navigation button[aria-label="Föregående vecka"],body > .class-full-week-backdrop .week-modal-navigation button[aria-label="Nästa vecka"]{border-radius:50%!important;min-width:40px!important;width:40px!important;height:40px!important;padding:0!important;font-size:18px!important}
 body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:.35!important}
 @media(max-width:480px){body > .class-full-week-backdrop .week-modal-navigation{gap:4px!important}body > .class-full-week-backdrop .week-modal-navigation button{padding:7px 8px!important;min-height:34px!important;font-size:11px!important}body > .class-full-week-backdrop .week-modal-navigation button[aria-label="Föregående vecka"],body > .class-full-week-backdrop .week-modal-navigation button[aria-label="Nästa vecka"]{min-width:32px!important;width:32px!important;height:34px!important;font-size:14px!important}}
+
+/* Diskret synlighetsknapp direkt vid veckonumret. */
+#lararvy .week-visibility-eye{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;width:36px!important;height:36px!important;min-height:36px!important;padding:0!important;border:1px solid #c7d5e2!important;border-radius:9px!important;background:#fff!important;color:#2d4a63!important;font-size:19px!important;line-height:1!important;box-shadow:none!important}
+#lararvy .week-visibility-eye[aria-pressed="false"]{opacity:.55!important}
+#lararvy .week-visibility-eye:focus-visible{outline:2px solid #2d4a63!important;outline-offset:2px!important}
