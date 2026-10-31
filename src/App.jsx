@@ -861,17 +861,15 @@ function nationalExamsForPlan(plan) {
   return NATIONAL_EXAMS_2026_27.filter(item => item.grade === grade && matchesSubject(item))
 }
 
-function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson, fullscreen = false }) {
+function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson }) {
   const frame = useRef(null)
   const original = useRef(null)
   const [dimensions, setDimensions] = useState({ scale: 0.25, height: 380 })
   useEffect(() => {
     const resize = () => {
       if (!frame.current || !original.current) return
-      const widthScale = frame.current.clientWidth / 960
-      const heightScale = fullscreen ? frame.current.clientHeight / Math.max(1, original.current.offsetHeight) : widthScale
-      const scale = Math.max(0.01, Math.min(widthScale, heightScale))
-      const height = fullscreen ? frame.current.clientHeight : original.current.offsetHeight * scale
+      const scale = frame.current.clientWidth / 960
+      const height = original.current.offsetHeight * scale
       setDimensions(prev => Math.abs(prev.height - height) > 1 || Math.abs(prev.scale - scale) > 0.001 ? { scale, height } : prev)
     }
     resize()
@@ -879,11 +877,11 @@ function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson, fullscre
     if (observer) { observer.observe(frame.current); observer.observe(original.current) }
     window.addEventListener('resize', resize)
     return () => { observer?.disconnect(); window.removeEventListener('resize', resize) }
-  }, [week, fullscreen])
-  return <div className={"calendar-real-week-thumbnail" + (fullscreen ? " class-full-week-thumbnail" : "")}>
-    {!fullscreen && <div className="calendar-real-week-label">Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}<button type="button" onClick={onOpen} aria-label="Visa hela veckan">⛶ Förstora veckan</button></div>}
-    <div className="calendar-real-week-frame" ref={frame} style={{ height: dimensions.height }} onClick={event => { if (!fullscreen) { onOpen(); return } const lesson = event.target.closest(".lesson"); if (lesson) { const lessons = Array.from(event.currentTarget.querySelectorAll(".lesson")); onOpenLesson(lessons.indexOf(lesson)) } }} role="button" tabIndex={0} aria-label={fullscreen ? "Hela veckan – tryck på en lektion för att redigera" : "Öppna hela veckan"} onKeyDown={event => { if (event.key === "Enter") onOpen() }}>
-      <div className="calendar-real-week-original" ref={original} style={{ transform: `scale(${dimensions.scale})`, left: fullscreen ? `max(0px, calc((100% - ${960 * dimensions.scale}px) / 2))` : 0 }} aria-hidden={!fullscreen} {...(!fullscreen ? {inert: ""} : {})}>
+  }, [week])
+  return <div className="calendar-real-week-thumbnail">
+    <div className="calendar-real-week-label">Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}<button type="button" onClick={onOpen} aria-label="Visa hela veckan">⛶ Förstora veckan</button></div>
+    <div className="calendar-real-week-frame" ref={frame} style={{ height: dimensions.height }} onClick={event => { const lesson = event.target.closest(".lesson"); if (lesson) { const lessons = Array.from(event.currentTarget.querySelectorAll(".lesson")); onOpenLesson(lessons.indexOf(lesson)) } else onOpen() }} role="button" tabIndex={0} aria-label="Välj lektion att redigera" onKeyDown={event => { if (event.key === "Enter") onOpen() }}>
+      <div className="calendar-real-week-original" ref={original} style={{ transform: `scale(${dimensions.scale})` }} aria-hidden="true" inert="">
         <article className="calendar-inline-week" style={{ backgroundColor: weekColor(week.weekStart) }}>
           <div className="calendar-inline-week-heading"><h2>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</h2><span>{week.chapter}</span></div>
           <LessonDetails week={week} entryType={entryType} onChange={() => {}} />
@@ -922,9 +920,9 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
     <div className="class-real-two-weeks-header"><h2>{className} · Veckoplanering</h2><span>Standard: föregående och nuvarande vecka</span><div className="class-week-count-controls" role="group" aria-label="Antal veckor att visa">{[1,2,3].map(n=><button key={n} type="button" className={visibleWeekCount===n?"active":""} aria-pressed={visibleWeekCount===n} onClick={()=>setVisibleWeekCount(n)}>{n} {n===1?"vecka":"veckor"}</button>)}</div></div>
     <div className="class-real-two-weeks-grid" style={{"--class-week-columns":visibleWeekCount}}>{weeks.map((week,_i)=><div className="class-real-week-column" key={week.weekStart}>
       <strong>{week.weekStart===currentStart?'Nuvarande vecka':`Vecka ${calendarWeekNumber(week.weekStart)}`}</strong>
-      <CalendarWeekThumbnail week={week} entryType={plan.entryType || 'lektion'} onOpen={()=>{setExpanded(null);setExpandedFullWeek(week.weekStart)}} onOpenLesson={()=>{setExpanded(null);setExpandedFullWeek(week.weekStart)}}/>
+      <CalendarWeekThumbnail week={week} entryType={plan.entryType || 'lektion'} onOpen={()=>setExpandedFullWeek(week.weekStart)} onOpenLesson={lessonIndex=>setExpanded({weekStart:week.weekStart,lessonIndex})}/>
     </div>)}</div>
-    {expandedFullWeek && <div className="class-full-week-backdrop" role="presentation"><section className="class-full-week-panel" role="dialog" aria-modal="true" aria-label={`Hela vecka ${calendarWeekNumber(expandedFullWeek)} för ${className}`}><div className="class-full-week-header"><h3>{className} · Vecka {calendarWeekNumber(expandedFullWeek)} · Alla lektioner</h3><button type="button" className="secondary" onClick={()=>setExpandedFullWeek(null)}>Stäng veckan ×</button></div><CalendarWeekThumbnail fullscreen week={weeks.find(w=>w.weekStart===expandedFullWeek)} entryType={plan.entryType||'lektion'} onOpen={()=>{}} onOpenLesson={lessonIndex=>{setExpanded({weekStart:expandedFullWeek,lessonIndex});setExpandedFullWeek(null)}} /><div className="class-full-week-footer"><button type="button" className="class-lesson-done-icon" aria-label="Spara och minska veckan" title="Spara och minska veckan" disabled={saving||busy} onClick={async()=>{setSaving(true);try{const ok=await onSave?.();if(ok===true)setExpandedFullWeek(null)}finally{setSaving(false)}}}>{saving||busy?"…":"✓"}</button></div></section></div>}
+    {expandedFullWeek && <div className="class-full-week-backdrop" role="presentation"><section className="class-full-week-panel" role="dialog" aria-modal="true" aria-label={`Hela vecka ${calendarWeekNumber(expandedFullWeek)} för ${className}`}><div className="class-full-week-header"><h3>{className} · Vecka {calendarWeekNumber(expandedFullWeek)}</h3><button type="button" className="secondary" onClick={()=>setExpandedFullWeek(null)}>⊟ Minska veckan</button></div><LessonDetails week={weeks.find(w=>w.weekStart===expandedFullWeek)} entryType={plan.entryType||"lektion"} onChange={changes=>{const slots=scheduled.filter(item=>item.weekStart===expandedFullWeek);const overrides={...(group.overrides||{})};(changes.lessons||[]).forEach((lesson,i)=>{const slot=slots[i];if(!slot)return;const key=String(slot.lessonNumber-1);overrides[key]={...(overrides[key]||{}),lesson}});onChangeClassGroups?.((plan.classGroups||[]).map(g=>g.name===className?{...g,overrides}:g))}}/><div className="class-full-week-footer"><button type="button" className="class-lesson-done-icon" aria-label="Spara och minska veckan" title="Spara och minska veckan" disabled={saving||busy} onClick={async()=>{setSaving(true);try{const ok=await onSave?.();if(ok===true)setExpandedFullWeek(null)}finally{setSaving(false)}}}>{saving||busy?"…":"✓"}</button></div></section></div>}
     {expanded && <div className="calendar-lesson-modal-backdrop" role="presentation"><section className="calendar-lesson-modal" role="dialog" aria-modal="true" aria-label="Redigera klassens lektion">
       <div className="calendar-lesson-modal-header"><h3>Vecka {calendarWeekNumber(expanded.weekStart)}{expanded.lessonIndex!==null?' · Lektion '+(expanded.lessonIndex+1):''} · {className}</h3><button type="button" onClick={()=>setExpanded(null)}>Stäng</button></div>
       <LessonDetails week={weeks.find(w=>w.weekStart===expanded.weekStart)} entryType={plan.entryType||'lektion'} onlyLessonIndex={expanded.lessonIndex} onChange={changes=>{
@@ -2720,8 +2718,8 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
             return <>{showDay && <span>{dayLabel}</span>}{showDay && showLesson && ' · '}{showLesson && <span>{name}</span>}{lesson.assessment && <> · <span className="lesson-heading-assessment">{lesson.assessment.type === 'Egen benämning' ? (lesson.assessment.customType || 'Prov') : (lesson.assessment.type || 'Prov')}</span></>}{lessonDayDate(week.weekStart, day) && <span className="lesson-day-date"> · {lessonDayDate(week.weekStart, day)}</span>}</>
           })()}
         </h4>}
-        {editable && entryType !== 'dag' && <div className="lesson-reorder-controls"><button type="button" disabled={i === 0} aria-label={`Flytta lektion ${i + 1} uppåt`} onClick={() => moveLesson(i, -1)}><span aria-hidden="true">↑</span></button><button type="button" disabled={i === lessons.length - 1} aria-label={`Flytta lektion ${i + 1} nedåt`} onClick={() => moveLesson(i, 1)}><span aria-hidden="true">↓</span></button></div>}
-        {editable && <button type="button" className="remove-small" onClick={() => { if (!(lesson.topics || []).some(topic => topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm(entryType === 'dag' ? 'Ta bort dagen och allt innehåll i den?' : 'Ta bort lektionen och allt innehåll i den?')) changeLessons(entryType === 'dag' ? lessons.filter((_, index) => index !== i) : normalizeLessonOrder(lessons.filter((_, index) => index !== i))) }} aria-label={`Ta bort ${entryType === 'dag' ? 'dag' : 'lektion'} ${i+1}`} title="Ta bort lektion"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15M10 10v7M14 10v7"/></svg></button>}
+        {editable && entryType !== 'dag' && <div className="lesson-reorder-controls"><button type="button" disabled={i === 0} aria-label={`Flytta lektion ${i + 1} uppåt`} onClick={() => moveLesson(i, -1)}>↑ Flytta upp</button><button type="button" disabled={i === lessons.length - 1} aria-label={`Flytta lektion ${i + 1} nedåt`} onClick={() => moveLesson(i, 1)}>↓ Flytta ned</button></div>}
+        {editable && <button type="button" className="remove-small" onClick={() => { if (!(lesson.topics || []).some(topic => topic.name?.trim() || topic.pages?.some(value => String(value).trim()) || topic.assignments?.some(value => String(value).trim()) || topic.links?.some(link => (typeof link === 'string' ? link : link?.url)?.trim())) || window.confirm(entryType === 'dag' ? 'Ta bort dagen och allt innehåll i den?' : 'Ta bort lektionen och allt innehåll i den?')) changeLessons(entryType === 'dag' ? lessons.filter((_, index) => index !== i) : normalizeLessonOrder(lessons.filter((_, index) => index !== i))) }}>× Ta bort {entryType === 'dag' ? 'dag' : 'lektion'}</button>}
       </div>
       {lesson.assessment && <div className="lesson-assessment-card" role="note">
         <strong>📝 {lesson.assessment.type === 'Egen benämning' ? (lesson.assessment.customType || 'Prov/test') : (lesson.assessment.type || 'Prov')}</strong>
