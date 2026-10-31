@@ -6595,3 +6595,13 @@ html,body,#root {max-width:100%;overflow-x:clip;}
 #lararvy .smart-lesson-modal-pager>button {display:flex!important;align-items:center!important;justify-content:center!important;width:42px!important;height:38px!important;font-size:23px!important;line-height:1!important;padding:0!important;border-radius:9px!important;}
 #lararvy .smart-lesson-modal-history {display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;}
 #lararvy .smart-lesson-modal-history>button {min-height:32px!important;padding:5px 10px!important;font-size:12px!important;}
+
+/* Ikonåtgärder direkt i lektionens rubrikrad, utan textknappar. */
+#lararvy .smart-lesson-dialog .lesson-heading {display:flex!important;align-items:center!important;flex-wrap:nowrap!important;gap:5px!important;min-width:0!important;}
+#lararvy .smart-lesson-dialog .lesson-heading .lesson-edit-heading {flex:1 1 auto!important;min-width:0!important;padding:8px!important;}
+#lararvy .smart-lesson-dialog .lesson-reorder-controls {display:inline-flex!important;flex:0 0 auto!important;gap:2px!important;margin:0!important;}
+#lararvy .smart-lesson-dialog .lesson-reorder-controls button,#lararvy .smart-lesson-dialog .lesson-inline-history button,#lararvy .smart-lesson-dialog .lesson-heading>.remove-small {display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;width:29px!important;min-width:29px!important;height:32px!important;min-height:32px!important;padding:0!important;margin:0!important;background:transparent!important;border:0!important;border-radius:6px!important;box-shadow:none!important;font-size:19px!important;line-height:1!important;color:#50545c!important;}
+#lararvy .smart-lesson-dialog .lesson-inline-history {display:inline-flex!important;gap:2px!important;flex:0 0 auto!important;}
+#lararvy .smart-lesson-dialog .lesson-heading>.remove-small {color:#b14a4a!important;}
+#lararvy .smart-lesson-dialog .lesson-heading button:disabled {opacity:.3!important;}
+@media(max-width:650px){#lararvy .smart-lesson-dialog .lesson-heading {gap:2px!important;}#lararvy .smart-lesson-dialog .lesson-reorder-controls button,#lararvy .smart-lesson-dialog .lesson-inline-history button,#lararvy .smart-lesson-dialog .lesson-heading>.remove-small{width:26px!important;min-width:26px!important;height:30px!important;font-size:17px!important;}#lararvy .smart-lesson-dialog .lesson-heading .lesson-edit-heading{font-size:12px!important;}}
