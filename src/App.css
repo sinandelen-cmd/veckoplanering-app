@@ -6552,3 +6552,20 @@ html,body,#root {max-width:100%;overflow-x:clip;}
  #lararvy .teacher-months-focused .week-card .lesson{max-width:100%!important;}
  #lararvy .teacher-week-navigation .teacher-close-week{min-width:94px!important;}
 }
+
+
+/* Testgren: tydligt kapitel med diskreta begrepp i samma ljusorange ruta. */
+#lararvy .teacher-chapter-sticky {background:#fce3c4!important;border-radius:12px!important;padding:12px 14px!important;box-shadow:none!important;}
+#lararvy .teacher-chapter-sticky .chapter-heading {font-size:clamp(1.35rem,4.5vw,1.75rem)!important;font-weight:800!important;margin:0 0 7px!important;line-height:1.2!important;background:transparent!important;border:0!important;padding:0!important;box-shadow:none!important;}
+#lararvy .teacher-chapter-sticky .chapter-vocabulary {background:transparent!important;border:0!important;padding:0!important;margin:0!important;box-shadow:none!important;}
+#lararvy .teacher-chapter-sticky .chapter-vocabulary-list {display:flex!important;flex-wrap:wrap!important;gap:4px!important;}
+#lararvy .teacher-chapter-sticky .chapter-vocabulary-term {font-size:10px!important;line-height:1.2!important;padding:3px 6px!important;border-radius:5px!important;}
+#lararvy .teacher-pinned-chapter-shell {background:#fce3c4!important;border-radius:12px!important;}
+#lararvy .teacher-pinned-chapter-heading {font-size:clamp(1.35rem,4.5vw,1.75rem)!important;font-weight:800!important;}
+#lararvy .teacher-pinned-chapter-shell .chapter-vocabulary {background:transparent!important;border:0!important;padding:0!important;margin:0!important;}
+#lararvy .teacher-pinned-chapter-shell .chapter-vocabulary-term {font-size:10px!important;padding:3px 6px!important;}
+#lararvy .smart-lesson-modal-navigation {display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;padding:8px 4px;border-bottom:1px solid #e5e7eb;}
+#lararvy .smart-lesson-modal-navigation button {min-width:38px;min-height:36px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#1f2937;font-size:16px;cursor:pointer;}
+#lararvy .smart-lesson-modal-navigation button:disabled {opacity:.4;cursor:default;}
+#lararvy .smart-lesson-modal-navigation span {font-size:13px;font-weight:700;}
+@media(max-width:750px){#lararvy .teacher-month-weeks .lesson-grid,#lararvy .teacher-month-weeks .lessons-grid,#lararvy .teacher-month-weeks .lesson-cards {grid-template-columns:minmax(0,1fr)!important;}#lararvy .teacher-month-weeks .lesson-card {width:100%!important;min-width:0!important;}}
