@@ -876,7 +876,7 @@ function nationalExamsForPlan(plan) {
   return NATIONAL_EXAMS_2026_27.filter(item => item.grade === grade && matchesSubject(item))
 }
 
-function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson }) {
+function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson, classWeekView = false }) {
   const frame = useRef(null)
   const original = useRef(null)
   const [dimensions, setDimensions] = useState({ scale: 0.25, height: 380 })
@@ -885,7 +885,7 @@ function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson }) {
       if (!frame.current || !original.current) return
       const phone = window.innerWidth < 700
       const fitRows = Math.ceil(4 / bestThumbCols(window.innerWidth, window.innerHeight))
-      const fitHeight = phone ? Infinity : Math.max(120, (window.innerHeight - 330) / fitRows) / Math.max(1, original.current.offsetHeight)
+      const fitHeight = (phone || classWeekView) ? Infinity : Math.max(120, (window.innerHeight - 330) / fitRows) / Math.max(1, original.current.offsetHeight)
       const scale = Math.min(frame.current.clientWidth / 960, fitHeight)
       const height = original.current.offsetHeight * scale
       setDimensions(prev => Math.abs(prev.height - height) > 1 || Math.abs(prev.scale - scale) > 0.001 ? { scale, height } : prev)
@@ -895,7 +895,7 @@ function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson }) {
     if (observer) { observer.observe(frame.current); observer.observe(original.current) }
     window.addEventListener('resize', resize)
     return () => { observer?.disconnect(); window.removeEventListener('resize', resize) }
-  }, [week])
+  }, [week, classWeekView])
   return <div className="calendar-real-week-thumbnail">
     <div className="calendar-real-week-label"><button type="button" className="calendar-week-heading-open" onClick={onOpen} aria-label={`Visa hela vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`} title="Visa hela veckan"><span>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</span><span className="calendar-week-expand-icon" aria-hidden="true">⛶ Öppna</span></button></div>
     <div className="calendar-real-week-frame" ref={frame} style={{ height: dimensions.height }} onClick={event => { const lesson = event.target.closest(".lesson"); if (lesson) { onOpenLesson(Number(lesson.dataset.lessonIndex)) } else { const lessons = Array.from(event.currentTarget.querySelectorAll(".lesson")); if (lessons.length) { const y = event.clientY; const nearest = lessons.reduce((best, item) => Math.abs(item.getBoundingClientRect().top + item.getBoundingClientRect().height/2 - y) < Math.abs(best.getBoundingClientRect().top + best.getBoundingClientRect().height/2 - y) ? item : best, lessons[0]); onOpenLesson(Number(nearest.dataset.lessonIndex)) } } }} role="button" tabIndex={0} aria-label="Välj lektion att redigera" onKeyDown={event => { if (event.key === "Enter") onOpenLesson(0) }}>
@@ -992,7 +992,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
     <div className="class-real-two-weeks-header"><div className="class-week-count-controls" role="group" aria-label="Antal veckor att visa">{[1,2,3].map(n=><button key={n} type="button" className={visibleWeekCount===n?"active":""} aria-pressed={visibleWeekCount===n} onClick={()=>setVisibleWeekCount(n)}>{n} {n===1?"vecka":"veckor"}</button>)}</div></div>
     <div className="class-real-two-weeks-grid" style={{"--class-week-columns":visibleWeekCount}}>{weeks.map((week,_i)=><div className="class-real-week-column" key={week.weekStart}>
       <strong>{week.weekStart===currentStart?'Nuvarande vecka':`Vecka ${calendarWeekNumber(week.weekStart)}`}</strong>
-      <CalendarWeekThumbnail week={week} entryType={plan.entryType || 'lektion'} onOpen={()=>setExpandedFullWeek(week.weekStart)} onOpenLesson={lessonIndex=>setExpanded({weekStart:week.weekStart,lessonIndex})}/>
+      <CalendarWeekThumbnail classWeekView week={week} entryType={plan.entryType || 'lektion'} onOpen={()=>setExpandedFullWeek(week.weekStart)} onOpenLesson={lessonIndex=>setExpanded({weekStart:week.weekStart,lessonIndex})}/>
     </div>)}</div>
     {expandedFullWeek && createPortal(<div className="class-full-week-backdrop" role="presentation" style={{position:'fixed',inset:0,zIndex:10000,background:'rgba(22,35,45,.45)',display:'flex',alignItems:'center',justifyContent:'center',padding:8}}>
       <section className="class-full-week-panel" role="dialog" aria-modal="true" aria-label={`Hela vecka ${calendarWeekNumber(expandedFullWeek)} för ${className}`} style={{width:'100%',maxWidth:1100,height:'calc(100dvh - 16px)',maxHeight:'calc(100dvh - 16px)',display:'flex',flexDirection:'column',overflow:'hidden',padding:8,background:'#fff',borderRadius:12}}>
