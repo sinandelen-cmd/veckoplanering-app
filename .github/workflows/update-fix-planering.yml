@@ -1,5 +1,5 @@
 name: Återställ fix-planering till tidigare fungerande version
-# ÅTERSTÄLLNING: använd tidigare fungerande preview 105 med korrekta inloggningsuppgifter.
+# ÅTERSTÄLLNING: exakt samma gränssnitt som preview 111 före felsökningen, med giltig Supabase-nyckel.
 on:
   workflow_dispatch:
   push:
@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 2d494e0142304b214a79ec50c60be9e9c307444d
+          ref: 69a03c6bcecc5eab9ef3ef57a18d6fd31ae75917
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -41,7 +41,7 @@ jobs:
             process.stdout.write(token);
           ')"
           export CLOUDFLARE_API_TOKEN
-          npx --yes wrangler@4 preview --name "fix/planering" --message "Återställ testversion 105 från 31 oktober med rättad Supabase-inloggning"
+          npx --yes wrangler@4 preview --name "fix/planering" --message "Återställ ursprungliga testversion 111 med giltig Supabase-nyckel"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: 1117b3ec07a0dd6de08ca8ccb477f269
