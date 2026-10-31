@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 69a03c6bcecc5eab9ef3ef57a18d6fd31ae75917
+          ref: f85d912120d7b8b1ae26ae9a175390d00e917eae
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -41,7 +41,7 @@ jobs:
             process.stdout.write(token);
           ')"
           export CLOUDFLARE_API_TOKEN
-          npx --yes wrangler@4 preview --name "fix/planering" --message "Återställ ursprungliga testversion 111 med giltig Supabase-nyckel"
+          npx --yes wrangler@4 preview --name "fix/planering" --message "Återställ ursprungliga versionen före chatten"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: 1117b3ec07a0dd6de08ca8ccb477f269
