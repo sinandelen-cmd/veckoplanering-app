@@ -6533,3 +6533,8 @@ html,body,#root {max-width:100%;overflow-x:clip;}
 #lararvy .calendar-week-heading-open:focus-visible{outline:3px solid #287cba!important;outline-offset:-3px!important;}
 #lararvy .calendar-week-expand-icon{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 28px!important;width:28px!important;height:28px!important;border:1px solid #b6cee0!important;border-radius:8px!important;background:#f8fcff!important;color:#245477!important;font-size:20px!important;line-height:1!important;}
 #lararvy .calendar-week-heading-open:hover .calendar-week-expand-icon{background:#d9ebfa!important;}
+
+/* Veckans kompakta öppna-åtgärd i högra hörnet. */
+#lararvy .calendar-week-heading-open{min-height:43px!important;gap:8px!important;}
+#lararvy .calendar-week-expand-icon{flex:0 0 auto!important;width:auto!important;height:auto!important;min-height:27px!important;max-width:58%!important;padding:4px 8px!important;white-space:nowrap!important;font-size:12px!important;font-weight:700!important;letter-spacing:0!important;}
+@media(max-width:680px){#lararvy .calendar-week-expand-icon{font-size:10px!important;padding:4px 5px!important;}}
