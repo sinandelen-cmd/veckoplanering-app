@@ -2,8 +2,7 @@ export default function Navigation({ active = 'mina', onAllWeeks, onNavigate, on
   if (!onNavigate) return <nav className="public-navigation" aria-label="Huvudmeny"><a href="/">Årsplanering</a></nav>
   const items = [
     { id: 'mina', title: 'Startsida', run: () => onNavigate('mina') },
-    { id: 'arsplan', title: 'Planering', run: () => onNavigate('arsplan', true) },
-    { id: 'bibliotek', title: 'Mina planeringar', run: () => onNavigate('bibliotek') },
+    { id: 'bibliotek', title: 'Planering', run: () => onNavigate('bibliotek') },
     { id: 'calendar', title: 'Månadsvy', run: () => calendarOpen ? onNavigate('arsplan') : onToggleCalendar?.() },
     ...(onAllWeeks ? [{ id: 'weeks', title: 'Alla veckor', run: onAllWeeks }] : []),
   ]
