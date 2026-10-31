@@ -6569,3 +6569,17 @@ html,body,#root {max-width:100%;overflow-x:clip;}
 #lararvy .smart-lesson-modal-navigation button:disabled {opacity:.4;cursor:default;}
 #lararvy .smart-lesson-modal-navigation span {font-size:13px;font-weight:700;}
 @media(max-width:750px){#lararvy .teacher-month-weeks .lesson-grid,#lararvy .teacher-month-weeks .lessons-grid,#lararvy .teacher-month-weeks .lesson-cards {grid-template-columns:minmax(0,1fr)!important;}#lararvy .teacher-month-weeks .lesson-card {width:100%!important;min-width:0!important;}}
+
+
+/* Testgren: diskret och konsekvent veckoverktygsrad. */
+#lararvy .teacher-week-controls {display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:7px!important;}
+#lararvy .teacher-week-controls .week-heading-visibility {margin-left:auto!important;display:inline-flex!important;align-items:center!important;gap:5px!important;flex:0 0 auto!important;width:auto!important;max-width:100%!important;padding:5px 8px!important;min-height:32px!important;border-radius:8px!important;font-size:11px!important;font-weight:650!important;line-height:1.15!important;box-shadow:none!important;}
+#lararvy .teacher-week-controls .week-heading-visibility input {width:15px!important;height:15px!important;margin:0!important;accent-color:#277a61!important;}
+#lararvy .teacher-week-controls .week-heading-visibility span {font-size:11px!important;white-space:nowrap!important;}
+#lararvy .teacher-week-controls button {border-radius:8px!important;box-shadow:none!important;}
+#lararvy .teacher-week-history-actions button {font-size:12px!important;min-height:32px!important;padding:5px 8px!important;}
+#lararvy .teacher-week-collapse-toggle {min-width:32px!important;min-height:32px!important;padding:4px!important;}
+/* Veckans redigerbara nummer följer innehållet och får inte vara klistrat över lektionerna. */
+#lararvy .teacher-month-weeks .week-top {position:static!important;top:auto!important;}
+#lararvy .teacher-month-weeks .teacher-week-controls {position:static!important;top:auto!important;}
+@media(max-width:650px){#lararvy .teacher-week-controls .week-heading-visibility{margin-left:auto!important;}#lararvy .teacher-week-controls .teacher-week-elevvisning{flex:1 1 160px!important;min-width:0!important;}#lararvy .teacher-week-controls .teacher-week-elevvisning select{max-width:100%!important;}}
