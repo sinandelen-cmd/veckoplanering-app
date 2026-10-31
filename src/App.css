@@ -6005,3 +6005,78 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .class-full-week-panel > .class-full-week-thumbnail .lesson {
   cursor:pointer;
 }
+
+/* Verktygsikoner: endast själva symbolen är synlig. Tryckyta och
+   tangentbordsfokus behålls för tillgänglighet på mobil och dator. */
+#lararvy .lesson-reorder-controls button,
+#lararvy .lesson-heading > button.remove-small,
+#lararvy .lesson .topic .remove-small,
+#lararvy .lesson .topic .lesson-bare-icon,
+#lararvy .lesson .topic .remove-topic-column,
+#lararvy .class-lesson-done-icon,
+.calendar-lesson-modal .lesson-reorder-controls button,
+.calendar-lesson-modal .lesson-heading > button.remove-small,
+.calendar-lesson-modal .lesson .topic .remove-small,
+.calendar-lesson-modal .lesson .topic .lesson-bare-icon,
+.calendar-lesson-modal .lesson .topic .remove-topic-column {
+  appearance: none !important;
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  outline-offset: 2px;
+  width: auto !important;
+  height: auto !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  margin: 0 !important;
+  padding: 4px !important;
+  display: inline-flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  flex: 0 0 auto;
+  line-height: 1 !important;
+  cursor: pointer;
+}
+#lararvy .lesson-reorder-controls button,
+.calendar-lesson-modal .lesson-reorder-controls button {
+  font-size: 27px !important;
+  color: #86565e !important;
+}
+#lararvy .lesson-heading > button.remove-small,
+#lararvy .lesson .topic .remove-small,
+#lararvy .lesson .topic .remove-topic-column,
+.calendar-lesson-modal .lesson-heading > button.remove-small,
+.calendar-lesson-modal .lesson .topic .remove-small,
+.calendar-lesson-modal .lesson .topic .remove-topic-column {
+  color: #9b3f4b !important;
+}
+#lararvy .lesson .topic .lesson-bare-icon,
+.calendar-lesson-modal .lesson .topic .lesson-bare-icon {
+  color: #52966e !important;
+  font-size: 27px !important;
+}
+#lararvy .lesson-reorder-controls button:hover,
+#lararvy .lesson-heading > button.remove-small:hover,
+#lararvy .lesson .topic .remove-small:hover,
+#lararvy .lesson .topic .lesson-bare-icon:hover,
+#lararvy .class-lesson-done-icon:hover,
+.calendar-lesson-modal .lesson-reorder-controls button:hover,
+.calendar-lesson-modal .lesson-heading > button.remove-small:hover,
+.calendar-lesson-modal .lesson .topic .remove-small:hover,
+.calendar-lesson-modal .lesson .topic .lesson-bare-icon:hover {
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: brightness(.8);
+}
+#lararvy .lesson-reorder-controls button:focus-visible,
+#lararvy .lesson-heading > button.remove-small:focus-visible,
+#lararvy .lesson .topic .remove-small:focus-visible,
+#lararvy .lesson .topic .lesson-bare-icon:focus-visible,
+.calendar-lesson-modal .lesson-reorder-controls button:focus-visible,
+.calendar-lesson-modal .lesson-heading > button.remove-small:focus-visible,
+.calendar-lesson-modal .lesson .topic .remove-small:focus-visible,
+.calendar-lesson-modal .lesson .topic .lesson-bare-icon:focus-visible {
+  outline: 2px solid #2563eb !important;
+}
