@@ -8025,3 +8025,87 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
     flex:0 0 auto!important;
   }
 }
+
+/* Fix: stoppa länknamn från att brytas en bokstav per rad och lämna momentkortet.
+   Varje länk får en egen rad med ikon + fullt namn + liten redigeringspenna. */
+@media screen {
+  #lararvy .lesson .topic-name > .moment-inner-links,
+  body > .class-full-week-backdrop .lesson .topic-name > .moment-inner-links,
+  .calendar-lesson-modal .lesson .topic-name > .moment-inner-links {
+    display:flex!important;
+    flex-direction:column!important;
+    flex-wrap:nowrap!important;
+    align-items:stretch!important;
+    gap:3px!important;
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    overflow:visible!important;
+    padding:4px 0 0!important;
+    margin-top:3px!important;
+  }
+  #lararvy .lesson .moment-inner-links > .moment-link-item,
+  body > .class-full-week-backdrop .lesson .moment-inner-links > .moment-link-item,
+  .calendar-lesson-modal .lesson .moment-inner-links > .moment-link-item {
+    display:flex!important;
+    flex-direction:row!important;
+    flex-wrap:wrap!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    flex:0 0 auto!important;
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+    gap:3px!important;
+    overflow:visible!important;
+  }
+  #lararvy .lesson .moment-link-item > .resource-chip,
+  body > .class-full-week-backdrop .lesson .moment-link-item > .resource-chip,
+  .calendar-lesson-modal .lesson .moment-link-item > .resource-chip {
+    display:flex!important;
+    flex:1 1 0!important;
+    width:auto!important;
+    min-width:0!important;
+    max-width:100%!important;
+    flex-direction:row!important;
+    flex-wrap:nowrap!important;
+    align-items:flex-start!important;
+    white-space:normal!important;
+    overflow:visible!important;
+    gap:4px!important;
+  }
+  #lararvy .lesson .moment-link-item .resource-chip > .resource-label,
+  body > .class-full-week-backdrop .lesson .moment-link-item .resource-chip > .resource-label,
+  .calendar-lesson-modal .lesson .moment-link-item .resource-chip > .resource-label {
+    display:block!important;
+    flex:1 1 auto!important;
+    min-width:0!important;
+    width:auto!important;
+    max-width:none!important;
+    height:auto!important;
+    white-space:normal!important;
+    word-break:normal!important;
+    overflow-wrap:break-word!important;
+    text-overflow:clip!important;
+    overflow:visible!important;
+    line-height:1.3!important;
+  }
+  #lararvy .lesson .moment-link-item > .moment-link-edit-button,
+  body > .class-full-week-backdrop .lesson .moment-link-item > .moment-link-edit-button,
+  .calendar-lesson-modal .lesson .moment-link-item > .moment-link-edit-button {
+    flex:0 0 22px!important;
+  }
+  #lararvy .lesson .moment-link-item > .moment-link-form,
+  body > .class-full-week-backdrop .lesson .moment-link-item > .moment-link-form,
+  .calendar-lesson-modal .lesson .moment-link-item > .moment-link-form {
+    flex:1 0 100%!important;
+    min-width:0!important;
+  }
+  #lararvy .lesson .moment-inner-links > .lesson-bare-link,
+  body > .class-full-week-backdrop .lesson .moment-inner-links > .lesson-bare-link,
+  .calendar-lesson-modal .lesson .moment-inner-links > .lesson-bare-link {
+    flex:0 0 auto!important;
+    align-self:flex-start!important;
+  }
+}
