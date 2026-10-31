@@ -6171,3 +6171,87 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 /* Startsidan har ingen övermeny förrän Planering öppnas. */
 .planning-layout.view-home > .shell { grid-row:1 / 3!important; }
 @media(max-width:750px) { .planning-layout.view-home > .shell { width:100%!important; } }
+
+/* Enbart övre meny – ingen sidomeny eller reserverad sidokolumn. */
+.planning-layout,
+.planning-layout.view-home {
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:auto minmax(0,1fr)!important;
+  column-gap:0!important;
+  width:100%!important;
+  max-width:100%!important;
+}
+.planning-layout > .planning-unified-navigation.planning-top-only {
+  grid-column:1!important;
+  grid-row:1!important;
+  display:flex!important;
+  position:sticky!important;
+  top:0!important;
+  z-index:1200!important;
+  width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  padding:9px 16px!important;
+  gap:14px!important;
+  align-items:center!important;
+  flex-wrap:wrap!important;
+  background:#dbe9f7!important;
+  border-bottom:1px solid #bfd4e8!important;
+  color:#234661!important;
+}
+.planning-layout > .shell,
+.planning-layout.view-home > .shell {
+  grid-column:1!important;
+  grid-row:2!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+}
+.planning-top-brand {font-weight:800;font-size:15px;white-space:nowrap;color:#234661;}
+.planning-top-links {display:flex;align-items:center;gap:5px;flex:1 1 390px;min-width:0;flex-wrap:wrap;}
+.planning-top-actions {display:flex;align-items:center;gap:4px;flex:0 0 auto;margin-left:auto;}
+.planning-top-only .planning-top-links button,
+.planning-top-only .planning-top-actions button {
+  appearance:none!important;
+  background:transparent!important;
+  border:1px solid transparent!important;
+  border-radius:9px!important;
+  padding:8px 10px!important;
+  color:#234661!important;
+  font-size:13px!important;
+  font-weight:650!important;
+  line-height:1.25!important;
+  cursor:pointer;
+  white-space:nowrap;
+  min-height:36px;
+}
+.planning-top-only .planning-top-links button:hover,
+.planning-top-only .planning-top-actions button:hover {background:#c5ddf2!important;}
+.planning-top-only .planning-top-links button.active {
+  background:#fff!important;
+  color:#153e60!important;
+  border-color:#aac7df!important;
+  box-shadow:0 1px 3px #315a781b;
+}
+.planning-top-only .planning-top-actions button:disabled {opacity:.4;cursor:default;}
+@media(max-width:750px) {
+  .planning-layout > .planning-unified-navigation.planning-top-only {
+    padding:8px 10px!important;
+    gap:5px!important;
+    flex-wrap:wrap!important;
+  }
+  .planning-top-brand {font-size:13px;}
+  .planning-top-links {
+    order:3;
+    flex:1 0 100%;
+    overflow-x:auto;
+    flex-wrap:nowrap;
+    scrollbar-width:thin;
+    padding-bottom:3px;
+  }
+  .planning-top-actions {margin-left:auto;}
+  .planning-top-only .planning-top-links button,
+  .planning-top-only .planning-top-actions button {font-size:12px!important;padding:7px 9px!important;min-height:34px;}
+}
