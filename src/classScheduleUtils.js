@@ -13,7 +13,7 @@ export const describe = lesson => (lesson?.topics || []).map(topic => {
   return parts.filter(Boolean).join(' · ')
 }).filter(Boolean).join('; ') || lesson?.name || 'Lektion utan innehåll'
 
-export function buildClassSchedule(plan, group) {
+export function buildClassSchedule(plan, group, { includeHiddenWeeks = false } = {}) {
   const days = Array.isArray(group.days) ? group.days : []
   const extraSlots = Array.isArray(group.extraSlots) ? group.extraSlots : []
   const cancelled = new Set(Array.isArray(group.cancelledDates) ? group.cancelledDates : [])
@@ -23,7 +23,7 @@ export function buildClassSchedule(plan, group) {
   // Varje klass använder innehållet från rätt grundvecka.
   // Klassens lektionsinnehåll ska kunna fortsätta över veckogränser.
   return (plan.weeksData || []).flatMap(week => {
-    if (!week?.weekStart || week.hidden) return []
+    if (!week?.weekStart || (week.hidden && !includeHiddenWeeks)) return []
     const source = Array.isArray(week.lessons) ? week.lessons : []
     const mondayDate = monday(week.weekStart)
     const slots = []
