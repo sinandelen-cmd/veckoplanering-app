@@ -6969,3 +6969,42 @@ body>.teacher-scroll-context-fixed{display:none!important;}
  display:block!important;width:17px!important;height:17px!important;
  min-width:17px!important;stroke:currentColor!important;stroke-width:1.8!important;
 }
+
+
+/* Klassflikar: schema/elevvisning på samma rad, längst till höger. */
+#lararvy #kopplade-klasser .class-mini-row{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ gap:12px!important;flex-wrap:wrap!important;width:100%!important;
+}
+#lararvy #kopplade-klasser .class-mini-chips{
+ display:flex!important;align-items:center!important;flex:0 1 auto!important;
+ min-width:0!important;flex-wrap:wrap!important;gap:5px!important;
+}
+#lararvy #kopplade-klasser .class-mini-row-right{
+ display:flex!important;align-items:center!important;justify-content:flex-end!important;
+ flex:1 0 auto!important;margin-left:auto!important;min-width:0!important;
+}
+#lararvy #kopplade-klasser .class-mini-row-right .class-base-visibility{
+ display:flex!important;align-items:center!important;justify-content:flex-end!important;
+ margin:0!important;padding:0!important;min-width:0!important;
+}
+#lararvy #kopplade-klasser .class-mini-row-right .class-bulk-visibility{
+ display:inline-flex!important;align-items:center!important;gap:8px!important;
+ margin:0!important;padding:0!important;
+}
+#lararvy #kopplade-klasser .class-edit-schedule-action{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ gap:7px!important;min-height:36px!important;padding:7px 12px!important;
+ font-size:13px!important;font-weight:750!important;white-space:nowrap!important;
+ color:#60473d!important;background:#fff0bd!important;border:1px solid #e7d7a2!important;
+ border-radius:9px!important;
+}
+#lararvy #kopplade-klasser .class-edit-schedule-action svg{
+ width:18px!important;height:18px!important;flex-shrink:0!important;stroke:currentColor!important;
+}
+@media(max-width:700px){
+ #lararvy #kopplade-klasser .class-mini-row{flex-wrap:wrap!important;overflow-x:visible!important;gap:7px!important;}
+ #lararvy #kopplade-klasser .class-mini-chips{flex:1 1 100%!important;overflow-x:auto!important;flex-wrap:nowrap!important;}
+ #lararvy #kopplade-klasser .class-mini-row-right{flex:1 1 100%!important;justify-content:flex-end!important;}
+ #lararvy #kopplade-klasser .class-mini-row-right .class-bulk-visibility select{max-width:180px!important;}
+}
