@@ -1229,7 +1229,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       if (!sections.length) { pinned.hidden = true; return }
       // Veckans överkant styr övergången, inte den dolda kapitelrubriken.
       // Behåll föregående kapitel fram tills nästa veckas innehåll når den fasta raden.
-      const boundary = pinned.getBoundingClientRect().bottom + 2
+      const boundary = scrollArea.getBoundingClientRect().top + 8
       const allWeeks = [...scrollArea.querySelectorAll('.chapter-week-group')]
       const week = allWeeks.find(el => el.getBoundingClientRect().bottom > boundary) || allWeeks[allWeeks.length - 1]
       const section = week?.closest('.teacher-chapter-section') || sections[0]
