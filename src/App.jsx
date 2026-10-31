@@ -1211,52 +1211,36 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [weekContentOverrides, setWeekContentOverrides] = useState({})
   const [pinnedChapter, setPinnedChapter] = useState(null)
 
-  // Visa den riktiga kapitelrutan (rubrik + begrepp) fast i viewporten.
-  // Byt innehåll endast när ett nytt kapitel eller en ny vecka nås.
+  // Fast rubrik i själva planeringen: samma stora kapitelruta, uppdaterad
+  // efter den vecka som befinner sig under rubriken vid scroll åt båda håll.
   useEffect(() => {
     if (teacherTab !== 'arsplan' || (!showPastTeacherWeeks && !focusedTeacherWeek)) return undefined
-    const pinned = document.createElement('div')
-    pinned.className = 'teacher-full-chapter-fixed'
-    pinned.setAttribute('aria-label', 'Aktuellt kapitel och vecka')
-    document.body.appendChild(pinned)
+    const root = document.querySelector('#lararvy .teacher-year-review')
+    const pinned = root?.querySelector('.teacher-active-chapter-bar')
+    const scrollArea = root?.querySelector('.teacher-months')
+    if (!pinned || !scrollArea) return undefined
+    const heading = pinned.querySelector('.teacher-active-chapter-content')
+    const weekLabel = pinned.querySelector('.teacher-active-week-label')
     let frame = 0
-    let currentKey = ''
+    let lastChapter = ''
     const update = () => {
       frame = 0
-      const sections = [...document.querySelectorAll('#lararvy .teacher-months .teacher-chapter-section')]
-      if (!sections.length) { pinned.style.display = 'none'; return }
-      const nav = document.querySelector('#lararvy .teacher-week-navigation')
-      const header = document.querySelector('.planning-layout > .planning-unified-navigation')
-      const headerBottom = Math.max(0, header?.getBoundingClientRect().bottom || 0)
-      const navRect = nav?.getBoundingClientRect()
-      const navBottom = navRect && navRect.top <= headerBottom + 6 && navRect.bottom > headerBottom ? navRect.bottom : headerBottom
-      const top = Math.max(4, Math.ceil(navBottom) + 4)
-      const boundary = top + pinned.getBoundingClientRect().height + 8
-      const last = sections[sections.length - 1].getBoundingClientRect()
-      if (last.bottom <= boundary) { pinned.style.display = 'none'; return }
+      const sections = [...scrollArea.querySelectorAll('.teacher-chapter-section')]
+      if (!sections.length) { pinned.hidden = true; return }
+      const rect = pinned.getBoundingClientRect()
+      const boundary = rect.bottom + 2
       const section = sections.find(el => el.getBoundingClientRect().bottom > boundary) || sections[sections.length - 1]
       const groups = [...section.querySelectorAll('.chapter-week-group')]
-      const current = groups.find(el => el.getBoundingClientRect().bottom > boundary) || groups[groups.length - 1]
-      const key = (section.dataset.chapter || '') + '|' + (current?.dataset.week || '')
-      if (key !== currentKey) {
-        const source = section.querySelector('.teacher-chapter-sticky')
-        if (source) {
-          pinned.replaceChildren(source.cloneNode(true))
-          const week = document.createElement('div')
-          week.className = 'teacher-full-chapter-week'
-          week.textContent = 'Vecka ' + (current?.dataset.week || '')
-          pinned.appendChild(week)
-          currentKey = key
-        }
+      const week = groups.find(el => el.getBoundingClientRect().bottom > boundary) || groups[groups.length - 1]
+      const chapterName = section.dataset.chapter || ''
+      if (lastChapter !== chapterName) {
+        const original = section.querySelector('.teacher-chapter-sticky')
+        if (original) heading.replaceChildren(...[...original.children].map(node => node.cloneNode(true)))
+        lastChapter = chapterName
       }
-      const parent = document.querySelector('#lararvy .teacher-year-review')
-      const rect = parent?.getBoundingClientRect()
-      if (rect) {
-        pinned.style.left = Math.max(8, rect.left + 14) + 'px'
-        pinned.style.width = Math.max(200, Math.min(window.innerWidth - 16, rect.width - 28)) + 'px'
-      }
-      pinned.style.top = top + 'px'
-      pinned.style.display = 'block'
+      const nextWeek = 'Vecka ' + (week?.dataset.week || '')
+      if (weekLabel.textContent !== nextWeek) weekLabel.textContent = nextWeek
+      pinned.hidden = false
     }
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update) }
     update()
@@ -1266,9 +1250,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       document.removeEventListener('scroll', schedule, true)
       window.removeEventListener('resize', schedule)
       if (frame) cancelAnimationFrame(frame)
-      pinned.remove()
     }
-  }, [teacherTab, showPastTeacherWeeks, focusedTeacherWeek])
+  }, [teacherTab, showPastTeacherWeeks, focusedTeacherWeek, pastWeeksExpanded])
 
   useEffect(() => {
     if (teacherTab !== "arsplan") { setPinnedChapter(null); return undefined }
@@ -2121,6 +2104,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         </section>
       </div>})()}
       
+      {(showPastTeacherWeeks || focusedTeacherWeek) && <div className="teacher-active-chapter-bar" aria-label="Aktuellt kapitel och vecka"><div className="teacher-active-chapter-content" /><div className="teacher-active-week-label" /></div>}
       <div className={`teacher-months ${focusedTeacherWeek ? "teacher-months-focused" : ""} ${focusedTeacherWeek && teacherWeekOverview ? "teacher-months-overview-hidden" : ""} ${!focusedTeacherWeek && !showPastTeacherWeeks ? "smart-months-mini-hidden" : ""} ${showPastTeacherWeeks && !focusedTeacherWeek ? "teacher-months-all-weeks" : ""} `}>
         {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? (pastWeeksExpanded ? teacherDisplayWeeks : upcomingTeacherWeeks) : defaultTeacherWindow)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
