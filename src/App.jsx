@@ -897,8 +897,8 @@ function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson }) {
   }, [week])
   return <div className="calendar-real-week-thumbnail">
     <div className="calendar-real-week-label">Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</div>
-    <div className="calendar-real-week-frame" ref={frame} style={{ height: dimensions.height }} onClick={event => { const lesson = event.target.closest(".lesson"); if (lesson) { const lessons = Array.from(event.currentTarget.querySelectorAll(".lesson")); onOpenLesson(lessons.indexOf(lesson)) } else onOpen() }} role="button" tabIndex={0} aria-label="Välj lektion att redigera" onKeyDown={event => { if (event.key === "Enter") onOpen() }}>
-      <div className="calendar-real-week-original" ref={original} style={{ transform: `scale(${dimensions.scale})` }} aria-hidden="true" inert="">
+    <div className="calendar-real-week-frame" ref={frame} style={{ height: dimensions.height }} onClick={event => { const lesson = event.target.closest(".lesson"); if (lesson) { onOpenLesson(Number(lesson.dataset.lessonIndex)) } else { const lessons = Array.from(event.currentTarget.querySelectorAll(".lesson")); if (lessons.length) { const y = event.clientY; const nearest = lessons.reduce((best, item) => Math.abs(item.getBoundingClientRect().top + item.getBoundingClientRect().height/2 - y) < Math.abs(best.getBoundingClientRect().top + best.getBoundingClientRect().height/2 - y) ? item : best, lessons[0]); onOpenLesson(Number(nearest.dataset.lessonIndex)) } } }} role="button" tabIndex={0} aria-label="Välj lektion att redigera" onKeyDown={event => { if (event.key === "Enter") onOpenLesson(0) }}>
+      <div className="calendar-real-week-original" ref={original} style={{ transform: `scale(${dimensions.scale})` }} aria-hidden="true">
         <article className="calendar-inline-week" style={{ backgroundColor: weekColor(week.weekStart) }}>
           <div className="calendar-inline-week-heading"><h2>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</h2><span>{week.chapter}</span></div>
           <LessonDetails week={week} entryType={entryType} onChange={() => {}} />
@@ -2772,7 +2772,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
     changeLessons(normalizeLessonOrder(next))
   }
   return <div className="lessons">
-    {lessons.map((lesson, i) => ({ lesson, i })).sort((a, b) => editable ? a.i - b.i : (WEEKDAYS.indexOf(a.lesson.day || a.lesson.name) + 5) % 5 - (WEEKDAYS.indexOf(b.lesson.day || b.lesson.name) + 5) % 5).filter(({ i }) => onlyLessonIndex === null || i === onlyLessonIndex).map(({ lesson, i }) => <section className="lesson" key={i}>
+    {lessons.map((lesson, i) => ({ lesson, i })).sort((a, b) => editable ? a.i - b.i : (WEEKDAYS.indexOf(a.lesson.day || a.lesson.name) + 5) % 5 - (WEEKDAYS.indexOf(b.lesson.day || b.lesson.name) + 5) % 5).filter(({ i }) => onlyLessonIndex === null || i === onlyLessonIndex).map(({ lesson, i }) => <section className="lesson" data-lesson-index={i} key={i}>
       <div className="lesson-heading">
         {editable ? <div className="lesson-edit-heading" style={{ '--lesson-day-color': DAY_COLORS[Math.max(0, WEEKDAYS.indexOf(entryType === 'dag' ? lesson.name : lesson.day)) % DAY_COLORS.length] }}>
           <span className="lesson-number-inline">{entryType === 'dag' ? (lesson.name || WEEKDAYS[i]) : (lesson.day || 'Välj dag')} · {entryType === 'dag' ? `Lektion ${i + 1}` : `Lektion ${i + 1}`}{lessonDayDate(week.weekStart, entryType === 'dag' ? lesson.name : lesson.day) ? ` · ${lessonDayDate(week.weekStart, entryType === 'dag' ? lesson.name : lesson.day)}` : ''}</span>
