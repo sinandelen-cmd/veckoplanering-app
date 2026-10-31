@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function Navigation({ active = 'mina', onNavigate, onAllWeeks, onNew, onToggleCalendar, calendarOpen = false, hasOpenPlan = false, isAdmin = false, onOpenAdmin, adminOpen = false, pendingCount = 0, onCloseAdmin, onSignOut, onBack, onForward, canBack = false, canForward = false, onPrintPlan, previousLabel = 'Startsida', onPrevious }) {
+export default function Navigation({ active = 'mina', onNavigate, onAllWeeks, onNew, onToggleCalendar, calendarOpen = false, hasOpenPlan = false, allWeeksOpen = false, isAdmin = false, onOpenAdmin, adminOpen = false, pendingCount = 0, onCloseAdmin, onSignOut, onBack, onForward, canBack = false, canForward = false, onPrintPlan, previousLabel = 'Startsida', onPrevious }) {
   const [planningMenuOpen, setPlanningMenuOpen] = useState(false)
   if (!onNavigate) return <nav className="public-navigation" aria-label="Huvudmeny"><a href="/">Årsplanering</a></nav>
   const choose = action => { setPlanningMenuOpen(false); action() }
@@ -16,7 +16,7 @@ export default function Navigation({ active = 'mina', onNavigate, onAllWeeks, on
           {hasOpenPlan && <>
             <button type="button" onClick={() => choose(() => onNavigate('arsplan'))}>📘 Grundplanering</button>
             <button type="button" onClick={() => choose(() => calendarOpen ? onNavigate('arsplan') : onToggleCalendar?.())}>🗓 Kalendervy</button>
-            {onAllWeeks && <button type="button" onClick={() => choose(() => { onNavigate('arsplan'); onAllWeeks() })}>▦ Alla veckor</button>}
+            {onAllWeeks && <button type="button" onClick={() => choose(() => { onNavigate('arsplan'); onAllWeeks() })}>{allWeeksOpen ? "▦ Stäng alla veckor" : "▦ Visa alla veckor"}</button>}
           </>}
         </div>}
       </div>
