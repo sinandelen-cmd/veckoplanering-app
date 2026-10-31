@@ -1245,9 +1245,11 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     }
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update) }
     update()
+    scrollArea.addEventListener('scroll', schedule, { passive: true })
     document.addEventListener('scroll', schedule, true)
     window.addEventListener('resize', schedule)
     return () => {
+      scrollArea.removeEventListener('scroll', schedule)
       document.removeEventListener('scroll', schedule, true)
       window.removeEventListener('resize', schedule)
       if (frame) cancelAnimationFrame(frame)
