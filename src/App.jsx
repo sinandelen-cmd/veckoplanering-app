@@ -939,6 +939,33 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
   const [saving, setSaving] = useState(false)
   const [visibleWeekCount, setVisibleWeekCount] = useState(3)
   const [expandedFullWeek, setExpandedFullWeek] = useState(null)
+  const classHistory = useRef({ past: [], future: [] })
+  const [, setClassHistoryVersion] = useState(0)
+  const applyClassOverrides = (overrides, record = true) => {
+    const current = (plan.classGroups || []).find(item => item.name === className)
+    if (!current) return
+    if (record) {
+      classHistory.current.past.push(structuredClone(current.overrides || {}))
+      if (classHistory.current.past.length > 60) classHistory.current.past.shift()
+      classHistory.current.future = []
+    }
+    onChangeClassGroups?.((plan.classGroups || []).map(g => g.name === className ? { ...g, overrides } : g))
+    setClassHistoryVersion(n => n + 1)
+  }
+  const undoClassLesson = () => {
+    const previous = classHistory.current.past.pop()
+    if (!previous) return
+    const current = (plan.classGroups || []).find(item => item.name === className)
+    classHistory.current.future.push(structuredClone(current?.overrides || {}))
+    applyClassOverrides(previous, false)
+  }
+  const redoClassLesson = () => {
+    const next = classHistory.current.future.pop()
+    if (!next) return
+    const current = (plan.classGroups || []).find(item => item.name === className)
+    classHistory.current.past.push(structuredClone(current?.overrides || {}))
+    applyClassOverrides(next, false)
+  }
   const group = (plan.classGroups || []).find(item => item.name === className)
   const scheduled = useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
   const today = new Date()
@@ -970,7 +997,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
         <div className="class-full-week-header" style={{flexShrink:0,display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}><h3>{className} · Vecka {calendarWeekNumber(expandedFullWeek)}</h3><button type="button" className="secondary" onClick={()=>setExpandedFullWeek(null)}>✕ Stäng</button></div>
         <ClassWeekFit><article className="calendar-inline-week" style={{backgroundColor:weekColor(expandedFullWeek)}}>
           <div className="calendar-inline-week-heading"><h2>Vecka {calendarWeekNumber(expandedFullWeek)}</h2><span>{weeks.find(w=>w.weekStart===expandedFullWeek)?.chapter}</span></div>
-          <LessonDetails week={weeks.find(w=>w.weekStart===expandedFullWeek)} entryType={plan.entryType||'lektion'} onChange={changes=>{
+          <LessonDetails week={weeks.find(w=>w.weekStart===expandedFullWeek)} entryType={plan.entryType||'lektion'} onUndo={undoClassLesson} onRedo={redoClassLesson} canUndo={classHistory.current.past.length>0} canRedo={classHistory.current.future.length>0} onChange={changes=>{
             const slots=scheduled.filter(item=>item.weekStart===expandedFullWeek)
             const overrides={...(group.overrides||{})}
             ;(changes.lessons||[]).forEach((lesson,i)=>{
@@ -978,7 +1005,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
               const key=String(slot.lessonNumber-1)
               overrides[key]={...(overrides[key]||{}),lesson}
             })
-            onChangeClassGroups?.((plan.classGroups||[]).map(g=>g.name===className?{...g,overrides}:g))
+            applyClassOverrides(overrides)
           }}/>
         </article></ClassWeekFit>
         <div className="class-full-week-footer" style={{flexShrink:0,display:'flex',justifyContent:'flex-end'}}><button type="button" className="class-lesson-done-icon" aria-label="Spara och stäng veckan" disabled={saving||busy} onClick={async()=>{setSaving(true);try{const ok=await onSave?.();if(ok===true)setExpandedFullWeek(null)}finally{setSaving(false)}}}>{saving||busy?'…':'✓ Klar'}</button></div>
@@ -986,7 +1013,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
     </div>}
     {expanded && <div className="calendar-lesson-modal-backdrop" role="presentation"><section className="calendar-lesson-modal" role="dialog" aria-modal="true" aria-label="Redigera klassens lektion">
       <div className="calendar-lesson-modal-header"><h3>Vecka {calendarWeekNumber(expanded.weekStart)}{expanded.lessonIndex!==null?' · Lektion '+(expanded.lessonIndex+1):''} · {className}</h3><button type="button" onClick={()=>setExpanded(null)}>Stäng</button></div>
-      <LessonDetails week={weeks.find(w=>w.weekStart===expanded.weekStart)} entryType={plan.entryType||'lektion'} onlyLessonIndex={expanded.lessonIndex} onPreviousLesson={expanded.lessonIndex !== null ? ()=>setExpanded(current=>({...current,lessonIndex:Math.max(0,current.lessonIndex-1)})) : undefined} onNextLesson={expanded.lessonIndex !== null ? ()=>setExpanded(current=>({...current,lessonIndex:Math.min((weeks.find(w=>w.weekStart===current.weekStart)?.lessons?.length||1)-1,current.lessonIndex+1)})) : undefined} lessonCount={weeks.find(w=>w.weekStart===expanded.weekStart)?.lessons?.length||0} onChange={changes=>{
+      <LessonDetails week={weeks.find(w=>w.weekStart===expanded.weekStart)} entryType={plan.entryType||'lektion'} onlyLessonIndex={expanded.lessonIndex} onPreviousLesson={expanded.lessonIndex !== null ? ()=>setExpanded(current=>({...current,lessonIndex:Math.max(0,current.lessonIndex-1)})) : undefined} onNextLesson={expanded.lessonIndex !== null ? ()=>setExpanded(current=>({...current,lessonIndex:Math.min((weeks.find(w=>w.weekStart===current.weekStart)?.lessons?.length||1)-1,current.lessonIndex+1)})) : undefined} lessonCount={weeks.find(w=>w.weekStart===expanded.weekStart)?.lessons?.length||0} onUndo={undoClassLesson} onRedo={redoClassLesson} canUndo={classHistory.current.past.length>0} canRedo={classHistory.current.future.length>0} onChange={changes=>{
         const slots=scheduled.filter(item=>item.weekStart===expanded.weekStart)
         const overrides={...(group.overrides||{})}
         ;(changes.lessons||[]).forEach((lesson,i)=>{
@@ -995,7 +1022,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
           const key=String(slot.lessonNumber-1)
           overrides[key]={...(overrides[key]||{}),lesson}
         })
-        onChangeClassGroups?.((plan.classGroups||[]).map(g=>g.name===className?{...g,overrides}:g))
+        applyClassOverrides(overrides)
       }}/>
       <div className="calendar-lesson-modal-footer"><button type="button" className="class-lesson-done-icon" aria-label="Klar – spara lektionen" title="Klar – spara lektionen" disabled={saving||busy} onClick={async()=>{setSaving(true);try{const ok=await onSave?.();if(ok===true)setExpanded(null)}finally{setSaving(false)}}}>{saving||busy?"…":"✓"}</button>{saveStatus && <span role="status">{saveStatus}</span>}</div>
     </section></div>}
