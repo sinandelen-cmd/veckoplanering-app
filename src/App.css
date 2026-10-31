@@ -6906,3 +6906,29 @@ body>.teacher-scroll-context-fixed{display:none!important;}
   width:26px!important;min-width:26px!important;height:30px!important;
  }
 }
+
+
+/* Enhetlig ikonuppsättning för samma åtgärder i alla planeringsvyer. */
+#lararvy .lesson-inline-history button,
+#lararvy .teacher-week-delete-icon,
+#lararvy .teacher-close-week,
+.calendar-lesson-modal .lesson-inline-history button{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ gap:5px!important;
+}
+#lararvy .lesson-inline-history button svg,
+#lararvy .teacher-week-delete-icon svg,
+#lararvy .teacher-close-week svg,
+.calendar-lesson-modal .lesson-inline-history button svg{
+ width:17px!important;height:17px!important;flex-shrink:0!important;
+ stroke:currentColor!important;stroke-width:1.8!important;
+}
+#lararvy .teacher-week-delete-icon{
+ color:#9b3d46!important;background:#faebed!important;
+ border:0!important;border-radius:8px!important;
+}
+#lararvy .teacher-week-delete-icon:disabled,
+#lararvy .lesson-inline-history button:disabled,
+.calendar-lesson-modal .lesson-inline-history button:disabled{
+ opacity:.35!important;cursor:not-allowed!important;
+}
