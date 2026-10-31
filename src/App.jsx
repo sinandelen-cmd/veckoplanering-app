@@ -1277,7 +1277,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [simpleSetup, setSimpleSetup] = useState(true)
   const [simpleMore, setSimpleMore] = useState(false)
   const [teacherTab, setTeacherTab] = useState("mina")
-  const [showPastTeacherWeeks, setShowPastTeacherWeeks] = useState(true)
+  const [showPastTeacherWeeks, setShowPastTeacherWeeks] = useState(false)
   const [pastWeeksExpanded, setPastWeeksExpanded] = useState(false)
   const [allWeekContentsOpen, setAllWeekContentsOpen] = useState(true)
   const [weekContentOverrides, setWeekContentOverrides] = useState({})
@@ -1498,7 +1498,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     })
     setFocusedTeacherWeek(null)
   }
-  useEffect(() => { const home = () => { setFocusedTeacherWeek(null); setShowPastTeacherWeeks(true) }; window.addEventListener('planning-home', home); return () => window.removeEventListener('planning-home', home) }, [])
+  useEffect(() => { const home = () => { setFocusedTeacherWeek(null); setShowPastTeacherWeeks(false) }; window.addEventListener('planning-home', home); return () => window.removeEventListener('planning-home', home) }, [])
   const windowStart = Math.max(0, Math.min(teacherWindowStart ?? defaultWindowFirst, Math.max(0, teacherDisplayWeeks.length - 4)))
   const defaultTeacherWindow = teacherDisplayWeeks.slice(Math.max(defaultWindowFirst, windowStart), Math.max(defaultWindowFirst, windowStart) + 4)
   const visibleTeacherWeeks = weeks.filter(week => week && !week.hidden)
