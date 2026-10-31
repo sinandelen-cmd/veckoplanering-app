@@ -6790,3 +6790,33 @@ body>.teacher-scroll-context-fixed{display:none!important;}
 #lararvy .teacher-year-review:has(.teacher-active-chapter-bar) .teacher-months .teacher-month-weeks{
  margin-top:0!important;padding-top:0!important;
 }
+
+
+/* Stabil scrollarkitektur: endast veckornas innehåll scrollar.
+   Kapitel och vecka förblir i en fast överdel och byts vid veckogräns. */
+#lararvy .expanded-weeks-inline>.teacher-year-review:has(>.teacher-active-chapter-bar){
+ display:flex!important;flex-direction:column!important;
+ height:calc(100dvh - 245px)!important;min-height:350px!important;
+ overflow:hidden!important;position:relative!important;
+}
+#lararvy .expanded-weeks-inline>.teacher-year-review:has(>.teacher-active-chapter-bar)>.teacher-months{
+ display:block!important;flex:1 1 auto!important;min-height:0!important;
+ height:auto!important;max-height:none!important;
+ overflow-y:auto!important;overflow-x:hidden!important;
+ overscroll-behavior-y:contain!important;
+ -webkit-overflow-scrolling:touch!important;
+ padding-top:0!important;scroll-padding-top:8px!important;
+}
+#lararvy .expanded-weeks-inline>.teacher-year-review:has(>.teacher-active-chapter-bar)>.teacher-active-chapter-bar{
+ position:relative!important;top:auto!important;flex:0 0 auto!important;
+ z-index:20!important;display:block!important;
+}
+#lararvy .expanded-weeks-inline>.teacher-year-review:has(>.teacher-active-chapter-bar)>.teacher-week-navigation,
+#lararvy .expanded-weeks-inline>.teacher-year-review:has(>.teacher-active-chapter-bar)>.teacher-past-weeks-banner{
+ position:relative!important;top:auto!important;flex:0 0 auto!important;
+}
+@media(max-width:650px){
+ #lararvy .expanded-weeks-inline>.teacher-year-review:has(>.teacher-active-chapter-bar){
+  height:calc(100dvh - 235px)!important;min-height:310px!important;
+ }
+}
