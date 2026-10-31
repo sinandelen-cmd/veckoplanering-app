@@ -21,7 +21,10 @@ jobs:
       - run: npm run check
       - run: npm run build
       - name: Uppdatera versionen som visas på fix-planering länken
-        run: npx --yes wrangler@4 versions upload --preview-alias fix-planering
+        run: |
+          # Ta bort radbrytningar som ibland följer med när token kopieras på mobil.
+          export CLOUDFLARE_API_TOKEN="$(printf %s "$CLOUDFLARE_API_TOKEN" | tr -d '\r\n')"
+          npx --yes wrangler@4 versions upload --preview-alias fix-planering
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: 1117b3ec07a0dd6de08ca8ccb477f269
