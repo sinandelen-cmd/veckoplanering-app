@@ -1,5 +1,5 @@
-name: Uppdatera fix-planering testlänk
-# Visa hela klassveckan och rensa ikonernas bakgrund i testversionen.
+name: Uppdatera verkliga fix-planering-miljön
+# Publicerar till Workers Preview fix/planering, inte en version-url-alias.
 on:
   workflow_dispatch:
   push:
@@ -32,7 +32,7 @@ jobs:
             process.stdout.write(token);
           ')"
           export CLOUDFLARE_API_TOKEN
-          npx --yes wrangler@4 versions upload --preview-alias fix-planering
+          npx --yes wrangler@4 preview --name "fix/planering" --message "Uppdaterad helvecksvy och ikonstil"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: 1117b3ec07a0dd6de08ca8ccb477f269
