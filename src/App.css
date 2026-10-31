@@ -6319,3 +6319,26 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
   .planning-original-top .planning-unified-center {order:2!important;flex:1 0 100%!important;justify-content:flex-start!important;flex-wrap:nowrap!important;overflow-x:auto!important;scrollbar-width:thin;}
   .planning-original-top button {font-size:12px!important;min-height:35px!important;padding:7px 9px!important;}
 }
+
+/* Test C: fyra miniatyrveckor och en kompakt helvecksvy. */
+#lararvy .smart-months-mini-hidden {display:none!important;}
+#lararvy .smart-four-week-overview {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0 20px;align-items:start;}
+#lararvy .smart-week-mini {min-width:0;background:#fff;border:1px solid #cbd9e8;border-radius:12px;padding:8px;box-shadow:0 2px 7px #29456212;overflow:hidden;}
+#lararvy .smart-week-mini .calendar-real-week-thumbnail {min-width:0;width:100%;}
+#lararvy .smart-week-mini .calendar-real-week-frame {width:100%;overflow:hidden;}
+#lararvy .smart-week-open {display:block;width:100%;margin-top:8px;padding:10px 5px;border:1px solid #aacce8;border-radius:8px;background:#e0effb;color:#234b6c;font-weight:750;cursor:pointer;}
+#lararvy .smart-week-focus {background:#fff;border:1px solid #c9d9e8;border-radius:14px;padding:14px;margin:12px 0;box-shadow:0 2px 9px #28456112;}
+#lararvy .smart-week-focus-head {display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;color:#234b6c;}
+#lararvy .smart-week-done {background:#dceee5;border:1px solid #a2ceb6;border-radius:9px;color:#225b41;font-weight:800;padding:10px 14px;cursor:pointer;}
+#lararvy .smart-week-lesson-list {display:grid;grid-template-columns:1fr;gap:6px;}
+#lararvy .smart-lesson-row {display:flex;align-items:center;gap:12px;text-align:left;width:100%;border:1px solid #dbe4ed;border-radius:9px;background:#f4f8fc;padding:9px 12px;color:#294761;cursor:pointer;}
+#lararvy .smart-lesson-row.selected {background:#e5f1fc;border-color:#82b7df;}
+#lararvy .smart-lesson-day {font-weight:800;min-width:75px;font-size:12px;}
+#lararvy .smart-lesson-topic {flex:1;min-width:0;font-weight:650;font-size:13px;overflow-wrap:anywhere;}
+#lararvy .smart-lesson-topic small {display:block;font-size:11px;font-weight:400;color:#60758b;margin-top:3px;}
+#lararvy .smart-lesson-edit {font-size:11px;font-weight:700;white-space:nowrap;}
+#lararvy .smart-week-hint {font-size:12px;color:#536c82;margin:10px 0 0;}
+#lararvy .smart-week-focus + .teacher-months {max-width:100%;}
+#lararvy .teacher-mobile-week-overview {display:none!important;}
+@media(max-width:850px){#lararvy .smart-four-week-overview{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:480px){#lararvy .smart-four-week-overview{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}#lararvy .smart-week-mini{padding:5px;}#lararvy .smart-lesson-row{gap:6px;padding:8px;}#lararvy .smart-lesson-day{min-width:57px;}#lararvy .smart-lesson-edit{font-size:10px;}}
