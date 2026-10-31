@@ -6950,3 +6950,22 @@ body>.teacher-scroll-context-fixed{display:none!important;}
  min-width:26px!important;min-height:26px!important;padding:4px!important;
  border-radius:7px!important;
 }
+
+
+/* Sida/Uppgift: endast papperskorg, aldrig en lång raderingsetikett. */
+.planning-layout .topic-grid .topic-fixed-heading .remove-topic-column,
+.planning-layout .topic-fixed-heading .remove-topic-column,
+.calendar-lesson-modal .topic-fixed-heading .remove-topic-column{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 28px!important;width:28px!important;min-width:28px!important;
+ height:28px!important;min-height:28px!important;max-width:28px!important;
+ padding:4px!important;margin:0!important;gap:0!important;
+ border:0!important;border-radius:8px!important;
+ background:#fae8e9!important;color:#943e45!important;
+ font-size:0!important;line-height:1!important;white-space:nowrap!important;
+}
+.planning-layout .topic-fixed-heading .remove-topic-column svg,
+.calendar-lesson-modal .topic-fixed-heading .remove-topic-column svg{
+ display:block!important;width:17px!important;height:17px!important;
+ min-width:17px!important;stroke:currentColor!important;stroke-width:1.8!important;
+}
