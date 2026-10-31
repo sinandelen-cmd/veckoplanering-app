@@ -6516,3 +6516,7 @@ html,body,#root {max-width:100%;overflow-x:clip;}
 /* Förenklad veckonavigering: endast en Lägg till vecka-knapp under fyraveckorsvyn. */
 #lararvy .teacher-week-navigation .teacher-add-week-inline{display:none!important;}
 #lararvy .smart-four-week-overview + .week-add-actions{display:flex!important;}
+
+/* En enda Lägg till vecka-knapp: den stora under de fyra veckorna. */
+#lararvy .teacher-week-navigation .teacher-add-week-inline{display:none!important;}
+#lararvy .teacher-week-navigation .teacher-add-week-inline::before{display:none!important;}
