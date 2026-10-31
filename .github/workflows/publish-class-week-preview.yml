@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - .github/workflows/publish-class-week-preview.yml
+      - src/App.css
 jobs:
   publish-preview:
     runs-on: ubuntu-latest
