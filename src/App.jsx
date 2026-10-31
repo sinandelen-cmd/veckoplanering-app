@@ -1227,11 +1227,12 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       frame = 0
       const sections = [...scrollArea.querySelectorAll('.teacher-chapter-section')]
       if (!sections.length) { pinned.hidden = true; return }
-      const rect = pinned.getBoundingClientRect()
-      const boundary = rect.bottom + 2
-      const section = sections.find(el => el.getBoundingClientRect().bottom > boundary) || sections[sections.length - 1]
-      const groups = [...section.querySelectorAll('.chapter-week-group')]
-      const week = groups.find(el => el.getBoundingClientRect().bottom > boundary) || groups[groups.length - 1]
+      // Veckans överkant styr övergången, inte den dolda kapitelrubriken.
+      // Behåll föregående kapitel fram tills nästa veckas innehåll når den fasta raden.
+      const boundary = pinned.getBoundingClientRect().bottom + 2
+      const allWeeks = [...scrollArea.querySelectorAll('.chapter-week-group')]
+      const week = allWeeks.find(el => el.getBoundingClientRect().bottom > boundary) || allWeeks[allWeeks.length - 1]
+      const section = week?.closest('.teacher-chapter-section') || sections[0]
       const chapterName = section.dataset.chapter || ''
       if (lastChapter !== chapterName) {
         const original = section.querySelector('.teacher-chapter-sticky')
