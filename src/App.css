@@ -6525,3 +6525,11 @@ html,body,#root {max-width:100%;overflow-x:clip;}
 #lararvy .teacher-week-navigation .teacher-add-week-inline{display:inline-flex!important;align-items:center!important;justify-content:center!important;order:1!important;margin-left:0!important;background:#287b49!important;color:white!important;border:0!important;border-radius:999px!important;min-height:38px!important;padding:8px 14px!important;font-weight:750!important;}
 #lararvy .teacher-week-navigation .teacher-add-week-inline:disabled{opacity:.5!important;cursor:not-allowed!important;}
 #lararvy .teacher-week-navigation .teacher-all-weeks-inline-toggle{order:2!important;}
+
+/* Kompakt helvecksåtkomst utan stora dubbla knappar. */
+#lararvy .smart-week-mini .smart-week-open{display:none!important;}
+#lararvy .calendar-real-week-label{padding:0!important;}
+#lararvy .calendar-week-heading-open{display:flex!important;width:100%!important;align-items:center!important;justify-content:space-between!important;gap:6px!important;text-align:left!important;padding:9px 11px!important;border:0!important;background:transparent!important;color:#3d3640!important;font:inherit!important;font-weight:800!important;cursor:pointer!important;border-radius:10px 10px 0 0!important;}
+#lararvy .calendar-week-heading-open:focus-visible{outline:3px solid #287cba!important;outline-offset:-3px!important;}
+#lararvy .calendar-week-expand-icon{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 28px!important;width:28px!important;height:28px!important;border:1px solid #b6cee0!important;border-radius:8px!important;background:#f8fcff!important;color:#245477!important;font-size:20px!important;line-height:1!important;}
+#lararvy .calendar-week-heading-open:hover .calendar-week-expand-icon{background:#d9ebfa!important;}
