@@ -1220,7 +1220,6 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     const scrollArea = root?.querySelector('.teacher-months')
     if (!pinned || !scrollArea) return undefined
     const heading = pinned.querySelector('.teacher-active-chapter-content')
-    const weekLabel = pinned.querySelector('.teacher-active-week-label')
     let frame = 0
     let lastChapter = ''
     const update = () => {
@@ -1239,8 +1238,6 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
         if (original) heading.replaceChildren(...[...original.children].map(node => node.cloneNode(true)))
         lastChapter = chapterName
       }
-      const nextWeek = 'Vecka ' + (week?.dataset.week || '')
-      if (weekLabel.textContent !== nextWeek) weekLabel.textContent = nextWeek
       pinned.hidden = false
     }
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update) }
@@ -2107,7 +2104,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         </section>
       </div>})()}
       
-      {(showPastTeacherWeeks || focusedTeacherWeek) && <div className="teacher-active-chapter-bar" aria-label="Aktuellt kapitel och vecka"><div className="teacher-active-chapter-content" /><div className="teacher-active-week-label" /></div>}
+      {(showPastTeacherWeeks || focusedTeacherWeek) && <div className="teacher-active-chapter-bar" aria-label="Aktuellt kapitel och vecka"><div className="teacher-active-chapter-content" /></div>}
       <div className={`teacher-months ${focusedTeacherWeek ? "teacher-months-focused" : ""} ${focusedTeacherWeek && teacherWeekOverview ? "teacher-months-overview-hidden" : ""} ${!focusedTeacherWeek && !showPastTeacherWeeks ? "smart-months-mini-hidden" : ""} ${showPastTeacherWeeks && !focusedTeacherWeek ? "teacher-months-all-weeks" : ""} `}>
         {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? (pastWeeksExpanded ? teacherDisplayWeeks : upcomingTeacherWeeks) : defaultTeacherWindow)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
@@ -2405,7 +2402,7 @@ const addNewTeacherWeek = () => setPlan(p => {
           <label className="chapter-editor">Kapitel / tema (valfritt)<input value={week.chapter || ''} placeholder="Exempel: Kapitel 5 – Taluppfattning" onChange={e => updateWeek(index, { chapter: e.target.value })} /></label>
           {!/^Vecka\s+\d+$/i.test(week.title || '') && <input className="week-title" aria-label="Egen veckorubrik" value={week.title || ''} onChange={e => updateWeek(index, { title: e.target.value })} />}
           {!isGeneratedLessonSummary(week.content, week.chapter) && <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />}
-          <LessonDetails week={week} entryType={plan.entryType || 'lektion'} onChange={changes => updateWeek(index, changes)} />
+          <LessonDetails week={week} entryType={plan.entryType || 'lektion'} onChange={changes => updateWeek(index, changes)} onUndo={undoPlan} onRedo={redoPlan} canUndo={historyRef.current.past.length > 0} canRedo={historyRef.current.future.length > 0} />
           <details className="legacy-week-details" defaultOpen={Boolean(week.pages?.length || week.assignments?.length || week.links?.length)}>
             <summary>Extra veckomaterial (sidor, uppgifter och länkar)</summary>
             <p className="muted">Använd i första hand momenten under varje lektion. Här kan du även lägga material för hela veckan.</p>
