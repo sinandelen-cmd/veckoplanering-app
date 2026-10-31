@@ -1210,39 +1210,53 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [weekContentOverrides, setWeekContentOverrides] = useState({})
   const [pinnedChapter, setPinnedChapter] = useState(null)
 
-  // Håll aktuellt kapitel och vecka synliga under scrollning åt båda håll.
+  // Fristående fast rubrik direkt i document.body: påverkas inte av
+  // planeringens scrollcontainrar, overflow eller transformerade föräldrar.
   useEffect(() => {
     if (!showPastTeacherWeeks || teacherTab !== 'arsplan') return undefined
-    const indicator = document.querySelector('.teacher-scroll-context')
-    if (!indicator) return undefined
-    const label = indicator.querySelector('.teacher-scroll-context-label')
+    const indicator = document.createElement('div')
+    indicator.className = 'teacher-scroll-context teacher-scroll-context-fixed'
+    indicator.setAttribute('aria-live', 'off')
+    indicator.innerHTML = '<span class="teacher-scroll-context-label"></span>'
+    document.body.appendChild(indicator)
+    const label = indicator.firstElementChild
     let frame = 0
     const update = () => {
       frame = 0
-      const sections = [...document.querySelectorAll('.teacher-months-all-weeks .teacher-chapter-section')]
-      if (!sections.length) { indicator.hidden = true; return }
+      const sections = [...document.querySelectorAll('#lararvy .teacher-months-all-weeks .teacher-chapter-section')]
+      if (!sections.length) { indicator.style.display = 'none'; return }
       const header = document.querySelector('.planning-layout > .planning-unified-navigation')
-      const nav = document.querySelector('.teacher-week-navigation')
+      const nav = document.querySelector('#lararvy .teacher-week-navigation')
       const headerBottom = Math.max(0, header?.getBoundingClientRect().bottom || 0)
       const navRect = nav?.getBoundingClientRect()
-      const navBottom = navRect && navRect.top <= headerBottom + 6 && navRect.bottom > headerBottom ? navRect.bottom : headerBottom
-      const top = Math.max(0, Math.ceil(navBottom)) + 4
-      indicator.style.top = top + 'px'
-      const boundary = top + indicator.getBoundingClientRect().height + 4
-      const activeSection = sections.find(el => el.getBoundingClientRect().bottom > boundary) || sections[sections.length - 1]
-      const groups = [...activeSection.querySelectorAll('.chapter-week-group')]
-      const activeWeek = groups.find(el => el.getBoundingClientRect().bottom > boundary) || groups[groups.length - 1]
-      const chapter = activeSection.dataset.chapter || 'Utan kapitel'
-      const week = activeWeek?.dataset.week || ''
+      const navBottom = navRect && navRect.top <= headerBottom + 8 && navRect.bottom > headerBottom ? navRect.bottom : headerBottom
+      const top = Math.max(4, Math.ceil(navBottom) + 4)
+      const boundary = top + 38
+      const first = sections[0].getBoundingClientRect()
+      const last = sections[sections.length - 1].getBoundingClientRect()
+      if (first.top > boundary || last.bottom <= boundary) { indicator.style.display = 'none'; return }
+      const section = sections.find(el => el.getBoundingClientRect().bottom > boundary) || sections[sections.length - 1]
+      const groups = [...section.querySelectorAll('.chapter-week-group')]
+      const current = groups.find(el => el.getBoundingClientRect().bottom > boundary) || groups[groups.length - 1]
+      const chapter = section.dataset.chapter || 'Utan kapitel'
+      const week = current?.dataset.week || ''
       const next = chapter + (week ? ' · Vecka ' + week : '')
       if (label.textContent !== next) label.textContent = next
-      indicator.hidden = false
+      indicator.style.top = top + 'px'
+      indicator.style.display = 'block'
     }
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update) }
     update()
+    document.addEventListener('scroll', schedule, true)
     window.addEventListener('scroll', schedule, { passive: true })
     window.addEventListener('resize', schedule)
-    return () => { window.removeEventListener('scroll', schedule); window.removeEventListener('resize', schedule); if (frame) cancelAnimationFrame(frame) }
+    return () => {
+      document.removeEventListener('scroll', schedule, true)
+      window.removeEventListener('scroll', schedule)
+      window.removeEventListener('resize', schedule)
+      if (frame) cancelAnimationFrame(frame)
+      indicator.remove()
+    }
   }, [showPastTeacherWeeks, teacherTab])
 
   useEffect(() => {
@@ -2091,7 +2105,7 @@ const addNewTeacherWeek = () => setPlan(p => {
           <div className="smart-lesson-dialog-body"><LessonDetails week={modalWeek} entryType={plan.entryType||"lektion"} onlyLessonIndex={lessonModal.lessonIndex} onPreviousLesson={()=>setLessonModal(current=>({...current,lessonIndex:Math.max(0,current.lessonIndex-1)}))} onNextLesson={()=>setLessonModal(current=>({...current,lessonIndex:Math.min((modalWeek.lessons?.length||1)-1,current.lessonIndex+1)}))} lessonCount={modalWeek.lessons?.length||1} onUndo={undoPlan} onRedo={redoPlan} canUndo={historyRef.current.past.length>0} canRedo={historyRef.current.future.length>0} onChange={changes=>{updateWeek(modalIndex,changes);setLessonModalChanged(true)}} /></div>
         </section>
       </div>})()}
-      {showPastTeacherWeeks && !focusedTeacherWeek && <div className="teacher-scroll-context" hidden aria-live="off"><span className="teacher-scroll-context-label" /></div>}
+      
       <div className={`teacher-months ${focusedTeacherWeek ? "teacher-months-focused" : ""} ${focusedTeacherWeek && teacherWeekOverview ? "teacher-months-overview-hidden" : ""} ${!focusedTeacherWeek && !showPastTeacherWeeks ? "smart-months-mini-hidden" : ""} ${showPastTeacherWeeks && !focusedTeacherWeek ? "teacher-months-all-weeks" : ""} `}>
         {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? teacherDisplayWeeks : defaultTeacherWindow)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
