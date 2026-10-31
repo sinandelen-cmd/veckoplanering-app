@@ -8109,3 +8109,29 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
     align-self:flex-start!important;
   }
 }
+
+/* Länknamn: vanlig horisontell text i mindre standardstorlek, aldrig bokstavsstaplat. */
+@media screen {
+  #lararvy .lesson .moment-link-item .resource-chip > .resource-label,
+  body > .class-full-week-backdrop .lesson .moment-link-item .resource-chip > .resource-label,
+  .calendar-lesson-modal .lesson .moment-link-item .resource-chip > .resource-label {
+    font-family:inherit!important;
+    font-size:11px!important;
+    font-weight:400!important;
+    font-style:normal!important;
+    letter-spacing:normal!important;
+    line-height:1.35!important;
+    text-transform:none!important;
+    writing-mode:horizontal-tb!important;
+    text-orientation:mixed!important;
+    display:block!important;
+    white-space:normal!important;
+    overflow-wrap:normal!important;
+    word-break:normal!important;
+    min-width:0!important;
+    width:auto!important;
+    max-width:none!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+}
