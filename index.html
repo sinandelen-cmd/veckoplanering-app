@@ -3,6 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // The approved iPhone test view uses the compact wide layout in portrait.
+      // Apply only to iPhone portrait; retain normal tablet/landscape behavior.
+      if (/iPhone|iPod/i.test(navigator.userAgent)) {
+        const viewport = document.querySelector('meta[name="viewport"]');
+        const updateViewport = () => {
+          viewport.setAttribute('content', window.matchMedia('(orientation: portrait)').matches
+            ? 'width=device-width, initial-scale=0.5'
+            : 'width=device-width, initial-scale=1.0');
+        };
+        updateViewport();
+        window.addEventListener('orientationchange', updateViewport);
+      }
+    </script>
     <meta name="description" content="Årsplanering för lärare och elever" />
     <title>Årsplanering</title>
   </head>
