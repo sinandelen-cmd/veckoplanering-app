@@ -7428,54 +7428,67 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
 #lararvy .teacher-month-weeks > .chapter-week-group {width:100%!important;min-width:0!important;}
 #lararvy .teacher-month-weeks .week-card {width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;}
 #lararvy .teacher-month-weeks .week-card .lesson {max-width:100%!important;min-width:0!important;}
-/* Klassvyn använder nu samma fullständiga lektionskort som grundplaneringen.
-   Visa aldrig små miniatyrer eller förenklade ämnesrutor. */
-#lararvy .class-real-two-weeks,
-#lararvy .class-real-two-weeks-grid,
-#lararvy .class-real-two-weeks-grid > .class-real-week-column {
-  min-width:0!important;
-  max-width:100%!important;
-  width:100%!important;
-  box-sizing:border-box!important;
-}
-#lararvy .class-real-two-weeks .class-real-two-weeks-grid {
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr)!important;
-  gap:16px!important;
-}
-#lararvy .class-real-two-weeks-grid > .class-real-week-column {
-  max-height:none!important;
-  overflow:visible!important;
-  padding:0!important;
-}
-#lararvy .class-real-week-column > strong {
-  display:block;
-  margin:8px 0;
-  font-size:clamp(17px,2.2vw,22px)!important;
-}
-#lararvy .class-real-week-column .class-detailed-week {
-  display:block!important;
-  width:100%!important;
-  max-width:100%!important;
-  min-width:0!important;
-  box-sizing:border-box!important;
-  padding:clamp(10px,2vw,20px)!important;
-  overflow:visible!important;
-}
-#lararvy .class-real-week-column .class-detailed-week .lesson {
-  min-width:0!important;
-  max-width:100%!important;
-  box-sizing:border-box!important;
-}
-#lararvy .class-real-week-column .class-detailed-week input,
-#lararvy .class-real-week-column .class-detailed-week textarea {
-  min-width:0;
-  max-width:100%;
-  box-sizing:border-box;
+/* I klassvyn är miniatyrerna endast för stora skärmar. */
+#lararvy .class-responsive-week-lessons {display:none;}
+@media (max-width:1199px) {
+  #lararvy .class-real-two-weeks-grid,
+  #lararvy .class-real-two-weeks .class-real-two-weeks-grid {
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:14px!important;
+  }
+  #lararvy .class-real-two-weeks-grid > .class-real-week-column {
+    max-height:none!important;
+    overflow:visible!important;
+    min-width:0!important;
+  }
+  #lararvy .class-real-week-column .calendar-real-week-thumbnail {display:none!important;}
+  #lararvy .class-real-week-column > strong {font-size:clamp(16px,2.2vw,21px)!important;}
+  #lararvy .class-responsive-week-lessons {
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+    margin-top:8px;
+    padding:8px;
+    border:1px solid #d5e0ea;
+    border-radius:12px;
+    background:#f8fbfe;
+  }
+  #lararvy .class-responsive-lesson {
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:5px;
+    width:100%;
+    min-width:0;
+    min-height:54px;
+    padding:11px 12px;
+    border:1px solid #d5e0ea;
+    border-radius:9px;
+    background:#fff;
+    color:#294761;
+    text-align:left;
+    font:inherit;
+    font-size:clamp(14px,1.5vw,17px);
+    cursor:pointer;
+    overflow-wrap:anywhere;
+  }
+  #lararvy .class-responsive-lesson strong {font-size:inherit;}
+  #lararvy .class-responsive-lesson span {color:#475d70;}
+  #lararvy .class-responsive-open {
+    width:100%;
+    min-height:44px;
+    border:1px solid #a4c6e1;
+    border-radius:9px;
+    background:#e4f1fa;
+    color:#234b6c;
+    font:inherit;
+    font-weight:750;
+    cursor:pointer;
+  }
+  #lararvy .class-responsive-empty {margin:8px;font-size:15px;}
 }
 @media (max-width:700px) {
-  #lararvy .class-real-two-weeks {padding:8px!important;}
-  #lararvy .class-detailed-week .lesson {padding:8px!important;}
-  #lararvy .class-detailed-week .topic-grid {min-width:0!important;}
   #lararvy .teacher-month-weeks .week-card {padding:12px!important;}
+  #lararvy .teacher-month-weeks .lesson {max-width:100%!important;}
+  #lararvy .teacher-week-navigation {overflow-x:auto;max-width:100%;}
 }
