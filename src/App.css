@@ -7468,3 +7468,92 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
     opacity:1!important;
   }
 }
+
+
+/* Godkänd design: hjälpttext i vita skrivfält och + i varje färgad rutas nedre högra hörn. */
+@media screen {
+  .planning-layout.view-teacher .lesson .topic-grid > .topic-name:has(textarea),
+  .class-full-week-backdrop .lesson .topic-grid > .topic-name:has(textarea) {
+    background:#e8f4ee!important;
+    border-radius:10px!important;
+    padding:9px 10px 48px!important;
+    position:relative!important;
+  }
+  .planning-layout.view-teacher .lesson .topic-grid > .topic-name > textarea,
+  .class-full-week-backdrop .lesson .topic-grid > .topic-name > textarea,
+  .planning-layout.view-teacher .lesson .topic-column .topic-cell > input,
+  .class-full-week-backdrop .lesson .topic-column .topic-cell > input {
+    background:#fff!important;
+    color:#111!important;
+    -webkit-text-fill-color:#111!important;
+    opacity:1!important;
+  }
+  .planning-layout.view-teacher .lesson .topic-grid :is(input,textarea)::placeholder,
+  .class-full-week-backdrop .lesson .topic-grid :is(input,textarea)::placeholder {
+    color:#4f555a!important;
+    -webkit-text-fill-color:#4f555a!important;
+    opacity:1!important;
+    font-weight:500!important;
+  }
+  .planning-layout.view-teacher .lesson .topic-column:has(.topic-cell input),
+  .class-full-week-backdrop .lesson .topic-column:has(.topic-cell input) {
+    position:relative!important;
+    min-height:125px!important;
+    padding-bottom:48px!important;
+    box-sizing:border-box!important;
+  }
+  .planning-layout.view-teacher .lesson .topic-column:has(.topic-cell input) > .add-detail.lesson-bare-icon,
+  .class-full-week-backdrop .lesson .topic-column:has(.topic-cell input) > .add-detail.lesson-bare-icon {
+    position:absolute!important;
+    right:9px!important;
+    bottom:9px!important;
+    left:auto!important;
+    top:auto!important;
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    align-self:auto!important;
+    width:34px!important;
+    min-width:34px!important;
+    height:34px!important;
+    min-height:34px!important;
+    padding:0!important;
+    margin:0!important;
+    border:1px solid #bdd1c8!important;
+    border-radius:50%!important;
+    background:#fff!important;
+    color:#303b3d!important;
+    font-size:25px!important;
+    line-height:1!important;
+    box-shadow:none!important;
+    cursor:pointer!important;
+  }
+  .planning-layout.view-teacher .lesson .topic-grid > .topic-name .moment-inner-actions .lesson-bare-add,
+  .class-full-week-backdrop .lesson .topic-grid > .topic-name .moment-inner-actions .lesson-bare-add {
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    position:static!important;
+    width:34px!important;
+    min-width:34px!important;
+    height:34px!important;
+    min-height:34px!important;
+    padding:0!important;
+    border:1px solid #bdd1c8!important;
+    border-radius:50%!important;
+    background:#fff!important;
+    color:#303b3d!important;
+    font-size:24px!important;
+    line-height:1!important;
+    cursor:pointer!important;
+  }
+  .planning-layout.view-teacher .lesson .topic-grid > .topic-name .moment-inner-actions,
+  .class-full-week-backdrop .lesson .topic-grid > .topic-name .moment-inner-actions {
+    position:absolute!important;
+    right:9px!important;
+    bottom:8px!important;
+    width:auto!important;
+    margin:0!important;
+    gap:5px!important;
+  }
+}
