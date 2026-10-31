@@ -896,7 +896,7 @@ function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson }) {
     return () => { observer?.disconnect(); window.removeEventListener('resize', resize) }
   }, [week])
   return <div className="calendar-real-week-thumbnail">
-    <div className="calendar-real-week-label">Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</div>
+    <div className="calendar-real-week-label"><button type="button" className="calendar-week-heading-open" onClick={onOpen} aria-label={`Visa hela vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`} title="Visa hela veckan"><span>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</span><span className="calendar-week-expand-icon" aria-hidden="true">⛶</span></button></div>
     <div className="calendar-real-week-frame" ref={frame} style={{ height: dimensions.height }} onClick={event => { const lesson = event.target.closest(".lesson"); if (lesson) { onOpenLesson(Number(lesson.dataset.lessonIndex)) } else { const lessons = Array.from(event.currentTarget.querySelectorAll(".lesson")); if (lessons.length) { const y = event.clientY; const nearest = lessons.reduce((best, item) => Math.abs(item.getBoundingClientRect().top + item.getBoundingClientRect().height/2 - y) < Math.abs(best.getBoundingClientRect().top + best.getBoundingClientRect().height/2 - y) ? item : best, lessons[0]); onOpenLesson(Number(nearest.dataset.lessonIndex)) } } }} role="button" tabIndex={0} aria-label="Välj lektion att redigera" onKeyDown={event => { if (event.key === "Enter") onOpenLesson(0) }}>
       <div className="calendar-real-week-original" ref={original} style={{ transform: `scale(${dimensions.scale})` }} aria-hidden="true">
         <article className="calendar-inline-week" style={{ backgroundColor: weekColor(week.weekStart) }}>
@@ -1643,7 +1643,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(row.id)) } catch { /* Lagring kan vara blockerad */ }
     setOpenedFromLibrary(teacherTab === 'bibliotek')
     const openedPlan = planFromRow(row)
-    setSimpleSetup(false); setSelectedId(row.id); savedPlanRef.current = JSON.stringify(openedPlan); setSavedRevision(revision => revision + 1); setPlan(openedPlan); setTeacherTab('arsplan'); setCalendarOpen(false); setEditingClassView(className || ""); setPreviewStudents(false); setA4Demo(false); setStatus(className ? `Klassen ${className} tillhör grundplaneringen. Öppna klassernas schema nedan.` : 'Planeringen är öppnad i kalendervyn.'); if (className) { setCalendarOpen(false); setTimeout(()=>document.querySelector('[aria-label="Kopplade klasser"]')?.scrollIntoView({behavior:'smooth',block:'start'}),150) } else window.scrollTo({ top: 0, behavior: 'smooth' })
+    setSimpleSetup(false); setSelectedId(row.id); savedPlanRef.current = JSON.stringify(openedPlan); setSavedRevision(revision => revision + 1); setPlan(openedPlan); setTeacherTab('arsplan'); setCalendarOpen(false); setEditingClassView(className || ""); setPreviewStudents(false); setA4Demo(false); setStatus(className ? `Klassen ${className} tillhör grundplaneringen. Öppna klassernas schema nedan.` : ''); if (className) { setCalendarOpen(false); setTimeout(()=>document.querySelector('[aria-label="Kopplade klasser"]')?.scrollIntoView({behavior:'smooth',block:'start'}),150) } else window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function shareWithColleague(event) {
@@ -2046,7 +2046,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       {!focusedTeacherWeek && !showPastTeacherWeeks && <div className="smart-four-week-overview" aria-label="Fyra veckor i miniatyr">
         {defaultTeacherWindow.map(({week}) => <div className="smart-week-mini" key={week.weekStart || week.weekNumber}>
           <CalendarWeekThumbnail week={week} entryType={plan.entryType||"lektion"} onOpen={()=>{setFocusedTeacherWeek(String(week.weekStart||week.weekNumber));setTeacherWeekOverview(false)}} onOpenLesson={lessonIndex=>{if(lessonIndex<0)return;setLessonModal({weekKey:String(week.weekStart||week.weekNumber),lessonIndex});setLessonModalChanged(false)}}/>
-          <button type="button" className="smart-week-open" onClick={()=>{setFocusedTeacherWeek(String(week.weekStart||week.weekNumber));setTeacherWeekOverview(false)}}>Visa hela vecka {calendarWeekNumber(week.weekStart)??week.weekNumber}</button>
+          
         </div>)}
       </div>}
       {lessonModal && (()=>{const modalIndex=weeks.findIndex(w=>String(w.weekStart||w.weekNumber)===lessonModal.weekKey);const modalWeek=weeks[modalIndex];if(!modalWeek)return null;return <div className="smart-lesson-overlay" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget){setLessonModal(null);setLessonModalChanged(false)}}}>
