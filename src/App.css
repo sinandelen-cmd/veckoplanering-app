@@ -6623,3 +6623,18 @@ html,body,#root {max-width:100%;overflow-x:clip;}
 #lararvy .smart-lesson-dialog .lesson-edit-heading-pager>.lesson-heading-prev,#lararvy .smart-lesson-dialog .lesson-edit-heading-pager>.lesson-heading-next{display:flex!important;align-items:center!important;justify-content:center!important;width:28px!important;min-width:28px!important;height:30px!important;padding:0!important;margin:0!important;border:0!important;border-radius:5px!important;background:transparent!important;box-shadow:none!important;color:#514550!important;font-size:25px!important;line-height:1!important;cursor:pointer!important;}
 #lararvy .smart-lesson-dialog .lesson-edit-heading-pager>button:disabled{opacity:.25!important;cursor:default!important;}
 @media(max-width:650px){#lararvy .smart-lesson-dialog .lesson-heading>.lesson-edit-heading.lesson-edit-heading-pager{grid-template-columns:23px minmax(0,1fr) 23px!important;padding:4px!important;gap:1px!important;}#lararvy .smart-lesson-dialog .lesson-edit-heading-pager>.lesson-heading-prev,#lararvy .smart-lesson-dialog .lesson-edit-heading-pager>.lesson-heading-next{width:23px!important;min-width:23px!important;height:28px!important;}}
+
+
+/* Gemensam linjeikonstandard i lektionsredigeraren. */
+#lararvy .smart-lesson-dialog .lesson-heading button svg,
+#lararvy .smart-lesson-dialog .lesson-add-assessment svg,
+.lesson-heading button svg,.lesson-add-assessment svg{display:block;flex:none;width:16px;height:16px;stroke-width:1.8;}
+#lararvy .smart-lesson-dialog .lesson-add-assessment,.lesson-add-assessment{
+  display:inline-flex;align-items:center;justify-content:center;gap:4px;
+  width:auto;min-height:25px;margin:5px 0;padding:3px 6px;
+  border:1px solid #e6caca;border-radius:6px;background:#fff8f8;
+  color:#994747;font-size:10px;font-weight:500;line-height:1.1;
+  box-shadow:none;white-space:nowrap;
+}
+#lararvy .smart-lesson-dialog .lesson-add-assessment svg,.lesson-add-assessment svg{width:15px;height:15px;}
+#lararvy .smart-lesson-dialog .lesson-heading>.remove-small svg{color:#b14a4a;}
