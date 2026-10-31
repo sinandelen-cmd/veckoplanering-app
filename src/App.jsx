@@ -2910,7 +2910,9 @@ function PlanningActionIcon({ name, size = 16 }) {
     "undo": <><path d="M3 7v6h6" /><path d="M3 13a9 9 0 1 1 3 6" /></>,
     "redo": <><path d="M21 7v6h-6" /><path d="M21 13a9 9 0 1 0-3 6" /></>,
     "trash": <><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M6 6l1 14h10l1-14" /><path d="M10 10v7M14 10v7" /></>,
-    "clipboard-plus": <><rect x="5" y="4" width="14" height="18" rx="2" /><path d="M9 4.5V3h6v1.5M12 10v7M8.5 13.5h7" /></>
+    "clipboard-plus": <><rect x="5" y="4" width="14" height="18" rx="2" /><path d="M9 4.5V3h6v1.5M12 10v7M8.5 13.5h7" /></>,
+    "pencil": <><path d="m16 4 4 4-12 12H4v-4L16 4Z" /><path d="m14 6 4 4" /></>,
+    "check": <path d="m5 12 4 4L19 6" />
   };
   return <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" focusable="false">{paths[name]}</svg>;
 }
@@ -2925,12 +2927,12 @@ function MomentLinkItem({ link, index, editable, onChange, onDelete }) {
       <span className="resource-icon"><ResourceIcon kind={info.kind} fallback={info.icon} /></span>
       <span className="resource-label">{label || info.label}</span><span className="print-resource-url">{url}</span>
     </a> : <span className="moment-link-unnamed">{label || 'Ny länk'}</span>}
-    {editable && <button type="button" className="moment-link-edit-button" aria-label={`Redigera länk ${index + 1}`} title="Redigera namn och länk" aria-expanded={editing} onClick={() => setEditing(value => !value)}>✎</button>}
+    {editable && <button type="button" className="moment-link-edit-button" aria-label={`Redigera länk ${index + 1}`} title="Redigera namn och länk" aria-expanded={editing} onClick={() => setEditing(value => !value)}><PlanningActionIcon name="pencil" size={13} /></button>}
     {editable && editing && <div className="moment-link-form" role="group" aria-label={`Redigera länk ${index + 1}`}>
       <label>Namn<input aria-label={`Länk ${index + 1} – namn`} placeholder="Skriv länkens namn" value={label} onChange={e => onChange({ url, label: e.target.value })} /></label>
       <label>Länk<input aria-label={`Länk ${index + 1} – webbadress`} inputMode="url" placeholder="https://..." value={url} onChange={e => onChange({ url: e.target.value, label })} /></label>
       <div className="moment-link-form-actions">
-        <button type="button" className="moment-link-done" aria-label="Klart – stäng länkredigering" onClick={() => setEditing(false)}>✓ Klart</button>
+        <button type="button" className="moment-link-done" aria-label="Klart – stäng länkredigering" title="Klart" onClick={() => setEditing(false)}><PlanningActionIcon name="check" size={16} /></button>
         <button type="button" className="remove-small" aria-label={`Ta bort länk ${index + 1}`} onClick={onDelete}><PlanningActionIcon name="trash" /></button>
       </div>
     </div>}
