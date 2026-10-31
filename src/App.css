@@ -6228,3 +6228,74 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
     top:auto!important;
   }
 }
+
+/* Orienteringsrad: brödsmulor speglar vald vänstermeny. */
+.planning-unified-navigation .planning-nav-tools {
+  display:flex!important;
+  flex:1 1 auto!important;
+  justify-content:center!important;
+  align-items:center!important;
+  gap:10px!important;
+  min-width:0!important;
+  overflow:hidden!important;
+}
+.planning-unified-navigation .planning-breadcrumbs {
+  display:flex;
+  align-items:center;
+  min-width:0;
+  overflow:hidden;
+  white-space:nowrap;
+  font-size:13px;
+  font-weight:600;
+  color:#365976;
+}
+.planning-unified-navigation .planning-breadcrumb-item {
+  display:inline-flex;
+  align-items:center;
+  min-width:0;
+  max-width:100%;
+}
+.planning-unified-navigation .planning-breadcrumb-separator {
+  flex:0 0 auto;
+  margin:0 8px;
+  color:#708da7;
+  font-size:19px;
+  font-weight:400;
+}
+.planning-unified-navigation .planning-breadcrumb-parent {
+  flex:0 1 auto;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.planning-unified-navigation .planning-breadcrumb-current {
+  flex:0 1 auto;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  color:#153e60;
+  font-weight:800;
+}
+.planning-unified-navigation .planning-breadcrumb-subtitle {
+  flex:0 1 auto;
+  min-width:0;
+  max-width:170px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:11px;
+  color:#526d83;
+}
+@media(max-width:850px) {
+  .planning-unified-navigation .planning-breadcrumb-subtitle { display:none; }
+  .planning-unified-navigation .planning-breadcrumbs { font-size:12px; }
+  .planning-unified-navigation .planning-breadcrumb-separator { margin-inline:5px; }
+}
+@media(max-width:750px) {
+  .planning-unified-navigation .planning-nav-tools { justify-content:flex-start!important; }
+  .planning-unified-navigation .planning-breadcrumb-item:first-child:not(:last-child) { display:none; }
+  .planning-unified-navigation .planning-breadcrumb-item:nth-child(2) .planning-breadcrumb-separator { display:none; }
+  .planning-unified-navigation .planning-breadcrumbs { font-size:12px; }
+  .planning-unified-navigation .planning-unified-left { gap:0!important; }
+  .planning-unified-navigation .planning-unified-left button { padding-inline:5px!important; }
+}
