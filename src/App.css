@@ -7084,3 +7084,51 @@ body>.teacher-scroll-context-fixed{display:none!important;}
  .class-full-week-panel .lesson-heading{min-width:0!important;}
  .class-full-week-panel .topic-grid{min-width:0!important;max-width:100%!important;}
 }
+
+
+/* Öppna klassvecka: fast rubrik, en enda scrollbar för SAMTLIGA lektioner.
+   Lektionslistan är en direkt child till panelen (LessonDetails -> .lessons). */
+.class-full-week-backdrop{
+ inset:0!important;height:100dvh!important;max-height:100dvh!important;
+ padding:0!important;overflow:hidden!important;
+}
+.class-full-week-panel{
+ display:flex!important;flex-direction:column!important;
+ height:100%!important;max-height:100%!important;min-height:0!important;
+ width:100%!important;max-width:none!important;
+ overflow:hidden!important;padding:0!important;
+ border-radius:0!important;
+}
+.class-full-week-panel>.class-full-week-header{
+ position:relative!important;top:auto!important;z-index:2!important;
+ flex:0 0 auto!important;
+}
+.class-full-week-panel>.lessons{
+ display:flex!important;flex-direction:column!important;
+ flex:1 1 auto!important;min-height:0!important;
+ height:auto!important;max-height:none!important;
+ overflow-y:auto!important;overflow-x:hidden!important;
+ overscroll-behavior-y:contain!important;
+ -webkit-overflow-scrolling:touch!important;
+ align-items:stretch!important;
+ padding:12px 14px 36px!important;
+ scroll-padding-bottom:36px!important;
+}
+.class-full-week-panel>.lessons>.lesson{
+ display:block!important;flex:0 0 auto!important;
+ height:auto!important;min-height:0!important;max-height:none!important;
+ overflow:visible!important;
+}
+.class-full-week-panel>.class-full-week-footer{
+ flex:0 0 auto!important;margin:0!important;
+ padding:8px 14px max(12px,env(safe-area-inset-bottom,12px))!important;
+ background:#fff!important;border-top:1px solid #e2e8ef!important;
+}
+@media(max-width:650px){
+ .class-full-week-panel>.lessons{
+  padding:10px 10px 40px!important;gap:12px!important;
+ }
+ .class-full-week-panel>.lessons>.lesson{
+  width:100%!important;max-width:100%!important;
+ }
+}
