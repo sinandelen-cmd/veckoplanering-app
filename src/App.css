@@ -6520,3 +6520,8 @@ html,body,#root {max-width:100%;overflow-x:clip;}
 /* En enda Lägg till vecka-knapp: den stora under de fyra veckorna. */
 #lararvy .teacher-week-navigation .teacher-add-week-inline{display:none!important;}
 #lararvy .teacher-week-navigation .teacher-add-week-inline::before{display:none!important;}
+
+/* En enda kompakt knapp för ny vecka; tidigare stora dubbletten är borttagen. */
+#lararvy .teacher-week-navigation .teacher-add-week-inline{display:inline-flex!important;align-items:center!important;justify-content:center!important;order:1!important;margin-left:0!important;background:#287b49!important;color:white!important;border:0!important;border-radius:999px!important;min-height:38px!important;padding:8px 14px!important;font-weight:750!important;}
+#lararvy .teacher-week-navigation .teacher-add-week-inline:disabled{opacity:.5!important;cursor:not-allowed!important;}
+#lararvy .teacher-week-navigation .teacher-all-weeks-inline-toggle{order:2!important;}
