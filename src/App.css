@@ -6587,3 +6587,11 @@ html,body,#root {max-width:100%;overflow-x:clip;}
 /* En tydlig knapp för att växla mellan alla veckor och grundplanering. */
 #lararvy .teacher-week-navigation .teacher-all-weeks-inline-toggle {display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;border-radius:9px!important;padding:8px 12px!important;min-height:38px!important;font-size:13px!important;font-weight:700!important;box-shadow:none!important;white-space:nowrap!important;}
 #lararvy .teacher-week-navigation .teacher-all-weeks-inline-toggle span[aria-hidden] {font-size:15px!important;line-height:1!important;}
+
+/* Samma vänster–mitten–höger-princip för lektionsbyte som för vecka/månad. */
+#lararvy .smart-lesson-modal-navigation {display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:9px!important;padding:10px 12px!important;}
+#lararvy .smart-lesson-modal-pager {display:grid!important;grid-template-columns:42px minmax(0,1fr) 42px!important;align-items:center!important;gap:8px!important;width:100%!important;}
+#lararvy .smart-lesson-modal-pager>span {text-align:center!important;font-size:14px!important;font-weight:750!important;}
+#lararvy .smart-lesson-modal-pager>button {display:flex!important;align-items:center!important;justify-content:center!important;width:42px!important;height:38px!important;font-size:23px!important;line-height:1!important;padding:0!important;border-radius:9px!important;}
+#lararvy .smart-lesson-modal-history {display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;}
+#lararvy .smart-lesson-modal-history>button {min-height:32px!important;padding:5px 10px!important;font-size:12px!important;}
