@@ -1213,7 +1213,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   // Fristående fast rubrik direkt i document.body: påverkas inte av
   // planeringens scrollcontainrar, overflow eller transformerade föräldrar.
   useEffect(() => {
-    if (!showPastTeacherWeeks || teacherTab !== 'arsplan') return undefined
+    if ((!showPastTeacherWeeks && !focusedTeacherWeek) || teacherTab !== 'arsplan') return undefined
     const indicator = document.createElement('div')
     indicator.className = 'teacher-scroll-context teacher-scroll-context-fixed'
     indicator.setAttribute('aria-live', 'off')
@@ -1223,7 +1223,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     let frame = 0
     const update = () => {
       frame = 0
-      const sections = [...document.querySelectorAll('#lararvy .teacher-months-all-weeks .teacher-chapter-section')]
+      const sections = [...document.querySelectorAll('#lararvy .teacher-months .teacher-chapter-section')]
       if (!sections.length) { indicator.style.display = 'none'; return }
       const header = document.querySelector('.planning-layout > .planning-unified-navigation')
       const nav = document.querySelector('#lararvy .teacher-week-navigation')
@@ -1257,7 +1257,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       if (frame) cancelAnimationFrame(frame)
       indicator.remove()
     }
-  }, [showPastTeacherWeeks, teacherTab])
+  }, [showPastTeacherWeeks, focusedTeacherWeek, teacherTab])
 
   useEffect(() => {
     if (teacherTab !== "arsplan") { setPinnedChapter(null); return undefined }
