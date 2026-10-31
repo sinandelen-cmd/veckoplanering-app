@@ -6420,3 +6420,8 @@ html,body,#root {max-width:100%;overflow-x:clip;}
 #lararvy .visual-tree-schools>.visual-tree-school .school-folder-heading{display:flex!important;align-items:center!important;}
 #lararvy .visual-tree-schools>.visual-tree-school .school-folder-heading>.visual-tree-node{flex:1!important;text-align:left!important;}
 @media(max-width:650px){#lararvy .visual-tree-schools>.visual-tree-school .visual-tree-courses{padding-left:7px!important;}}
+
+/* Ny planering hör till Mina planeringar, inte den globala övermenyn. */
+#lararvy .planning-board-new-plan{background:#2d7953;color:white;border:1px solid #236443;border-radius:9px;padding:10px 14px;font-weight:750;white-space:nowrap;cursor:pointer;}
+#lararvy .planning-board-new-plan:hover{background:#236443;}
+@media(max-width:650px){#lararvy .planning-board-tools{flex-wrap:wrap;gap:8px;}#lararvy .planning-board-new-plan{min-height:42px;}}
