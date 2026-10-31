@@ -7317,3 +7317,12 @@ body>.teacher-scroll-context-fixed{display:none!important;}
  outline-offset:2px!important;
 }
 #lararvy .class-week-return-button:disabled {opacity:.6!important;cursor:wait!important;}
+
+/* Klassens helvecksvy: övre åtgärder ska alltid vara synliga även på iPhone. */
+#lararvy .class-full-week-backdrop {box-sizing:border-box!important;padding-top:max(8px,env(safe-area-inset-top))!important;padding-bottom:max(8px,env(safe-area-inset-bottom))!important;}
+#lararvy .class-full-week-panel {box-sizing:border-box!important;height:100%!important;max-height:100%!important;min-height:0!important;}
+#lararvy .class-full-week-header {position:relative!important;z-index:20!important;min-height:52px!important;padding:8px 6px!important;background:var(--plan-light,#fff)!important;box-sizing:border-box!important;}
+#lararvy .class-full-week-header h3 {font-size:clamp(13px,3.4vw,18px)!important;line-height:1.25!important;min-width:0!important;overflow-wrap:anywhere!important;}
+#lararvy .class-week-header-return {display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;min-height:40px!important;padding:8px 12px!important;border-radius:10px!important;border:1px solid var(--plan-accent,#79524a)!important;background:var(--plan-soft,#f3f5f6)!important;color:var(--plan-ink,#493b3b)!important;font:inherit!important;font-size:13px!important;font-weight:750!important;box-shadow:none!important;white-space:nowrap!important;}
+#lararvy .class-week-header-return:focus-visible {outline:2px solid var(--plan-accent,#79524a)!important;outline-offset:2px!important;}
+@media(max-width:650px){#lararvy .class-full-week-header {gap:4px!important;}#lararvy .class-week-header-return {font-size:12px!important;padding:7px 9px!important;}}
