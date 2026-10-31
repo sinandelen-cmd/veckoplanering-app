@@ -6504,3 +6504,7 @@ html,body,#root {max-width:100%;overflow-x:clip;}
 #lararvy .teacher-week-navigation .teacher-all-weeks-inline-toggle{order:99!important;margin-left:auto!important;white-space:nowrap!important;min-height:40px!important;}
 #lararvy .teacher-week-navigation .teacher-all-weeks-inline-toggle[aria-pressed="true"]{background:#e3f1e9!important;border-color:#93c7aa!important;color:#22563b!important;}
 @media(max-width:650px){#lararvy .teacher-week-navigation .teacher-all-weeks-inline-toggle{margin-left:auto!important;font-size:13px!important;padding:8px 10px!important;}}
+
+/* Namnet på den öppna planeringen ersätter redundant Planering-knapp. */
+.planning-unified-navigation .planning-active-plan-title{display:block;max-width:min(48vw,440px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#24465e;font-size:clamp(14px,1.45vw,19px);font-weight:800;text-align:center;line-height:1.4;}
+@media(max-width:650px){.planning-unified-navigation .planning-active-plan-title{max-width:32vw;font-size:13px;}}
