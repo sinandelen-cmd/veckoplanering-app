@@ -1,12 +1,12 @@
 import { useState } from 'react'
 
-export default function Navigation({ active = 'mina', onNavigate, onAllWeeks, onNew, onToggleCalendar, calendarOpen = false, hasOpenPlan = false, isAdmin = false, onOpenAdmin, adminOpen = false, pendingCount = 0, onCloseAdmin, onSignOut, onBack, onForward, canBack = false, canForward = false, onPrintPlan }) {
+export default function Navigation({ active = 'mina', onNavigate, onAllWeeks, onNew, onToggleCalendar, calendarOpen = false, hasOpenPlan = false, isAdmin = false, onOpenAdmin, adminOpen = false, pendingCount = 0, onCloseAdmin, onSignOut, onBack, onForward, canBack = false, canForward = false, onPrintPlan, previousLabel = 'Startsida', onPrevious }) {
   const [planningMenuOpen, setPlanningMenuOpen] = useState(false)
   if (!onNavigate) return <nav className="public-navigation" aria-label="Huvudmeny"><a href="/">Årsplanering</a></nav>
   const choose = action => { setPlanningMenuOpen(false); action() }
   return <nav className="planning-unified-navigation planning-original-top" aria-label="Huvudnavigation">
     <div className="planning-unified-left">
-      <button type="button" onClick={() => choose(() => { onCloseAdmin?.(); onNavigate('mina') })}>⌂ Startsida</button>
+      <button type="button" onClick={() => choose(() => { onCloseAdmin?.(); if (onPrevious) onPrevious(); else onNavigate('mina') })}>← {previousLabel}</button>
     </div>
     <div className="planning-unified-center">
       <div className="planning-nav-dropdown">
