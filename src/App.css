@@ -6538,3 +6538,17 @@ html,body,#root {max-width:100%;overflow-x:clip;}
 #lararvy .calendar-week-heading-open{min-height:43px!important;gap:8px!important;}
 #lararvy .calendar-week-expand-icon{flex:0 0 auto!important;width:auto!important;height:auto!important;min-height:27px!important;max-width:58%!important;padding:4px 8px!important;white-space:nowrap!important;font-size:12px!important;font-weight:700!important;letter-spacing:0!important;}
 @media(max-width:680px){#lararvy .calendar-week-expand-icon{font-size:10px!important;padding:4px 5px!important;}}
+
+/* Oktober: tydliga och kompakta veckokontroller. */
+#lararvy .calendar-week-heading-open{min-height:34px!important;padding:5px 8px!important;}
+#lararvy .calendar-week-expand-icon{font-size:10px!important;min-height:23px!important;padding:3px 6px!important;border-radius:6px!important;max-width:none!important;}
+#lararvy .teacher-week-navigation .teacher-close-week{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;order:-10!important;width:auto!important;min-width:94px!important;height:36px!important;min-height:36px!important;padding:6px 12px!important;border-radius:9px!important;font-size:13px!important;line-height:1.2!important;white-space:nowrap!important;background:#fff!important;color:#294c66!important;border:1px solid #b8cad8!important;font-weight:750!important;}
+#lararvy .teacher-months-focused .week-card .lessons{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important;align-items:start!important;}
+#lararvy .teacher-months-focused .week-card .lesson{min-width:0!important;width:100%!important;max-width:none!important;overflow:visible!important;}
+#lararvy .teacher-months-focused .week-card .lesson :is(input,textarea,select){min-width:0!important;max-width:100%!important;box-sizing:border-box!important;}
+#lararvy .teacher-months-focused .week-card .lesson :is(label,span,p,div){overflow-wrap:break-word!important;word-break:normal!important;}
+@media(max-width:850px){
+ #lararvy .teacher-months-focused .week-card .lessons{grid-template-columns:minmax(0,1fr)!important;gap:12px!important;}
+ #lararvy .teacher-months-focused .week-card .lesson{max-width:100%!important;}
+ #lararvy .teacher-week-navigation .teacher-close-week{min-width:94px!important;}
+}
