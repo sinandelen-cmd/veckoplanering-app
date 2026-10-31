@@ -7470,90 +7470,95 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
 }
 
 
-/* Godkänd design: hjälpttext i vita skrivfält och + i varje färgad rutas nedre högra hörn. */
+/* Enhetliga små plusknappar: placerade INUTI respektive färgad panel.
+   Behåll vita skrivfält och minska tomt utrymme under dem. */
 @media screen {
-  .planning-layout.view-teacher .lesson .topic-grid > .topic-name:has(textarea),
-  .class-full-week-backdrop .lesson .topic-grid > .topic-name:has(textarea) {
+  #lararvy .lesson .topic-grid > .topic-name:has(textarea),
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-name:has(textarea),
+  .calendar-lesson-modal .lesson .topic-grid > .topic-name:has(textarea) {
+    position:relative!important;
     background:#e8f4ee!important;
     border-radius:10px!important;
-    padding:9px 10px 48px!important;
-    position:relative!important;
+    min-height:88px!important;
+    padding:7px 8px 30px!important;
+    box-sizing:border-box!important;
   }
-  .planning-layout.view-teacher .lesson .topic-grid > .topic-name > textarea,
-  .class-full-week-backdrop .lesson .topic-grid > .topic-name > textarea,
-  .planning-layout.view-teacher .lesson .topic-column .topic-cell > input,
-  .class-full-week-backdrop .lesson .topic-column .topic-cell > input {
-    background:#fff!important;
+  #lararvy .lesson .topic-grid > .topic-name > textarea,
+  #lararvy .lesson .topic-column .topic-cell > input,
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-name > textarea,
+  body > .class-full-week-backdrop .lesson .topic-column .topic-cell > input,
+  .calendar-lesson-modal .lesson .topic-grid > .topic-name > textarea,
+  .calendar-lesson-modal .lesson .topic-column .topic-cell > input {
+    background-color:#fff!important;
     color:#111!important;
     -webkit-text-fill-color:#111!important;
     opacity:1!important;
   }
-  .planning-layout.view-teacher .lesson .topic-grid :is(input,textarea)::placeholder,
-  .class-full-week-backdrop .lesson .topic-grid :is(input,textarea)::placeholder {
-    color:#4f555a!important;
-    -webkit-text-fill-color:#4f555a!important;
+  #lararvy .lesson .topic-grid :is(input,textarea)::placeholder,
+  body > .class-full-week-backdrop .lesson .topic-grid :is(input,textarea)::placeholder,
+  .calendar-lesson-modal .lesson .topic-grid :is(input,textarea)::placeholder {
+    color:#555!important;
+    -webkit-text-fill-color:#555!important;
     opacity:1!important;
     font-weight:500!important;
   }
-  .planning-layout.view-teacher .lesson .topic-column:has(.topic-cell input),
-  .class-full-week-backdrop .lesson .topic-column:has(.topic-cell input) {
+  #lararvy .lesson .topic-grid > .topic-column:has(.topic-cell input),
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-column:has(.topic-cell input),
+  .calendar-lesson-modal .lesson .topic-grid > .topic-column:has(.topic-cell input) {
     position:relative!important;
-    min-height:125px!important;
-    padding-bottom:48px!important;
+    min-height:88px!important;
+    padding:8px 8px 30px!important;
     box-sizing:border-box!important;
   }
-  .planning-layout.view-teacher .lesson .topic-column:has(.topic-cell input) > .add-detail.lesson-bare-icon,
-  .class-full-week-backdrop .lesson .topic-column:has(.topic-cell input) > .add-detail.lesson-bare-icon {
+  #lararvy .lesson .topic-grid > .topic-name > .moment-inner-actions,
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-name > .moment-inner-actions,
+  .calendar-lesson-modal .lesson .topic-grid > .topic-name > .moment-inner-actions {
     position:absolute!important;
-    right:9px!important;
-    bottom:9px!important;
+    right:6px!important;
+    bottom:6px!important;
     left:auto!important;
     top:auto!important;
+    width:auto!important;
+    margin:0!important;
+    padding:0!important;
+    gap:4px!important;
+  }
+  /* Samma 22px-storlek på Moment, Sida och Uppgift. */
+  #lararvy .lesson .topic-grid .topic-corner-add,
+  body > .class-full-week-backdrop .lesson .topic-grid .topic-corner-add,
+  .calendar-lesson-modal .lesson .topic-grid .topic-corner-add {
     display:inline-flex!important;
-    align-items:center!important;
     justify-content:center!important;
+    align-items:center!important;
+    position:absolute!important;
+    right:6px!important;
+    bottom:6px!important;
+    top:auto!important;
+    left:auto!important;
     align-self:auto!important;
-    width:34px!important;
-    min-width:34px!important;
-    height:34px!important;
-    min-height:34px!important;
+    flex:0 0 22px!important;
+    width:22px!important;
+    min-width:22px!important;
+    max-width:22px!important;
+    height:22px!important;
+    min-height:22px!important;
+    max-height:22px!important;
     padding:0!important;
     margin:0!important;
     border:1px solid #bdd1c8!important;
-    border-radius:50%!important;
+    border-radius:6px!important;
     background:#fff!important;
-    color:#303b3d!important;
-    font-size:25px!important;
+    color:#36433c!important;
+    font-size:17px!important;
+    font-weight:600!important;
     line-height:1!important;
     box-shadow:none!important;
     cursor:pointer!important;
   }
-  .planning-layout.view-teacher .lesson .topic-grid > .topic-name .moment-inner-actions .lesson-bare-add,
-  .class-full-week-backdrop .lesson .topic-grid > .topic-name .moment-inner-actions .lesson-bare-add {
-    display:inline-flex!important;
-    align-items:center!important;
-    justify-content:center!important;
+  /* Momentets + ligger i åtgärdsraden, som i sin tur ligger i hörnet. */
+  #lararvy .lesson .topic-grid > .topic-name > .moment-inner-actions .topic-corner-add,
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-name > .moment-inner-actions .topic-corner-add,
+  .calendar-lesson-modal .lesson .topic-grid > .topic-name > .moment-inner-actions .topic-corner-add {
     position:static!important;
-    width:34px!important;
-    min-width:34px!important;
-    height:34px!important;
-    min-height:34px!important;
-    padding:0!important;
-    border:1px solid #bdd1c8!important;
-    border-radius:50%!important;
-    background:#fff!important;
-    color:#303b3d!important;
-    font-size:24px!important;
-    line-height:1!important;
-    cursor:pointer!important;
-  }
-  .planning-layout.view-teacher .lesson .topic-grid > .topic-name .moment-inner-actions,
-  .class-full-week-backdrop .lesson .topic-grid > .topic-name .moment-inner-actions {
-    position:absolute!important;
-    right:9px!important;
-    bottom:8px!important;
-    width:auto!important;
-    margin:0!important;
-    gap:5px!important;
   }
 }
