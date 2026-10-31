@@ -7226,3 +7226,40 @@ body>.teacher-scroll-context-fixed{display:none!important;}
  .class-full-week-summary-heading{font-size:13px}
  .class-full-week-summary-details{font-size:11px}
 }
+
+
+/* Lektionsdialog: båda bläddringspilarna ligger INUTI samma rosa ruta som lektionsnamnet. */
+#lararvy .smart-lesson-dialog .lesson-heading{
+ display:flex!important;align-items:center!important;min-width:0!important;gap:8px!important;
+}
+#lararvy .smart-lesson-dialog .lesson-heading>.lesson-edit-heading.lesson-edit-heading-pager{
+ display:grid!important;
+ grid-template-columns:36px minmax(0,1fr) 36px!important;
+ align-items:center!important;gap:5px!important;
+ flex:1 1 auto!important;width:auto!important;min-width:0!important;
+ box-sizing:border-box!important;
+ padding:8px 10px!important;
+ background:#fcf5f7!important;
+ border:2px solid #eee3e7!important;border-radius:14px!important;
+ box-shadow:none!important;
+}
+#lararvy .smart-lesson-dialog .lesson-edit-heading-pager>.lesson-number-inline{
+ display:block!important;min-width:0!important;width:auto!important;
+ padding:4px 0!important;margin:0!important;
+ text-align:center!important;background:transparent!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ color:#4e414c!important;font-weight:800!important;
+ overflow-wrap:normal!important;
+}
+#lararvy .smart-lesson-dialog .lesson-edit-heading-pager>.lesson-heading-prev,
+#lararvy .smart-lesson-dialog .lesson-edit-heading-pager>.lesson-heading-next{
+ position:static!important;float:none!important;transform:none!important;
+ margin:0!important;justify-self:center!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+}
+@media(max-width:650px){
+ #lararvy .smart-lesson-dialog .lesson-heading>.lesson-edit-heading.lesson-edit-heading-pager{
+  grid-template-columns:30px minmax(0,1fr) 30px!important;
+  padding:6px!important;gap:2px!important;
+ }
+}
