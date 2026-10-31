@@ -6470,3 +6470,8 @@ html,body,#root {max-width:100%;overflow-x:clip;}
    order:-1;flex:1 0 100%!important;
  }
 }
+
+/* En enda navigeringsrad: inga upprepade rubriker eller Tillbaka-knappar i planeringsträdet. */
+#mina-arsplaneringar .planning-board-bar{display:flex!important;justify-content:flex-end!important;align-items:center!important;min-height:0!important;padding:8px 10px!important;}
+#mina-arsplaneringar .planning-board-bar .planning-board-tools{margin-left:0!important;width:auto!important;max-width:100%!important;justify-content:flex-end!important;gap:8px!important;}
+@media(max-width:650px){#mina-arsplaneringar .planning-board-bar{padding:8px 4px!important;}#mina-arsplaneringar .planning-board-bar .planning-board-tools{width:100%!important;justify-content:flex-start!important;}}
