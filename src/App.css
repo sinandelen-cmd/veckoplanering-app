@@ -7292,3 +7292,28 @@ body>.teacher-scroll-context-fixed{display:none!important;}
  outline:2px solid var(--plan-accent, #79524a)!important;
  outline-offset:2px!important;
 }
+
+/* Tydlig återgång från klassens helvecksvy, med samma temafärger. */
+#lararvy .class-full-week-footer {
+ padding:10px 8px max(12px,env(safe-area-inset-bottom))!important;
+ justify-content:center!important;
+ background:var(--plan-light,#fff)!important;
+ border-top:1px solid var(--plan-soft,#e4e9ed)!important;
+}
+#lararvy .class-week-return-button {
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:100%!important;min-height:46px!important;
+ padding:10px 16px!important;
+ border:1px solid var(--plan-accent,#79524a)!important;
+ border-radius:12px!important;
+ background:var(--plan-soft,#f3f5f6)!important;
+ color:var(--plan-ink,#493b3b)!important;
+ font:inherit!important;font-weight:750!important;
+ box-shadow:none!important;
+ cursor:pointer!important;
+}
+#lararvy .class-week-return-button:focus-visible {
+ outline:2px solid var(--plan-accent,#79524a)!important;
+ outline-offset:2px!important;
+}
+#lararvy .class-week-return-button:disabled {opacity:.6!important;cursor:wait!important;}
