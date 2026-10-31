@@ -1,4 +1,5 @@
 name: Uppdatera fix-planering testlänk
+# Starta om publicering efter att Cloudflare-token lagts till.
 on:
   workflow_dispatch:
   push:
