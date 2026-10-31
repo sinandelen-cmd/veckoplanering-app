@@ -3013,7 +3013,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
                   updateTopic({ ...topic, [field]: next })
                 }} /><button className="remove-small" type="button" aria-label={`Ta bort ${field === "pages" ? "sida" : "uppgift"} på rad ${row + 1}`} onClick={() => updateTopic({ ...topic, [field]: (field === 'pages' ? pages : assignments).filter((_, index) => index !== row) })}><PlanningActionIcon name="trash" /></button></> : <span>{(field === 'pages' ? pages : assignments)[row] || ' '}</span>}
               </div>)}
-              {editable && <button type="button" className={`add-detail lesson-bare-icon ${field === 'pages' ? 'lesson-bare-page' : 'lesson-bare-task'}`} title={field === 'pages' ? 'Lägg till sida' : 'Lägg till uppgift'} aria-label={field === 'pages' ? 'Lägg till sida' : 'Lägg till uppgift'} onClick={() => updateTopic({ ...topic, [field]: [...(field === 'pages' ? pages : assignments), ''] })}>+</button>}
+              {editable && <button type="button" className={`add-detail lesson-bare-icon ${field === 'pages' ? 'lesson-bare-page' : 'lesson-bare-task'}`} title={field === 'pages' ? 'Lägg till sida' : 'Lägg till uppgift'} aria-label={field === 'pages' ? 'Lägg till sida' : 'Lägg till uppgift'} onClick={() => updateTopic({ ...topic, [field]: Array.from({ length: rows + 1 }, (_, index) => (field === 'pages' ? pages : assignments)[index] || '') })}>+</button>}
             </div>)}
           </div>
         </div>
