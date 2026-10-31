@@ -2225,16 +2225,7 @@ const addNewTeacherWeek = () => setPlan(p => {
               return {...previous, weeksData: updated}
             })
             setStatus('Vecka '+target+' är ändrad. Lektionerna är kvar.')
-          }} /></strong><div className="teacher-week-inline-visibility"><div className="teacher-week-elevvisning">
-            <label>Elevvisning
-              <select aria-label={"Elevvisning vecka "+week.weekNumber} value={week.hidden?"hidden":week.keepVisibleExtra?"extra":"normal"} onChange={e=>updateWeek(index,e.target.value==="hidden"?{hidden:true,keepVisibleExtra:false}:e.target.value==="extra"?{hidden:false,keepVisibleExtra:true}:{hidden:false,keepVisibleExtra:false})}>
-                <option value="normal">Automatisk</option>
-                <option value="extra">Visa manuellt för elever (även passerad vecka)</option>
-                <option value="hidden">Dölj för elever</option>
-              </select>
-            </label>
-          </div>
-          <button type="button" className="week-visibility-eye" aria-label={week.hidden ? "Visa vecka för elever" : "Dölj vecka för elever"} aria-pressed={!week.hidden} title={week.hidden ? "Dold för elever – tryck för att visa" : "Synlig för elever – tryck för att dölja"} onClick={()=>updateWeek(index,{hidden:!week.hidden})}>{week.hidden ? "◉̸" : "👁"}</button></div><span style={{ fontSize: "1.15rem", fontWeight: 700 }}>{formatDate(week.weekStart)}</span>
+          }} /></strong><span style={{ fontSize: "1.15rem", fontWeight: 700 }}>{formatDate(week.weekStart)}</span>
             <button type="button" className="remove-small teacher-week-delete-icon" aria-label={`Ta bort vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`} title="Ta bort vecka" disabled={weeks.length <= 1} onClick={() => {
               if (hasWeekWork(week, index) && !window.confirm(`Ta bort vecka ${week.weekNumber} och allt innehåll i veckan?`)) return
               setPlan(p => {
@@ -2477,7 +2468,7 @@ const addNewTeacherWeek = () => setPlan(p => {
             const nextDate = addWeeks(week.weekStart, target - current)
             if (calendarWeekNumber(nextDate) !== target) { setStatus('Veckonumret finns inte vid detta årsskifte.'); return }
             shiftAllWeeks(index, target)
-          }} /></strong><button type="button" className="week-visibility-eye" aria-label={week.hidden ? "Visa vecka för elever" : "Dölj vecka för elever"} aria-pressed={!week.hidden} title={week.hidden ? "Dold för elever – tryck för att visa" : "Synlig för elever – tryck för att dölja"} onClick={()=>updateWeek(index,{hidden:!week.hidden})}>{week.hidden ? "◉̸" : "👁"}</button><span style={{ fontSize: "1.15rem", fontWeight: 700 }}>{formatDate(week.weekStart)}</span>
+          }} /></strong><span style={{ fontSize: "1.15rem", fontWeight: 700 }}>{formatDate(week.weekStart)}</span>
 </div>
           <label className="chapter-editor">Kapitel / tema (valfritt)<input value={week.chapter || ''} placeholder="Exempel: Kapitel 5 – Taluppfattning" onChange={e => updateWeek(index, { chapter: e.target.value })} /></label>
           {!/^Vecka\s+\d+$/i.test(week.title || '') && <input className="week-title" aria-label="Egen veckorubrik" value={week.title || ''} onChange={e => updateWeek(index, { title: e.target.value })} />}
