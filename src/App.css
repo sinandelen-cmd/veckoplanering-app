@@ -6670,3 +6670,18 @@ body > .teacher-scroll-context-fixed{
  pointer-events:none!important;white-space:nowrap!important;
  transition:none!important;animation:none!important;
 }
+
+
+/* iPhone och dator: öppnad vecka visar alltid en lektion per rad.
+   Detta ersätter äldre regler som återställde två kolumner. */
+#lararvy .teacher-months-focused .week-card .lessons,
+#lararvy .teacher-months-all-weeks .week-card .lessons{
+ display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;
+ grid-template-columns:minmax(0,1fr)!important;gap:12px!important;
+ align-items:stretch!important;width:100%!important;min-width:0!important;
+}
+#lararvy .teacher-months-focused .week-card .lessons>.lesson,
+#lararvy .teacher-months-all-weeks .week-card .lessons>.lesson{
+ flex:0 0 auto!important;width:100%!important;min-width:0!important;
+ max-width:100%!important;box-sizing:border-box!important;
+}
