@@ -2084,7 +2084,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       <nav className="teacher-week-navigation" aria-label="Navigera mellan veckor">
 
         
-        {focusedTeacherWeek && <button type="button" className="teacher-close-week" aria-label="Stäng veckan och visa fyra veckor" title="Stäng veckan" onClick={() => {setFocusedTeacherWeek(null);setFocusedTeacherLesson(null);setTeacherWeekOverview(false)}}>✕ Stäng</button>}
+        {focusedTeacherWeek && <button type="button" className="teacher-close-week" aria-label="Stäng veckan och visa fyra veckor" title="Stäng veckan" onClick={() => {setFocusedTeacherWeek(null);setFocusedTeacherLesson(null);setTeacherWeekOverview(false)}}><PlanningActionIcon name="x" /> Stäng</button>}
 
         <button type="button" aria-label="Föregående vecka" onClick={() => { if (!focusedTeacherWeek) { setTeacherWindowStart(Math.max(0, windowStart - 1)); return } const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const next = weeks[Math.max(0, i < 0 ? 0 : i - 1)]; if (next) setFocusedTeacherWeek(String(next.weekStart || next.weekNumber)) }}>◀</button>
         {[-1, 0, 1].map(offset => { const i = weeks.findIndex(w => String(w.weekStart || w.weekNumber) === focusedTeacherWeek); const todayIndex = weeks.findIndex(w => w.weekStart === mondayOf(new Date())); const center = i >= 0 ? i : (todayIndex >= 0 ? todayIndex : 0); const w = weeks[center + offset]; return <button type="button" key={offset} className={offset === 0 ? 'current' : 'adjacent'} disabled={!w} onClick={() => w && setFocusedTeacherWeek(String(w.weekStart || w.weekNumber))}>{w ? `Vecka ${calendarWeekNumber(w.weekStart) ?? w.weekNumber}` : '–'}</button> })}
@@ -2821,7 +2821,7 @@ function WeekDetails({ week, onChange }) {
         return <div className="week-link-entry" key={index}>
           {editable && <input type="url" aria-label={`Länk ${index + 1}`} placeholder="Klistra in länk till YouTube, PPTX, PDF, fil..." value={url} onChange={e => updateList('links', links.map((item, i) => i === index ? e.target.value : item))} />}
           {info && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon"><ResourceIcon kind={info.kind} fallback={info.icon} /></span><span>{info.label}</span><span className="print-resource-url">{url}</span></a>}
-          {editable && onUndo && <div className="lesson-inline-history"><button type="button" disabled={!canUndo} onClick={onUndo} aria-label="Ångra" title="Ångra">↶</button><button type="button" disabled={!canRedo} onClick={onRedo} aria-label="Gör om" title="Gör om">↷</button></div>}{editable && <button type="button" className="remove-small" aria-label={`Ta bort länk ${index + 1}`} onClick={() => updateList('links', links.filter((_, i) => i !== index))}>×</button>}
+          {editable && onUndo && <div className="lesson-inline-history"><button type="button" disabled={!canUndo} onClick={onUndo} aria-label="Ångra" title="Ångra"><PlanningActionIcon name="undo" /></button><button type="button" disabled={!canRedo} onClick={onRedo} aria-label="Gör om" title="Gör om"><PlanningActionIcon name="redo" /></button></div>}{editable && <button type="button" className="remove-small" aria-label={`Ta bort länk ${index + 1}`} onClick={() => updateList('links', links.filter((_, i) => i !== index))}>×</button>}
         </div>
       })}
       {editable && <button type="button" className="add-detail" onClick={() => updateList('links', [...links, ''])}>+ Lägg till länk eller filadress</button>}
@@ -2841,6 +2841,7 @@ function lessonDayDate(weekStart, lessonName) {
 }
 function PlanningActionIcon({ name, size = 16 }) {
   const paths = {
+    "x": <><path d="M18 6 6 18" /><path d="m6 6 12 12" /></>,
     "chevron-left": <path d="m15 18-6-6 6-6" />,
     "chevron-right": <path d="m9 18 6-6-6-6" />,
     "arrow-up": <><path d="m12 19 0-14" /><path d="m5 12 7-7 7 7" /></>,
