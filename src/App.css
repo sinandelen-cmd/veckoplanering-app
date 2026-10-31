@@ -838,17 +838,26 @@ nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a
 @media (max-width: 650px) { .unified-navigation { gap: .25rem; padding: .55rem; } .navigation-brand { width: 100%; } .unified-navigation button { padding: .42rem .5rem; } .unified-navigation .calendar-toggle { margin-left: 0; } }
 
 /* Enkel vänsternavigering: planbiblioteket är utgångspunkten. */
-.planning-layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); min-height: 100vh; align-items: start; }
+
+/* Samlad desktop-layout: 150 px sidomeny och 44 px topprad. */
+.planning-layout {
+  display:grid;
+  grid-template-columns:150px minmax(0,1fr);
+  grid-template-rows:44px minmax(0,1fr);
+  min-height:100vh;
+  align-items:start;
+  column-gap:0;
+}
 .planning-layout > .shell { width: 100%; min-width: 0; max-width: 1400px; margin: 0 auto; }
-.planning-sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; gap: .35rem; padding: 1.1rem .8rem; background: #075b46; color: white; }
+
 .sidebar-brand { font-size: 1.1rem; font-weight: 800; padding: .4rem .65rem 1rem; }
 .planning-sidebar button { text-align: left; cursor: pointer; font: inherit; border: 0; border-radius: .55rem; padding: .7rem .65rem; }
-.sidebar-link { color: white; background: transparent; font-weight: 650 !important; }
-.sidebar-link.active { background: #fff; color: #075b46; }
+.sidebar-link { color: #1d3d5c; background: transparent; font-weight: 650 !important; }
+.sidebar-link.active { background: #fff; color: #1d3d5c; font-weight: 800 !important; }
 .sidebar-new { color: #143b2d; background: #fef3c7; font-weight: 750 !important; }
 .sidebar-plan-list { display: flex; flex-direction: column; gap: .2rem; max-height: 45vh; overflow-y: auto; }
-.sidebar-plan { color: #e6f5ed; background: transparent; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .87rem !important; }
-.sidebar-plan.selected { background: #d4eee1; color: #075b46; font-weight: 750 !important; }
+.sidebar-plan { color: #1d3d5c; background: transparent; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .87rem !important; }
+.sidebar-plan.selected { background: white; color: #1d3d5c; font-weight: 750 !important; }
 .sidebar-empty { font-size: .8rem; opacity: .8; padding: 0 .65rem; }
 .sidebar-divider { border-top: 1px solid #4c8a77; margin: .5rem 0; }
 .sidebar-calendar { font-size: .85rem !important; opacity: .9; }
@@ -864,7 +873,7 @@ nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a
 @media print { .planning-sidebar, .public-navigation { display: none !important; } .planning-layout { display: block; } }
 
 /* Endast planbiblioteket till vänster; arbetsvyerna ligger överst. */
-.planning-layout { grid-template-rows: auto 1fr; }
+
 .planning-layout > .planning-sidebar { grid-column: 1; grid-row: 1 / 3; }
 .planning-top-navigation { grid-column: 2; grid-row: 1; display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; background: #075b46; color: white; padding: .7rem 1rem; }
 .top-navigation-brand { font-weight: 800; margin-right: 1rem; }
@@ -877,13 +886,7 @@ nav[aria-label="Huvudmeny"] .nav-role:focus-visible { outline: 3px solid #fef08a
 @media print { .planning-top-navigation { display: none !important; } }
 
 /* Ljus och välkomnande navigering för lärare, även på mobil. */
-.planning-sidebar {
-  background: #f2f7ff;
-  color: #294568;
-  border-right: 1px solid #d9e5f6;
-  gap: .55rem;
-  padding: 1.1rem .9rem;
-}
+
 .sidebar-new {
   background: #ffe6a8;
   color: #533d12;
@@ -930,7 +933,13 @@ body { background: #fffaf2; color: var(--ink); }
 .secondary { background: #fff0bf; color: #714147; }
 .secondary:hover { background: #ffe6a3; }
 .planning-sidebar {
-  background: #fff5cf;
+position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; gap: .35rem; padding: .65rem .4rem; background: #dbe9f7; color: #1d3d5c;
+background: #f2f7ff;
+  color: #294568;
+  border-right: 1px solid #d9e5f6;
+  gap: .55rem;
+  padding: 1.1rem .9rem;
+background: #fff5cf;
   color: #694044;
   border-right: 1px solid #efd7b4;
 }
@@ -1763,9 +1772,9 @@ body { background: #fffaf2; color: var(--ink); }
 .expanded-weeks-inline .teacher-month-weeks{gap:30px!important}
 .expanded-weeks-inline .teacher-month-weeks>.chapter-week-group{margin-bottom:10px!important}
 .expanded-weeks-inline .teacher-month-weeks .week-card{border:2px solid #e0cbd1!important;border-radius:18px!important;padding:20px!important;box-shadow:0 7px 18px rgba(91,54,68,.10)!important}
-.expanded-weeks-inline .teacher-month-weeks>.chapter-week-group:nth-child(4n+1) .week-card{background:#fff0f4!important}
-.expanded-weeks-inline .teacher-month-weeks>.chapter-week-group:nth-child(4n+2) .week-card{background:#ebf8ee!important}
-.expanded-weeks-inline .teacher-month-weeks>.chapter-week-group:nth-child(4n+3) .week-card{background:#eef3ff!important}
+.expanded-weeks-inline .teacher-month-weeks>.chapter-week-group:nth-child(4n/**/+1) .week-card{background:#fff0f4!important}
+.expanded-weeks-inline .teacher-month-weeks>.chapter-week-group:nth-child(4n/**/+2) .week-card{background:#ebf8ee!important}
+.expanded-weeks-inline .teacher-month-weeks>.chapter-week-group:nth-child(4n/**/+3) .week-card{background:#eef3ff!important}
 .expanded-weeks-inline .teacher-month-weeks>.chapter-week-group:nth-child(4n) .week-card{background:#fff6e3!important}
 .calendar-inline-weeks{gap:32px!important}
 .calendar-inline-week{padding:24px!important;border:2px solid #e5cfd5!important;border-radius:18px!important;box-shadow:0 7px 18px rgba(91,54,68,.10)!important}
@@ -1776,9 +1785,9 @@ body { background: #fffaf2; color: var(--ink); }
 .calendar-inline-week .lesson-list>button.secondary{background:#d8ecff!important;color:#1c507c!important;border:2px solid #86b7de!important;font-weight:800!important;padding:13px 20px!important;border-radius:12px!important}
 
 /* Samma tydliga växlande veckofärger som i Elevvy, inom varje månad. */
-.expanded-weeks-inline .teacher-month-weeks > .chapter-week-group:nth-child(4n+1) .week-card { background:#f0eaff!important; border-color:#d9cafa!important; }
-.expanded-weeks-inline .teacher-month-weeks > .chapter-week-group:nth-child(4n+2) .week-card { background:#e5f6ef!important; border-color:#bde5d0!important; }
-.expanded-weeks-inline .teacher-month-weeks > .chapter-week-group:nth-child(4n+3) .week-card { background:#e8f2ff!important; border-color:#c4d9f3!important; }
+.expanded-weeks-inline .teacher-month-weeks > .chapter-week-group:nth-child(4n/**/+1) .week-card { background:#f0eaff!important; border-color:#d9cafa!important; }
+.expanded-weeks-inline .teacher-month-weeks > .chapter-week-group:nth-child(4n/**/+2) .week-card { background:#e5f6ef!important; border-color:#bde5d0!important; }
+.expanded-weeks-inline .teacher-month-weeks > .chapter-week-group:nth-child(4n/**/+3) .week-card { background:#e8f2ff!important; border-color:#c4d9f3!important; }
 .expanded-weeks-inline .teacher-month-weeks > .chapter-week-group:nth-child(4n) .week-card { background:#fff0df!important; border-color:#f2d5b2!important; }
 .expanded-weeks-inline .teacher-month-weeks > .chapter-week-group .week-card { box-shadow:0 3px 10px rgba(52,67,89,.07)!important; }
 
@@ -1836,7 +1845,7 @@ body { background: #fffaf2; color: var(--ink); }
 .planning-layout { --navigation-surface: #fff3ce; }
 .planning-layout > .planning-sidebar,
 .planning-layout > .planning-top-navigation {
-  background-color: var(--navigation-surface) !important;
+  background-color: #dbe9f7 !important;
   background-image: none !important;
   box-shadow: none !important;
   border: 0 !important;
@@ -2051,7 +2060,7 @@ body { background: #fffaf2; color: var(--ink); }
   background: #ffe9b5 !important;
 }
 .planning-layout > .planning-top-navigation {
-  min-height: 62px !important;
+  min-height: 42px !important;
   padding: 8px 12px !important;
   gap: 5px !important;
 }
@@ -2256,7 +2265,6 @@ body { background: #fffaf2; color: var(--ink); }
 /* Sidomenyn växer efter titlarnas längd, med en gräns så innehållet får plats. */
 @media (min-width:761px) {
   .planning-layout {
-    grid-template-columns:clamp(260px, max-content, 420px) minmax(0,1fr) !important;
   }
   .planning-layout > .planning-sidebar { width:auto !important; }
   .planning-layout > .planning-sidebar .sidebar-plan-list { width:max-content; max-width:100%; }
@@ -2401,18 +2409,13 @@ body { background: #fffaf2; color: var(--ink); }
 /* ENHETLIG LAYOUT – en regeluppsättning för alla lärarsidor.
    Menyerna möts utan lucka; arbetsytan börjar alltid 2 cm efter vänstermenyn. */
 @media screen and (min-width:751px) {
-  .planning-layout {
-    display:grid !important;
-    grid-template-columns:245px minmax(0,1fr) !important;
-    column-gap:0 !important;
-  }
   .planning-layout > .planning-sidebar {
     grid-column:1 !important;
-    width:245px !important;
-    max-width:245px !important;
+    width:150px !important;
+    max-width:150px !important;
     margin:0 !important;
     box-sizing:border-box !important;
-    background:#fff3ce !important;
+    background:#dbe9f7 !important;
   }
   .planning-layout > .planning-top-navigation {
     grid-column:2 !important;
@@ -2422,7 +2425,7 @@ body { background: #fffaf2; color: var(--ink); }
     left:auto !important;
     transform:none !important;
     box-sizing:border-box !important;
-    background:#fff3ce !important;
+    background:#dbe9f7 !important;
   }
   .planning-layout > .planning-top-navigation::before { display:none !important; }
   .planning-layout > .shell,
@@ -2514,7 +2517,6 @@ body { background: #fffaf2; color: var(--ink); }
 .planning-home-navigation{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 20px;background:#fff;border-bottom:1px solid #e4e7eb}
 .planning-home-navigation button{border:1px solid #d8e0e7;border-radius:10px;padding:10px 14px;background:#f8fafc;color:#243b53;cursor:pointer;font-weight:650}
 .planning-home-navigation button:hover{background:#eaf3fc}
-.planning-layout{display:block!important;padding-left:0!important;margin-left:0!important}
 .planning-layout .shell{margin-left:auto!important;max-width:1300px}
 .planning-tree{display:grid;gap:22px}
 .planning-tree-grade{border:1px solid #dbe3eb;border-radius:16px;padding:18px;background:#f9fbfd}
@@ -4223,7 +4225,7 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
     align-items:center!important;
     justify-content:space-between!important;
     gap:10px!important;
-    min-height:54px!important;
+    min-height:44px!important;
     margin:0 0 10px!important;
     padding:7px 12px!important;
     background:#fffdf9!important;
@@ -5462,33 +5464,15 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 }
 
 /* Gemensam, stabil huvudmeny för samtliga planeringsvyer. */
-.planning-unified-navigation {
-  box-sizing:border-box!important;
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;
-  align-items:center!important;
-  gap:12px!important;
-  width:100%!important;
-  min-height:58px!important;
-  padding:8px 16px!important;
-  background:#456581!important;
-  color:white!important;
-}
+
 .planning-unified-left,.planning-unified-center,.planning-unified-right {
   display:flex!important;align-items:center!important;gap:8px!important;min-width:0!important;
 }
 .planning-unified-left{justify-content:flex-start!important}
 .planning-unified-center{justify-content:center!important}
 .planning-unified-right{justify-content:flex-end!important}
-.planning-unified-navigation button {
-  appearance:none;border:1px solid transparent!important;background:transparent!important;
-  color:#fff!important;border-radius:9px!important;padding:9px 12px!important;
-  font-size:14px!important;font-weight:700!important;white-space:nowrap!important;cursor:pointer;
-}
-.planning-unified-navigation button.active {background:#304b66!important}
 .planning-unified-navigation button:hover {background:#56718b!important}
 .planning-unified-navigation button:focus-visible{outline:2px solid #fff!important;outline-offset:2px}
-.planning-layout > .planning-unified-navigation {width:100%!important}
 #lararvy header.topbar:has(.planning-unified-navigation) {
   background:#456581!important;padding:0!important;gap:0!important;
   display:flex!important;flex-direction:column!important;align-items:stretch!important;
@@ -5505,9 +5489,7 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .teacher-week-navigation{background:#304b66!important}
 .teacher-week-navigation button{background:#56718b!important;border-color:#56718b!important}
 @media(max-width:700px){
- .planning-unified-navigation{gap:4px!important;padding:6px 5px!important;min-height:54px!important}
  .planning-unified-left,.planning-unified-center,.planning-unified-right{gap:2px!important}
- .planning-unified-navigation button{font-size:11px!important;padding:7px 5px!important}
 }
 
 /* Huvudmenyn fyller hela skärmbredden även inuti planeringens arbetsyta. */
@@ -5521,27 +5503,16 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy header.topbar .planning-inline-navigation:has(.planning-unified-navigation){
   margin:0!important;padding:0!important;
 }
-.planning-unified-navigation{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;flex-wrap:nowrap!important}
+
 .planning-unified-navigation .planning-unified-left,
 .planning-unified-navigation .planning-unified-center,
 .planning-unified-navigation .planning-unified-right{flex-wrap:nowrap!important}
 @media(max-width:700px){
- .planning-unified-navigation{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important}
  .planning-unified-navigation button{padding:7px 4px!important;font-size:10px!important}
 }
 
 /* Fast, gemensam huvudmeny: en enda rad på samtliga vyer. */
-.planning-unified-navigation {
-  position:sticky!important;
-  top:0!important;
-  z-index:1000!important;
-  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;
-  min-height:58px!important;
-  height:58px!important;
-  overflow-x:auto!important;
-  overflow-y:hidden!important;
-  scrollbar-width:none;
-}
+
 .planning-unified-navigation::-webkit-scrollbar {display:none}
 #lararvy header.topbar:has(.planning-unified-navigation) {
   position:sticky!important;
@@ -5554,7 +5525,6 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
   z-index:1000!important;
 }
 @media(max-width:700px) {
-  .planning-unified-navigation {height:54px!important;min-height:54px!important}
 }
 
 /* Lås klassundermenyn direkt under den fasta huvudmenyn. */
@@ -5581,11 +5551,7 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 }
 
 /* Designval 1: sammanhängande, klickbara flikar i båda nivåerna. */
-.planning-unified-navigation {
-  padding:8px 14px 0!important;
-  align-items:end!important;
-  column-gap:8px!important;
-}
+
 .planning-unified-left,.planning-unified-center,.planning-unified-right {
   align-items:end!important;
   height:100%!important;
@@ -5617,7 +5583,7 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
   border-radius:0!important;
   padding:8px 10px 0!important;
   margin:0!important;
-  min-height:56px!important;
+  min-height:44px!important;
 }
 #lararvy #kopplade-klasser .class-mini-chips {
   display:flex!important;
@@ -5646,7 +5612,6 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
   background:#dce6ef!important;
 }
 @media(max-width:700px){
-  .planning-unified-navigation{padding:6px 4px 0!important}
   .planning-unified-navigation button{padding:9px 5px!important;font-size:10px!important}
   #lararvy #kopplade-klasser .class-mini-row{top:54px!important;padding:6px 5px 0!important}
   #lararvy #kopplade-klasser .class-mini-chip,
@@ -5731,8 +5696,8 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .class-real-week-expanded .calendar-inline-week {max-width:none;width:100%}
 @media(max-width:600px){#lararvy .class-real-two-weeks{padding:6px}#lararvy .class-real-two-weeks-grid{gap:6px}#lararvy .class-real-week-column>strong{font-size:12px}}
 /* Huvudmenyn behåller samma höjd i alla vyer där den visas. */
-.planning-unified-navigation{box-sizing:border-box!important;min-height:58px!important;height:58px!important}
-@media(max-width:700px){.planning-unified-navigation{min-height:54px!important;height:54px!important}}
+
+@media(max-width:700px){}
 
 /* Klassveckor ska ALLTID ligga i två kolumner, även på smala skärmar. */
 #lararvy .class-real-two-weeks-grid,
@@ -5786,7 +5751,6 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 /* Tre veckor måste kunna visas; tidigare tvåkolumnslåsning får inte vinna. */
 #lararvy .class-real-two-weeks-grid { grid-template-columns:repeat(var(--class-week-columns,2),minmax(0,1fr))!important; }
 @media(max-width:850px) {
- .planning-unified-navigation { height:auto!important; min-height:54px!important; flex-wrap:wrap!important; align-items:center!important; padding:5px 8px!important; row-gap:2px!important; }
  .planning-unified-left,.planning-unified-center,.planning-unified-right { height:auto!important; min-width:0; }
  .planning-unified-navigation button { padding:8px 7px!important; min-height:36px!important; font-size:.82rem!important; }
  .planning-unified-navigation .planning-nav-context { max-width:115px; padding:2px 4px; }
@@ -5815,12 +5779,31 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .class-real-two-weeks-grid .calendar-real-week-thumbnail { min-width:0!important; width:100%!important; }
 
 /* Huvudmeny: separat verktygsgrupp förhindrar kollision med Administration. */
-.planning-unified-navigation { grid-template-columns:auto minmax(0,1fr) auto auto!important; }
+
+/* Samlad huvudnavigation: en desktopdefinition. */
+.planning-unified-navigation {
+  box-sizing:border-box;
+  display:flex;
+  flex-wrap:nowrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  width:100%;
+  min-width:0;
+  height:44px;
+  min-height:44px;
+  padding:0 14px;
+  background:#c7dcf1;
+  color:#1d3d5c;
+  position:sticky;
+  top:0;
+  z-index:1200;
+  overflow-x:hidden;
+}
 .planning-unified-navigation .planning-nav-tools { display:flex; align-items:center; justify-content:flex-end; gap:6px; min-width:0; }
 .planning-unified-navigation .planning-nav-context { max-width:150px; }
 .planning-unified-navigation .planning-nav-context-grade { white-space:nowrap; }
 @media(max-width:850px) {
- .planning-unified-navigation { display:grid!important; grid-template-columns:minmax(0,1fr)!important; gap:0!important; padding:0 8px 5px!important; height:auto!important; }
  .planning-unified-navigation .planning-unified-left,
  .planning-unified-navigation .planning-unified-center,
  .planning-unified-navigation .planning-unified-right { display:flex!important; height:auto!important; justify-content:flex-start!important; min-width:0!important; }
@@ -5838,7 +5821,7 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 
 /* Fast blå huvudmeny och fast klassmeny direkt under den, med korrekt mobilhöjd. */
 .planning-layout .planning-unified-navigation { position:sticky!important; top:0!important; z-index:1200!important; }
-#lararvy header.topbar:has(>.planning-header-toolbar) { position:sticky!important; top:var(--planning-nav-height,58px)!important; z-index:1100!important; background:#fff!important; box-shadow:0 3px 9px rgba(20,42,60,.10)!important; }
+#lararvy header.topbar:has(>.planning-header-toolbar) { position:sticky!important; top:0!important; z-index:1100!important; background:#fff!important; box-shadow:0 3px 9px rgba(20,42,60,.10)!important; }
 #lararvy header.topbar .planning-header-toolbar { position:relative!important; top:auto!important; }
 #lararvy header.topbar #kopplade-klasser { position:relative!important; top:auto!important; margin:0!important; }
 #lararvy header.topbar #kopplade-klasser .class-mini-row { position:relative!important; top:auto!important; }
@@ -5926,12 +5909,7 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 }
 
 /* Huvudmenyn (Startsida, Planering, Månadsvy, Administration, Logga ut) ligger kvar överst när man scrollar. */
-#lararvy .planning-unified-navigation,
-.planning-unified-navigation {
-  position:sticky!important;
-  top:0;
-  z-index:60;
-}
+
 
 /* Hela sidan (övre menyn och flikarna) ryms i fönstret. Veckorna scrollar inuti sin egen ruta, så att både övre och nedre delen av veckan kan nås. */
 #lararvy .class-real-two-weeks-grid > .class-real-week-column {
@@ -5954,18 +5932,54 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
   transform-origin: 0 0;
 }
 
-/* Enkel, samlad övre meny: en rad, jämn höjd, lika knappstil, klumpig text kortas av i stället för att bryta. */
-#lararvy .planning-unified-navigation,
-.planning-unified-navigation {
-  display:flex!important; flex-wrap:nowrap!important; align-items:center!important; justify-content:space-between!important;
-  gap:10px!important; height:56px!important; min-height:56px!important; padding:0 14px!important; box-sizing:border-box!important;
-  background:#456581!important; color:#fff!important;
+/* Vänstermeny och tunn topprad: en och samma navigering på alla lärarsidor. */
+
+.planning-layout > .planning-sidebar { grid-column:1!important; grid-row:1 / 3!important; width:150px!important; max-width:150px!important; background:#dbe9f7!important; color:#1d3d5c!important; border:0!important; }
+.planning-layout > .shell { grid-column:2!important; grid-row:2!important; min-width:0!important; }
+.planning-sidebar .sidebar-link { color:#1d3d5c!important; }
+.planning-sidebar .sidebar-link.active { background:white!important; color:#1d3d5c!important; font-weight:800!important; }
+.planning-sidebar .sidebar-plan { color:#1d3d5c!important; min-width:0!important; flex:1 1 auto!important; }
+.planning-sidebar .sidebar-plan.selected { background:white!important; color:#1d3d5c!important; }
+.planning-sidebar .sidebar-plan-row { display:flex; align-items:center; min-width:0; }
+.planning-sidebar .sidebar-plan-delete { flex:0 0 auto; padding:4px!important; color:#1d3d5c; background:transparent; }
+.planning-sidebar .sidebar-search { width:100%; min-width:0; box-sizing:border-box; font-size:12px; }
+.planning-unified-navigation .planning-menu-toggle { display:none!important; }
+.planning-unified-navigation button:disabled { opacity:.35!important; cursor:default!important; }
+.planning-unified-navigation .planning-nav-context { color:#1d3d5c!important; }
+.planning-unified-navigation .planning-unified-left { justify-content:flex-start!important; }
+.planning-unified-navigation .planning-unified-right { justify-content:flex-end!important; }
+.planning-unified-navigation .planning-nav-print { color:#1d3d5c!important; background:rgba(255,255,255,.5)!important; }
+.planning-sidebar-backdrop { display:none; }
+@media(max-width:750px) {
+  /* Samlad mobildefinition av toppraden. */
+  .planning-unified-navigation {
+    display:flex;
+    flex-wrap:nowrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:4px;
+    width:100%;
+    height:44px;
+    min-height:44px;
+    padding:0 8px;
+    position:sticky;
+    top:0;
+    z-index:1200;
+  }
+ .planning-layout { display:block!important; }
+ .planning-layout > .planning-sidebar { position:fixed!important; left:0!important; top:0!important; bottom:0!important; z-index:1302!important; width:min(260px,85vw)!important; max-width:min(260px,85vw)!important; height:100dvh!important; transform:translateX(-105%); transition:transform .2s ease; overflow-y:auto!important; }
+ .planning-layout > .planning-sidebar.mobile-open { transform:translateX(0); }
+ .planning-sidebar-backdrop { display:block; position:fixed; inset:0; z-index:1301; background:rgba(0,0,0,.35); border:0; }
+ .planning-unified-navigation .planning-menu-toggle { display:inline-flex!important; }
+ .planning-layout > .shell { width:100%!important; }
 }
+/* Enkel, samlad övre meny: en rad, jämn höjd, lika knappstil, klumpig text kortas av i stället för att bryta. */
+
 .planning-unified-navigation .planning-unified-left,
 .planning-unified-navigation .planning-unified-center,
 .planning-unified-navigation .planning-unified-right { display:flex!important; align-items:center!important; gap:6px!important; flex-wrap:nowrap!important; }
 .planning-unified-navigation button {
-  appearance:none!important; border:0!important; background:transparent!important; color:#fff!important;
+  appearance:none!important; border:0!important; background:transparent!important; color:#1d3d5c!important;
   font:inherit!important; font-size:15px!important; font-weight:600!important; line-height:1!important;
   padding:9px 12px!important; min-height:40px!important; border-radius:8px!important; white-space:nowrap!important; cursor:pointer!important;
 }
@@ -5975,7 +5989,6 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .planning-unified-navigation .planning-nav-context-title { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .planning-unified-navigation .planning-nav-print { min-height:40px!important; padding:6px 10px!important; background:rgba(255,255,255,.12)!important; }
 @media(max-width:700px){
-  .planning-unified-navigation { gap:4px!important; padding:0 8px!important; }
   .planning-unified-navigation button { font-size:13px!important; padding:8px 8px!important; min-height:38px!important; }
   .planning-unified-navigation .planning-nav-context { display:none!important; }
 }
@@ -6019,10 +6032,6 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .teacher-default-thumbs > * { min-width:0!important; max-width:100%!important; }
 
 /* Grundplanering standard: allt ryms i fönstret, ingen sidscroll. Miniatyrerna skalas även efter höjden. */
-body.teacher-fit-mode { overflow:hidden!important; }
-body.teacher-fit-mode #lararvy .teacher-default-thumbs { height:calc(100dvh - 250px); align-items:stretch!important; overflow:hidden!important; }
-body.teacher-fit-mode #lararvy .teacher-default-thumbs > * { height:100%; overflow:hidden; }
-body.teacher-fit-mode #lararvy .teacher-default-thumbs .calendar-real-week-frame { overflow:hidden!important; }
 
 /* Ny vecka i veckoraden, till höger där "Visa allt innehåll" var. */
 #lararvy .teacher-week-navigation .teacher-add-week-inline { margin-left:auto!important; background:#2d7d46!important; color:#fff!important; border:0!important; border-radius:999px!important; min-height:36px!important; padding:6px 14px!important; font-size:14px!important; font-weight:700!important; cursor:pointer; }
@@ -6042,7 +6051,6 @@ body.teacher-fit-mode #lararvy .teacher-default-thumbs .calendar-real-week-frame
 /* Alla veckor sparas automatiskt, så infotexten behövs inte. */
 #lararvy .autosave-info { display:none!important; }
 /* Fyra veckor sida vid sida i Grundplanering. */
-body.teacher-fit-mode #lararvy .teacher-default-thumbs { grid-template-columns:repeat(4,minmax(0,1fr))!important; height:calc(100dvh - 230px)!important; }
 #lararvy .teacher-default-thumbs { grid-template-columns:repeat(4,minmax(0,1fr))!important; }
 /* Stängknapp (✕) för vald vecka. */
 #lararvy .teacher-week-navigation .teacher-close-week { width:40px!important; height:40px!important; min-height:40px!important; padding:0!important; border-radius:999px!important; border:1px solid #c7d5e2!important; background:#fff!important; color:#2d4a63!important; font-size:18px!important; font-weight:700!important; cursor:pointer; }
@@ -6083,18 +6091,10 @@ body.teacher-fit-mode #lararvy .teacher-default-thumbs { grid-template-columns:r
 #lararvy .teacher-thumb-visibility { font-size:10px!important; padding:2px 5px!important; }
 #lararvy .teacher-thumb-visibility input { width:12px!important; height:12px!important; }
 /* Standardvyn: kapitelnamn och begrepp syns överst, och fyra veckor fyller bredden och ryms i höjden. */
-body.teacher-fit-mode #lararvy .teacher-pinned-chapter-shell { display:block!important; position:relative!important; top:auto!important; margin:0 0 6px!important; }
-body.teacher-fit-mode #lararvy .teacher-default-thumbs { height:calc(100dvh - 330px)!important; }
 /* Vald vecka: den lilla förhandsbilden döljs, lektionerna visas i fullt format sida vid sida. */
 #lararvy .teacher-mobile-week-overview { display:none!important; }
 
 
-/* Telefon (under 700 px): sidan får scrolla och veckorna står under varandra i full bredd. */
-@media (max-width:699px) {
-  body.teacher-fit-mode { overflow:auto!important; }
-  body.teacher-fit-mode #lararvy .teacher-default-thumbs { height:auto!important; overflow:visible!important; }
-  body.teacher-fit-mode #lararvy .teacher-default-thumbs > * { height:auto!important; overflow:visible!important; }
-}
 
 
 
@@ -6103,3 +6103,67 @@ body.teacher-fit-mode #lararvy .teacher-default-thumbs { height:calc(100dvh - 33
 #lararvy .teacher-thumb-visibility { padding:0!important; border:0!important; background:transparent!important; gap:0!important; font-size:0!important; width:auto!important; }
 #lararvy .teacher-thumb-visibility span { position:absolute!important; width:1px!important; height:1px!important; overflow:hidden!important; clip:rect(0 0 0 0)!important; }
 #lararvy .teacher-thumb-visibility input { width:14px!important; height:14px!important; margin:0!important; }
+
+/* Fyra redigerbara veckor i Grundplanering: inga skalade miniatyrer eller klippta nederkanter. */
+#lararvy .teacher-months.teacher-months-default-editable {
+  display:flex!important; flex-direction:column!important; gap:14px!important;
+  height:auto!important; max-height:none!important; overflow:visible!important;
+}
+#lararvy .teacher-months-default-editable .teacher-month-section,
+#lararvy .teacher-months-default-editable .teacher-month-weeks,
+#lararvy .teacher-months-default-editable .chapter-week-group {
+  min-width:0!important; max-width:100%!important; height:auto!important;
+  max-height:none!important; overflow:visible!important;
+}
+#lararvy .teacher-months-default-editable .teacher-month-weeks {
+  display:grid!important;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))!important;
+  gap:14px!important; align-items:start!important;
+}
+#lararvy .teacher-months-default-editable .week-card {
+  width:100%!important; min-width:0!important; max-width:none!important;
+  height:auto!important; max-height:none!important; overflow:visible!important;
+}
+#lararvy .teacher-months-default-editable .teacher-week-collapsible-content {
+  display:block!important; height:auto!important; max-height:none!important;
+  overflow:visible!important;
+}
+/* Kapitel och moment ligger kvar under huvudnavigeringen vid sidscroll. */
+#lararvy .teacher-months-default-editable .teacher-chapter-sticky,
+#lararvy .teacher-months-focused .teacher-chapter-sticky {
+  position:sticky!important; top:var(--planning-nav-height,60px)!important;
+  z-index:30!important; background:#fff!important;
+}
+/* Dag-/lektionsrubriker och åtgärder får egna rader utan överlappning. */
+#lararvy .teacher-months-default-editable .lesson-heading,
+#lararvy .teacher-months-focused .lesson-heading {
+  display:flex!important; flex-wrap:wrap!important; gap:8px!important;
+  align-items:center!important; min-width:0!important;
+}
+#lararvy .teacher-months-default-editable .lesson-heading > :first-child,
+#lararvy .teacher-months-focused .lesson-heading > :first-child {
+  min-width:min(100%,185px)!important; overflow-wrap:normal!important;
+}
+#lararvy .teacher-months-default-editable .lesson-reorder-controls,
+#lararvy .teacher-months-focused .lesson-reorder-controls {
+  display:flex!important; flex-wrap:wrap!important; gap:6px!important;
+  margin-left:0!important; min-width:0!important;
+}
+#lararvy .teacher-months-default-editable .lesson-reorder-controls button,
+#lararvy .teacher-months-focused .lesson-reorder-controls button {
+  flex:0 0 auto!important; white-space:nowrap!important;
+}
+/* Diskret borttagningskontroll i veckans rubrik. */
+#lararvy .teacher-week-delete-icon {
+  width:28px!important; height:28px!important; min-height:28px!important;
+  padding:0!important; border-radius:7px!important; font-size:16px!important;
+  flex:0 0 auto!important;
+}
+@media(max-width:700px) {
+  #lararvy .teacher-months-default-editable .teacher-month-weeks {
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  #lararvy .teacher-months-default-editable .week-card .lessons {
+    display:flex!important; flex-direction:column!important;
+  }
+}
