@@ -1209,6 +1209,44 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [allWeekContentsOpen, setAllWeekContentsOpen] = useState(true)
   const [weekContentOverrides, setWeekContentOverrides] = useState({})
   const [pinnedChapter, setPinnedChapter] = useState(null)
+
+  // Kompakt, stabil kapitel- och veckovisare när alla veckor är öppna.
+  // DOM uppdateras bara när kapitlet/veckan faktiskt ändras, utan animation.
+  useEffect(() => {
+    const indicator = document.querySelector('#lararvy .teacher-scroll-context')
+    if (!showPastTeacherWeeks || teacherTab !== 'arsplan' || !indicator) return undefined
+    const label = indicator.querySelector('.teacher-scroll-context-label')
+    let frame = 0
+    const update = () => {
+      frame = 0
+      const sections = [...document.querySelectorAll('#lararvy .teacher-months .teacher-chapter-section')]
+      const header = document.querySelector('.planning-layout > .planning-unified-navigation')
+      const nav = document.querySelector('#lararvy .teacher-week-navigation')
+      const headerBottom = Math.max(0, header?.getBoundingClientRect().bottom || 0)
+      const navRect = nav?.getBoundingClientRect()
+      const navBottom = navRect && navRect.top <= headerBottom + 4 && navRect.bottom > headerBottom ? navRect.bottom : headerBottom
+      const top = Math.max(0, Math.ceil(navBottom)) + 5
+      indicator.style.top = top + 'px'
+      const boundary = top + 15
+      const section = sections.find(el => { const rect = el.getBoundingClientRect(); return rect.top <= boundary && rect.bottom > boundary })
+      if (!section) { indicator.hidden = true; return }
+      const heading = section.querySelector('.teacher-chapter-sticky')
+      if (!heading || heading.getBoundingClientRect().top >= boundary) { indicator.hidden = true; return }
+      const groups = [...section.querySelectorAll('.chapter-week-group')]
+      const current = groups.find(el => el.getBoundingClientRect().bottom > boundary) || groups[groups.length - 1]
+      const chapter = section.dataset.chapter || 'Utan kapitel'
+      const week = current?.dataset.week || ''
+      const next = chapter + (week ? ' · Vecka ' + week : '')
+      if (label.textContent !== next) label.textContent = next
+      indicator.hidden = false
+    }
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(update) }
+    update()
+    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', schedule)
+    return () => { window.removeEventListener('scroll', schedule); window.removeEventListener('resize', schedule); if (frame) cancelAnimationFrame(frame) }
+  }, [showPastTeacherWeeks, teacherTab])
+
   useEffect(() => {
     if (teacherTab !== "arsplan") { setPinnedChapter(null); return undefined }
     const update = () => {
@@ -2055,16 +2093,17 @@ const addNewTeacherWeek = () => setPlan(p => {
           <div className="smart-lesson-dialog-body"><LessonDetails week={modalWeek} entryType={plan.entryType||"lektion"} onlyLessonIndex={lessonModal.lessonIndex} onPreviousLesson={()=>setLessonModal(current=>({...current,lessonIndex:Math.max(0,current.lessonIndex-1)}))} onNextLesson={()=>setLessonModal(current=>({...current,lessonIndex:Math.min((modalWeek.lessons?.length||1)-1,current.lessonIndex+1)}))} lessonCount={modalWeek.lessons?.length||1} onUndo={undoPlan} onRedo={redoPlan} canUndo={historyRef.current.past.length>0} canRedo={historyRef.current.future.length>0} onChange={changes=>{updateWeek(modalIndex,changes);setLessonModalChanged(true)}} /></div>
         </section>
       </div>})()}
+      {showPastTeacherWeeks && !focusedTeacherWeek && <div className="teacher-scroll-context" hidden aria-live="off"><span className="teacher-scroll-context-label" /></div>}
       <div className={`teacher-months ${focusedTeacherWeek ? "teacher-months-focused" : ""} ${focusedTeacherWeek && teacherWeekOverview ? "teacher-months-overview-hidden" : ""} ${!focusedTeacherWeek && !showPastTeacherWeeks ? "smart-months-mini-hidden" : ""} `}>
         {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? teacherDisplayWeeks : defaultTeacherWindow)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
           if (!chapters[chapterName]) chapters[chapterName] = { name: chapterName, items: [] }
           chapters[chapterName].items.push(item)
           return chapters
-        }, {})).map(group => <section className="teacher-month-section teacher-chapter-section" key={group.name}>
+        }, {})).map(group => <section className="teacher-month-section teacher-chapter-section" data-chapter={group.name} key={group.name}>
           <div className="teacher-chapter-sticky"><h3 className={`chapter-heading chapter-tone-${chapterTone(group.name)}`}>{group.name}</h3>{group.name !== "Utan kapitel" && <ChapterVocabulary chapter={group.name} weeks={group.items.map(item => item.week)} />}</div>
           <div className="teacher-month-weeks">
-          {group.items.map(({ week, index }) => <div className="chapter-week-group" key={`${week.weekStart || week.weekNumber}-${index}`}>
+          {group.items.map(({ week, index }) => <div className="chapter-week-group" data-week={calendarWeekNumber(week.weekStart) ?? week.weekNumber} key={`${week.weekStart || week.weekNumber}-${index}`}>
           <article className={`week-card teacher-collapsible-week ${(focusedTeacherWeek || (!showPastTeacherWeeks && !focusedTeacherWeek) || (weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen)) ? "teacher-week-open" : "teacher-week-closed"}`} id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
           <div className="teacher-week-controls">
           <div className="teacher-week-history-actions" aria-label="Ångra eller gör om ändring">
