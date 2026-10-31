@@ -6080,3 +6080,81 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 .calendar-lesson-modal .lesson .topic .lesson-bare-icon:focus-visible {
   outline: 2px solid #2563eb !important;
 }
+
+
+/* Ikoner utan färgade knapprutor: samtliga små åtgärdsikoner i
+   grundplanering, klassplanering, kalender och lektionsdialoger.
+   Färg används bara för själva ikonen; klickyta/fokus behålls. */
+:is(#lararvy, .calendar-lesson-modal, .class-full-week-panel, .calendar-overlay)
+  :is(.lesson-heading, .lesson-reorder-controls, .topic, .topic-grid, .topic-fixed-heading, .topic-cell, .calendar-inline-week-heading)
+  button:is(.remove-small, .lesson-bare-icon, .add-detail, .remove-topic-column),
+:is(#lararvy, .calendar-lesson-modal, .class-full-week-panel, .calendar-overlay)
+  .lesson-reorder-controls button,
+:is(#lararvy, .calendar-lesson-modal, .class-full-week-panel, .calendar-overlay)
+  .class-lesson-done-icon,
+:is(#lararvy, .calendar-lesson-modal, .class-full-week-panel, .calendar-overlay)
+  :is(.lesson, .topic, .calendar-inline-week) button[aria-label^="Ta bort"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  text-shadow: none !important;
+  padding: 4px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  width: auto !important;
+  height: auto !important;
+  line-height: 1 !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+:is(#lararvy, .calendar-lesson-modal, .class-full-week-panel, .calendar-overlay)
+ :is(.lesson-heading, .lesson-reorder-controls, .topic, .topic-grid, .topic-cell)
+ button:is(.remove-small, .lesson-bare-icon, .add-detail, .remove-topic-column):hover,
+:is(#lararvy, .calendar-lesson-modal, .class-full-week-panel, .calendar-overlay)
+ .lesson-reorder-controls button:hover {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+:is(#lararvy, .calendar-lesson-modal, .class-full-week-panel, .calendar-overlay)
+ .lesson-reorder-controls button:focus-visible,
+:is(#lararvy, .calendar-lesson-modal, .class-full-week-panel, .calendar-overlay)
+ button:is(.remove-small, .lesson-bare-icon, .add-detail, .remove-topic-column):focus-visible {
+  outline: 2px solid #2460ab !important;
+  outline-offset: 2px;
+}
+/* Dölj aldrig själva veckan bakom rullningsbara lektionsrader. */
+.class-full-week-backdrop {
+  height: 100dvh !important;
+  overflow: hidden !important;
+}
+.class-full-week-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+}
+.class-full-week-panel > .class-full-week-thumbnail {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+.class-full-week-panel > .class-full-week-thumbnail > .calendar-real-week-frame {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow: hidden !important;
+}
+.class-full-week-panel > .class-full-week-thumbnail .calendar-real-week-original {
+  transform-origin: left top !important;
+}
+@media (max-width: 650px) {
+  .class-full-week-panel { border-radius: 0 !important; }
+  .class-full-week-header h3 { font-size: clamp(13px, 3.5vw, 17px) !important; }
+}
