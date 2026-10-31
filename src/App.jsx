@@ -2205,16 +2205,6 @@ const addNewTeacherWeek = () => setPlan(p => {
 
           {!(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) && <strong className="teacher-collapsed-week-label">Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>}
 
-          <div className="teacher-week-elevvisning">
-            <label>Elevvisning
-              <select aria-label={"Elevvisning vecka "+week.weekNumber} value={week.hidden?"hidden":week.keepVisibleExtra?"extra":"normal"} onChange={e=>updateWeek(index,e.target.value==="hidden"?{hidden:true,keepVisibleExtra:false}:e.target.value==="extra"?{hidden:false,keepVisibleExtra:true}:{hidden:false,keepVisibleExtra:false})}>
-                <option value="normal">Automatisk</option>
-                <option value="extra">Visa manuellt för elever (även passerad vecka)</option>
-                <option value="hidden">Dölj för elever</option>
-              </select>
-            </label>
-          </div>
-          <button type="button" className="week-visibility-eye" aria-label={week.hidden ? "Visa vecka för elever" : "Dölj vecka för elever"} aria-pressed={!week.hidden} title={week.hidden ? "Dold för elever – tryck för att visa" : "Synlig för elever – tryck för att dölja"} onClick={()=>updateWeek(index,{hidden:!week.hidden})}>{week.hidden ? "◉̸" : "👁"}</button>
           </div>
           <div className="teacher-week-collapsible-content" hidden={!(!focusedTeacherWeek && !showPastTeacherWeeks) && !(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen)}>
           <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><strong style={{ fontSize: "1.45rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 5 }}>Vecka <input type="text" inputMode="numeric" pattern="[0-9]*" aria-label="Ändra veckonummer" key={`${week.weekStart}-${week.weekNumber}`} style={{ width: "3.3ch", minWidth: 66, fontSize: "1.45rem", fontWeight: 800, padding: "4px 6px" }} defaultValue={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Skriv veckonummer direkt och tryck Enter" onFocus={e => e.target.select()} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') { e.currentTarget.value = String(calendarWeekNumber(week.weekStart) ?? week.weekNumber); e.currentTarget.blur() } }} onBlur={e => {
@@ -2235,7 +2225,16 @@ const addNewTeacherWeek = () => setPlan(p => {
               return {...previous, weeksData: updated}
             })
             setStatus('Vecka '+target+' är ändrad. Lektionerna är kvar.')
-          }} /></strong><span style={{ fontSize: "1.15rem", fontWeight: 700 }}>{formatDate(week.weekStart)}</span>
+          }} /></strong><div className="teacher-week-inline-visibility"><div className="teacher-week-elevvisning">
+            <label>Elevvisning
+              <select aria-label={"Elevvisning vecka "+week.weekNumber} value={week.hidden?"hidden":week.keepVisibleExtra?"extra":"normal"} onChange={e=>updateWeek(index,e.target.value==="hidden"?{hidden:true,keepVisibleExtra:false}:e.target.value==="extra"?{hidden:false,keepVisibleExtra:true}:{hidden:false,keepVisibleExtra:false})}>
+                <option value="normal">Automatisk</option>
+                <option value="extra">Visa manuellt för elever (även passerad vecka)</option>
+                <option value="hidden">Dölj för elever</option>
+              </select>
+            </label>
+          </div>
+          <button type="button" className="week-visibility-eye" aria-label={week.hidden ? "Visa vecka för elever" : "Dölj vecka för elever"} aria-pressed={!week.hidden} title={week.hidden ? "Dold för elever – tryck för att visa" : "Synlig för elever – tryck för att dölja"} onClick={()=>updateWeek(index,{hidden:!week.hidden})}>{week.hidden ? "◉̸" : "👁"}</button></div><span style={{ fontSize: "1.15rem", fontWeight: 700 }}>{formatDate(week.weekStart)}</span>
             <button type="button" className="remove-small teacher-week-delete-icon" aria-label={`Ta bort vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`} title="Ta bort vecka" disabled={weeks.length <= 1} onClick={() => {
               if (hasWeekWork(week, index) && !window.confirm(`Ta bort vecka ${week.weekNumber} och allt innehåll i veckan?`)) return
               setPlan(p => {
