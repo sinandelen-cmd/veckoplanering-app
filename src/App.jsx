@@ -2915,6 +2915,28 @@ function PlanningActionIcon({ name, size = 16 }) {
   return <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" focusable="false">{paths[name]}</svg>;
 }
 
+function MomentLinkItem({ link, index, editable, onChange, onDelete }) {
+  const url = typeof link === 'string' ? link : link?.url || ''
+  const label = typeof link === 'string' ? resourceInfo(link)?.label || '' : link?.label || ''
+  const info = resourceInfo(url)
+  const [editing, setEditing] = useState(!url.trim())
+  return <div className={`topic-link topic-link-compact moment-link-item${editing ? ' moment-link-editing' : ''}`}>
+    {info ? <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer" title={label || info.label}>
+      <span className="resource-icon"><ResourceIcon kind={info.kind} fallback={info.icon} /></span>
+      <span className="resource-label">{label || info.label}</span><span className="print-resource-url">{url}</span>
+    </a> : <span className="moment-link-unnamed">{label || 'Ny länk'}</span>}
+    {editable && <button type="button" className="moment-link-edit-button" aria-label={`Redigera länk ${index + 1}`} title="Redigera namn och länk" aria-expanded={editing} onClick={() => setEditing(value => !value)}>✎</button>}
+    {editable && editing && <div className="moment-link-form" role="group" aria-label={`Redigera länk ${index + 1}`}>
+      <label>Namn<input aria-label={`Länk ${index + 1} – namn`} placeholder="Skriv länkens namn" value={label} onChange={e => onChange({ url, label: e.target.value })} /></label>
+      <label>Länk<input aria-label={`Länk ${index + 1} – webbadress`} inputMode="url" placeholder="https://..." value={url} onChange={e => onChange({ url: e.target.value, label })} /></label>
+      <div className="moment-link-form-actions">
+        <button type="button" className="moment-link-done" aria-label="Klart – stäng länkredigering" onClick={() => setEditing(false)}>✓ Klart</button>
+        <button type="button" className="remove-small" aria-label={`Ta bort länk ${index + 1}`} onClick={onDelete}><PlanningActionIcon name="trash" /></button>
+      </div>
+    </div>}
+  </div>
+}
+
 function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 'bara-lektion', onlyLessonIndex = null, onPreviousLesson = null, onNextLesson = null, lessonCount = null, onUndo = null, onRedo = null, canUndo = false, canRedo = false }) {
   const lessons = Array.isArray(week?.lessons) ? week.lessons : []
   const editable = typeof onChange === 'function'
@@ -2975,23 +2997,14 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
           <div className={`topic-grid ${topic.hidePages ? "without-pages" : ""} ${topic.hideAssignments ? "without-assignments" : ""}`}>
             <div className="topic-name">{editable ? <textarea aria-label="Momentets namn" placeholder="Skriv moment" rows={1} ref={node => { if (node) { node.style.height = "auto"; node.style.height = `${node.scrollHeight}px` } }} value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong className="topic-name-display">{topic.name || 'Moment'}</strong>}
             <div className="topic-links moment-inner-links">
-            {links.map((link, k) => {
-              const url = typeof link === 'string' ? link : link.url || ''
-              const label = typeof link === 'string' ? resourceInfo(link)?.label || '' : link.label || ''
-              const info = resourceInfo(url)
-              const changeLink = next => updateTopic({ ...topic, links: links.map((item, index) => index === k ? next : item) })
-              return <div className="topic-link topic-link-compact" key={k}>
-                {info && <a className={`resource-chip ${info.kind}`} href={url} target="_blank" rel="noopener noreferrer"><span className="resource-icon"><ResourceIcon kind={info.kind} fallback={info.icon} /></span><span className="resource-label">{label || info.label}</span><span className="print-resource-url">{url}</span></a>}
-                {editable && <details className="topic-link-editor" open={!url.trim()}>
-                  <summary aria-label={`Öppna eller stäng redigering av länk ${k + 1}`} title="Länkens meny: redigera eller radera"><span aria-hidden="true">···</span></summary>
-                  <div className="topic-link-editor-fields">
-                    <label>Namn<input aria-label="Länkens namn" placeholder="Länkens namn" value={label} onChange={e => changeLink({ url, label: e.target.value })} /></label>
-                    <label>Webbadress<input aria-label="Länkadress" placeholder="https://..." value={url} onChange={e => changeLink({ url: e.target.value, label })} /></label>
-                    <button type="button" className="remove-small" aria-label={`Ta bort länk ${k + 1}`} onClick={() => updateTopic({ ...topic, links: links.filter((_, index) => index !== k) })}><PlanningActionIcon name="trash" /></button>
-                  </div>
-                </details>}
-              </div>
-            })}
+            {links.map((link, k) => <MomentLinkItem
+              key={k}
+              link={link}
+              index={k}
+              editable={editable}
+              onChange={next => updateTopic({ ...topic, links: links.map((item, index) => index === k ? next : item) })}
+              onDelete={() => updateTopic({ ...topic, links: links.filter((_, index) => index !== k) })}
+            />)}
             {editable && <button type="button" className="add-detail lesson-bare-icon lesson-bare-link" title="Lägg till länk" aria-label="Lägg till länk" onClick={() => updateTopic({ ...topic, links: [...links, { label: '', url: '' }] })}>🔗</button>}
           </div>
 
