@@ -7979,3 +7979,49 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
     outline-offset:2px!important;
   }
 }
+
+/* En centimeters vertikalt avstånd runt skrivfälten. */
+@media screen {
+  /* De tre färgpanelerna behåller samma höjd per momentrad. */
+  #lararvy .lesson .topic-grid > .topic-name:has(> textarea),
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-name:has(> textarea),
+  .calendar-lesson-modal .lesson .topic-grid > .topic-name:has(> textarea) {
+    padding-top:1cm!important;
+    padding-bottom:1cm!important;
+    padding-left:8px!important;
+    padding-right:8px!important;
+    min-height:0!important;
+    box-sizing:border-box!important;
+    justify-content:center!important;
+  }
+  #lararvy .lesson .topic-grid > .topic-column:has(.topic-cell input),
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-column:has(.topic-cell input),
+  .calendar-lesson-modal .lesson .topic-grid > .topic-column:has(.topic-cell input) {
+    padding-top:1cm!important;
+    padding-bottom:1cm!important;
+    padding-left:8px!important;
+    padding-right:8px!important;
+    min-height:0!important;
+    box-sizing:border-box!important;
+  }
+  /* Papperskorgen och plus-knapparna hålls i hörnen, utanför skrivytorna. */
+  #lararvy .lesson .topic-grid > .topic-column:has(.topic-cell input) > .topic-fixed-heading,
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-column:has(.topic-cell input) > .topic-fixed-heading,
+  .calendar-lesson-modal .lesson .topic-grid > .topic-column:has(.topic-cell input) > .topic-fixed-heading {
+    position:absolute!important;
+    top:5px!important;
+    right:6px!important;
+    left:auto!important;
+    margin:0!important;
+  }
+  /* Den vita momentrutan växer fortsatt i höjdled efter innehållet. */
+  #lararvy .lesson .topic-grid > .topic-name > textarea,
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-name > textarea,
+  .calendar-lesson-modal .lesson .topic-grid > .topic-name > textarea {
+    height:auto;
+    max-height:none!important;
+    overflow:hidden!important;
+    resize:none!important;
+    flex:0 0 auto!important;
+  }
+}
