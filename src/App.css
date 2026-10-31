@@ -6583,3 +6583,7 @@ html,body,#root {max-width:100%;overflow-x:clip;}
 #lararvy .teacher-month-weeks .week-top {position:static!important;top:auto!important;}
 #lararvy .teacher-month-weeks .teacher-week-controls {position:static!important;top:auto!important;}
 @media(max-width:650px){#lararvy .teacher-week-controls .week-heading-visibility{margin-left:auto!important;}#lararvy .teacher-week-controls .teacher-week-elevvisning{flex:1 1 160px!important;min-width:0!important;}#lararvy .teacher-week-controls .teacher-week-elevvisning select{max-width:100%!important;}}
+
+/* En tydlig knapp för att växla mellan alla veckor och grundplanering. */
+#lararvy .teacher-week-navigation .teacher-all-weeks-inline-toggle {display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;border-radius:9px!important;padding:8px 12px!important;min-height:38px!important;font-size:13px!important;font-weight:700!important;box-shadow:none!important;white-space:nowrap!important;}
+#lararvy .teacher-week-navigation .teacher-all-weeks-inline-toggle span[aria-hidden] {font-size:15px!important;line-height:1!important;}
