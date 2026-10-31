@@ -2160,6 +2160,18 @@ const addNewTeacherWeek = () => setPlan(p => {
         
         <button type="button" className="teacher-all-weeks-inline-toggle" aria-expanded={showPastTeacherWeeks} title={showPastTeacherWeeks ? "Stäng alla öppna veckor och återgå till grundplaneringen" : "Visa alla veckor i en sammanhängande vy"} onClick={() => { setFocusedTeacherWeek(null); setFocusedTeacherLesson(null); setTeacherWeekOverview(false); setWeekContentOverrides({}); setShowPastTeacherWeeks(current => !current); setPastWeeksExpanded(false) }}><span aria-hidden="true">{showPastTeacherWeeks ? "✕" : "▦"}</span> {showPastTeacherWeeks ? "Stäng alla veckor" : "Visa alla veckor"}</button>
       </nav>
+      {focusedTeacherWeek && createPortal(<div className="class-full-week-backdrop" role="presentation" style={{position:'fixed',inset:0,zIndex:10000,background:'rgba(22,35,45,.45)',display:'flex',alignItems:'center',justifyContent:'center',padding:8}}>
+        <section className="class-full-week-panel" role="dialog" aria-modal="true" aria-label="Grundplaneringens helvecksvy" style={{width:'100%',maxWidth:1100,height:'calc(100dvh - 16px)',maxHeight:'calc(100dvh - 16px)',display:'flex',flexDirection:'column',overflow:'hidden',padding:8,background:'#fff',borderRadius:12}}>
+          <div className="class-full-week-header" style={{flexShrink:0,display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
+            <h3>Grundplanering · Vecka {calendarWeekNumber(weeks.find(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)?.weekStart)}</h3>
+            <button type="button" className="class-week-header-return" aria-label="Stäng veckan" title="Stäng" onClick={()=>{setFocusedTeacherWeek(null);setFocusedTeacherLesson(null);setTeacherWeekOverview(false)}}>✕</button>
+          </div>
+          <ClassWeekFit><article className="calendar-inline-week" style={{backgroundColor:weekColor(weeks.find(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)?.weekStart)}}>
+            <div className="calendar-inline-week-heading"><h2>Vecka {calendarWeekNumber(weeks.find(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)?.weekStart)}</h2><span>{weeks.find(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)?.chapter}</span></div>
+            <LessonDetails week={weeks.find(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)} entryType={plan.entryType||'lektion'} onChange={changes=>{const index=weeks.findIndex(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek);if(index>=0)updateWeek(index,changes)}} onUndo={undoPlan} onRedo={redoPlan} canUndo={historyRef.current.past.length>0} canRedo={historyRef.current.future.length>0}/>
+          </article></ClassWeekFit>
+        </section>
+      </div>,document.body)}
       {focusedTeacherWeek && <div className="teacher-mobile-week-overview"><div className="teacher-mobile-week-overview-actions"><strong>Vecka {calendarWeekNumber(weeks.find(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)?.weekStart) || ""} · Helvecksvy</strong><button type="button" className="secondary" aria-expanded={!teacherWeekOverview} onClick={()=>setTeacherWeekOverview(v=>!v)}>{teacherWeekOverview?"Visa och redigera detaljer":"Visa hela veckan"}</button></div>{teacherWeekOverview && <CalendarWeekThumbnail week={weeks.find(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)} entryType={plan.entryType||"lektion"} onOpen={()=>setTeacherWeekOverview(false)} onOpenLesson={()=>setTeacherWeekOverview(false)}/>}</div>}
 
       {!focusedTeacherWeek && !showPastTeacherWeeks && <div className="smart-four-week-overview" aria-label="Fyra veckor i miniatyr">
