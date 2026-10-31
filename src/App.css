@@ -6685,3 +6685,22 @@ body > .teacher-scroll-context-fixed{
  flex:0 0 auto!important;width:100%!important;min-width:0!important;
  max-width:100%!important;box-sizing:border-box!important;
 }
+
+
+/* Tydlig, hopfällbar samling för veckor som redan har passerat. */
+#lararvy .teacher-past-weeks-banner{
+ display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+ gap:10px;margin:8px 0 12px;padding:12px 14px;
+ border:1px solid #b7d9c5;border-radius:12px;background:#eff9f2;
+ color:#285b3d;
+}
+#lararvy .teacher-past-weeks-banner-copy{display:flex;flex-direction:column;gap:2px;font-size:12px;}
+#lararvy .teacher-past-weeks-banner-copy strong{font-size:15px;}
+#lararvy .teacher-past-weeks-toggle{
+ border:1px solid #80b69a;border-radius:8px;background:#fff;
+ color:#22573b;font-size:13px;font-weight:700;padding:8px 12px;cursor:pointer;
+}
+@media(max-width:650px){
+ #lararvy .teacher-past-weeks-banner{padding:10px;gap:7px;}
+ #lararvy .teacher-past-weeks-toggle{font-size:12px;padding:7px 9px;}
+}
