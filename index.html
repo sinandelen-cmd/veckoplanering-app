@@ -3,19 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script>
-      // Match the tested compact iPhone presentation without changing desktop/tablet.
-      if (/iPhone|iPod/i.test(navigator.userAgent)) {
-        const viewport = document.querySelector('meta[name="viewport"]');
-        const applyTestScale = () => {
-          viewport.content = window.matchMedia('(orientation: portrait)').matches
-            ? 'width=device-width, initial-scale=0.5'
-            : 'width=device-width, initial-scale=1.0';
-        };
-        applyTestScale();
-        window.addEventListener('orientationchange', applyTestScale);
-      }
-    </script>
     <meta name="description" content="Årsplanering för lärare och elever" />
     <title>Årsplanering</title>
   </head>
