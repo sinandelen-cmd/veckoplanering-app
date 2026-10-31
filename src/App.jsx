@@ -2,6 +2,7 @@ function capitalizeFirstSwedish(value) { return String(value || '').replace(/^(\
 import UpdateNotices from './UpdateNotices.jsx'
 import { groupStudentWeeksForPrint } from './printGroups.js'
 import { Component, Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import * as XLSX from 'xlsx'
 import mammoth from 'mammoth'
 import * as pdfjsLib from 'pdfjs-dist'
@@ -992,7 +993,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
       <strong>{week.weekStart===currentStart?'Nuvarande vecka':`Vecka ${calendarWeekNumber(week.weekStart)}`}</strong>
       <CalendarWeekThumbnail week={week} entryType={plan.entryType || 'lektion'} onOpen={()=>setExpandedFullWeek(week.weekStart)} onOpenLesson={lessonIndex=>setExpanded({weekStart:week.weekStart,lessonIndex})}/>
     </div>)}</div>
-    {expandedFullWeek && <div className="class-full-week-backdrop" role="presentation" style={{position:'fixed',inset:0,zIndex:10000,background:'rgba(22,35,45,.45)',display:'flex',alignItems:'center',justifyContent:'center',padding:8}}>
+    {expandedFullWeek && createPortal(<div className="class-full-week-backdrop" role="presentation" style={{position:'fixed',inset:0,zIndex:10000,background:'rgba(22,35,45,.45)',display:'flex',alignItems:'center',justifyContent:'center',padding:8}}>
       <section className="class-full-week-panel" role="dialog" aria-modal="true" aria-label={`Hela vecka ${calendarWeekNumber(expandedFullWeek)} för ${className}`} style={{width:'100%',maxWidth:1100,height:'calc(100dvh - 16px)',maxHeight:'calc(100dvh - 16px)',display:'flex',flexDirection:'column',overflow:'hidden',padding:8,background:'#fff',borderRadius:12}}>
         <div className="class-full-week-header" style={{flexShrink:0,display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}><h3>{className} · Vecka {calendarWeekNumber(expandedFullWeek)}</h3><button type="button" className="class-week-header-return" aria-label="Stäng veckan och återgå till klassvyn" disabled={saving||busy} onClick={async()=>{setSaving(true);try{const ok=await onSave?.();if(ok===true)setExpandedFullWeek(null)}finally{setSaving(false)}}}>{saving||busy?'Sparar…':'← Till klassvyn'}</button></div>
         <ClassWeekFit><article className="calendar-inline-week" style={{backgroundColor:weekColor(expandedFullWeek)}}>
@@ -1010,7 +1011,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
         </article></ClassWeekFit>
         <div className="class-full-week-footer" style={{flexShrink:0}}><button type="button" className="class-week-return-button" aria-label="Stäng veckan och återgå till klassvyn" disabled={saving||busy} onClick={async()=>{setSaving(true);try{const ok=await onSave?.();if(ok===true)setExpandedFullWeek(null)}finally{setSaving(false)}}}>{saving||busy?'Sparar…':'← Stäng veckan · Tillbaka till klassvyn'}</button></div>
       </section>
-    </div>}
+    </div>, document.body)}
     {expanded && <div className="calendar-lesson-modal-backdrop" role="presentation"><section className="calendar-lesson-modal" role="dialog" aria-modal="true" aria-label="Redigera klassens lektion">
       <div className="calendar-lesson-modal-header"><h3>Vecka {calendarWeekNumber(expanded.weekStart)}{expanded.lessonIndex!==null?' · Lektion '+(expanded.lessonIndex+1):''} · {className}</h3><button type="button" onClick={()=>setExpanded(null)}>Stäng</button></div>
       <LessonDetails week={weeks.find(w=>w.weekStart===expanded.weekStart)} entryType={plan.entryType||'lektion'} onlyLessonIndex={expanded.lessonIndex} onPreviousLesson={expanded.lessonIndex !== null ? ()=>setExpanded(current=>({...current,lessonIndex:Math.max(0,current.lessonIndex-1)})) : undefined} onNextLesson={expanded.lessonIndex !== null ? ()=>setExpanded(current=>({...current,lessonIndex:Math.min((weeks.find(w=>w.weekStart===current.weekStart)?.lessons?.length||1)-1,current.lessonIndex+1)})) : undefined} lessonCount={weeks.find(w=>w.weekStart===expanded.weekStart)?.lessons?.length||0} onUndo={undoClassLesson} onRedo={redoClassLesson} canUndo={classHistory.current.past.length>0} canRedo={classHistory.current.future.length>0} onChange={changes=>{
