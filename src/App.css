@@ -7366,3 +7366,12 @@ body > .class-full-week-backdrop .class-week-return-button {
  background:var(--plan-soft,#f3f5f6)!important;color:var(--plan-ink,#493b3b)!important;
  font:inherit!important;font-weight:700!important;box-shadow:none!important;
 }
+
+/* Samma veckonavigering som grundplaneringens treveckorsrad, även i helvecksvyerna. */
+body > .class-full-week-backdrop .week-modal-navigation{display:flex!important;justify-content:center!important;align-items:center!important;gap:8px!important;flex-wrap:nowrap!important;min-width:0!important;overflow-x:auto;scrollbar-width:none;padding:4px 2px!important}
+body > .class-full-week-backdrop .week-modal-navigation::-webkit-scrollbar{display:none}
+body > .class-full-week-backdrop .week-modal-navigation button{flex:0 0 auto!important;border:1px solid #c7d5e2!important;background:#fff!important;color:#2d4a63!important;border-radius:999px!important;padding:8px 13px!important;min-height:40px!important;font-size:clamp(11px,2.7vw,15px)!important;font-weight:750!important;white-space:nowrap!important;box-shadow:none!important}
+body > .class-full-week-backdrop .week-modal-navigation button.current{background:#2d4a63!important;border-color:#2d4a63!important;color:#fff!important}
+body > .class-full-week-backdrop .week-modal-navigation button[aria-label="Föregående vecka"],body > .class-full-week-backdrop .week-modal-navigation button[aria-label="Nästa vecka"]{border-radius:50%!important;min-width:40px!important;width:40px!important;height:40px!important;padding:0!important;font-size:18px!important}
+body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:.35!important}
+@media(max-width:480px){body > .class-full-week-backdrop .week-modal-navigation{gap:4px!important}body > .class-full-week-backdrop .week-modal-navigation button{padding:7px 8px!important;min-height:34px!important;font-size:11px!important}body > .class-full-week-backdrop .week-modal-navigation button[aria-label="Föregående vecka"],body > .class-full-week-backdrop .week-modal-navigation button[aria-label="Nästa vecka"]{min-width:32px!important;width:32px!important;height:34px!important;font-size:14px!important}}
