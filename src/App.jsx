@@ -969,7 +969,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
     applyClassOverrides(next, false)
   }
   const group = (plan.classGroups || []).find(item => item.name === className)
-  const scheduled = useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
+  const scheduled = useMemo(() => group ? buildClassSchedule(plan, group, { includeHiddenWeeks: true }) : [], [plan, group])
   const today = new Date()
   const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
   monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
