@@ -6740,3 +6740,38 @@ body>.teacher-full-chapter-fixed .teacher-full-chapter-week{
  color:#754321;font-size:13px;font-weight:750;
 }
 body>.teacher-scroll-context-fixed{display:none!important;}
+
+
+/* Kapitel och vecka sitter på en fast plats i planeringens flöde.
+   Inga flytande dubbletter. Innehållet byts vid veckogränser. */
+#lararvy .teacher-active-chapter-bar{
+ position:sticky!important;top:0!important;z-index:80!important;
+ display:block!important;margin:0 0 8px!important;padding:10px 14px 7px!important;
+ background:#fce3c4!important;border:1px solid #e9c7a2!important;
+ border-radius:12px!important;box-shadow:0 2px 5px rgba(0,0,0,.07)!important;
+ transform:none!important;transition:none!important;animation:none!important;
+}
+#lararvy .teacher-active-chapter-bar[hidden]{display:none!important;}
+#lararvy .teacher-active-chapter-content .chapter-heading{
+ font-size:clamp(22px,4.5vw,32px)!important;font-weight:800!important;
+ margin:0 0 5px!important;padding:0!important;background:transparent!important;
+ border:0!important;box-shadow:none!important;line-height:1.15!important;
+}
+#lararvy .teacher-active-chapter-content .chapter-vocabulary{
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ padding:0!important;margin:0!important;
+}
+#lararvy .teacher-active-chapter-content .chapter-vocabulary-list{
+ display:flex!important;flex-wrap:wrap!important;gap:4px!important;
+}
+#lararvy .teacher-active-chapter-content .chapter-vocabulary-term{
+ font-size:10px!important;padding:3px 6px!important;
+}
+#lararvy .teacher-active-week-label{
+ font-size:15px!important;font-weight:800!important;color:#704326!important;
+ padding-top:5px!important;margin-top:5px!important;border-top:1px solid #dfb993!important;
+}
+#lararvy .teacher-months-all-weeks .teacher-chapter-sticky,
+#lararvy .teacher-months-focused .teacher-chapter-sticky{
+ position:static!important;top:auto!important;
+}
