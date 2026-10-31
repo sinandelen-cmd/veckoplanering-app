@@ -7008,3 +7008,33 @@ body>.teacher-scroll-context-fixed{display:none!important;}
  #lararvy #kopplade-klasser .class-mini-row-right{flex:1 1 100%!important;justify-content:flex-end!important;}
  #lararvy #kopplade-klasser .class-mini-row-right .class-bulk-visibility select{max-width:180px!important;}
 }
+
+
+/* En enda veckorubrik: den redigerbara veckoraden stannar i lektionsscrollen.
+   Ingen extra "Vecka 44"-etikett under den fasta kapitelrubriken. */
+#lararvy .expanded-weeks-inline .teacher-active-chapter-bar .teacher-active-week-label{
+ display:none!important;
+}
+#lararvy .expanded-weeks-inline .teacher-months .teacher-week-collapsible-content{
+ overflow:visible!important;
+}
+#lararvy .expanded-weeks-inline .teacher-months .teacher-week-collapsible-content>.week-top{
+ position:sticky!important;top:0!important;z-index:30!important;
+ background:#f1ebff!important;border-bottom:1px solid #ddd3ed!important;
+ border-radius:8px!important;padding:7px 10px!important;
+ margin:0 0 8px!important;
+}
+#lararvy .lesson-heading-history{
+ display:inline-flex!important;align-items:center!important;gap:5px!important;
+ flex:0 0 auto!important;
+}
+#lararvy .lesson-heading-history button{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:30px!important;height:30px!important;min-width:30px!important;
+ padding:5px!important;border:1px solid #ead6ad!important;
+ border-radius:8px!important;background:#fff4dc!important;color:#79524a!important;
+}
+#lararvy .lesson-heading-history button svg{
+ width:17px!important;height:17px!important;stroke-width:1.8!important;
+}
+#lararvy .lesson-heading-history button:disabled{opacity:.35!important;}
