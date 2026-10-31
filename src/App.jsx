@@ -2344,7 +2344,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       <section className="card planning-start-card">
         <div className="section-heading"><div><h1>Vad vill du göra?</h1></div></div>
         <div className="home-tiles">
-          <button type="button" className="home-tile" onClick={() => { setCalendarOpen(false); setFocusedTeacherWeek(null); setTeacherTab('arsplan') }}><span className="home-tile-icon">🗓️</span><strong>Planering</strong><span>Öppna planeringen och den övre menyn</span></button>
+          <button type="button" className="home-tile" onClick={() => { setShowArchive(false); setLibrarySchool(''); setLibrarySubject(''); setLibraryBoardPage(0); setCalendarOpen(false); setTeacherTab('bibliotek') }}><span className="home-tile-icon">🗂️</span><strong>Planering</strong><span>Öppna trädbilden med Grundskola och Gymnasiet</span></button>
           <button type="button" className="home-tile" onClick={() => { setShowArchive(false); setLibrarySchool(''); setLibrarySubject(''); setLibraryBoardPage(0); setTeacherTab('bibliotek') }}><span className="home-tile-icon">📂</span><strong>Mina planeringar</strong><span>Öppna ämnen och kurser</span></button>
         </div>
       </section>
