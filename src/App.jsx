@@ -1008,7 +1008,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
             applyClassOverrides(overrides)
           }}/>
         </article></ClassWeekFit>
-        <div className="class-full-week-footer" style={{flexShrink:0,display:'flex',justifyContent:'flex-end'}}><button type="button" className="class-lesson-done-icon" aria-label="Spara och stäng veckan" disabled={saving||busy} onClick={async()=>{setSaving(true);try{const ok=await onSave?.();if(ok===true)setExpandedFullWeek(null)}finally{setSaving(false)}}}>{saving||busy?'…':'✓ Klar'}</button></div>
+        <div className="class-full-week-footer" style={{flexShrink:0}}><button type="button" className="class-week-return-button" aria-label="Stäng veckan och återgå till klassvyn" disabled={saving||busy} onClick={async()=>{setSaving(true);try{const ok=await onSave?.();if(ok===true)setExpandedFullWeek(null)}finally{setSaving(false)}}}>{saving||busy?'Sparar…':'← Stäng veckan · Tillbaka till klassvyn'}</button></div>
       </section>
     </div>}
     {expanded && <div className="calendar-lesson-modal-backdrop" role="presentation"><section className="calendar-lesson-modal" role="dialog" aria-modal="true" aria-label="Redigera klassens lektion">
