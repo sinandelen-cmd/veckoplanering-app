@@ -6775,3 +6775,18 @@ body>.teacher-scroll-context-fixed{display:none!important;}
 #lararvy .teacher-months-focused .teacher-chapter-sticky{
  position:static!important;top:auto!important;
 }
+
+
+/* När den fasta fullstora kapitelrutan finns: visa inte en andra orange
+   kapitelruta i listan. Behåll elementet i DOM för kapitel-/veckodetektion. */
+#lararvy .teacher-year-review:has(.teacher-active-chapter-bar) .teacher-months .teacher-chapter-sticky{
+ display:none!important;position:static!important;height:0!important;
+ min-height:0!important;margin:0!important;padding:0!important;
+ border:0!important;overflow:hidden!important;
+}
+#lararvy .teacher-year-review:has(.teacher-active-chapter-bar) .teacher-months .teacher-chapter-section{
+ padding-top:0!important;margin-top:0!important;
+}
+#lararvy .teacher-year-review:has(.teacher-active-chapter-bar) .teacher-months .teacher-month-weeks{
+ margin-top:0!important;padding-top:0!important;
+}
