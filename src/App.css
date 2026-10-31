@@ -5903,3 +5903,76 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 #lararvy .teacher-year-review .teacher-week-navigation { margin-block:4px!important; }
 #lararvy .teacher-year-review .teacher-month-section { margin-top:0!important; padding-top:6px!important; }
 #lararvy .teacher-mobile-week-overview { margin:4px 0!important; padding:6px!important; }
+
+
+/* Klass > vecka: hela veckan ryms i dialogen utan egen scrollning.
+   Detaljer redigeras i den separata lektionsdialogen. */
+.class-full-week-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.class-full-week-panel .class-full-week-header,
+.class-full-week-panel .class-full-week-footer {
+  flex: 0 0 auto;
+}
+.class-full-week-lessons {
+  display: grid;
+  grid-auto-rows: minmax(0, 1fr);
+  gap: clamp(4px, 0.9vh, 12px);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: clamp(5px, 1vh, 12px) 0;
+}
+.class-full-week-lesson {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: clamp(4px, 0.8vh, 12px) 32px clamp(4px, 0.8vh, 12px) 12px;
+  border: 1px solid #d8e3e5;
+  border-radius: 10px;
+  background: #f7fafc;
+  color: #293e50;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+}
+.class-full-week-lesson:nth-child(5n+1) { background: #fdf7f8; }
+.class-full-week-lesson:nth-child(5n+2) { background: #fcfbee; }
+.class-full-week-lesson:nth-child(5n+3) { background: #f5f8ff; }
+.class-full-week-lesson:nth-child(5n+4) { background: #f1faf8; }
+.class-full-week-lesson:nth-child(5n+5) { background: #f8f5fc; }
+.class-full-week-lesson strong,
+.class-full-week-lesson .class-full-week-topic,
+.class-full-week-lesson small {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.class-full-week-lesson strong { font-size: clamp(11px, 1.6vh, 15px); }
+.class-full-week-lesson .class-full-week-topic { font-size: clamp(10px, 1.35vh, 13px); }
+.class-full-week-lesson small { font-size: clamp(9px, 1.15vh, 12px); color: #586a78; }
+.class-full-week-lesson .class-full-week-chevron {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 23px;
+}
+.class-full-week-lesson:focus-visible { outline: 2px solid #1767a5; outline-offset: -2px; }
+@media (max-width: 650px) {
+  .class-full-week-panel { height: 100dvh; max-height: 100dvh; padding: 8px 10px max(8px, env(safe-area-inset-bottom)); }
+  .class-full-week-panel .class-full-week-header { padding: 5px 0 8px; }
+  .class-full-week-panel .class-full-week-footer { padding: 5px 0; }
+  .class-full-week-lesson { border-radius: 8px; }
+}
