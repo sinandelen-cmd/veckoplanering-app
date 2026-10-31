@@ -995,7 +995,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
     </div>)}</div>
     {expandedFullWeek && createPortal(<div className="class-full-week-backdrop" role="presentation" style={{position:'fixed',inset:0,zIndex:10000,background:'rgba(22,35,45,.45)',display:'flex',alignItems:'center',justifyContent:'center',padding:8}}>
       <section className="class-full-week-panel" role="dialog" aria-modal="true" aria-label={`Hela vecka ${calendarWeekNumber(expandedFullWeek)} för ${className}`} style={{width:'100%',maxWidth:1100,height:'calc(100dvh - 16px)',maxHeight:'calc(100dvh - 16px)',display:'flex',flexDirection:'column',overflow:'hidden',padding:8,background:'#fff',borderRadius:12}}>
-        <div className="class-full-week-header" style={{flexShrink:0,display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}><h3>{className} · Vecka {calendarWeekNumber(expandedFullWeek)}</h3><button type="button" className="class-week-header-return" aria-label="Stäng veckan och återgå till klassvyn" disabled={saving||busy} onClick={async()=>{setSaving(true);try{const ok=await onSave?.();if(ok===true)setExpandedFullWeek(null)}finally{setSaving(false)}}}>{saving||busy?'Sparar…':'← Till klassvyn'}</button></div>
+        <div className="class-full-week-header" style={{flexShrink:0,display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}><h3>{className} · Vecka {calendarWeekNumber(expandedFullWeek)}</h3><button type="button" className="class-week-header-return" aria-label="Stäng veckan och återgå till klassvyn" disabled={saving||busy} onClick={async()=>{setSaving(true);try{const ok=await onSave?.();if(ok===true)setExpandedFullWeek(null)}finally{setSaving(false)}}}>{saving||busy?'Sparar…':'✕ Stäng'}</button></div>
         <ClassWeekFit><article className="calendar-inline-week" style={{backgroundColor:weekColor(expandedFullWeek)}}>
           <div className="calendar-inline-week-heading"><h2>Vecka {calendarWeekNumber(expandedFullWeek)}</h2><span>{weeks.find(w=>w.weekStart===expandedFullWeek)?.chapter}</span></div>
           <LessonDetails week={weeks.find(w=>w.weekStart===expandedFullWeek)} entryType={plan.entryType||'lektion'} onUndo={undoClassLesson} onRedo={redoClassLesson} canUndo={classHistory.current.past.length>0} canRedo={classHistory.current.future.length>0} onChange={changes=>{
@@ -1009,7 +1009,6 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
             applyClassOverrides(overrides)
           }}/>
         </article></ClassWeekFit>
-        <div className="class-full-week-footer" style={{flexShrink:0}}><button type="button" className="class-week-return-button" aria-label="Stäng veckan och återgå till klassvyn" disabled={saving||busy} onClick={async()=>{setSaving(true);try{const ok=await onSave?.();if(ok===true)setExpandedFullWeek(null)}finally{setSaving(false)}}}>{saving||busy?'Sparar…':'← Stäng veckan · Tillbaka till klassvyn'}</button></div>
       </section>
     </div>, document.body)}
     {expanded && <div className="calendar-lesson-modal-backdrop" role="presentation"><section className="calendar-lesson-modal" role="dialog" aria-modal="true" aria-label="Redigera klassens lektion">
