@@ -6820,3 +6820,25 @@ body>.teacher-scroll-context-fixed{display:none!important;}
   height:calc(100dvh - 235px)!important;min-height:310px!important;
  }
 }
+
+
+/* Tydligare mörkrosa navigeringspilar inuti lektionsrubrikens rosa ruta. */
+#lararvy .smart-lesson-dialog .lesson-edit-heading-pager>.lesson-heading-prev,
+#lararvy .smart-lesson-dialog .lesson-edit-heading-pager>.lesson-heading-next{
+ color:#a00055!important;background:transparent!important;
+ width:30px!important;min-width:30px!important;height:34px!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ border:0!important;box-shadow:none!important;
+}
+#lararvy .smart-lesson-dialog .lesson-edit-heading-pager>.lesson-heading-prev svg,
+#lararvy .smart-lesson-dialog .lesson-edit-heading-pager>.lesson-heading-next svg{
+ width:23px!important;height:23px!important;stroke-width:2.7!important;
+}
+#lararvy .smart-lesson-dialog .lesson-edit-heading-pager>button:disabled{
+ opacity:.35!important;cursor:default!important;
+}
+@media(max-width:650px){
+ #lararvy .smart-lesson-dialog .lesson-heading>.lesson-edit-heading.lesson-edit-heading-pager{
+  grid-template-columns:30px minmax(0,1fr) 30px!important;
+ }
+}
