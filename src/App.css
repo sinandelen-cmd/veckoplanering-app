@@ -7401,32 +7401,44 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
  #lararvy .lesson .topic-grid>.topic-name>.moment-inner-actions .lesson-bare-remove{background:transparent!important;border:0!important;box-shadow:none!important}
 }
 
-/* Visa/dölj veckans innehåll: tydlig knapp i lärarens veckokort. */
-#lararvy .teacher-week-controls .teacher-week-collapse-toggle.teacher-week-content-toggle,
-#lararvy .teacher-collapsible-week.teacher-week-closed .teacher-week-collapse-toggle.teacher-week-content-toggle {
+
+/* Kompakt fällpil vid varje vecka; gemensam kontroll i veckonavigeringen. */
+#lararvy .teacher-week-controls .teacher-week-collapse-toggle {
   display:inline-flex!important;
   align-items:center!important;
   justify-content:center!important;
-  gap:7px!important;
-  width:auto!important;
-  min-width:0!important;
-  max-width:100%!important;
-  height:auto!important;
-  min-height:38px!important;
-  flex:0 1 auto!important;
-  padding:7px 12px!important;
+  flex:0 0 34px!important;
+  width:34px!important;
+  min-width:34px!important;
+  max-width:34px!important;
+  height:34px!important;
+  min-height:34px!important;
+  padding:0!important;
   margin:0!important;
-  font-size:13px!important;
-  line-height:1.25!important;
-  white-space:normal!important;
-  text-align:center!important;
-  border-radius:9px!important;
+  font-size:20px!important;
+  line-height:1!important;
+  white-space:nowrap!important;
 }
-#lararvy .teacher-week-content-toggle span:first-child {font-size:18px;line-height:1}
-@media (max-width:480px) {
-  #lararvy .teacher-week-controls .teacher-week-collapse-toggle.teacher-week-content-toggle {
-    min-height:40px!important;
-    padding:8px 10px!important;
-    font-size:12px!important;
+#lararvy .teacher-week-navigation .teacher-all-content-toggle {
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:6px!important;
+  min-height:36px!important;
+  padding:6px 12px!important;
+  margin:0!important;
+  border:1px solid #c7d5e2!important;
+  border-radius:9px!important;
+  background:#fff!important;
+  color:#2d4a63!important;
+  font-size:13px!important;
+  font-weight:700!important;
+  white-space:nowrap!important;
+  cursor:pointer!important;
+}
+#lararvy .teacher-week-navigation .teacher-all-content-toggle span {font-size:19px;line-height:1}
+@media(max-width:650px) {
+  #lararvy .teacher-week-controls .teacher-week-collapse-toggle {
+    flex-basis:36px!important;width:36px!important;min-width:36px!important;max-width:36px!important;height:36px!important;min-height:36px!important;
   }
 }
