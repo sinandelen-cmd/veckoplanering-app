@@ -7682,3 +7682,42 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
     padding-top:4px!important;
   }
 }
+
+/* Moment: skrivfältet växer med texten utan radgräns.
+   Länkikoner och länknamn ligger direkt under textfältet, inte längst ned i panelen. */
+@media screen {
+  #lararvy .lesson .topic-grid > .topic-name:has(> textarea),
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-name:has(> textarea),
+  .calendar-lesson-modal .lesson .topic-grid > .topic-name:has(> textarea) {
+    justify-content:flex-start!important;
+    gap:0!important;
+  }
+  #lararvy .lesson .topic-grid > .topic-name > textarea,
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-name > textarea,
+  .calendar-lesson-modal .lesson .topic-grid > .topic-name > textarea {
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    min-height:44px!important;
+    max-height:none!important;
+    overflow:hidden!important;
+    resize:none!important;
+    white-space:pre-wrap!important;
+    overflow-wrap:anywhere!important;
+    box-sizing:border-box!important;
+    margin:0!important;
+    padding:8px 10px!important;
+    flex:0 0 auto!important;
+  }
+  #lararvy .lesson .topic-grid > .topic-name > .moment-inner-links,
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-name > .moment-inner-links,
+  .calendar-lesson-modal .lesson .topic-grid > .topic-name > .moment-inner-links {
+    margin-top:3px!important;
+    margin-bottom:0!important;
+    padding-top:0!important;
+    padding-bottom:0!important;
+    align-self:stretch!important;
+    flex:0 0 auto!important;
+    min-height:20px!important;
+  }
+}
