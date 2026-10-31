@@ -6605,3 +6605,7 @@ html,body,#root {max-width:100%;overflow-x:clip;}
 #lararvy .smart-lesson-dialog .lesson-heading>.remove-small {color:#b14a4a!important;}
 #lararvy .smart-lesson-dialog .lesson-heading button:disabled {opacity:.3!important;}
 @media(max-width:650px){#lararvy .smart-lesson-dialog .lesson-heading {gap:2px!important;}#lararvy .smart-lesson-dialog .lesson-reorder-controls button,#lararvy .smart-lesson-dialog .lesson-inline-history button,#lararvy .smart-lesson-dialog .lesson-heading>.remove-small{width:26px!important;min-width:26px!important;height:30px!important;font-size:17px!important;}#lararvy .smart-lesson-dialog .lesson-heading .lesson-edit-heading{font-size:12px!important;}}
+
+/* Radera lektion: separat diskret åtgärd nere till höger i lektionskortet. */
+#lararvy .smart-lesson-dialog .lesson {position:relative!important;padding-bottom:39px!important;}
+#lararvy .smart-lesson-dialog .lesson-heading>.remove-small {position:absolute!important;right:10px!important;bottom:7px!important;top:auto!important;width:30px!important;min-width:30px!important;height:30px!important;color:#b14a4a!important;background:transparent!important;border:0!important;box-shadow:none!important;}
