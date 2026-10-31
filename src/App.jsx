@@ -2260,10 +2260,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         </section>)}
       </div>
 
-      <div className="sticky-actions button-row">
-        
-        <span className="autosave-info" role="status">Ändringar sparas och publiceras automatiskt när lektionerna har innehåll.</span>
-      </div>
+
       {isDirty && <p className="unsaved-notice" role="status">Osparade ändringar – välj Spara utkast innan du lämnar sidan.</p>}
       {status && <p className="status">{status}</p>}
     </section>
@@ -2504,10 +2501,7 @@ const addNewTeacherWeek = () => setPlan(p => {
           return { ...p, weeks: existing.length + 1, weeksData: [...existing, newWeek] }
         })}>+ Lägg till vecka</button>
       </div>
-      <div className="sticky-actions button-row">
-        
-        <span className="autosave-info" role="status">Ändringar sparas och publiceras automatiskt när lektionerna har innehåll.</span>
-      </div>
+
       {isDirty && <p className="unsaved-notice" role="status">Osparade ändringar – välj Spara utkast innan du lämnar sidan.</p>}
       {status && <p className="status">{status}</p>}
     </section>
