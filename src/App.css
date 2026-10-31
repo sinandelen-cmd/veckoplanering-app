@@ -7749,3 +7749,162 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
     flex-shrink:0!important;
   }
 }
+
+/* Alla länknamn visas utan trunkering. Nya och gamla länkar redigeras i samma ruta. */
+@media screen {
+  #lararvy .lesson .topic-grid > .topic-name > .moment-inner-links,
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-name > .moment-inner-links,
+  .calendar-lesson-modal .lesson .topic-grid > .topic-name > .moment-inner-links {
+    display:flex!important;
+    flex-direction:row!important;
+    flex-wrap:wrap!important;
+    align-items:flex-start!important;
+    justify-content:flex-start!important;
+    gap:4px 7px!important;
+    overflow:visible!important;
+    height:auto!important;
+    min-height:20px!important;
+    padding:3px 30px 0 0!important;
+    box-sizing:border-box!important;
+  }
+  #lararvy .lesson .moment-inner-links .moment-link-item,
+  body > .class-full-week-backdrop .lesson .moment-inner-links .moment-link-item,
+  .calendar-lesson-modal .lesson .moment-inner-links .moment-link-item {
+    display:inline-flex!important;
+    flex:0 1 auto!important;
+    flex-direction:row!important;
+    flex-wrap:wrap!important;
+    align-items:flex-start!important;
+    min-width:0!important;
+    max-width:100%!important;
+    gap:3px!important;
+    overflow:visible!important;
+  }
+  #lararvy .lesson .moment-inner-links .moment-link-editing,
+  body > .class-full-week-backdrop .lesson .moment-inner-links .moment-link-editing,
+  .calendar-lesson-modal .lesson .moment-inner-links .moment-link-editing {
+    flex:1 1 100%!important;
+    width:100%!important;
+  }
+  #lararvy .lesson .moment-inner-links .resource-chip,
+  body > .class-full-week-backdrop .lesson .moment-inner-links .resource-chip,
+  .calendar-lesson-modal .lesson .moment-inner-links .resource-chip {
+    display:inline-flex!important;
+    flex-direction:row!important;
+    align-items:flex-start!important;
+    max-width:100%!important;
+    white-space:normal!important;
+    overflow:visible!important;
+    min-width:0!important;
+    padding:1px 2px!important;
+  }
+  #lararvy .lesson .moment-inner-links .resource-chip .resource-label,
+  body > .class-full-week-backdrop .lesson .moment-inner-links .resource-chip .resource-label,
+  .calendar-lesson-modal .lesson .moment-inner-links .resource-chip .resource-label {
+    display:inline-block!important;
+    max-width:none!important;
+    width:auto!important;
+    white-space:normal!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+    overflow-wrap:anywhere!important;
+    word-break:normal!important;
+    font-size:10px!important;
+    line-height:1.3!important;
+    font-weight:500!important;
+    text-align:left!important;
+  }
+  #lararvy .lesson .moment-link-edit-button,
+  body > .class-full-week-backdrop .lesson .moment-link-edit-button,
+  .calendar-lesson-modal .lesson .moment-link-edit-button {
+    display:inline-flex!important;
+    justify-content:center!important;
+    align-items:center!important;
+    width:24px!important;
+    height:24px!important;
+    min-width:24px!important;
+    min-height:24px!important;
+    padding:1px!important;
+    margin:0!important;
+    border:1px solid #bed6cb!important;
+    border-radius:6px!important;
+    background:#fff!important;
+    color:#315d4e!important;
+    font-size:15px!important;
+    line-height:1!important;
+    cursor:pointer!important;
+  }
+  #lararvy .lesson .moment-link-form,
+  body > .class-full-week-backdrop .lesson .moment-link-form,
+  .calendar-lesson-modal .lesson .moment-link-form {
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    gap:6px!important;
+    padding:9px!important;
+    margin:3px 0 4px!important;
+    box-sizing:border-box!important;
+    border:1px solid #afcdc0!important;
+    border-radius:9px!important;
+    background:#f9fdfa!important;
+  }
+  #lararvy .lesson .moment-link-form label,
+  body > .class-full-week-backdrop .lesson .moment-link-form label,
+  .calendar-lesson-modal .lesson .moment-link-form label {
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+    gap:3px!important;
+    width:100%!important;
+    min-width:0!important;
+    font-size:12px!important;
+    font-weight:700!important;
+    color:#375248!important;
+  }
+  #lararvy .lesson .moment-link-form input,
+  body > .class-full-week-backdrop .lesson .moment-link-form input,
+  .calendar-lesson-modal .lesson .moment-link-form input {
+    display:block!important;
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+    padding:8px!important;
+    border:1px solid #b8d1c6!important;
+    border-radius:7px!important;
+    background:#fff!important;
+    color:#182b22!important;
+    -webkit-text-fill-color:#182b22!important;
+    font-size:14px!important;
+  }
+  #lararvy .lesson .moment-link-form-actions,
+  body > .class-full-week-backdrop .lesson .moment-link-form-actions,
+  .calendar-lesson-modal .lesson .moment-link-form-actions {
+    display:flex!important;
+    justify-content:flex-end!important;
+    align-items:center!important;
+    gap:7px!important;
+  }
+  #lararvy .lesson .moment-link-done,
+  body > .class-full-week-backdrop .lesson .moment-link-done,
+  .calendar-lesson-modal .lesson .moment-link-done {
+    min-height:34px!important;
+    padding:6px 12px!important;
+    border:1px solid #98c6aa!important;
+    border-radius:8px!important;
+    background:#e6f5ec!important;
+    color:#215b3b!important;
+    font-size:13px!important;
+    font-weight:750!important;
+    cursor:pointer!important;
+  }
+  #lararvy .lesson .moment-link-unnamed,
+  body > .class-full-week-backdrop .lesson .moment-link-unnamed,
+  .calendar-lesson-modal .lesson .moment-link-unnamed {
+    font-size:11px!important;
+    color:#4f665a!important;
+    overflow-wrap:anywhere!important;
+  }
+}
