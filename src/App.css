@@ -7524,9 +7524,12 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
     gap:4px!important;
   }
   /* Samma 22px-storlek på Moment, Sida och Uppgift. */
-  #lararvy .lesson .topic-grid .topic-corner-add,
-  body > .class-full-week-backdrop .lesson .topic-grid .topic-corner-add,
-  .calendar-lesson-modal .lesson .topic-grid .topic-corner-add {
+  #lararvy .lesson .topic-grid > .topic-column > .topic-corner-add.lesson-bare-icon,
+  #lararvy .lesson .topic-grid > .topic-name > .moment-inner-actions > .topic-corner-add.lesson-bare-icon,
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-column > .topic-corner-add.lesson-bare-icon,
+  body > .class-full-week-backdrop .lesson .topic-grid > .topic-name > .moment-inner-actions > .topic-corner-add.lesson-bare-icon,
+  .calendar-lesson-modal .lesson .topic-grid > .topic-column > .topic-corner-add.lesson-bare-icon,
+  .calendar-lesson-modal .lesson .topic-grid > .topic-name > .moment-inner-actions > .topic-corner-add.lesson-bare-icon {
     display:inline-flex!important;
     justify-content:center!important;
     align-items:center!important;
