@@ -6932,3 +6932,21 @@ body>.teacher-scroll-context-fixed{display:none!important;}
 .calendar-lesson-modal .lesson-inline-history button:disabled{
  opacity:.35!important;cursor:not-allowed!important;
 }
+
+
+/* Gemensam raderingsikon för Sida/Uppgift-rutor, moment och enskilda rader. */
+#lararvy .remove-small:has(>svg),
+.calendar-lesson-modal .remove-small:has(>svg){
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ gap:0!important;vertical-align:middle!important;
+}
+#lararvy .remove-small>svg,
+.calendar-lesson-modal .remove-small>svg{
+ width:16px!important;height:16px!important;min-width:16px!important;
+ stroke:currentColor!important;stroke-width:1.8!important;flex-shrink:0!important;
+}
+#lararvy .remove-topic-column:has(>svg),
+.calendar-lesson-modal .remove-topic-column:has(>svg){
+ min-width:26px!important;min-height:26px!important;padding:4px!important;
+ border-radius:7px!important;
+}
