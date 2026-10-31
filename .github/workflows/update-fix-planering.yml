@@ -1,5 +1,5 @@
 name: Uppdatera fix-planering testlänk
-# Publicera senaste veckovy och ikonförbättringar till testlänken.
+# Öppna klassveckans hela miniatyr direkt vid tryck, utan lektionslista.
 on:
   workflow_dispatch:
   push:
