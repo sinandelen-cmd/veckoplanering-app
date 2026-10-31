@@ -2973,7 +2973,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
         const rows = editable ? Math.max(1, pages.length, assignments.length) : Math.max(lastFilledRow(pages), lastFilledRow(assignments))
         return <div className="topic" key={j}>
           <div className={`topic-grid ${topic.hidePages ? "without-pages" : ""} ${topic.hideAssignments ? "without-assignments" : ""}`}>
-            <div className="topic-name">{editable ? <textarea aria-label="Momentets namn" placeholder="Skriv moment" rows={Math.max(2, String(topic.name || '').split('\n').length)} value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong className="topic-name-display">{topic.name || 'Moment'}</strong>}
+            <div className="topic-name">{editable ? <textarea aria-label="Momentets namn" placeholder="Skriv moment" rows={1} ref={node => { if (node) { node.style.height = "auto"; node.style.height = `${node.scrollHeight}px` } }} value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong className="topic-name-display">{topic.name || 'Moment'}</strong>}
             <div className="topic-links moment-inner-links">
             {links.map((link, k) => {
               const url = typeof link === 'string' ? link : link.url || ''
