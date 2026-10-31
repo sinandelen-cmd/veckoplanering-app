@@ -1211,54 +1211,64 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [weekContentOverrides, setWeekContentOverrides] = useState({})
   const [pinnedChapter, setPinnedChapter] = useState(null)
 
-  // Fristående fast rubrik direkt i document.body: påverkas inte av
-  // planeringens scrollcontainrar, overflow eller transformerade föräldrar.
+  // Visa den riktiga kapitelrutan (rubrik + begrepp) fast i viewporten.
+  // Byt innehåll endast när ett nytt kapitel eller en ny vecka nås.
   useEffect(() => {
-    if ((!showPastTeacherWeeks && !focusedTeacherWeek) || teacherTab !== 'arsplan') return undefined
-    const indicator = document.createElement('div')
-    indicator.className = 'teacher-scroll-context teacher-scroll-context-fixed'
-    indicator.setAttribute('aria-live', 'off')
-    indicator.innerHTML = '<span class="teacher-scroll-context-label"></span>'
-    document.body.appendChild(indicator)
-    const label = indicator.firstElementChild
+    if (teacherTab !== 'arsplan' || (!showPastTeacherWeeks && !focusedTeacherWeek)) return undefined
+    const pinned = document.createElement('div')
+    pinned.className = 'teacher-full-chapter-fixed'
+    pinned.setAttribute('aria-label', 'Aktuellt kapitel och vecka')
+    document.body.appendChild(pinned)
     let frame = 0
+    let currentKey = ''
     const update = () => {
       frame = 0
       const sections = [...document.querySelectorAll('#lararvy .teacher-months .teacher-chapter-section')]
-      if (!sections.length) { indicator.style.display = 'none'; return }
-      const header = document.querySelector('.planning-layout > .planning-unified-navigation')
+      if (!sections.length) { pinned.style.display = 'none'; return }
       const nav = document.querySelector('#lararvy .teacher-week-navigation')
+      const header = document.querySelector('.planning-layout > .planning-unified-navigation')
       const headerBottom = Math.max(0, header?.getBoundingClientRect().bottom || 0)
       const navRect = nav?.getBoundingClientRect()
-      const navBottom = navRect && navRect.top <= headerBottom + 8 && navRect.bottom > headerBottom ? navRect.bottom : headerBottom
+      const navBottom = navRect && navRect.top <= headerBottom + 6 && navRect.bottom > headerBottom ? navRect.bottom : headerBottom
       const top = Math.max(4, Math.ceil(navBottom) + 4)
-      const boundary = top + 38
-      const first = sections[0].getBoundingClientRect()
+      const boundary = top + pinned.getBoundingClientRect().height + 8
       const last = sections[sections.length - 1].getBoundingClientRect()
-      if (last.bottom <= boundary) { indicator.style.display = 'none'; return }
+      if (last.bottom <= boundary) { pinned.style.display = 'none'; return }
       const section = sections.find(el => el.getBoundingClientRect().bottom > boundary) || sections[sections.length - 1]
       const groups = [...section.querySelectorAll('.chapter-week-group')]
       const current = groups.find(el => el.getBoundingClientRect().bottom > boundary) || groups[groups.length - 1]
-      const chapter = section.dataset.chapter || 'Utan kapitel'
-      const week = current?.dataset.week || ''
-      const next = chapter + (week ? ' · Vecka ' + week : '')
-      if (label.textContent !== next) label.textContent = next
-      indicator.style.top = top + 'px'
-      indicator.style.display = 'block'
+      const key = (section.dataset.chapter || '') + '|' + (current?.dataset.week || '')
+      if (key !== currentKey) {
+        const source = section.querySelector('.teacher-chapter-sticky')
+        if (source) {
+          pinned.replaceChildren(source.cloneNode(true))
+          const week = document.createElement('div')
+          week.className = 'teacher-full-chapter-week'
+          week.textContent = 'Vecka ' + (current?.dataset.week || '')
+          pinned.appendChild(week)
+          currentKey = key
+        }
+      }
+      const parent = document.querySelector('#lararvy .teacher-year-review')
+      const rect = parent?.getBoundingClientRect()
+      if (rect) {
+        pinned.style.left = Math.max(8, rect.left + 14) + 'px'
+        pinned.style.width = Math.max(200, Math.min(window.innerWidth - 16, rect.width - 28)) + 'px'
+      }
+      pinned.style.top = top + 'px'
+      pinned.style.display = 'block'
     }
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update) }
     update()
     document.addEventListener('scroll', schedule, true)
-    window.addEventListener('scroll', schedule, { passive: true })
     window.addEventListener('resize', schedule)
     return () => {
       document.removeEventListener('scroll', schedule, true)
-      window.removeEventListener('scroll', schedule)
       window.removeEventListener('resize', schedule)
       if (frame) cancelAnimationFrame(frame)
-      indicator.remove()
+      pinned.remove()
     }
-  }, [showPastTeacherWeeks, focusedTeacherWeek, teacherTab])
+  }, [teacherTab, showPastTeacherWeeks, focusedTeacherWeek])
 
   useEffect(() => {
     if (teacherTab !== "arsplan") { setPinnedChapter(null); return undefined }
