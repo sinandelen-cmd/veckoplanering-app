@@ -1,0 +1,26 @@
+name: Uppdatera fix-planering testlänk
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/update-fix-planering.yml
+jobs:
+  publish-preview:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run check
+      - run: npm run build
+      - name: Uppdatera versionen som visas på fix-planering länken
+        run: npx --yes wrangler@4 versions upload --preview-alias fix-planering
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 1117b3ec07a0dd6de08ca8ccb477f269
