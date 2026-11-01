@@ -8135,3 +8135,16 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
     text-overflow:clip!important;
   }
 }
+
+
+/* Admin: välj mottagare till senaste programnotisen och radera konto separat. */
+.admin-update-send {display:flex;flex-direction:column;gap:10px;max-width:100%}
+.admin-update-send > label {display:flex;flex-direction:column;gap:5px}
+.admin-update-send :is(input[type="text"],input:not([type]),textarea) {max-width:100%;box-sizing:border-box}
+.admin-update-recipients {border:1px solid #d7c6a6;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.admin-update-recipients > label {display:flex;flex-direction:row;align-items:center;gap:9px;font-weight:600}
+.admin-update-recipients input[type="radio"],.admin-update-teacher-row input[type="checkbox"] {flex:0 0 18px;width:18px;height:18px;margin:0}
+.admin-update-teacher-list {display:flex;flex-direction:column;gap:5px;max-height:240px;overflow-y:auto;padding:6px 0}
+.admin-update-teacher-row {display:flex;flex-direction:row;align-items:center;gap:9px;padding:7px 8px;border:1px solid #e0e7eb;border-radius:7px;background:#fff;min-width:0;overflow-wrap:anywhere}
+.admin-delete-account {color:#8f2732!important;background:#fff1f1!important;border:1px solid #e4bec2!important;border-radius:7px!important;font-size:12px!important}
+.admin-delete-account:disabled {opacity:.5!important}
