@@ -2722,6 +2722,33 @@ function AnnualApp() {
     } finally { setReviewingUserId(null) }
   }
 
+  async function deleteTeacherAccount(userId) {
+    if (reviewingUserId || userId === session.user.id) return
+    const account = requests.find(item => item.user_id === userId)
+    if (!account?.email) { setAdminError('Kontots e-postadress saknas. Uppdatera listan.'); return }
+    const typed = window.prompt('RADERA KONTO PERMANENT: Skriv lärarens hela e-postadress för att fortsätta: ' + account.email)
+    if (typed === null) return
+    if (typed.trim().toLowerCase() !== account.email.trim().toLowerCase()) {
+      setAdminError('Kontot har inte raderats: e-postadressen stämmer inte.')
+      return
+    }
+    if (!window.confirm('Radera kontot ' + account.email + ' permanent? Kontot och dess sparade planeringar kan gå förlorade och kan inte återställas via den här funktionen.')) return
+    setReviewingUserId(userId)
+    setAdminError('')
+    setAdminNotice('')
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-delete-teacher', { body: { user_id: userId, confirm_email: typed.trim() } })
+      if (error || !data?.success) {
+        setAdminError('Kunde inte radera kontot: ' + (data?.error || error?.message || 'Okänt fel'))
+        return
+      }
+      await loadRequests()
+      setAdminNotice(account.email + ' har raderats permanent.')
+    } catch (error) {
+      setAdminError('Kontot kunde inte raderas: ' + (error?.message || 'Okänt fel'))
+    } finally { setReviewingUserId(null) }
+  }
+
   async function setTeacherExpiry(userId, email) {
     if (reviewingUserId) return
     const date = window.prompt('Ange slutdatum för ' + email + ' (ÅÅÅÅ-MM-DD):')
@@ -2816,7 +2843,7 @@ function AnnualApp() {
       {pending.map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}>
         <strong>{item.email}</strong> – Väntar på godkännande{' '}
         <button type="button" disabled={Boolean(reviewingUserId)} onClick={() => reviewRequest(item.user_id, true)}>{reviewingUserId === item.user_id ? 'Sparar…' : 'Godkänn'}</button>{' '}
-        <button type="button" disabled={Boolean(reviewingUserId)} onClick={() => reviewRequest(item.user_id, false)}>Avslå</button>
+        <button type="button" disabled={Boolean(reviewingUserId)} onClick={() => reviewRequest(item.user_id, false)}>Avslå</button>{' '}<button type="button" className="admin-delete-account" disabled={Boolean(reviewingUserId)} onClick={() => deleteTeacherAccount(item.user_id)}>Radera konto</button>
       </div>)}
       <h3><button type="button" aria-expanded={showApprovedTeachers} aria-controls="approved-teachers-list" onClick={() => setShowApprovedTeachers(value => !value)}>{showApprovedTeachers ? "▾ Dölj" : "▸ Visa"} godkända lärare ({approved.length})</button></h3>
       {showApprovedTeachers && <div id="approved-teachers-list">{approved.length === 0 && <p>Inga kollegor är godkända ännu.</p>}{approved.map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – ✓ Godkänd</div>)}</div>}
@@ -2828,9 +2855,9 @@ function AnnualApp() {
         <td>{item.status==='blocked'?'Spärrad':item.expires_at&&new Date(item.expires_at)<=new Date()?'Utgången':'Aktiv'}</td>
         <td><select aria-label={'Timer för '+item.email} value={item.timer_period||'none'} disabled={Boolean(reviewingUserId)} onChange={e=>changeTeacher(item.user_id,'timer',e.target.value)}><option value="none">Ingen</option><option value="month">1 månad</option><option value="year">1 år</option></select></td>
         <td>{item.expires_at?new Date(item.expires_at).toLocaleDateString('sv-SE'):'Ingen gräns'}{' '}{item.timer_period!=='none'&&<button type="button" disabled={Boolean(reviewingUserId)||item.status!=='approved'} onClick={()=>setTeacherExpiry(item.user_id,item.email)}>Ändra datum</button>}</td>
-        <td><button type="button" disabled={Boolean(reviewingUserId)} onClick={()=>changeTeacher(item.user_id,item.status==='blocked'?'activate':'block')}>{item.status==='blocked'?'Återge åtkomst':'Ta bort åtkomst'}</button>{' '}<button type="button" disabled={Boolean(reviewingUserId)||item.timer_period==='none'} onClick={()=>changeTeacher(item.user_id,'extend')}>Förläng</button></td>
+        <td><button type="button" disabled={Boolean(reviewingUserId)} onClick={()=>changeTeacher(item.user_id,item.status==='blocked'?'activate':'block')}>{item.status==='blocked'?'Återge åtkomst':'Ta bort åtkomst'}</button>{' '}<button type="button" disabled={Boolean(reviewingUserId)||item.timer_period==='none'} onClick={()=>changeTeacher(item.user_id,'extend')}>Förläng</button>{' '}<button type="button" className="admin-delete-account" disabled={Boolean(reviewingUserId)} onClick={()=>deleteTeacherAccount(item.user_id)}>Radera konto</button></td>
       </tr>)}</tbody></table></div>
-      {rejected.length > 0 && <><h3>Avslagna ansökningar ({rejected.length})</h3>{rejected.map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – Avslagen</div>)}</>}
+      {rejected.length > 0 && <><h3>Avslagna ansökningar ({rejected.length})</h3>{rejected.map(item => <div key={item.user_id} style={{ padding: 12, borderBottom: '1px solid #ddd' }}><strong>{item.email}</strong> – Avslagen {' '}<button type="button" className="admin-delete-account" disabled={Boolean(reviewingUserId)} onClick={()=>deleteTeacherAccount(item.user_id)}>Radera konto</button></div>)}</>}
       <button type="button" onClick={loadRequests}>Uppdatera listorna</button>
       </section>
     </>} />
