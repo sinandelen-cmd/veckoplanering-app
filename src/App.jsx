@@ -181,7 +181,7 @@ function makeWeeks(plan, count = plan.weeks) {
     chapter: '',
     content: '',
     pages: [], assignments: [], links: [],
-    items: [], lessons: Array.from({ length: plan.entryType === 'dag' ? 5 : Math.max(1, Math.min(8, Number(plan.lessonsPerWeek) || 3)) }, (_, i) => ({ name: plan.entryType === 'dag' ? WEEKDAYS[i] : `Lektion ${i + 1}`, day: plan.entryType === 'dag' ? WEEKDAYS[i] : (plan.lessonDays?.[i] || ''), topics: [] })),
+    items: [], lessons: Array.from({ length: plan.entryType === 'dag' ? 5 : Math.max(1, Math.min(8, Number(plan.lessonsPerWeek) || 3)) }, (_, i) => ({ name: plan.entryType === 'dag' ? WEEKDAYS[i] : `Lektion ${i + 1}`, day: plan.entryType === 'dag' ? WEEKDAYS[i] : (plan.lessonDays?.[i] || ''), topics: [{ name: '', pages: [], assignments: [], links: [] }] })),
   }))
 }
 
@@ -3014,8 +3014,8 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
         </div> : <><div>{lesson.assessment.title}</div>{lesson.assessment.description && <p>{lesson.assessment.description}</p>}</>}
       </div>}
       {editable && !lesson.assessment && <button type="button" className="lesson-add-assessment" aria-label="Lägg till examination" title="Lägg till examination" onClick={()=>updateAssessment(i,{type:'Prov',title:'',description:''})}><PlanningActionIcon name="clipboard-plus" size={15} /><span>Examination</span></button>}
-      {(lesson.topics || []).map((topic, j) => ({ topic, j })).filter(({ topic }) => (editable || topic.classMomentPlaceholder || topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || '')))).map(({ topic, j }) => {
-        const updateTopic = next => changeLesson(i, { ...lesson, topics: (lesson.topics || []).map((item, index) => index === j ? next : item) })
+      {(editable && !(lesson.topics || []).length ? [{ name: '', pages: [], assignments: [], links: [] }] : (lesson.topics || [])).map((topic, j) => ({ topic, j })).filter(({ topic }) => (editable || topic.classMomentPlaceholder || topic.name?.trim() || topic.pages?.some(Boolean) || topic.assignments?.some(Boolean) || topic.links?.some(link => resourceInfo(typeof link === 'string' ? link : link?.url || '')))).map(({ topic, j }) => {
+        const updateTopic = next => changeLesson(i, { ...lesson, topics: ((lesson.topics || []).length ? lesson.topics : [{ name: '', pages: [], assignments: [], links: [] }]).map((item, index) => index === j ? next : item) })
         const pages = Array.isArray(topic.pages) ? topic.pages : []
         const assignments = Array.isArray(topic.assignments) ? topic.assignments : []
         const links = Array.isArray(topic.links) ? topic.links : []
