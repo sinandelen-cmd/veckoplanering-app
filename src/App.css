@@ -8148,3 +8148,55 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
 .admin-update-teacher-row {display:flex;flex-direction:row;align-items:center;gap:9px;padding:7px 8px;border:1px solid #e0e7eb;border-radius:7px;background:#fff;min-width:0;overflow-wrap:anywhere}
 .admin-delete-account {color:#8f2732!important;background:#fff1f1!important;border:1px solid #e4bec2!important;border-radius:7px!important;font-size:12px!important}
 .admin-delete-account:disabled {opacity:.5!important}
+
+
+/* Samlade veckokontroller: identisk knappstil, mobilanpassad placering. */
+#lararvy .teacher-week-navigation .teacher-week-global-actions {
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:8px!important;
+  margin-left:auto!important;
+  min-width:0!important;
+}
+#lararvy .teacher-week-navigation .teacher-week-global-actions > button.teacher-all-content-toggle,
+#lararvy .teacher-week-navigation .teacher-week-global-actions > button.teacher-all-weeks-inline-toggle {
+  order:initial!important;
+  display:inline-flex!important;
+  flex:0 0 auto!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:6px!important;
+  margin:0!important;
+  min-height:38px!important;
+  padding:8px 12px!important;
+  border:1px solid #c7d5e2!important;
+  border-radius:9px!important;
+  background:#fff!important;
+  color:#2d4a63!important;
+  font-size:13px!important;
+  font-weight:700!important;
+  line-height:1.2!important;
+  white-space:nowrap!important;
+  box-shadow:none!important;
+  cursor:pointer!important;
+}
+#lararvy .teacher-week-navigation .teacher-week-global-actions > button span[aria-hidden] {
+  font-size:15px!important;
+  line-height:1!important;
+}
+@media (max-width:650px) {
+  #lararvy .teacher-week-navigation .teacher-week-global-actions {
+    flex:1 0 100%!important;
+    width:100%!important;
+    margin-left:0!important;
+    justify-content:space-between!important;
+  }
+  #lararvy .teacher-week-navigation .teacher-week-global-actions > button.teacher-all-content-toggle,
+  #lararvy .teacher-week-navigation .teacher-week-global-actions > button.teacher-all-weeks-inline-toggle {
+    flex:1 1 0!important;
+    min-width:0!important;
+    padding:9px 5px!important;
+    font-size:12px!important;
+  }
+}
