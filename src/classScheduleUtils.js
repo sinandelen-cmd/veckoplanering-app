@@ -16,6 +16,8 @@ export const describe = lesson => (lesson?.topics || []).map(topic => {
 export function buildClassSchedule(plan, group, { includeHiddenWeeks = false } = {}) {
   const days = Array.isArray(group.days) ? group.days : []
   const extraSlots = Array.isArray(group.extraSlots) ? group.extraSlots : []
+  // Utan ordinarie dagar eller extralektioner finns inga lektionstillfällen att skapa.
+  if (days.length === 0 && extraSlots.length === 0) return []
   const cancelled = new Set(Array.isArray(group.cancelledDates) ? group.cancelledDates : [])
   const closures = Array.isArray(group.schoolClosures) ? group.schoolClosures : []
   const dayCounts = new Map()
