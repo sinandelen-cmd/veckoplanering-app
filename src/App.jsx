@@ -1427,11 +1427,12 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const initialPlansLoadedRef = useRef(false)
   const latestPlanRef = useRef(plan)
   useEffect(() => { latestPlanRef.current = plan }, [plan])
-  const historyRef = useRef({ past: [], current: JSON.stringify(plan), future: [] })
+  const serializedPlan = useMemo(() => JSON.stringify(plan), [plan])
+  const historyRef = useRef({ past: [], current: serializedPlan, future: [] })
   const historySkipRef = useRef(false)
   const [, setHistoryVersion] = useState(0)
   useEffect(() => {
-    const next = JSON.stringify(plan)
+    const next = serializedPlan
     const history = historyRef.current
     if (next === history.current) return
     if (historySkipRef.current) {
@@ -1444,7 +1445,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     history.current = next
     history.future = []
     setHistoryVersion(v => v + 1)
-  }, [plan])
+  }, [serializedPlan])
   const undoPlan = () => {
     const h = historyRef.current
     if (!h.past.length) return
@@ -1463,9 +1464,9 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     setPlan(JSON.parse(h.current))
     setHistoryVersion(v => v + 1)
   }
-  const savedPlanRef = useRef(JSON.stringify(plan))
+  const savedPlanRef = useRef(serializedPlan)
   const [, setSavedRevision] = useState(0)
-  const serializedPlan = useMemo(() => JSON.stringify(plan), [plan])
+
   const isDirty = serializedPlan !== savedPlanRef.current
   const confirmNavigation = () => JSON.stringify(latestPlanRef.current) === savedPlanRef.current || window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')
   useEffect(() => {
