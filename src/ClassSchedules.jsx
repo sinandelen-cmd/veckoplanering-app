@@ -59,8 +59,8 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
   }, []), [schedule])
   const weeksShown = showAll ? grouped : grouped.slice(0, 8)
   const comparison = React.useMemo(() => compare ? groups.map(g => ({name:g.name, weeks:buildClassSchedule(plan,g).reduce((acc,item)=>{const key=iso(monday(item.date));(acc[key] ||= []).push(item);return acc},{})})) : [], [compare, groups, plan])
-  const comparisonWeeks = [...new Set(comparison.flatMap(g=>Object.keys(g.weeks)))].sort()
-  const unscheduledGroups = groups.filter(g => !(g.days || []).length)
+  const comparisonWeeks = React.useMemo(() => [...new Set(comparison.flatMap(g => Object.keys(g.weeks)))].sort(), [comparison])
+  const unscheduledGroups = React.useMemo(() => groups.filter(g => !(g.days || []).length), [groups])
   return <section className="card" aria-label="Kopplade klasser">
 
     <div className="class-mini-row">
