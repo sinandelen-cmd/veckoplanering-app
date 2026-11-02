@@ -1509,12 +1509,12 @@ const addNewTeacherWeek = () => setPlan(p => {
   useEffect(() => { const home = () => { setFocusedTeacherWeek(null); setShowPastTeacherWeeks(true) }; window.addEventListener('planning-home', home); return () => window.removeEventListener('planning-home', home) }, [])
   const windowStart = Math.max(0, Math.min(teacherWindowStart ?? defaultWindowFirst, Math.max(0, teacherDisplayWeeks.length - 4)))
   const defaultTeacherWindow = teacherDisplayWeeks.slice(Math.max(defaultWindowFirst, windowStart), Math.max(defaultWindowFirst, windowStart) + 4)
-  const visibleTeacherWeeks = weeks.filter(week => week && !week.hidden)
-  const weeksWithContent = visibleTeacherWeeks.filter(week => Boolean(
+  const visibleTeacherWeeks = useMemo(() => weeks.filter(week => week && !week.hidden), [weeks])
+  const weeksWithContent = useMemo(() => visibleTeacherWeeks.filter(week => Boolean(
     String(week.content || '').trim() || String(week.chapter || '').trim() ||
     week.items?.length || week.pages?.length || week.assignments?.length || week.links?.length ||
     week.lessons?.some(lesson => lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.length || topic.assignments?.length || topic.links?.length))
-  ))
+  )), [visibleTeacherWeeks]
   const publicationIssues = [
     ...(!String(plan.title || '').trim() ? ['Ange planeringens namn.'] : []),
     ...(!String(plan.subject || '').trim() ? ['Ange ämne.'] : []),
