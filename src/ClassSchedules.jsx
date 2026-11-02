@@ -51,12 +51,12 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
     }
     updateGroup({ overrides, pendingMoments: [...(group.pendingMoments || []), ...(carry ? [carry] : [])] })
   }
-  const grouped = schedule.reduce((result, item) => {
+  const grouped = React.useMemo(() => schedule.reduce((result, item) => {
     const weekStart = iso(monday(item.date))
     if (!result.length || result[result.length-1].weekStart !== weekStart) result.push({ weekStart, items: [] })
     result[result.length-1].items.push({...item, weekLessonNumber:result[result.length-1].items.length+1})
     return result
-  }, [])
+  }, []), [schedule])
   const weeksShown = showAll ? grouped : grouped.slice(0, 8)
   const comparison = React.useMemo(() => compare ? groups.map(g => ({name:g.name, weeks:buildClassSchedule(plan,g).reduce((acc,item)=>{const key=iso(monday(item.date));(acc[key] ||= []).push(item);return acc},{})})) : [], [compare, groups, plan])
   const comparisonWeeks = [...new Set(comparison.flatMap(g=>Object.keys(g.weeks)))].sort()
