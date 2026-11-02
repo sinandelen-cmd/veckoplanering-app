@@ -490,8 +490,7 @@ function weeklyContentAsText(data, fallback) {
 }
 
 function planFromRow(row) {
-  let data = {}
-  try { data = JSON.parse(row.content || '{}') } catch { data = {} }
+  const data = parseContent(row.content) || {}
   if (data.kind === 'arsplanering-v2' || data.kind === 'arsplanering-v1') {
     return { ...emptyPlan(), ...data, published: typeof row.published === 'boolean' ? row.published : Boolean(data.published) }
   }
