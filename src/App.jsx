@@ -1,5 +1,6 @@
 function capitalizeFirstSwedish(value) { return String(value || '').replace(/^(\s*)([a-zåäö])/i, (_, spaces, letter) => spaces + letter.toLocaleUpperCase('sv-SE')) }
 import UpdateNotices from './UpdateNotices.jsx'
+import { isFullPlanRow, assertWritableFullRow } from './planSummaries.js'
 import { replaceSavedPlanRow, reconcileSavedEditor } from './autosaveUtils.js'
 import { groupStudentWeeksForPrint } from './printGroups.js'
 import { Component, Fragment, useEffect, useMemo, useRef, useState } from 'react'
@@ -1531,9 +1532,7 @@ const addNewTeacherWeek = () => setPlan(p => {
   ]
 
   async function loadPlans() {
-    const { data, error } = await supabase.from('veckoplanering')
-      .select('id,title,content,week_start,created_at,updated_at,subject,school_year,class_name,start_date,weeks,published,public_slug')
-      .eq('user_id', session.user.id).order('created_at', { ascending: false })
+    const { data, error } = await supabase.rpc('list_plan_summaries')
     if (error) {
       setStatus(`Kunde inte hämta planeringar: ${error.message}`)
       return false
@@ -1547,15 +1546,10 @@ const addNewTeacherWeek = () => setPlan(p => {
         const lastPlan = annualPlans.find(row => String(row.id) === lastId)
         if (lastPlan && JSON.stringify(latestPlanRef.current) === savedPlanRef.current) {
           // Skriv inte över ändringar som läraren hann göra medan listan laddades.
-          const restored = planFromRow(lastPlan)
-          setSimpleSetup(false)
-          setTeacherTab("arsplan")
-          setCalendarOpen(false)
-          setSelectedId(lastPlan.id)
-          savedPlanRef.current = JSON.stringify(restored)
-          setSavedRevision(revision => revision + 1)
-          setPlan(restored)
-          setStatus('')
+          void fetchFullPlanRow(lastPlan.id).then(full => {
+            if (!full || JSON.stringify(latestPlanRef.current) !== savedPlanRef.current) return
+            loadPlan(full, undefined, true)
+          })
         }
       } catch { /* Lagring kan vara blockerad */ }
     }
@@ -1639,6 +1633,7 @@ const addNewTeacherWeek = () => setPlan(p => {
 
 
   async function save(publish, automatic = false) {
+    if (selectedId && !Array.isArray(plan.weeksData)) return setStatus('Planeringens veckodata saknas. Ladda om planeringen innan du sparar.')
     if (busy) return
     if (!String(plan.title || '').trim()) return setStatus('Skriv ett namn på årsplaneringen.')
     if (!String(plan.subject || '').trim()) return setStatus('Skriv ämne.')
@@ -1717,7 +1712,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         const cachedRow = automatic && selectedId ? plans.find(item => item.id === data.id) : null
         let refreshed = true
         if (cachedRow) {
-          setPlans(current => replaceSavedPlanRow(current, data.id, row, payload.published, slug))
+          setPlans(current => replaceSavedPlanRow(current, data.id, { ...row, is_summary: false }, payload.published, slug))
         } else {
           refreshed = await loadPlans()
         }
@@ -1775,7 +1770,32 @@ const addNewTeacherWeek = () => setPlan(p => {
     setStatus('Texten är klar för förhandsgranskning. Inget har ersatts ännu.')
   }
 
+  async function fetchFullPlanRow(id) {
+    const uid = session?.user?.id
+    if (!uid) return null
+    const { data, error } = await supabase.from('veckoplanering')
+      .select('id,title,content,week_start,created_at,updated_at,subject,school_year,class_name,start_date,weeks,published,public_slug')
+      .eq('id', id).eq('user_id', uid).single()
+    if (error || !data) { setStatus(`Kunde inte öppna planeringen: ${error?.message || 'okänt fel'}`); return null }
+    return { ...data, is_summary: false }
+  }
+
+  async function ensureFullPlanRow(row) {
+    if (isFullPlanRow(row)) return row
+    return fetchFullPlanRow(row.id)
+  }
+
+  async function openPlanRow(row, navigationApproved = false) {
+    if (busy) return false
+    if (!navigationApproved && !confirmNavigation()) return false
+    const full = await ensureFullPlanRow(row)
+    if (!full) return false
+    loadPlan(full, undefined, true)
+    return true
+  }
+
   function loadPlan(row, className, navigationApproved = false) {
+    if (!isFullPlanRow(row)) { setStatus('Planeringen måste hämtas helt innan den kan öppnas.'); return false }
     if (busy) return
     if (!navigationApproved && !confirmNavigation()) return false
     try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(row.id)) } catch { /* Lagring kan vara blockerad */ }
@@ -1828,8 +1848,10 @@ const addNewTeacherWeek = () => setPlan(p => {
     if (archived && !window.confirm(`Arkivera "${row.title}"? Den sparas och kan återställas när som helst.`)) return
     setBusy(true)
     try {
-      const stored = parseContent(row.content)
-      if (!stored || typeof stored !== 'object') throw new Error('Planeringens innehåll kunde inte läsas.')
+      const full = await ensureFullPlanRow(row)
+      if (!full) throw new Error('Planeringen kunde inte hämtas. Ingen ändring gjordes.')
+      const stored = parseContent(full.content)
+      assertWritableFullRow(full, stored)
       const updated = { ...stored, archived }
       const { data, error } = await supabase.from('veckoplanering').update({ content: JSON.stringify(updated), updated_at: new Date().toISOString() })
         .eq('id', row.id).eq('user_id', session.user.id).select('id').single()
@@ -1955,15 +1977,15 @@ const addNewTeacherWeek = () => setPlan(p => {
     setNavigationIndex(previous => Math.min(previous + 1, 39))
   }, [teacherTab, selectedId, calendarOpen]) // Navigationshistorik per inloggad session.
 
-  const restoreNavigation = direction => {
+  const restoreNavigation = async direction => {
     const targetIndex = navigationIndex + direction
     if (targetIndex < 0 || targetIndex >= navigationHistory.length) return
     const target = navigationHistory[targetIndex]
     if (!confirmNavigation()) return
     if (target.planId && target.planId !== selectedId) {
       const row = plans.find(item => item.id === target.planId)
-      if (row) loadPlan(row, undefined, true)
-      else return
+      if (!row) return
+      if (!(await openPlanRow(row, true))) return
     }
     restoringNavigation.current = true
     setTeacherTab(target.tab)
@@ -2011,7 +2033,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     setBookPicker(null)
     setShowArchive(archived)
     if (!archived) {
-      loadPlan(existing)
+      void openPlanRow(existing)
       setStatus('Planeringen finns redan! Den befintliga grundplaneringen har öppnats. Lägg till klass där.')
     } else {
       setTeacherTab('bibliotek')
@@ -2567,9 +2589,12 @@ const addNewTeacherWeek = () => setPlan(p => {
   if(Object.keys(subjects).some(existing=>existing!==subject&&existing.toLocaleLowerCase('sv')===name.toLocaleLowerCase('sv'))){setStatus('Det finns redan ett ämne med det namnet.');return}
   setBusy(true);
   try {
-    for(const row of rows){
+    for(const summary of rows){
+      const row = await ensureFullPlanRow(summary);
+      if(!row)throw new Error('En planering kunde inte hämtas. Ingen ändring gjordes för den.');
       const stored=parseContent(row.content);
       if(!stored||typeof stored!=='object')throw new Error('En kursplanering kunde inte läsas.');
+      assertWritableFullRow(row, stored);
       const updated={...stored,subject:name};
       const {error}=await supabase.from('veckoplanering').update({subject:name,content:JSON.stringify(updated),updated_at:new Date().toISOString()}).eq('id',row.id).eq('user_id',uid);
       if(error)throw error;
