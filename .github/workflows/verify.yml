@@ -12,6 +12,10 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    env:
+      VITE_ISOLATED_PREVIEW: '1'
+      VITE_SUPABASE_URL: https://tdbmhkwsgzflqgmftzyy.supabase.co
+      VITE_SUPABASE_ANON_KEY: sb_publishable_q42eqoSAfkeQf3A0ks_XlQ_WkouV40K
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,6 +26,14 @@ jobs:
       - run: npm run lint
       - run: npm run check
       - run: npm run build
+
+      - name: Verify isolated Supabase bundle
+        run: |
+          grep -rl 'tdbmhkwsgzflqgmftzyy.supabase.co' dist/assets/ >/dev/null
+          if grep -rl 'siirwdmgbxwycndrxduu.supabase.co' dist/assets/ >/dev/null; then
+            echo 'ERROR: Production Supabase URL found in test bundle' >&2
+            exit 1
+          fi
 
       - name: Save built website
         if: success()
