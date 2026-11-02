@@ -13,6 +13,7 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     env:
+      VITE_ISOLATED_PREVIEW: '1'
       VITE_SUPABASE_URL: https://tdbmhkwsgzflqgmftzyy.supabase.co
       VITE_SUPABASE_ANON_KEY: sb_publishable_q42eqoSAfkeQf3A0ks_XlQ_WkouV40K
     steps:
