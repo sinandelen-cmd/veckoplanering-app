@@ -1711,7 +1711,17 @@ const addNewTeacherWeek = () => setPlan(p => {
         if (simpleSetup) { setSimpleSetup(false); setTeacherTab('arsplan'); setCalendarOpen(false) }
         setSelectedId(data.id)
         try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(data.id)) } catch { /* Lagring kan vara blockerad */ }
-        const refreshed = await loadPlans()
+        // Vid autosparning av en redan listad planering behövs ingen ny hämtning
+        // av samtliga planeringars stora content-fält. Behåll övriga radfält.
+        const cachedRow = automatic && selectedId ? plans.find(item => item.id === data.id) : null
+        let refreshed = true
+        if (cachedRow) {
+          setPlans(current => current.map(item => item.id === data.id
+            ? { ...item, ...row, id: data.id, published: payload.published, public_slug: slug }
+            : item))
+        } else {
+          refreshed = await loadPlans()
+        }
         // Ändringar som gjorts medan nätverksanropet pågick får inte skrivas över.
         savedPlanRef.current = JSON.stringify(payload)
         setSavedRevision(revision => revision + 1)
