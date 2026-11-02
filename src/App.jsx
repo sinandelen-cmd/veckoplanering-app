@@ -1,5 +1,6 @@
 function capitalizeFirstSwedish(value) { return String(value || '').replace(/^(\s*)([a-zåäö])/i, (_, spaces, letter) => spaces + letter.toLocaleUpperCase('sv-SE')) }
 import UpdateNotices from './UpdateNotices.jsx'
+import { replaceSavedPlanRow, reconcileSavedEditor } from './autosaveUtils.js'
 import { groupStudentWeeksForPrint } from './printGroups.js'
 import { Component, Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -1716,9 +1717,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         const cachedRow = automatic && selectedId ? plans.find(item => item.id === data.id) : null
         let refreshed = true
         if (cachedRow) {
-          setPlans(current => current.map(item => item.id === data.id
-            ? { ...item, ...row, id: data.id, published: payload.published, public_slug: slug }
-            : item))
+          setPlans(current => replaceSavedPlanRow(current, data.id, row, payload.published, slug))
         } else {
           refreshed = await loadPlans()
         }
@@ -1726,7 +1725,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         savedPlanRef.current = JSON.stringify(payload)
         setSavedRevision(revision => revision + 1)
         const newerEdits = latestPlanRef.current !== plan
-        setPlan(current => current === plan ? payload : current)
+        setPlan(current => reconcileSavedEditor(current, plan, payload))
         const message = !refreshed ? 'Sparad, men listan kunde inte uppdateras. Ladda om för att kontrollera.' : publish
           ? `Publicerad: ${window.location.origin}/elev/${slug}`
           : keepPublished
