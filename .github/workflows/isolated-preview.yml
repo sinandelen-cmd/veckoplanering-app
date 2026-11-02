@@ -1,0 +1,35 @@
+name: Isolerad Årsplanering förhandsvisning
+on:
+  push:
+    branches:
+      - test/arsplanering-isolated-preview-20261102
+  workflow_dispatch:
+jobs:
+  verify-isolated-preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      VITE_SUPABASE_URL: https://tdbmhkwsgzflqgmftzyy.supabase.co
+      VITE_SUPABASE_ANON_KEY: sb_publishable_q42eqoSAfkeQf3A0ks_XlQ_WkouV40K
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run check
+      - run: npm run build
+      - name: Verify test project is embedded and production project is absent
+        run: |
+          grep -rl 'tdbmhkwsgzflqgmftzyy.supabase.co' dist/assets/ >/dev/null
+          if grep -rl 'siirwdmgbxwycndrxduu.supabase.co' dist/assets/ >/dev/null; then
+            echo 'Production Supabase URL found in preview build' >&2
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arsplanering-isolated-preview
+          path: dist/
