@@ -1544,7 +1544,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       try {
         const lastId = window.sessionStorage.getItem(`arsplanering-last-open-${session.user.id}`)
         const lastPlan = annualPlans.find(row => String(row.id) === lastId)
-        if (lastPlan && JSON.stringify(latestPlanRef.current) === savedPlanRef.current) {
+        if (lastPlan && serializedPlanRef.current === savedPlanRef.current) {
           // Skriv inte över ändringar som läraren hann göra medan listan laddades.
           const restored = planFromRow(lastPlan)
           setSimpleSetup(false)
@@ -1738,7 +1738,7 @@ const addNewTeacherWeek = () => setPlan(p => {
   useEffect(() => {
     if (!selectedId || simpleSetup || busy || !isDirty || teacherTab === 'new') return undefined
     const timer = window.setTimeout(() => {
-      if (JSON.stringify(latestPlanRef.current) !== savedPlanRef.current) {
+      if (serializedPlanRef.current !== savedPlanRef.current) {
         void save(true, true)
       }
     }, 1400)
