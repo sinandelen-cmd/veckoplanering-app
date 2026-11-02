@@ -18,6 +18,10 @@ export function buildClassSchedule(plan, group, { includeHiddenWeeks = false } =
   const extraSlots = Array.isArray(group.extraSlots) ? group.extraSlots : []
   const cancelled = new Set(Array.isArray(group.cancelledDates) ? group.cancelledDates : [])
   const closures = Array.isArray(group.schoolClosures) ? group.schoolClosures : []
+  const dayCounts = new Map()
+  for (const day of days) dayCounts.set(day, (dayCounts.get(day) || 0) + 1)
+  const extraSlotCounts = new Map()
+  for (const slot of extraSlots) extraSlotCounts.set(slot.date, (extraSlotCounts.get(slot.date) || 0) + 1)
   const firstDate = group.startDate || plan.startDate || ''
   let lessonNumber = 0
   // Varje klass använder innehållet från rätt grundvecka.
@@ -34,7 +38,7 @@ export function buildClassSchedule(plan, group, { includeHiddenWeeks = false } =
       if ((firstDate && dateKey < firstDate) || cancelled.has(dateKey)) continue
       const closure = closures.find(event => dateKey >= event.startDate && dateKey <= (event.endDate || event.startDate))
       if (closure && closure.type !== 'Halvdag') continue
-      const scheduledCount = days.filter(d => d === day).length + extraSlots.filter(slot => slot.date === dateKey).length
+      const scheduledCount = (dayCounts.get(day) || 0) + (extraSlotCounts.get(dateKey) || 0)
       const count = closure?.type === 'Halvdag' ? Math.max(0,scheduledCount - Math.max(1,Number(closure.cancelledLessons)||1)) : scheduledCount
       for (let n = 0; n < count; n++) slots.push({date:dateKey,day,slot:n+1,time:group.lessonTimes?.[day]?.[n] || ''})
     }
