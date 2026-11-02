@@ -1,5 +1,6 @@
 function capitalizeFirstSwedish(value) { return String(value || '').replace(/^(\s*)([a-zåäö])/i, (_, spaces, letter) => spaces + letter.toLocaleUpperCase('sv-SE')) }
 import UpdateNotices from './UpdateNotices.jsx'
+import { replaceSavedPlanRow, reconcileSavedEditor } from './autosaveUtils.js'
 import { groupStudentWeeksForPrint } from './printGroups.js'
 import { Component, Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -461,8 +462,16 @@ function booksForSubject(school, subject) {
     levels:school === 'Gymnasiet' ? 'Gymnasiet' : 'Grundskolan'
   })).sort((a,b) => a.title.localeCompare(b.title,'sv'))
 }
+const parsedContentCache = new Map()
 function parseContent(value) {
-  try { return JSON.parse(value || '{}') } catch { return null }
+  const source = value || '{}'
+  if (parsedContentCache.has(source)) return parsedContentCache.get(source)
+  let parsed = null
+  try { parsed = JSON.parse(source) } catch { /* Ogiltigt innehåll hanteras som tidigare */ }
+  // Begränsa minnet även när en planering redigeras många gånger.
+  if (parsedContentCache.size >= 40) parsedContentCache.delete(parsedContentCache.keys().next().value)
+  parsedContentCache.set(source, parsed)
+  return parsed
 }
 
 function isAnnualRow(row) {
@@ -482,8 +491,7 @@ function weeklyContentAsText(data, fallback) {
 }
 
 function planFromRow(row) {
-  let data = {}
-  try { data = JSON.parse(row.content || '{}') } catch { data = {} }
+  const data = parseContent(row.content) || {}
   if (data.kind === 'arsplanering-v2' || data.kind === 'arsplanering-v1') {
     return { ...emptyPlan(), ...data, published: typeof row.published === 'boolean' ? row.published : Boolean(data.published) }
   }
@@ -1231,6 +1239,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [showArchive, setShowArchive] = useState(false)
   const [planSearch, setPlanSearch] = useState("")
   const [libraryYear, setLibraryYear] = useState('alla')
+  const availableLibraryYears = useMemo(() => [...new Set(plans.map(row => String(row.school_year || parseContent(row.content)?.schoolYear || '').trim()).filter(Boolean))].sort((a,b) => b.localeCompare(a,'sv',{numeric:true})), [plans])
   const [subjectFolders, setSubjectFolders] = useState(() => { try { return JSON.parse(localStorage.getItem('arsplanering-subject-folders') || '{}') } catch { return {} } })
   const [personalSchool, setPersonalSchool] = useState(() => { try { return localStorage.getItem('arsplanering-personal-school') || 'Grundskola' } catch { return 'Grundskola' } })
   const [personalSubjects, setPersonalSubjects] = useState(() => { try { return JSON.parse(localStorage.getItem('arsplanering-personal-subjects') || '[]') } catch { return [] } })
@@ -1419,11 +1428,14 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const initialPlansLoadedRef = useRef(false)
   const latestPlanRef = useRef(plan)
   useEffect(() => { latestPlanRef.current = plan }, [plan])
-  const historyRef = useRef({ past: [], current: JSON.stringify(plan), future: [] })
+  const serializedPlan = useMemo(() => JSON.stringify(plan), [plan])
+  const serializedPlanRef = useRef(serializedPlan)
+  serializedPlanRef.current = serializedPlan
+  const historyRef = useRef({ past: [], current: serializedPlan, future: [] })
   const historySkipRef = useRef(false)
   const [, setHistoryVersion] = useState(0)
   useEffect(() => {
-    const next = JSON.stringify(plan)
+    const next = serializedPlan
     const history = historyRef.current
     if (next === history.current) return
     if (historySkipRef.current) {
@@ -1436,7 +1448,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     history.current = next
     history.future = []
     setHistoryVersion(v => v + 1)
-  }, [plan])
+  }, [serializedPlan])
   const undoPlan = () => {
     const h = historyRef.current
     if (!h.past.length) return
@@ -1455,13 +1467,14 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     setPlan(JSON.parse(h.current))
     setHistoryVersion(v => v + 1)
   }
-  const savedPlanRef = useRef(JSON.stringify(plan))
+  const savedPlanRef = useRef(serializedPlan)
   const [, setSavedRevision] = useState(0)
-  const isDirty = JSON.stringify(plan) !== savedPlanRef.current
-  const confirmNavigation = () => JSON.stringify(latestPlanRef.current) === savedPlanRef.current || window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')
+
+  const isDirty = serializedPlan !== savedPlanRef.current
+  const confirmNavigation = () => serializedPlanRef.current === savedPlanRef.current || window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')
   useEffect(() => {
     const warnBeforeLeave = event => {
-      if (JSON.stringify(latestPlanRef.current) === savedPlanRef.current) return
+      if (serializedPlanRef.current === savedPlanRef.current) return
       event.preventDefault()
       event.returnValue = ''
     }
@@ -1470,10 +1483,11 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   }, [])
 
 
-  const weeks = displayWeeks(plan)
-  const teacherDisplayWeeks = weeks.map((week, index) => ({week, index})) // Alla veckor finns kvar; passerade veckor kan fällas ut kapitelvis
-  const pastTeacherWeeks = teacherDisplayWeeks.filter(({week}) => week.weekStart && week.weekStart < mondayOf(new Date()))
-  const upcomingTeacherWeeks = teacherDisplayWeeks.filter(({week}) => !week.weekStart || week.weekStart >= mondayOf(new Date()))
+  const weeks = useMemo(() => displayWeeks(plan), [plan])
+  const classSchedulePlan = useMemo(() => ({ ...plan, weeksData: weeks }), [plan, weeks])
+  const teacherDisplayWeeks = useMemo(() => weeks.map((week, index) => ({week, index})), [weeks]) // Alla veckor finns kvar; passerade veckor kan fällas ut kapitelvis
+  const pastTeacherWeeks = useMemo(() => teacherDisplayWeeks.filter(({week}) => week.weekStart && week.weekStart < mondayOf(new Date())), [teacherDisplayWeeks])
+  const upcomingTeacherWeeks = useMemo(() => teacherDisplayWeeks.filter(({week}) => !week.weekStart || week.weekStart >= mondayOf(new Date())), [teacherDisplayWeeks])
   // Standardvyn visar tre veckor: föregående, nuvarande och nästa (utan att användaren behöver klicka "Alla veckor").
   const defaultWindowFirst = (() => { const first = upcomingTeacherWeeks[0] ? teacherDisplayWeeks.indexOf(upcomingTeacherWeeks[0]) : teacherDisplayWeeks.length; return Math.max(0, Math.min(first, teacherDisplayWeeks.length - 1)) })()
 const addNewTeacherWeek = () => setPlan(p => {
@@ -1501,12 +1515,12 @@ const addNewTeacherWeek = () => setPlan(p => {
   useEffect(() => { const home = () => { setFocusedTeacherWeek(null); setShowPastTeacherWeeks(true) }; window.addEventListener('planning-home', home); return () => window.removeEventListener('planning-home', home) }, [])
   const windowStart = Math.max(0, Math.min(teacherWindowStart ?? defaultWindowFirst, Math.max(0, teacherDisplayWeeks.length - 4)))
   const defaultTeacherWindow = teacherDisplayWeeks.slice(Math.max(defaultWindowFirst, windowStart), Math.max(defaultWindowFirst, windowStart) + 4)
-  const visibleTeacherWeeks = weeks.filter(week => week && !week.hidden)
-  const weeksWithContent = visibleTeacherWeeks.filter(week => Boolean(
+  const visibleTeacherWeeks = useMemo(() => weeks.filter(week => week && !week.hidden), [weeks])
+  const weeksWithContent = useMemo(() => visibleTeacherWeeks.filter(week => Boolean(
     String(week.content || '').trim() || String(week.chapter || '').trim() ||
     week.items?.length || week.pages?.length || week.assignments?.length || week.links?.length ||
     week.lessons?.some(lesson => lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.length || topic.assignments?.length || topic.links?.length))
-  ))
+  )), [visibleTeacherWeeks])
   const publicationIssues = [
     ...(!String(plan.title || '').trim() ? ['Ange planeringens namn.'] : []),
     ...(!String(plan.subject || '').trim() ? ['Ange ämne.'] : []),
@@ -1698,12 +1712,20 @@ const addNewTeacherWeek = () => setPlan(p => {
         if (simpleSetup) { setSimpleSetup(false); setTeacherTab('arsplan'); setCalendarOpen(false) }
         setSelectedId(data.id)
         try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(data.id)) } catch { /* Lagring kan vara blockerad */ }
-        const refreshed = await loadPlans()
+        // Vid autosparning av en redan listad planering behövs ingen ny hämtning
+        // av samtliga planeringars stora content-fält. Behåll övriga radfält.
+        const cachedRow = automatic && selectedId ? plans.find(item => item.id === data.id) : null
+        let refreshed = true
+        if (cachedRow) {
+          setPlans(current => replaceSavedPlanRow(current, data.id, row, payload.published, slug))
+        } else {
+          refreshed = await loadPlans()
+        }
         // Ändringar som gjorts medan nätverksanropet pågick får inte skrivas över.
         savedPlanRef.current = JSON.stringify(payload)
         setSavedRevision(revision => revision + 1)
         const newerEdits = latestPlanRef.current !== plan
-        setPlan(current => current === plan ? payload : current)
+        setPlan(current => reconcileSavedEditor(current, plan, payload))
         const message = !refreshed ? 'Sparad, men listan kunde inte uppdateras. Ladda om för att kontrollera.' : publish
           ? `Publicerad: ${window.location.origin}/elev/${slug}`
           : keepPublished
@@ -1725,7 +1747,7 @@ const addNewTeacherWeek = () => setPlan(p => {
   useEffect(() => {
     if (!selectedId || simpleSetup || busy || !isDirty || teacherTab === 'new') return undefined
     const timer = window.setTimeout(() => {
-      if (JSON.stringify(latestPlanRef.current) !== savedPlanRef.current) {
+      if (serializedPlanRef.current !== savedPlanRef.current) {
         void save(true, true)
       }
     }, 1400)
@@ -1759,7 +1781,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(row.id)) } catch { /* Lagring kan vara blockerad */ }
     setOpenedFromLibrary(teacherTab === 'bibliotek')
     const openedPlan = planFromRow(row)
-    setSimpleSetup(false); setSelectedId(row.id); savedPlanRef.current = JSON.stringify(openedPlan); setSavedRevision(revision => revision + 1); setPlan(openedPlan); setTeacherTab('arsplan'); setCalendarOpen(false); setEditingClassView(className || ""); setPreviewStudents(false); setA4Demo(false); setStatus(className ? `Klassen ${className} tillhör grundplaneringen. Öppna klassernas schema nedan.` : ''); if (className) { setCalendarOpen(false); setTimeout(()=>document.querySelector('[aria-label="Kopplade klasser"]')?.scrollIntoView({behavior:'smooth',block:'start'}),150) } else window.scrollTo({ top: 0, behavior: 'smooth' })
+    setSimpleSetup(false); setSelectedId(row.id); savedPlanRef.current = JSON.stringify(openedPlan); setSavedRevision(revision => revision + 1); setPlan(openedPlan); setTeacherTab('arsplan'); setCalendarOpen(false); setEditingClassView(className || ""); setPreviewStudents(false); setA4Demo(false); setStatus(className ? `Klassen ${className} tillhör grundplaneringen. Öppna klassernas schema nedan.` : ''); if (className) { setCalendarOpen(false); window.scrollTo({ top: 0, behavior: 'instant' }) } else window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   async function shareWithColleague(event) {
@@ -1865,7 +1887,7 @@ const addNewTeacherWeek = () => setPlan(p => {
 
   async function deletePlan(row) {
     if (busy) return
-    if (selectedId === row.id && JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar i den här planeringen. Radering tar även bort dem. Vill du fortsätta?')) return
+    if (selectedId === row.id && serializedPlanRef.current !== savedPlanRef.current && !window.confirm('Du har osparade ändringar i den här planeringen. Radering tar även bort dem. Vill du fortsätta?')) return
     if (!window.confirm(`Radera "${row.title}"? Detta kan inte ångras.`)) return
     setBusy(true)
     try {
@@ -2105,7 +2127,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
       </div>}
       <div className="planning-header-toolbar" style={{width:'100%',flexBasis:'100%'}}>
-    {selectedId && !calendarOpen && teacherTab === "arsplan" && <div id="kopplade-klasser" style={{margin:"10px 0 14px"}}><ClassSchedules onOpenCalendar={()=>{setCalendarOpen(true);window.scrollTo({top:0,behavior:"smooth"})}} onGoHome={returnToPlanningTree} plan={{...plan,weeksData:weeks}} publicSlug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} editingClassView={editingClassView} setEditingClassView={setEditingClassView} onSelectClassPreview={setClassStudentPreview} onUndo={undoPlan} onRedo={redoPlan} canUndo={historyRef.current.past.length>0} canRedo={historyRef.current.future.length>0} onSetAllDisplayMode={setAllWeeksDisplayMode} allWeeksDisplayMode={weeks.every(w=>w.hidden)?"hidden":weeks.every(w=>!w.hidden&&w.keepVisibleExtra)?"extra":weeks.every(w=>!w.hidden&&!w.keepVisibleExtra)?"normal":""} weeksBusy={busy} /></div>}
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && <div id="kopplade-klasser" style={{margin:"10px 0 14px"}}><ClassSchedules onOpenCalendar={()=>{setCalendarOpen(true);window.scrollTo({top:0,behavior:"smooth"})}} onGoHome={returnToPlanningTree} plan={classSchedulePlan} publicSlug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} editingClassView={editingClassView} setEditingClassView={setEditingClassView} onSelectClassPreview={setClassStudentPreview} onUndo={undoPlan} onRedo={redoPlan} canUndo={historyRef.current.past.length>0} canRedo={historyRef.current.future.length>0} onSetAllDisplayMode={setAllWeeksDisplayMode} allWeeksDisplayMode={weeks.every(w=>w.hidden)?"hidden":weeks.every(w=>!w.hidden&&w.keepVisibleExtra)?"extra":weeks.every(w=>!w.hidden&&!w.keepVisibleExtra)?"normal":""} weeksBusy={busy} /></div>}
       </div>
     </header>}
 
@@ -2136,7 +2158,7 @@ const addNewTeacherWeek = () => setPlan(p => {
 
     
 
-    {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && <ClassTwoWeekCalendar plan={{...plan,weeksData:weeks}} className={editingClassView} onChangeClassGroups={groups=>setPlan(previous=>({...previous,classGroups:groups}))} onSave={()=>save(false)} busy={busy} saveStatus={status} />}
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && <ClassTwoWeekCalendar plan={classSchedulePlan} className={editingClassView} onChangeClassGroups={groups=>setPlan(previous=>({...previous,classGroups:groups}))} onSave={()=>save(false)} busy={busy} saveStatus={status} />}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline" style={editingClassView && plan.classGroups?.some(g=>g.name===editingClassView)?{display:"none"}:undefined}>
     
 <section className="card teacher-year-review">
@@ -2518,7 +2540,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     <section className="card" id="mina-arsplaneringar">
 
       {planSearch && plans.some(row => Boolean(parseContent(row.content)?.archived) === showArchive) && !plans.some(row => Boolean(parseContent(row.content)?.archived) === showArchive && [row.title, row.subject, row.class_name, row.school_year].some(value => String(value || "").toLocaleLowerCase("sv").includes(planSearch.trim().toLocaleLowerCase("sv")))) && <p className="muted">Inga planeringar matchar sökningen. Prova ett annat ord eller rensa sökningen.</p>}
-      <div className="visual-planning-tree planning-board" id="planeringstrad"><div className="planning-board-bar"><div className="planning-board-tools"><div className="school-filter"><button type="button" className="secondary school-filter-toggle" aria-expanded={schoolFilterOpen} onClick={()=>setSchoolFilterOpen(value=>!value)}>⚙ Visa skolformer</button>{schoolFilterOpen && <div className="school-filter-panel"><strong>Visa i planeringsträdet</strong>{['Grundskola','Gymnasiet'].map(school=><label key={school}><input type="checkbox" checked={visibleSchoolForms.includes(school)} onChange={()=>toggleVisibleSchoolForm(school)}/>{school}</label>)}<small>Valet sparas på den här enheten. Inga planeringar tas bort.</small><button type="button" className="secondary" onClick={()=>setSchoolFilterOpen(false)}>✓ Klar</button></div>}</div><button type="button" className="planning-board-new-plan" onClick={createPlan}>＋ Ny planering</button><button type="button" className="secondary" aria-pressed={showArchive} onClick={() => { setShowArchive(value => !value); setLibrarySchool(''); setLibrarySubject('') }}>{showArchive ? '📂 Visa aktiva' : '🗃 Arkiv'}</button><label htmlFor="library-year-select">Läsår</label><select id="library-year-select" value={libraryYear} onChange={event => { setLibraryYear(event.target.value); setLibrarySchool(''); setLibrarySubject('') }}><option value="alla">Alla läsår</option>{[...new Set(plans.map(row => String(row.school_year || parseContent(row.content)?.schoolYear || '').trim()).filter(Boolean))].sort((a,b) => b.localeCompare(a,'sv',{numeric:true})).map(year => <option key={year} value={year}>{year}</option>)}</select><button type="button" className="secondary" onClick={() => { const year = window.prompt('Nytt läsår (exempelvis 2027–2028):'); if (year?.trim()) { setLibraryYear(year.trim()); setLibrarySchool(''); setLibrarySubject('') } }}>＋ Läsår</button></div></div><div className="visual-tree-schools" ref={boardTreeRef}>
+      <div className="visual-planning-tree planning-board" id="planeringstrad"><div className="planning-board-bar"><div className="planning-board-tools"><div className="school-filter"><button type="button" className="secondary school-filter-toggle" aria-expanded={schoolFilterOpen} onClick={()=>setSchoolFilterOpen(value=>!value)}>⚙ Visa skolformer</button>{schoolFilterOpen && <div className="school-filter-panel"><strong>Visa i planeringsträdet</strong>{['Grundskola','Gymnasiet'].map(school=><label key={school}><input type="checkbox" checked={visibleSchoolForms.includes(school)} onChange={()=>toggleVisibleSchoolForm(school)}/>{school}</label>)}<small>Valet sparas på den här enheten. Inga planeringar tas bort.</small><button type="button" className="secondary" onClick={()=>setSchoolFilterOpen(false)}>✓ Klar</button></div>}</div><button type="button" className="planning-board-new-plan" onClick={createPlan}>＋ Ny planering</button><button type="button" className="secondary" aria-pressed={showArchive} onClick={() => { setShowArchive(value => !value); setLibrarySchool(''); setLibrarySubject('') }}>{showArchive ? '📂 Visa aktiva' : '🗃 Arkiv'}</button><label htmlFor="library-year-select">Läsår</label><select id="library-year-select" value={libraryYear} onChange={event => { setLibraryYear(event.target.value); setLibrarySchool(''); setLibrarySubject('') }}><option value="alla">Alla läsår</option>{availableLibraryYears.map(year => <option key={year} value={year}>{year}</option>)}</select><button type="button" className="secondary" onClick={() => { const year = window.prompt('Nytt läsår (exempelvis 2027–2028):'); if (year?.trim()) { setLibraryYear(year.trim()); setLibrarySchool(''); setLibrarySubject('') } }}>＋ Läsår</button></div></div><div className="visual-tree-schools" ref={boardTreeRef}>
                 {Object.entries(plans.filter(row => Boolean(parseContent(row.content)?.archived) === showArchive && (libraryYear === 'alla' || String(row.school_year || parseContent(row.content)?.schoolYear || '').trim() === libraryYear) && [row.title, row.subject, row.class_name, row.school_year].some(value => String(value || "").toLocaleLowerCase("sv").includes(planSearch.trim().toLocaleLowerCase("sv")))).reduce((groups, row) => {
           const data = parseContent(row.content) || {}
           const grade = String(data.grade || row.grade || '').trim()

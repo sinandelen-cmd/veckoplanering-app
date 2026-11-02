@@ -1,8 +1,10 @@
 import React from 'react'
 import { DAYS, DAY_SHORT, iso, monday, describe, buildClassSchedule } from './classScheduleUtils.js'
 
+const EMPTY_CLASS_GROUPS = []
+
 export default function ClassSchedules({ plan, onChange, publicSlug = "", editingClassView = "", setEditingClassView, onSelectClassPreview, onSetAllDisplayMode, allWeeksDisplayMode, weeksBusy }) {
-  const groups = Array.isArray(plan.classGroups) ? plan.classGroups : []
+  const groups = Array.isArray(plan.classGroups) ? plan.classGroups : EMPTY_CLASS_GROUPS
   const preserveScrollOnClassChange = (className) => {
     const top = window.scrollY
     setEditingClassView?.(className)
@@ -51,16 +53,16 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
     }
     updateGroup({ overrides, pendingMoments: [...(group.pendingMoments || []), ...(carry ? [carry] : [])] })
   }
-  const grouped = schedule.reduce((result, item) => {
+  const grouped = React.useMemo(() => schedule.reduce((result, item) => {
     const weekStart = iso(monday(item.date))
     if (!result.length || result[result.length-1].weekStart !== weekStart) result.push({ weekStart, items: [] })
     result[result.length-1].items.push({...item, weekLessonNumber:result[result.length-1].items.length+1})
     return result
-  }, [])
+  }, []), [schedule])
   const weeksShown = showAll ? grouped : grouped.slice(0, 8)
-  const comparison = groups.map(g => ({name:g.name, weeks:buildClassSchedule(plan,g).reduce((acc,item)=>{const key=iso(monday(item.date));(acc[key] ||= []).push(item);return acc},{})}))
-  const comparisonWeeks = [...new Set(comparison.flatMap(g=>Object.keys(g.weeks)))].sort()
-  const unscheduledGroups = groups.filter(g => !(g.days || []).length)
+  const comparison = React.useMemo(() => compare ? groups.map(g => ({name:g.name, weeks:buildClassSchedule(plan,g).reduce((acc,item)=>{const key=iso(monday(item.date));(acc[key] ||= []).push(item);return acc},{})})) : [], [compare, groups, plan])
+  const comparisonWeeks = React.useMemo(() => [...new Set(comparison.flatMap(g => Object.keys(g.weeks)))].sort(), [comparison])
+  const unscheduledGroups = React.useMemo(() => groups.filter(g => !(g.days || []).length), [groups])
   return <section className="card" aria-label="Kopplade klasser">
 
     <div className="class-mini-row">
