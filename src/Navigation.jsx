@@ -12,6 +12,7 @@ export default function Navigation({ active = 'mina', onNavigate, onAllWeeks, on
       {planTitle ? <strong className="planning-active-plan-title" title={planTitle}>{planTitle}</strong> : <div className="planning-nav-dropdown">
         <button type="button" className={(active === 'bibliotek' || active === 'arsplan') && !adminOpen ? 'active' : ''} aria-expanded={planningMenuOpen} aria-haspopup="true" onClick={() => { onCloseAdmin?.(); setPlanningMenuOpen(value => !value) }}>Planering <span aria-hidden="true">{planningMenuOpen ? '▴' : '▾'}</span></button>
         {planningMenuOpen && <div className="planning-nav-submenu" role="group" aria-label="Planeringsmeny">
+          <button type="button" onClick={() => choose(() => onNavigate('bibliotek'))}>📁 Mina planeringar</button>
           {hasOpenPlan && <>
             <button type="button" onClick={() => choose(() => onNavigate('arsplan'))}>📘 Grundplanering</button>
             <button type="button" onClick={() => choose(() => calendarOpen ? onNavigate('arsplan') : onToggleCalendar?.())}>🗓 Kalendervy</button>
