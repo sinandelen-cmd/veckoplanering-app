@@ -1,8 +1,10 @@
 import React from 'react'
 import { DAYS, DAY_SHORT, iso, monday, describe, buildClassSchedule } from './classScheduleUtils.js'
 
+const EMPTY_CLASS_GROUPS = []
+
 export default function ClassSchedules({ plan, onChange, publicSlug = "", editingClassView = "", setEditingClassView, onSelectClassPreview, onSetAllDisplayMode, allWeeksDisplayMode, weeksBusy }) {
-  const groups = Array.isArray(plan.classGroups) ? plan.classGroups : []
+  const groups = Array.isArray(plan.classGroups) ? plan.classGroups : EMPTY_CLASS_GROUPS
   const preserveScrollOnClassChange = (className) => {
     const top = window.scrollY
     setEditingClassView?.(className)
