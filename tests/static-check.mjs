@@ -272,7 +272,7 @@ assert.doesNotMatch(nav, /<button[^\n]*Mina planeringar/, "Mina planeringar ska 
 assert.match(app, /rows\.map\(row => <div key=\{row\.id\} className="course-folder-with-delete"/, 'Planeringsträdet ska visa sparade kurser')
 assert.match(app, /className="course-folder-delete"/, 'Sparade kurser ska kunna raderas direkt från trädet')
 assert.match(app, /plans=\{plans\.filter\(row => !parseContent\(row\.content\)\?\.archived\)\}/)
-assert.match(app, /onOpenPlan=\{loadPlan\}/)
+assert.match(app, /onOpenPlan=\{openPlanRow\}/)
 assert.match(css, /\.planning-layout/)
 
 assert.doesNotMatch(nav, /sidebar-link[^\n]*>Lärarvy/)
@@ -286,7 +286,7 @@ assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(false\); setEdit
 assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(false\); setEditingClassView\(className \|\| ""\); setPreviewStudents\(false\); setA4Demo\(false\); setStatus\(className \?/, 'Sparad planering ska öppna klassvyn och nollställa A4-demot')
 
 
-assert.match(app, /onClick=\{\(\) => loadPlan\(row\)\}/, 'Sparade kurser ska kunna öppnas från mappträdet')
+assert.match(app, /onClick=\{\(\)=>\{void openPlanRow\(row\)\}\}/, 'Sparade kurser ska kunna öppnas från mappträdet')
 assert.match(app, /showArchive \? .*Visa aktiva.*Arkiv/, "Arkivet ska vara åtkomligt inne i planeringstavlan")
 assert.match(app, /async function setArchived\(row, archived\)/)
 
