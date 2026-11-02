@@ -1428,6 +1428,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const latestPlanRef = useRef(plan)
   useEffect(() => { latestPlanRef.current = plan }, [plan])
   const serializedPlan = useMemo(() => JSON.stringify(plan), [plan])
+  const serializedPlanRef = useRef(serializedPlan)
+  serializedPlanRef.current = serializedPlan
   const historyRef = useRef({ past: [], current: serializedPlan, future: [] })
   const historySkipRef = useRef(false)
   const [, setHistoryVersion] = useState(0)
@@ -1468,10 +1470,10 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [, setSavedRevision] = useState(0)
 
   const isDirty = serializedPlan !== savedPlanRef.current
-  const confirmNavigation = () => JSON.stringify(latestPlanRef.current) === savedPlanRef.current || window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')
+  const confirmNavigation = () => serializedPlanRef.current === savedPlanRef.current || window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')
   useEffect(() => {
     const warnBeforeLeave = event => {
-      if (JSON.stringify(latestPlanRef.current) === savedPlanRef.current) return
+      if (serializedPlanRef.current === savedPlanRef.current) return
       event.preventDefault()
       event.returnValue = ''
     }
