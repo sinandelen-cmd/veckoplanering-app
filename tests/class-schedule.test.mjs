@@ -32,3 +32,17 @@ test('16. source plan remains unchanged after schedule generation', () => {
   buildClassSchedule(input, group())
   assert.equal(JSON.stringify(input), before)
 })
+
+test('17. full school year produces continuous class lesson numbering', () => {
+  const start = new Date('2026-08-17T12:00:00')
+  const weeks = Array.from({ length: 45 }, (_, i) => {
+    const date = new Date(start)
+    date.setDate(date.getDate() + i * 7)
+    return week(date.toISOString().slice(0, 10))
+  })
+  const result = buildClassSchedule(plan(weeks), group({ days: ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'], startDate: '2026-08-17' }))
+  assert.equal(result.length, 225)
+  assert.equal(result[0].lessonNumber, 1)
+  assert.equal(result.at(-1).lessonNumber, 225)
+  assert.equal(new Set(result.map(item => item.lessonNumber)).size, 225)
+})
