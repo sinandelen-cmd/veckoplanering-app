@@ -1465,7 +1465,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   }
   const savedPlanRef = useRef(JSON.stringify(plan))
   const [, setSavedRevision] = useState(0)
-  const isDirty = JSON.stringify(plan) !== savedPlanRef.current
+  const serializedPlan = useMemo(() => JSON.stringify(plan), [plan])
+  const isDirty = serializedPlan !== savedPlanRef.current
   const confirmNavigation = () => JSON.stringify(latestPlanRef.current) === savedPlanRef.current || window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')
   useEffect(() => {
     const warnBeforeLeave = event => {
