@@ -1514,7 +1514,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     String(week.content || '').trim() || String(week.chapter || '').trim() ||
     week.items?.length || week.pages?.length || week.assignments?.length || week.links?.length ||
     week.lessons?.some(lesson => lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.length || topic.assignments?.length || topic.links?.length))
-  )), [visibleTeacherWeeks]
+  )), [visibleTeacherWeeks])
   const publicationIssues = [
     ...(!String(plan.title || '').trim() ? ['Ange planeringens namn.'] : []),
     ...(!String(plan.subject || '').trim() ? ['Ange ämne.'] : []),
