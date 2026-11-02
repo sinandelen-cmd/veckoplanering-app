@@ -1479,6 +1479,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
 
 
   const weeks = useMemo(() => displayWeeks(plan), [plan])
+  const classSchedulePlan = useMemo(() => ({ ...plan, weeksData: weeks }), [plan, weeks])
   const teacherDisplayWeeks = useMemo(() => weeks.map((week, index) => ({week, index})), [weeks]) // Alla veckor finns kvar; passerade veckor kan fällas ut kapitelvis
   const pastTeacherWeeks = useMemo(() => teacherDisplayWeeks.filter(({week}) => week.weekStart && week.weekStart < mondayOf(new Date())), [teacherDisplayWeeks])
   const upcomingTeacherWeeks = useMemo(() => teacherDisplayWeeks.filter(({week}) => !week.weekStart || week.weekStart >= mondayOf(new Date())), [teacherDisplayWeeks])
@@ -2113,7 +2114,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         <button className="secondary" onClick={() => supabase.auth.signOut()}>Logga ut</button>
       </div>}
       <div className="planning-header-toolbar" style={{width:'100%',flexBasis:'100%'}}>
-    {selectedId && !calendarOpen && teacherTab === "arsplan" && <div id="kopplade-klasser" style={{margin:"10px 0 14px"}}><ClassSchedules onOpenCalendar={()=>{setCalendarOpen(true);window.scrollTo({top:0,behavior:"smooth"})}} onGoHome={returnToPlanningTree} plan={{...plan,weeksData:weeks}} publicSlug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} editingClassView={editingClassView} setEditingClassView={setEditingClassView} onSelectClassPreview={setClassStudentPreview} onUndo={undoPlan} onRedo={redoPlan} canUndo={historyRef.current.past.length>0} canRedo={historyRef.current.future.length>0} onSetAllDisplayMode={setAllWeeksDisplayMode} allWeeksDisplayMode={weeks.every(w=>w.hidden)?"hidden":weeks.every(w=>!w.hidden&&w.keepVisibleExtra)?"extra":weeks.every(w=>!w.hidden&&!w.keepVisibleExtra)?"normal":""} weeksBusy={busy} /></div>}
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && <div id="kopplade-klasser" style={{margin:"10px 0 14px"}}><ClassSchedules onOpenCalendar={()=>{setCalendarOpen(true);window.scrollTo({top:0,behavior:"smooth"})}} onGoHome={returnToPlanningTree} plan={classSchedulePlan} publicSlug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} onChange={next => setPlan(previous => ({...previous,classGroups:next.classGroups}))} editingClassView={editingClassView} setEditingClassView={setEditingClassView} onSelectClassPreview={setClassStudentPreview} onUndo={undoPlan} onRedo={redoPlan} canUndo={historyRef.current.past.length>0} canRedo={historyRef.current.future.length>0} onSetAllDisplayMode={setAllWeeksDisplayMode} allWeeksDisplayMode={weeks.every(w=>w.hidden)?"hidden":weeks.every(w=>!w.hidden&&w.keepVisibleExtra)?"extra":weeks.every(w=>!w.hidden&&!w.keepVisibleExtra)?"normal":""} weeksBusy={busy} /></div>}
       </div>
     </header>}
 
@@ -2144,7 +2145,7 @@ const addNewTeacherWeek = () => setPlan(p => {
 
     
 
-    {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && <ClassTwoWeekCalendar plan={{...plan,weeksData:weeks}} className={editingClassView} onChangeClassGroups={groups=>setPlan(previous=>({...previous,classGroups:groups}))} onSave={()=>save(false)} busy={busy} saveStatus={status} />}
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && <ClassTwoWeekCalendar plan={classSchedulePlan} className={editingClassView} onChangeClassGroups={groups=>setPlan(previous=>({...previous,classGroups:groups}))} onSave={()=>save(false)} busy={busy} saveStatus={status} />}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline" style={editingClassView && plan.classGroups?.some(g=>g.name===editingClassView)?{display:"none"}:undefined}>
     
 <section className="card teacher-year-review">
