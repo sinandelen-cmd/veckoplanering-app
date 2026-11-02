@@ -1544,7 +1544,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       try {
         const lastId = window.sessionStorage.getItem(`arsplanering-last-open-${session.user.id}`)
         const lastPlan = annualPlans.find(row => String(row.id) === lastId)
-        if (lastPlan && serializedPlanRef.current === savedPlanRef.current) {
+        if (lastPlan && JSON.stringify(latestPlanRef.current) === savedPlanRef.current) {
           // Skriv inte över ändringar som läraren hann göra medan listan laddades.
           const restored = planFromRow(lastPlan)
           setSimpleSetup(false)
