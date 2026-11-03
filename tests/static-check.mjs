@@ -370,3 +370,6 @@ assert.match(approvalSql, /approved teachers delete/)
 assert.match(app, /access !== 'approved'/)
 assert.match(app, /admin_review_teacher_request/)
 assert.match(app, /admin_list_teacher_accounts/, 'Administratören ska kunna lista lärarkonton')
+
+// Skärmversionen döljs vid utskrift; utskriftssidorna måste därför alltid skapas.
+assert.match(app, /\{printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">/)

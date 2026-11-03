@@ -849,7 +849,7 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
       </article></div>)}
     </section>
   </main>
-  {AVSTANGD_GRANSSNITT && printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">
+  {printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">
     {Array.from({ length: printGroups.length }, (_, index) => <StudentView key={index} plan={plan} preview={preview} printPage={index} printWeekStart={singlePrintWeek} />)}
   </div>}
 </>
