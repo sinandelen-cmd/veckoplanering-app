@@ -77,3 +77,7 @@ Det äldre ofärdiga testbygget 77c00821-7e28-4966-8d20-7024ee1f9d3a stod fast i
 Efter omladdning av elevlänken i webbläsaren finns 1 student-print-page med ämne, läsår, vecka 45, datum, lektionsrubrik, momenttext, sida 10 och uppgift 1–3. Detta verifierar att den tidigare saknade utskriftskopian nu finns i körande sida; det ersätter inte visuell PDF-granskning.
 
 Elevkompassens rapport hämtades: 31/31 säkerhetstester samt byggning/typkontroll passerade. Elevblad, närvaro, IUP, ångra och krypterad backup/återställning verifierades med syntetiska data och simulerade Supabase-svar. Riktiga serverbehörigheter är inte verifierade. Fortsatt isolerat Replit-uppdrag har skickats för datumstyrd historikåterställning och musklick i klassdialogen; inga produktionsändringar eller publicering tillåts.
+
+## Visuell bekräftelse från användaren
+
+Användarens skärmbild 4A66A9C3-EB78-4508-88C7-66BDE3EFFD3D.png visar A4 stående, 100 % och sida 1 av 1 med testlektionens innehåll efter rättningen. Ingen tydlig överlappning eller avklippning syns i förhandsvisningen. Felet med helt tom utskrift är därmed visuellt verifierat löst för det korta testfallet i iPhone-utskriften. Detta godkänner inte längre veckor, flersidesfall eller utskrift från datorns Chromium; de kontrollerna återstår.
