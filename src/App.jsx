@@ -1287,7 +1287,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [simpleSetup, setSimpleSetup] = useState(true)
   const [simpleMore, setSimpleMore] = useState(false)
   const [teacherTab, setTeacherTab] = useState("mina")
-  const [showPastTeacherWeeks, setShowPastTeacherWeeks] = useState(true)
+  const [showPastTeacherWeeks, setShowPastTeacherWeeks] = useState(false)
   const [pastWeeksExpanded, setPastWeeksExpanded] = useState(false)
   const [allWeekContentsOpen, setAllWeekContentsOpen] = useState(true)
   const [weekContentOverrides, setWeekContentOverrides] = useState({})
@@ -1515,7 +1515,7 @@ const addNewTeacherWeek = () => setPlan(p => {
   }
   useEffect(() => { const home = () => { setFocusedTeacherWeek(null); setShowPastTeacherWeeks(true) }; window.addEventListener('planning-home', home); return () => window.removeEventListener('planning-home', home) }, [])
   const windowStart = Math.max(0, Math.min(teacherWindowStart ?? defaultWindowFirst, Math.max(0, teacherDisplayWeeks.length - 4)))
-  const defaultTeacherWindow = teacherDisplayWeeks.slice(Math.max(defaultWindowFirst, windowStart), Math.max(defaultWindowFirst, windowStart) + 4)
+  const defaultTeacherWindow = teacherDisplayWeeks.slice(windowStart, windowStart + 4)
   const visibleTeacherWeeks = useMemo(() => weeks.filter(week => week && !week.hidden), [weeks])
   const weeksWithContent = useMemo(() => visibleTeacherWeeks.filter(week => Boolean(
     String(week.content || '').trim() || String(week.chapter || '').trim() ||
@@ -1801,6 +1801,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(row.id)) } catch { /* Lagring kan vara blockerad */ }
     setOpenedFromLibrary(teacherTab === 'bibliotek')
     const openedPlan = planFromRow(row)
+    setTeacherWindowStart(null); setFocusedTeacherWeek(null); setShowPastTeacherWeeks(false);
     setSimpleSetup(false); setSelectedId(row.id); savedPlanRef.current = JSON.stringify(openedPlan); setSavedRevision(revision => revision + 1); setPlan(openedPlan); setTeacherTab('arsplan'); setCalendarOpen(false); setEditingClassView(className || ""); setPreviewStudents(false); setA4Demo(false); setStatus(className ? `Klassen ${className} tillhör grundplaneringen. Öppna klassernas schema nedan.` : ''); if (className) { setCalendarOpen(false); window.scrollTo({ top: 0, behavior: 'instant' }) } else window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
