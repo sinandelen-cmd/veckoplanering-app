@@ -81,3 +81,11 @@ Elevkompassens rapport hämtades: 31/31 säkerhetstester samt byggning/typkontro
 ## Visuell bekräftelse från användaren
 
 Användarens skärmbild 4A66A9C3-EB78-4508-88C7-66BDE3EFFD3D.png visar A4 stående, 100 % och sida 1 av 1 med testlektionens innehåll efter rättningen. Ingen tydlig överlappning eller avklippning syns i förhandsvisningen. Felet med helt tom utskrift är därmed visuellt verifierat löst för det korta testfallet i iPhone-utskriften. Detta godkänner inte längre veckor, flersidesfall eller utskrift från datorns Chromium; de kontrollerna återstår.
+
+## Utökade datum- och utskriftsfall
+
+Tre beteendetester har lagts till för ISO-vecka 53/1, årsskifte, svensk DST och datumintervall. 47/47 tester passerar lokalt. De testar datumhjälpfunktionerna, inte serverns automatiska publicering.
+
+Syntetisk rad 8 skapad endast i testdatabasen: https://arsplanering-isolerad-test-20261102.pages.dev/elev/qa-a4-lang-kort-20261103 . Fixturen finns i tests/fixtures/a4-long-short.json. Fyra korta veckor och en lång vecka med 20 lektioner, över 1500 tecken, obrutet ord och lång HTTPS-länk. Webbläsaren visar samtliga veckor och den sista lektionen. Utskriftsunderlaget har två grupper: lång vecka (4577 tecken) samt fyra korta veckor (639 tecken). Grupper är inte bevis på fysiskt sidantal; visuell PDF-granskning krävs fortfarande.
+
+Testerna och fixturen sparade i commit 57e3d6bee8c90d5738cc473a89f3e7e4ef4522e3. Replit rapporterade fortfarande busy vid senaste kontrollen av det fortsatta Elevkompassen-uppdraget.
