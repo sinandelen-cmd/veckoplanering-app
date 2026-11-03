@@ -36,6 +36,9 @@ assert.match(app, /function isoWeekYear\(dateString\)/)
 assert.match(app, /weekStart \|\| `number-\$\{other\.weekNumber\}`/)
 assert.match(app, /\.sort\(\(a, b\) => \(a\.weekStart \|\| ''\)\.localeCompare\(b\.weekStart \|\| ''\)\)/)
 assert.match(app, /const keepPublished = !publish && databasePublished/)
+// Autosave must save a draft; never trigger publication of the student snapshot.
+assert.match(app, /void save\(false, true\)/)
+assert.doesNotMatch(app, /void save\(true, true\)/)
 assert.match(app, /\.select\('published,public_slug'\)/)
 assert.match(app, /publishedPayload = publish \? sanitizeForStudents\(payload\) : null/)
 assert.match(app, /JSON\.stringify\(latestPlanRef\.current\) === savedPlanRef\.current/)
@@ -119,7 +122,7 @@ assert.match(app, /weekContentScore = week =>/)
 assert.match(app, /topic\.links\?\.length \|\| 0/)
 assert.match(printSource, /\.\.\.\(week\.links \|\| \[\]\)/)
 
-assert.match(app, /week\.lessons\.filter\(lesson => lesson && typeof lesson === 'object'\)/)
+assert.match(app, /lessons\.filter\(lesson => lesson && typeof lesson === 'object'\)/)
 assert.match(app, /lesson\.topics\.filter\(topic => topic && typeof topic === 'object'\)/)
 assert.match(printSource, /week\.lessons\) \? week\.lessons\.filter\(Boolean\)/)
 
@@ -272,7 +275,7 @@ assert.doesNotMatch(nav, /<button[^\n]*Mina planeringar/, "Mina planeringar ska 
 assert.match(app, /rows\.map\(row => <div key=\{row\.id\} className="course-folder-with-delete"/, 'Planeringsträdet ska visa sparade kurser')
 assert.match(app, /className="course-folder-delete"/, 'Sparade kurser ska kunna raderas direkt från trädet')
 assert.match(app, /plans=\{plans\.filter\(row => !parseContent\(row\.content\)\?\.archived\)\}/)
-assert.match(app, /onOpenPlan=\{loadPlan\}/)
+assert.match(app, /onOpenPlan=\{openPlanRow\}/)
 assert.match(css, /\.planning-layout/)
 
 assert.doesNotMatch(nav, /sidebar-link[^\n]*>Lärarvy/)
@@ -286,7 +289,7 @@ assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(false\); setEdit
 assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(false\); setEditingClassView\(className \|\| ""\); setPreviewStudents\(false\); setA4Demo\(false\); setStatus\(className \?/, 'Sparad planering ska öppna klassvyn och nollställa A4-demot')
 
 
-assert.match(app, /onClick=\{\(\) => loadPlan\(row\)\}/, 'Sparade kurser ska kunna öppnas från mappträdet')
+assert.match(app, /onClick=\{\(\)=>\{void openPlanRow\(row\)\}\}/, 'Sparade kurser ska kunna öppnas från mappträdet')
 assert.match(app, /showArchive \? .*Visa aktiva.*Arkiv/, "Arkivet ska vara åtkomligt inne i planeringstavlan")
 assert.match(app, /async function setArchived\(row, archived\)/)
 
@@ -367,3 +370,6 @@ assert.match(approvalSql, /approved teachers delete/)
 assert.match(app, /access !== 'approved'/)
 assert.match(app, /admin_review_teacher_request/)
 assert.match(app, /admin_list_teacher_accounts/, 'Administratören ska kunna lista lärarkonton')
+
+// Skärmversionen döljs vid utskrift; utskriftssidorna måste därför alltid skapas.
+assert.match(app, /\{printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">/)

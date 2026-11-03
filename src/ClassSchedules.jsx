@@ -35,7 +35,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
   const updateGroup = changes => onChange({ ...plan, classGroups: groups.map((g, i) => i === (activeClassIndex >= 0 ? activeClassIndex : selected) ? { ...g, ...changes } : g) })
   const addClass = () => {
     if (!name.trim() || groups.some(g => g.name.toLocaleLowerCase('sv') === name.trim().toLocaleLowerCase('sv'))) return
-    onChange({ ...plan, classGroups: [...groups, { name: name.trim(), days: [...days], startDate: plan.startDate, cancelledDates: [], overrides: {} }] })
+    onChange({ ...plan, classGroups: [...groups, { name: name.trim(), days: [], startDate: plan.startDate, cancelledDates: [], overrides: {} }] })
     setSelected(groups.length); setName('')
   }
   const shiftClassLesson = item => {
@@ -67,7 +67,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
 
     <div className="class-mini-row">
       
-      <div className="class-mini-chips"><button type="button" className={"class-mini-chip"+(!editingClassView?" active":"")} onClick={()=>{window.dispatchEvent(new Event("planning-home"));preserveScrollOnClassChange("");setClassWeekPage(0);setShowClassMenu(false);setShowClosures(false)}} aria-pressed={!editingClassView}>📘 Grundplanering</button>{groups.map((g,i)=><button type="button" key={i} className={'class-mini-chip'+(editingClassView===g.name?' active':'')} aria-pressed={editingClassView===g.name} onClick={()=>{setSelected(i);preserveScrollOnClassChange(g.name);setClassWeekPage(0);setShowClassMenu(false);setShowClosures(false);setCompare(false);setShowClassDetails(false)}}>{g.name}</button>)}
+      <div className="class-mini-chips"><button type="button" className={"class-mini-chip"+(!editingClassView?" active":"")} onClick={()=>{window.dispatchEvent(new Event("planning-home"));preserveScrollOnClassChange("");setShowClassMenu(false);setShowClosures(false)}} aria-pressed={!editingClassView}>📘 Grundplanering</button>{groups.map((g,i)=><button type="button" key={i} className={'class-mini-chip'+(editingClassView===g.name?' active':'')} aria-pressed={editingClassView===g.name} onClick={()=>{setSelected(i);preserveScrollOnClassChange(g.name);setShowClassMenu(false);setShowClosures(false);setCompare(false);setShowClassDetails(false)}}>{g.name}</button>)}
         
         <button type="button" className="class-mini-add" onClick={()=>setAddingClass(v=>!v)} aria-expanded={addingClass}>+ Klass</button>{editingClassView && groups.some(g => g.name === editingClassView) && <button type="button" className="class-mini-schema" onClick={async()=>{if(!publicSlug){window.alert("Elevlänken är inte publicerad ännu. Lägg till lektionsinnehåll och kontrollera att planeringen är publicerad.");return}const url=window.location.origin+"/elev/"+encodeURIComponent(publicSlug)+(editingClassView?"?klass="+encodeURIComponent(editingClassView):"");try{await navigator.clipboard.writeText(url);window.alert("Elevlänken har kopierats:\n"+url)}catch{window.prompt("Kopiera elevlänken:",url)}}}>🔗 Elevlänk för {editingClassView}</button>}
       </div>
