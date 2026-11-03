@@ -65,3 +65,7 @@ Efter testpasset begärdes paus av Årsplanering Test och återaktivering av pro
 ### Databasrådgivning efter installation
 
 Två varningar gäller avsiktligt anropbar SECURITY DEFINER-RPC för elevversionen (anon/authenticated). Funktionen ska vara offentlig men bara exponera den publicerade kopian; rolltester ovan verifierar avgränsningen. Se [Supabase 0028](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable) och [0029](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable). Även [skydd mot läckta lösenord](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) rapporterades avstängt i testprojektet. Inga autentiseringsinställningar ändrades.
+
+## Uppföljning: tom A4-sida
+
+Användarens skärmbild visade en tom A4-sida i utskriftsförhandsvisning. Koden dolde student-screen-view vid utskrift, medan student-print-pages inte skapades eftersom de låg bakom AVSTANGD_GRANSSNITT. Spärren har tagits bort endast för utskriftssidorna i commit 3d3b2cba77c2af4ed3c067566da7d80453fc4629. Regressionstest tillagt; alla 44 tester, lint och isolerad build passerar. Slutlig visuell A4/PDF-kontroll efter rättningen återstår. AirPrint-meddelandet om saknad skrivare är separat från felet med tom sida.
