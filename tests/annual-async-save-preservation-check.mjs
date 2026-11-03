@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import vm from 'node:vm'
 import assert from 'node:assert/strict'
+import { reconcileSavedEditor } from '../src/autosaveUtils.js'
 import { loadFunctions } from './helpers/extract-functions.mjs'
 
 const appUrl = new URL('../src/App.jsx', import.meta.url)
@@ -23,7 +24,7 @@ async function scenario({ editDuringSave }) {
     from: () => ({ insert: () => ({ select: () => ({ single: () => new Promise(resolve => { completeInsert = resolve }) }) }) }),
   }
   const context = vm.createContext({
-    Date, Intl, DEFAULT_WEEKS: 1, WEEKDAYS: ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'],
+    Date, Intl, reconcileSavedEditor, DEFAULT_WEEKS: 1, WEEKDAYS: ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'],
     plan: originalPlan, weeks: originalPlan.weeksData, latestPlanRef,
     session: { user: { id: 'test-user' } }, supabase,
     busy: false, simpleSetup: false, isDirty: false, teacherTab: 'arsplan',
@@ -57,6 +58,6 @@ async function scenario({ editDuringSave }) {
 }
 await scenario({ editDuringSave: true })
 await scenario({ editDuringSave: false })
-assert.match(source, /<button type="button" disabled=\{busy\} title=\{row\.title\|\|displayName\}[\s\S]{0,300}?onClick=\{\(\)=>loadPlan\(row\)\}/,
+assert.match(source, /<button type="button" disabled=\{busy\} title=\{row\.title\|\|displayName\}[\s\S]{0,300}?onClick=\{\(\)=>\{void openPlanRow\(row\)\}\}/,
   'Man ska inte kunna byta planering under sparning')
 console.log('Annual async save preserves new edits and normal save behavior: OK')

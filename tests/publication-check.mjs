@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import vm from 'node:vm'
 import assert from 'node:assert/strict'
+import { loadFunctions } from './helpers/extract-functions.mjs'
 
 const source = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
 const start = source.indexOf('function publicationFields(')
@@ -25,7 +26,8 @@ assert.doesNotMatch(source, /Boolean\(plan\.published\)/)
 const fromRowStart = source.indexOf('function planFromRow(')
 const fromRowEnd = source.indexOf('function sanitizeForStudents(', fromRowStart)
 assert.ok(fromRowStart >= 0 && fromRowEnd > fromRowStart)
-const rowCtx = vm.createContext({ emptyPlan: () => ({ published: false }) })
+const rowCtx = vm.createContext({ emptyPlan: () => ({ published: false }), parsedContentCache: new Map() })
+vm.runInContext(await loadFunctions(new URL('../src/App.jsx', import.meta.url), ['parseContent']), rowCtx)
 vm.runInContext(source.slice(fromRowStart, fromRowEnd), rowCtx)
 const planFromRow = vm.runInContext('planFromRow', rowCtx)
 const staleRow = { content: JSON.stringify({ kind: 'arsplanering-v2', published: true }), published: false }
