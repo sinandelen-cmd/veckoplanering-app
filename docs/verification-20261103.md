@@ -69,3 +69,11 @@ Två varningar gäller avsiktligt anropbar SECURITY DEFINER-RPC för elevversion
 ## Uppföljning: tom A4-sida
 
 Användarens skärmbild visade en tom A4-sida i utskriftsförhandsvisning. Koden dolde student-screen-view vid utskrift, medan student-print-pages inte skapades eftersom de låg bakom AVSTANGD_GRANSSNITT. Spärren har tagits bort endast för utskriftssidorna i commit 3d3b2cba77c2af4ed3c067566da7d80453fc4629. Regressionstest tillagt; alla 44 tester, lint och isolerad build passerar. Slutlig visuell A4/PDF-kontroll efter rättningen återstår. AirPrint-meddelandet om saknad skrivare är separat från felet med tom sida.
+
+## Driftsättning och kontroll efter tömd byggkö
+
+Det äldre ofärdiga testbygget 77c00821-7e28-4966-8d20-7024ee1f9d3a stod fast i initialize och togs bort. Den senaste testversionen d57ac8d6c3542b2bd0cf835a46f5ff2632888497 driftsattes därefter med status success 2026-11-03 16:55:53 UTC. Ingen fungerande deployment eller produktionsmiljö togs bort.
+
+Efter omladdning av elevlänken i webbläsaren finns 1 student-print-page med ämne, läsår, vecka 45, datum, lektionsrubrik, momenttext, sida 10 och uppgift 1–3. Detta verifierar att den tidigare saknade utskriftskopian nu finns i körande sida; det ersätter inte visuell PDF-granskning.
+
+Elevkompassens rapport hämtades: 31/31 säkerhetstester samt byggning/typkontroll passerade. Elevblad, närvaro, IUP, ångra och krypterad backup/återställning verifierades med syntetiska data och simulerade Supabase-svar. Riktiga serverbehörigheter är inte verifierade. Fortsatt isolerat Replit-uppdrag har skickats för datumstyrd historikåterställning och musklick i klassdialogen; inga produktionsändringar eller publicering tillåts.
