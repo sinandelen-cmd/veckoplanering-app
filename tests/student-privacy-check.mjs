@@ -30,3 +30,7 @@ assert.equal(original.weeksData.length, 2, 'Originalplaneringen ska inte ändras
 assert.equal(original.weeksData[0].items.length, 1, 'Lärarens uppgifter ska bevaras')
 assert.equal(sanitize({ title: 'Tom', weeksData: null }).weeksData.length, 1, 'Tom plan ger en tom vecka, inga dolda veckor läcker')
 console.log('Student privacy/allowlist checks: OK')
+
+const classResult = sanitize({weeksData: [], classGroups: [{name: '8A', lessonTimes: {Måndag: ['09:00'], teacherNotes: 'HEMLIGT'}, overrides: {'0': {teacherNotes: 'HEMLIGT', lesson: {name: 'Elevlektion', teacherNotes: 'HEMLIGT', topics: [{name: 'Elevmoment', teacherNotes: 'HEMLIGT'}]}}}}]})
+assert.equal(JSON.stringify(classResult).includes('HEMLIGT'), false, 'Klassundantag får inte läcka interna fält')
+assert.equal(classResult.classGroups[0].overrides['0'].lesson.topics[0].name, 'Elevmoment')

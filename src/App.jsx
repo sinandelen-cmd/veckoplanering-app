@@ -512,6 +512,8 @@ function planFromRow(row) {
 // Elevkopian innehåller bara fält som faktiskt visas för elever.
 // En spärrlista för teacherNotes räcker inte: andra interna fält kan tillkomma.
 function sanitizeForStudents(plan) {
+  const sanitizeLessons = lessons => Array.isArray(lessons) ? lessons.filter(lesson => lesson && typeof lesson === 'object').map(lesson => ({ name: String(lesson.name || ''), day: String(lesson.day || ''), topics: Array.isArray(lesson.topics) ? lesson.topics.filter(topic => topic && typeof topic === 'object').map(topic => ({ name: String(topic.name || ''), pagesLabel: String(topic.pagesLabel || '').slice(0, 60), assignmentsLabel: String(topic.assignmentsLabel || '').slice(0, 60), pages: Array.isArray(topic.pages) ? topic.pages.map(String) : [], assignments: Array.isArray(topic.assignments) ? topic.assignments.map(String) : [], links: Array.isArray(topic.links) ? topic.links.filter(link => link && resourceInfo(typeof link === 'string' ? link : link.url)).map(link => typeof link === 'string' ? { url: link.trim(), label: resourceInfo(link).label } : { url: String(link.url).trim(), label: String(link.label || resourceInfo(link.url).label) }) : [] })) : [] })) : []
+
   const sourceWeeks = Array.isArray(plan?.weeksData) ? (plan.entryType === 'dag' && plan.weeksData.length ? displayWeeks(plan) : plan.weeksData) : makeWeeks(plan)
   return {
     kind: 'arsplanering-v2',
@@ -519,7 +521,7 @@ function sanitizeForStudents(plan) {
     subject: String(plan?.subject || ''),
     className: String(plan?.className || ''),
     startDate: String(plan?.startDate || ''),
-    classGroups: Array.isArray(plan?.classGroups) ? plan.classGroups.filter(g=>g && typeof g.name==='string').map(g=>({name:g.name.slice(0,80),startDate:String(g.startDate || plan.startDate || ''),days:Array.isArray(g.days)?g.days.filter(d=>['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].includes(d)):[],extraSlots:Array.isArray(g.extraSlots)?g.extraSlots.filter(item=>item && /^\d{4}-\d{2}-\d{2}$/.test(item.date || '')).map(item=>({date:item.date})):[],cancelledDates:Array.isArray(g.cancelledDates)?g.cancelledDates.filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)):[],lessonTimes:g.lessonTimes && typeof g.lessonTimes==='object'?g.lessonTimes:{},overrides:g.overrides && typeof g.overrides==='object'?g.overrides:{}})) : [],
+    classGroups: Array.isArray(plan?.classGroups) ? plan.classGroups.filter(g=>g && typeof g.name==='string').map(g=>({name:g.name.slice(0,80),startDate:String(g.startDate || plan.startDate || ''),days:Array.isArray(g.days)?g.days.filter(d=>['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].includes(d)):[],extraSlots:Array.isArray(g.extraSlots)?g.extraSlots.filter(item=>item && /^\d{4}-\d{2}-\d{2}$/.test(item.date || '')).map(item=>({date:item.date})):[],cancelledDates:Array.isArray(g.cancelledDates)?g.cancelledDates.filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)):[],lessonTimes:Object.fromEntries(Object.entries(g.lessonTimes || {}).filter(([day]) => ['Måndag','Tisdag','Onsdag','Torsdag','Fredag'].includes(day)).map(([day,times]) => [day,Array.isArray(times) ? times.filter(time => typeof time === 'string' && /^\d{2}:\d{2}$/.test(time)) : []])),overrides:Object.fromEntries(Object.entries(g.overrides || {}).filter(([key,value]) => /^\d+$/.test(key) && value && typeof value === 'object').map(([key,value]) => [key,{...(typeof value.text === 'string' ? {text:value.text} : {}),...(value.lesson ? {lesson:sanitizeLessons([value.lesson])[0]} : {})}]))})) : [],
     schoolYear: String(plan?.schoolYear || ''),
     grade: String(plan?.grade || ''),
     schoolForm: String(plan?.schoolForm || ''),
@@ -546,7 +548,7 @@ function sanitizeForStudents(plan) {
         hideDate: /^\d{4}-\d{2}-\d{2}$/.test(week.hideDate || '') ? week.hideDate : '',
         title: typeof week.title === 'string' ? week.title : '',
         chapter: typeof week.chapter === 'string' ? week.chapter.slice(0, 160) : '',
-        lessons: Array.isArray(week.lessons) ? week.lessons.filter(lesson => lesson && typeof lesson === 'object').map(lesson => ({ name: String(lesson.name || ''), day: String(lesson.day || ''), topics: Array.isArray(lesson.topics) ? lesson.topics.filter(topic => topic && typeof topic === 'object').map(topic => ({ name: String(topic.name || ''), pagesLabel: String(topic.pagesLabel || '').slice(0, 60), assignmentsLabel: String(topic.assignmentsLabel || '').slice(0, 60), pages: Array.isArray(topic.pages) ? topic.pages.map(String) : [], assignments: Array.isArray(topic.assignments) ? topic.assignments.map(String) : [], links: Array.isArray(topic.links) ? topic.links.filter(link => link && resourceInfo(typeof link === 'string' ? link : link.url)).map(link => typeof link === 'string' ? { url: link.trim(), label: resourceInfo(link).label } : { url: String(link.url).trim(), label: String(link.label || resourceInfo(link.url).label) }) : [] })) : [] })) : [],
+        lessons: sanitizeLessons(week.lessons),
         content: typeof week.content === 'string' ? week.content : '',
         pages: Array.isArray(week.pages) ? week.pages.filter(v => typeof v === 'string' && v.trim()).slice(0, 100) : [],
         assignments: Array.isArray(week.assignments) ? week.assignments.filter(v => typeof v === 'string' && v.trim()).slice(0, 100) : [],
@@ -2176,6 +2178,12 @@ const addNewTeacherWeek = () => setPlan(p => {
       </div>
       {shareMessage && <p role="status" className="share-feedback">{shareMessage}</p>}
     </section>}
+    {selectedId && teacherTab === "arsplan" && <section className="card" aria-label="Publicera elevversion">
+      <div className="button-row"><button type="button" className="primary" disabled={busy} onClick={() => save(true)}>{plan.published ? 'Uppdatera elevversion' : 'Publicera för elever'}</button>
+      {plan.published && plan.publicSlug && <a href={'/elev/' + encodeURIComponent(plan.publicSlug)} target="_blank" rel="noreferrer">Öppna elevversion</a>}</div>
+      <p className="muted">Ändringar sparas automatiskt som utkast. Elevversionen uppdateras när du publicerar.</p>
+      {status && <p role="status">{status}</p>}
+    </section>}
     {teacherTab !== "elevvy" && (isDirty || busy) && <div className="quick-save-bar" role="region" aria-label="Snabbspara årsplanering">
       <span aria-live="polite">{busy ? "Sparar…" : "Osparade ändringar"}</span>
       <span className="autosave-info">Sparas automatiskt</span>
@@ -2464,7 +2472,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     <section className="card calendar-primary-actions" aria-label="Spara och publicera årsplaneringen">
       <div className="button-row">
         <span className="autosave-info">Sparas automatiskt</span>
-        <span className="autosave-info">Publiceras automatiskt när det finns innehåll</span>
+        <span className="autosave-info">Publicera med knappen Publicera för elever</span>
         
       </div>
     </section>
@@ -2498,7 +2506,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       </div>}
     </section>
 
-    <div className="button-row" aria-label="Spara planering"><button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara ändringar</button><span className="autosave-info">Publiceras automatiskt när det finns innehåll</span></div>
+    <div className="button-row" aria-label="Spara planering"><button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara ändringar</button><span className="autosave-info">Publicera med knappen Publicera för elever</span></div>
     <div className="week-overview-toolbar" aria-label="Årskalender och zoom"><strong>Veckor i planeringen <span className="week-count-badge">{weeks.length} {weeks.length === 1 ? "vecka" : "veckor"}</span></strong><button type="button" className="primary" onClick={() => {
         setCalendarOpen(true)
         window.setTimeout(() => document.getElementById('teacher-year-calendar')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)

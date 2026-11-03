@@ -122,7 +122,7 @@ assert.match(app, /weekContentScore = week =>/)
 assert.match(app, /topic\.links\?\.length \|\| 0/)
 assert.match(printSource, /\.\.\.\(week\.links \|\| \[\]\)/)
 
-assert.match(app, /week\.lessons\.filter\(lesson => lesson && typeof lesson === 'object'\)/)
+assert.match(app, /lessons\.filter\(lesson => lesson && typeof lesson === 'object'\)/)
 assert.match(app, /lesson\.topics\.filter\(topic => topic && typeof topic === 'object'\)/)
 assert.match(printSource, /week\.lessons\) \? week\.lessons\.filter\(Boolean\)/)
 
