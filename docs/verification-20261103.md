@@ -1,46 +1,45 @@
 # Verifiering av Årsplanering – 2026-11-03
 
-Status: INTE färdigverifierad. Databasscenariot är godkänt efter tillfällig återaktivering. Inloggade webbläsartester blockeras av nekad testinloggning. Se uppföljningen längst ned.
+Status: Kärnscenarier för autosparning och klassbyten verifierade. Hela produkten är INTE 100 % färdigverifierad.
 
-Gren: `fix/plan-summaries-20261102`. Granskad applikationscommit: `46a0ee2497d89cc2cfbcb4408b5dcb6089b90600`.
+Gren: `fix/plan-summaries-20261102`.
+Senaste verifierade applikationscommit: `abb8098dd245bcc0ac1045cc16e9a0fabf9647d1`.
 Testwebbplats: https://arsplanering-isolerad-test-20261102.pages.dev/
 
-## Genomförda kontroller
+## Verifierat
 
-- `npm ci`: godkänd.
-- `npm run check`: samtliga 44 tester/kontrollskript godkända, inga överhoppade.
-- `npm run lint`: exit 0, 47 varningar kvar; alltså inte varningsfri.
-- Isolerad Vite-build: godkänd. Varning om stora JavaScript-paket kvarstår.
-- Byggda JavaScript-filer innehåller testprojektet `tdbmhkwsgzflqgmftzyy` och saknar produktionsprojektets URL.
-- Cloudflare bekräftade att testwebbplatsens kanoniska deployment kör ovanstående commit och den isolerade testkonfigurationen.
-- Webbläsaren öppnade testwebbplatsen och visade lärarinloggningen.
+- Testkontot kunde logga in i webbläsaren. Tidigare inloggningsblockering är löst.
+- Syntetisk testplanering id 7, ”QA verifiering 3 november”, användes. Fyra daterade veckor, sidnummer och uppgifter.
+- Två klasser skapades i gränssnittet: QA-8A med måndag och QA-8B med tisdag. Båda sparades i testdatabasen.
+- Tio klassbyten i följd gav rätt klassvy utan observerad frysning. Uppmätt tid inklusive verktygsanrop cirka 312–352 ms per byte; detta är inte en standardiserad prestandamätning.
+- Grundplaneringens moment ändrades till ”QA autosparning verifierad 2026-11-03” och följdes direkt av klassbyte. Sparad text kontrollerades med SQL och syntes efter full omladdning.
+- QA-8A fick egen text ”QA-8A egen ändring 2026-11-03”. Den överlevde omladdning och syntes i klassvyn. SQL visade klassens override, oförändrad grundtext och tomma overrides för QA-8B.
+- Senaste applikationsversionen verifierades driftsatt i Cloudflare, laddades om och öppnades i webbläsaren. Återgång från klassvy gav fyra veckor i grundplaneringen.
+- Alla 44 automatiska tester passerar. `npm run check` kör nu samtliga toppnivåskript i tests.
+- Lint: 0 fel, 47 varningar. Regeln no-undef är nu ett fel för att fånga saknade variabler.
+- Isolerad Vite-build passerar. Varning om stora JavaScript-paket kvarstår.
+- Testdatabas `tdbmhkwsgzflqgmftzyy` fungerade under testningen. Tidigare säkerhets- och prestandarådgivning gav inga varningar; RLS aktiverat på samtliga fyra public-tabeller.
+- Tidigare transaktionstest verifierade authenticated infoga/uppdatera/läsa och list_plan_summaries samt att ett annat konto inte kunde läsa eller uppdatera raden. Transaktionen återställdes med ROLLBACK.
 
-## Åtgärdade testfel
+## Åtgärdat i testgrenen
 
-Den tidigare `npm run check` utelämnade flera befintliga regressionstester. Alla toppnivåskript i tests körs nu. Full körning hittade två inaktuella testmiljöer: årsplaneringens sparscenario saknade importerad `reconcileSavedEditor`, och publiceringstestet saknade `parseContent` samt dess cache. Testerna använder nu aktuella hjälpfunktioner. Navigeringskontrollen pekar på nuvarande `openPlanRow` och behåller kravet att knappen är spärrad under sparning. Ingen applikationslogik ändrad.
+- Samtliga automatiska tester inkluderas; två inaktuella testmiljöer använder aktuella hjälpfunktioner.
+- Standardvyn visar fyra veckor i stället för hela året, även efter återgång till grundplanering. Den stora syntetiska planeringen frös före ändringen men gick att öppna efteråt.
+- Veckonavigeringen kan visa äldre veckor.
+- Klasskapande använder tom lista för schema i stället för odefinierad days.
+- Borttagna referenser till saknade setClassWeekPage, setOverviewPage och setSelectedLessonIndex.
+- WeekDetails får definierade standardvärden för undo/redo-props.
 
-## Ursprunglig blockering (åtgärdad tillfälligt i uppföljningen)
+## Kvar före fullständigt godkännande
 
-Supabase rapporterar Årsplanering Test som INACTIVE. Ett återaktiveringsförsök nekades: ägaren har nått gränsen på två aktiva gratisprojekt. Ingen annan databas pausades eller ändrades. Ingen SQL kördes och inga användardata ändrades.
+- Publik elevlänk, ompublicering, utkast och automatisk veckopublicering måste verifieras i isolerad miljö. Testdatabasen saknade den offentliga årsplanerings-RPC:n och stödfunktionen för automatisk veckopublicering vid schemaöversikten.
+- Hela visuella protokollet i QA-SLUTTEST.md återstår, inklusive mobilvy, A4/PDF, årsskifte och innehållsfiltrering.
+- Ingen standardiserad belastningsmätning av alla visningslägen. ”Visa alla veckor” kan fortfarande vara tung för mycket stora planeringar.
+- Lintvarningar och paketstorleksvarning är inte åtgärdade.
+- Elevkompassen är ett separat pågående arbete; ingen slutrapport från dess senaste Replit-uppdrag har ännu erhållits.
 
-## Återstår före godkännande
+## Drift och avgränsning
 
-1. Återaktivera testdatabasen med tillgänglig projektkapacitet; detta får inte ske genom otillåten paus av produktion eller Elevkompassen.
-2. Verifiera inloggning med separat testkonto och syntetiska data.
-3. Verifiera autosparning mot databasen, omladdning och att sparat innehåll finns kvar.
-4. Upprepa klassbyten och redigering under sparning; kontrollera rätt innehåll och mät respons/frysningar.
-5. Kör återstående inloggade och visuella scenarier i QA-SLUTTEST.md och prestandaplanen.
+Endast testgren och syntetiska data i testdatabasen ändrades. Ingen merge till main, produktionspublicering eller ändring av riktiga användardata.
 
-Automatiska hjälpfunktionstester är inte bevis för fungerande autosparning eller klassbyten i den körande webbläsaren. Ingen merge till main eller publicering till den riktiga webbplatsen har gjorts.
-
-## Uppföljning efter godkänt projektbyte
-
-- Användaren godkände tillfällig paus av Elevkompassen för testning och efterföljande återaktivering.
-- Årsplanering Test återaktiverades och rapporterade ACTIVE_HEALTHY. SQL-frågor besvarades. Två godkända testkonton och sex planeringar fanns kvar.
-- RLS är aktiverat på samtliga fyra tabeller i public. Supabases säkerhets- och prestandarådgivare rapporterade inga varningar vid kontrollen.
-- Databasscenario genomfört som authenticated med kontots auth.uid: infoga syntetisk planering, uppdatera och läsa tillbaka, kontrollera list_plan_summaries, växla till andra kontot och verifiera att läsning och uppdatering blockeras. Samtliga assertioner passerade. Testtransaktionen återställdes med ROLLBACK. Detta bevisar databasbeteende, inte webbläsarens autosparning.
-- Ny körning: 44/44 automatiska tester godkända.
-- Säker webbläsarinloggning genomfördes med användarinmatade uppgifter men nekades av tjänsten: invalid_credentials. Inga lösenord lästes eller ändrades. Autosparning efter omladdning och klassbyten förblir BLOCKED tills giltig testinloggning finns.
-- Schemaöversikten visar endast list_plan_summaries och plan_summary_content i public. Offentlig årsplanerings-RPC och stöd för automatisk veckopublicering är därför inte verifierade i denna databas; dessa funktioner kräver separat komplettering innan hela QA-protokollet kan godkännas.
-- Efter databaskontrollen pausades Årsplanering Test och återaktivering av Elevkompassen begärdes. Återaktiveringen verifierades därefter: Elevkompassen ACTIVE_HEALTHY, Årsplanering Test INACTIVE, Veckoplanering ACTIVE_HEALTHY.
-
+Efter testpasset begärdes paus av Årsplanering Test och återaktivering av projektet med namnet Elevkompassen enligt tidigare godkänt tillfälligt projektbyte. Slutlig hälsostatus kontrolleras separat. Observera att själva Elevkompassen-appen använder Veckoplanering-projektet, inte det tomma projektet som heter Elevkompassen. Produktionsprojektet Veckoplanering har förblivit ACTIVE_HEALTHY och har inte ändrats.
