@@ -54,9 +54,23 @@ Syntetiska planeringar: rad 7 för autosparning/klass/publicering och rad 8 för
 
 ## Elevkompassen
 
-Senaste erhållna rapport: 31/31 säkerhetstester, byggning och typkontroll godkända. Elevblad, närvarodetaljer, IUP, ångra samt krypterad backup/återställning testades med syntetiska uppgifter och simulerade Supabase-svar. Anonyma gamla portal-/filvägar lämnade inte ut skyddat innehåll i utvecklingsmiljön.
+Senaste erhållna Replit-slutrapport: 35/35 tester godkända, inga misslyckade eller överhoppade. Byggning, typkontroll, diffkontroll och syntaxkontroll av 19 transformerade skript godkända. Detta är rapporterade resultat från Replits verifiering, inte en oberoende omkörning här.
 
-Fortsatt Replit-uppdrag avser datumstyrd historikåterställning och vanlig musklickning i klassdialog. Senaste förfrågan gav busy; slutresultat inte erhållet. Verifiering av verkliga admin-/lärarroller, nekad roll och serverutloggning är inte slutförd. Simulerade tester ersätter inte verklig serverbehörighetskontroll. Ingen produktionspublicering gjordes.
+De två senast beställda datorflödena är färdigverifierade i utvecklingsmiljön:
+
+- Datumkontroller som saknades på aktiva startsidan har återställts.
+- Datumgränsen använder nu lokalt kalenderdatum i stället för UTC.
+- Historikvalet väljer senaste giltiga tidsstämpel inom datumgränsen, oberoende av insättningsordning.
+- Gränssnittstest återställde anteckning A från 1 november framför B från 2 november. Native bekräftelsedialog fungerade; A bestod efter återställningens omladdning och ytterligare omladdning med normal upplåsning.
+- Vanligt musklick på Skapa i klassdialogen fungerade; klassen bestod efter omladdning. Inget reproducerbart appfel i musåtkomst hittades, därför ändrades inte dialogens CSS/zoom.
+
+Tidigare verifierat: elevblad, närvarodetaljer, IUP, ångra och krypterad backup/återställning med syntetiska uppgifter. UI, lokal krypterad lagring och återläsning testades faktiskt i utvecklingsappen. Supabase-inloggning, administratörsgodkännande och hämtning av programfil simulerades.
+
+Tidigare verkliga anonyma Supabase-anrop nekades för status-/kontolistning och dokumentläsning (HTTP 401/42501); Storage gav HTTP 400 med intern 404 utan fil. Detta bevisar inte att behöriga användare kan hämta programmet.
+
+Kvar utanför verifieringen: verkliga godkända/nekade konton, produktionspolicyer samt verklig serverutloggning/sessionåterkallelse. Inget produktionsgodkännande lämnas. Inga produktionsändringar eller publiceringar gjordes.
+
+Inga dokumenterade blockerande fel återstår i de två senast beställda datorflödena. Replit nämner ytterligare fördjupning (negativa backupfall, fler tidszoner, flerfliksfall och en icke blockerande varning om flera Supabase-klientinstanser); dessa beskrivs inte som redan konstaterade blockerande fel.
 
 ## Databasrådgivning
 
