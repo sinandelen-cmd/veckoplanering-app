@@ -17,6 +17,7 @@ Testwebbplats: https://arsplanering-isolerad-test-20261102.pages.dev/
 - Senaste applikationsversionen verifierades driftsatt i Cloudflare, laddades om och öppnades i webbläsaren. Återgång från klassvy gav fyra veckor i grundplaneringen.
 - Alla 44 automatiska tester passerar. `npm run check` kör nu samtliga toppnivåskript i tests.
 - Lint: 0 fel, 47 varningar. Regeln no-undef är nu ett fel för att fånga saknade variabler.
+- GitHub Actions för applikationscommit abb8098dd245bcc0ac1045cc16e9a0fabf9647d1: completed/success.
 - Isolerad Vite-build passerar. Varning om stora JavaScript-paket kvarstår.
 - Testdatabas `tdbmhkwsgzflqgmftzyy` fungerade under testningen. Tidigare säkerhets- och prestandarådgivning gav inga varningar; RLS aktiverat på samtliga fyra public-tabeller.
 - Tidigare transaktionstest verifierade authenticated infoga/uppdatera/läsa och list_plan_summaries samt att ett annat konto inte kunde läsa eller uppdatera raden. Transaktionen återställdes med ROLLBACK.
@@ -42,4 +43,4 @@ Testwebbplats: https://arsplanering-isolerad-test-20261102.pages.dev/
 
 Endast testgren och syntetiska data i testdatabasen ändrades. Ingen merge till main, produktionspublicering eller ändring av riktiga användardata.
 
-Efter testpasset begärdes paus av Årsplanering Test och återaktivering av projektet med namnet Elevkompassen enligt tidigare godkänt tillfälligt projektbyte. Slutlig hälsostatus kontrolleras separat. Observera att själva Elevkompassen-appen använder Veckoplanering-projektet, inte det tomma projektet som heter Elevkompassen. Produktionsprojektet Veckoplanering har förblivit ACTIVE_HEALTHY och har inte ändrats.
+Efter testpasset begärdes paus av Årsplanering Test och återaktivering av projektet med namnet Elevkompassen enligt tidigare godkänt tillfälligt projektbyte. Slutlig status verifierad: Årsplanering Test INACTIVE, projektet Elevkompassen ACTIVE_HEALTHY och Veckoplanering ACTIVE_HEALTHY. Observera att själva Elevkompassen-appen använder Veckoplanering-projektet, inte det tomma projektet som heter Elevkompassen. Produktionsprojektet Veckoplanering har förblivit ACTIVE_HEALTHY och har inte ändrats.
