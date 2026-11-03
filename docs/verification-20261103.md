@@ -79,3 +79,12 @@ Efter installation rapporterades två varningar om avsiktligt anropbar SECURITY 
 ## Drift vid avslut
 
 Det godkända tillfälliga projektbytet är återställt och status verifierad: Årsplanering Test INACTIVE, projektet med namnet Elevkompassen ACTIVE_HEALTHY och Veckoplanering ACTIVE_HEALTHY. Testlänkarnas databas är därför pausad. Testdata och kod är bevarade. Själva Elevkompassen-appen använder Veckoplanering-projektet; det återstartade projektet med namnet Elevkompassen är ett separat tomt projekt. Produktionsdatabasen har inte pausats eller ändrats.
+
+## Förnyad kontroll 3 november – serverbehörigheter
+
+- Årsplaneringens lokala testsvit kördes igen: 47/47 godkända, inga överhoppade. Lint och build passerade; tidigare varningar kvarstår.
+- Produktionsprojektets metadata granskades skrivskyddat. RLS är aktiverat för teacher_access och elevkompassen_documents. Programbucketen elevkompassen-app är privat.
+- I en READ ONLY-transaktion saknade anon både EXECUTE på elevkompassen_access_status och SELECT på elevkompassen_documents.
+- Med authenticated-rollen och en syntetisk UUID utan godkännande returnerade den verkliga behörighetsfunktionen approved=false, is_admin=false och status=none. Dokumentfrågan returnerade 0 synliga rader. Transaktionen avslutades med ROLLBACK.
+- Detta är verkliga SQL-/rolltester, men JWT-identiteten sattes av testet. De verifierar inte Auth-inloggning, godkända användares åtkomst eller sessionåterkallelse. Inga riktiga dokument eller användarposter hämtades och inga produktionsdata ändrades.
+- Replit har fått ett nytt uppdrag att göra den isolerade testanslutningen fullt konfigurerbar och pröva en verklig tillfällig lokal Supabase-instans utan produktionsskrivningar eller betalda resurser. Resultatet är ännu inte erhållet.
