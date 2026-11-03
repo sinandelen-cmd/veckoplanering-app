@@ -1743,7 +1743,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     if (!selectedId || simpleSetup || busy || !isDirty || teacherTab === 'new') return undefined
     const timer = window.setTimeout(() => {
       if (serializedPlanRef.current !== savedPlanRef.current) {
-        void save(true, true)
+        void save(false, true)
       }
     }, 1400)
     return () => window.clearTimeout(timer)
