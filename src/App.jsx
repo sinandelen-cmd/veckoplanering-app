@@ -1513,7 +1513,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     })
     setFocusedTeacherWeek(null)
   }
-  useEffect(() => { const home = () => { setFocusedTeacherWeek(null); setShowPastTeacherWeeks(true) }; window.addEventListener('planning-home', home); return () => window.removeEventListener('planning-home', home) }, [])
+  useEffect(() => { const home = () => { setFocusedTeacherWeek(null); setShowPastTeacherWeeks(false) }; window.addEventListener('planning-home', home); return () => window.removeEventListener('planning-home', home) }, [])
   const windowStart = Math.max(0, Math.min(teacherWindowStart ?? defaultWindowFirst, Math.max(0, teacherDisplayWeeks.length - 4)))
   const defaultTeacherWindow = teacherDisplayWeeks.slice(windowStart, windowStart + 4)
   const visibleTeacherWeeks = useMemo(() => weeks.filter(week => week && !week.hidden), [weeks])
