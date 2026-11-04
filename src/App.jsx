@@ -1511,11 +1511,13 @@ const addNewTeacherWeek = () => setPlan(p => {
       el.style.marginBottom = ''
       if (showPastTeacherWeeks || focusedTeacherWeek) { el.style.transform = ''; el.style.transformOrigin = ''; return }
       const natural = el.offsetHeight
-      const available = window.innerHeight - el.getBoundingClientRect().top - 12
-      const scale = natural > 0 ? Math.max(0.2, Math.min(1, available / natural)) : 1
+      const naturalWidth = el.offsetWidth
+      const availableHeight = window.innerHeight - el.getBoundingClientRect().top - 12
+      const availableWidth = el.parentElement?.clientWidth || naturalWidth
+      const scale = natural > 0 && naturalWidth > 0 ? Math.max(0.2, Math.min(availableHeight / natural, availableWidth / naturalWidth)) : 1
       el.style.transformOrigin = 'top center'
-      el.style.transform = scale < 1 ? `scale(${scale})` : ''
-      el.style.marginBottom = scale < 1 ? `${-(natural * (1 - scale))}px` : ''
+      el.style.transform = Math.abs(scale - 1) > 0.002 ? `scale(${scale})` : ''
+      el.style.marginBottom = Math.abs(scale - 1) > 0.002 ? `${-(natural * (1 - scale))}px` : ''
     }
     fit()
     const observer = new ResizeObserver(fit)
