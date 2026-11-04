@@ -8216,13 +8216,3 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
 #lararvy .teacher-months-all-weeks .teacher-month-weeks > .chapter-week-group {
   width:100%!important;min-width:0!important;
 }
-
-
-/* Kompakt lektion i tvåveckorsläget. Mallens fält och ordning är oförändrade. */
-#lararvy .expanded-weeks-inline .teacher-months:not(.teacher-months-all-weeks):not(.teacher-months-focused) .week-card .lesson-heading { margin-bottom:4px!important; padding-top:4px!important; padding-bottom:4px!important; }
-#lararvy .expanded-weeks-inline .teacher-months:not(.teacher-months-all-weeks):not(.teacher-months-focused) .week-card .topic-cell textarea,
-#lararvy .expanded-weeks-inline .teacher-months:not(.teacher-months-all-weeks):not(.teacher-months-focused) .week-card .topic-cell input { height:26px!important; min-height:26px!important; max-height:26px!important; padding:2px 6px!important; }
-#lararvy .expanded-weeks-inline .teacher-months:not(.teacher-months-all-weeks):not(.teacher-months-focused) .week-card .topic-name textarea { height:auto!important; min-height:0!important; max-height:none!important; field-sizing:content; resize:none; overflow:hidden; padding:4px 6px!important; }
-#lararvy .expanded-weeks-inline .teacher-months:not(.teacher-months-all-weeks):not(.teacher-months-focused) .week-card .topic-name input { height:34px!important; min-height:34px!important; max-height:34px!important; padding:2px 6px!important; }
-#lararvy .expanded-weeks-inline .teacher-months:not(.teacher-months-all-weeks):not(.teacher-months-focused) .week-card .topic-grid { align-items:center!important; }
-#lararvy .expanded-weeks-inline .teacher-months:not(.teacher-months-all-weeks):not(.teacher-months-focused) .week-card .topic-fixed-heading { height:18px!important; min-height:0!important; overflow:hidden; }
