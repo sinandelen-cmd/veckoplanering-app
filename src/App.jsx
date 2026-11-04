@@ -1277,7 +1277,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [simpleSetup, setSimpleSetup] = useState(true)
   const [simpleMore, setSimpleMore] = useState(false)
   const [teacherTab, setTeacherTab] = useState("mina")
-  const [showPastTeacherWeeks, setShowPastTeacherWeeks] = useState(true)
+  const [showPastTeacherWeeks, setShowPastTeacherWeeks] = useState(false)
   const [pastWeeksExpanded, setPastWeeksExpanded] = useState(false)
   const [allWeekContentsOpen, setAllWeekContentsOpen] = useState(true)
   const [weekContentOverrides, setWeekContentOverrides] = useState({})
@@ -1501,6 +1501,28 @@ const addNewTeacherWeek = () => setPlan(p => {
   useEffect(() => { const home = () => { setFocusedTeacherWeek(null); setShowPastTeacherWeeks(true) }; window.addEventListener('planning-home', home); return () => window.removeEventListener('planning-home', home) }, [])
   const windowStart = Math.max(0, Math.min(teacherWindowStart ?? defaultWindowFirst, Math.max(0, teacherDisplayWeeks.length - 2)))
   const defaultTeacherWindow = teacherDisplayWeeks.slice(Math.max(defaultWindowFirst, windowStart), Math.max(defaultWindowFirst, windowStart) + 2)
+  // Grundplanering: två veckor skalas proportionellt så att alla lektioner ryms i skärmens höjd.
+  const teacherMonthsRef = useRef(null)
+  useEffect(() => {
+    const el = teacherMonthsRef.current
+    if (!el) return undefined
+    const fit = () => {
+      el.style.transform = 'none'
+      el.style.marginBottom = ''
+      if (showPastTeacherWeeks || focusedTeacherWeek) { el.style.transform = ''; el.style.transformOrigin = ''; return }
+      const natural = el.offsetHeight
+      const available = window.innerHeight - el.getBoundingClientRect().top - 12
+      const scale = natural > 0 ? Math.max(0.2, Math.min(1, available / natural)) : 1
+      el.style.transformOrigin = 'top center'
+      el.style.transform = scale < 1 ? `scale(${scale})` : ''
+      el.style.marginBottom = scale < 1 ? `${-(natural * (1 - scale))}px` : ''
+    }
+    fit()
+    const observer = new ResizeObserver(fit)
+    observer.observe(el)
+    window.addEventListener('resize', fit)
+    return () => { observer.disconnect(); window.removeEventListener('resize', fit); el.style.transform = ''; el.style.transformOrigin = ''; el.style.marginBottom = '' }
+  }, [showPastTeacherWeeks, focusedTeacherWeek, weeks.length])
   const visibleTeacherWeeks = weeks.filter(week => week && !week.hidden)
   const weeksWithContent = visibleTeacherWeeks.filter(week => Boolean(
     String(week.content || '').trim() || String(week.chapter || '').trim() ||
@@ -2186,7 +2208,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       </div>})()}
       
       {(showPastTeacherWeeks || focusedTeacherWeek) && <div className="teacher-active-chapter-bar" aria-label="Aktuellt kapitel och vecka"><div className="teacher-active-chapter-content" /></div>}
-      <div className={`teacher-months ${focusedTeacherWeek ? "teacher-months-focused" : ""} ${focusedTeacherWeek && teacherWeekOverview ? "teacher-months-overview-hidden" : ""} ${showPastTeacherWeeks && !focusedTeacherWeek ? "teacher-months-all-weeks" : ""} `}>
+      <div ref={teacherMonthsRef} className={`teacher-months ${focusedTeacherWeek ? "teacher-months-focused" : ""} ${focusedTeacherWeek && teacherWeekOverview ? "teacher-months-overview-hidden" : ""} ${showPastTeacherWeeks && !focusedTeacherWeek ? "teacher-months-all-weeks" : ""} `}>
         {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? (pastWeeksExpanded ? teacherDisplayWeeks : upcomingTeacherWeeks) : defaultTeacherWindow)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
           if (!chapters[chapterName]) chapters[chapterName] = { name: chapterName, items: [] }
