@@ -8237,3 +8237,15 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
 #lararvy .week-card .lesson-heading > h4 { flex:1 1 auto!important; width:auto!important; min-width:0!important; max-width:none!important; }
 #lararvy .week-card .lesson-heading > .lesson-edit-heading > * { min-width:0!important; }
 #lararvy .week-card .lesson-heading h4 span { white-space:normal!important; }
+
+/* Godkänd kompakt rubrik (höger i skissen): dag/lektion till vänster, Examination och knappar till höger, allt på en rad. */
+#lararvy .week-card .lesson-heading { display:flex!important; flex-wrap:nowrap!important; align-items:center!important; justify-content:space-between!important; gap:4px!important; }
+#lararvy .week-card .lesson-heading > .lesson-edit-heading,
+#lararvy .week-card .lesson-heading > h4 { flex:1 1 auto!important; min-width:0!important; overflow:hidden!important; text-overflow:ellipsis!important; white-space:nowrap!important; }
+#lararvy .week-card .lesson-heading > .lesson-reorder-controls,
+#lararvy .week-card .lesson-heading > .lesson-heading-history,
+#lararvy .week-card .lesson-heading > button.remove-small,
+#lararvy .week-card .lesson-heading > .lesson-add-assessment { flex:0 0 auto!important; }
+#lararvy .week-card .lesson-heading h4 span { white-space:nowrap!important; }
+#lararvy .week-card .lesson-heading .lesson-reorder-controls,
+#lararvy .week-card .lesson-heading .lesson-heading-history { display:flex!important; gap:0!important; }
