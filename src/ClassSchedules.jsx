@@ -75,6 +75,26 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
     </div>
     
     {addingClass && <div className="class-mini-new"><label>Ny klass <input value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addClass();if(name.trim())setAddingClass(false)}}} placeholder="T.ex. EK26A" /></label><button type="button" disabled={!name.trim()||groups.some(g=>g.name.toLocaleLowerCase('sv')===name.trim().toLocaleLowerCase('sv'))} onClick={()=>{addClass();setAddingClass(false);setShowClassMenu(true)}}>Lägg till</button></div>}
+    {editingClassView && group && <div className="class-two-week-view" aria-label={group.name + ' veckoplanering'}>
+      <div className="class-two-week-heading">
+        <h3>{group.name}</h3>
+        <div className="class-two-week-pager">
+          <button type="button" className="secondary" disabled={classWeekPage===0} onClick={()=>setClassWeekPage(n=>Math.max(0,n-1))}>← Föregående</button>
+          <button type="button" className="secondary" disabled={(classWeekPage+1)*2>=grouped.length} onClick={()=>setClassWeekPage(n=>n+1)}>Nästa →</button>
+        </div>
+      </div>
+      <div className="class-two-week-grid">
+        {grouped.slice(classWeekPage*2,classWeekPage*2+2).map(week=><section className="class-two-week-card" key={week.weekStart}>
+          <h4>Vecka {(() => {const d=new Date(week.weekStart+'T12:00:00');d.setDate(d.getDate()+3);const y=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-y)/86400000-3+(y.getDay()+6)%7)/7)})()}</h4>
+          {week.items.map(item=><button type="button" className="class-two-week-lesson" key={item.lessonNumber} onClick={()=>{setShowClassMenu(true);setShowClassDetails(true);setCompare(false);setExpandedWeek(week.weekStart);setShowAll(true);setEditing(item.lessonNumber);setEditText(item.override?.text ?? describe(item.lesson))}}>
+            <strong>Lektion {item.weekLessonNumber}</strong><span>{item.day} · {item.date}</span>
+            <span className="class-two-week-description">{item.override?.text ?? describe(item.lesson)}</span>
+          </button>)}
+          {!week.items.length && <p>Inga lektioner denna vecka</p>}
+        </section>)}
+      </div>
+      {!grouped.length && <p>Välj lektionsdagar under Ändra schema för att visa veckorna.</p>}
+    </div>}
     {unscheduledGroups.length>0 && <p role="alert" className="class-mini-warning">Välj lektionsdagar för {unscheduledGroups.map(g=>g.name).join(', ')} under respektive klassflik → Ändra schema.</p>}
     {showClassMenu && group && <div className="class-mini-panel">
       <div className="class-mini-panel-title"><strong>{group.name} · Lektionsdagar</strong><button type="button" className="secondary" onClick={()=>setShowClassMenu(false)} aria-label="Stäng schema">✕</button></div>
