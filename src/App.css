@@ -8216,3 +8216,24 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
 #lararvy .teacher-months-all-weeks .teacher-month-weeks > .chapter-week-group {
   width:100%!important;min-width:0!important;
 }
+
+/* Kompakt lektion (enligt godkänd skiss): rubrik och Examination på en rad, rutorna Moment/Sida/Uppgift lägre. */
+#lararvy .week-card .lesson-heading { flex-wrap:nowrap!important; gap:6px!important; padding:4px 6px!important; margin-bottom:4px!important; min-height:0!important; align-items:center!important; }
+#lararvy .week-card .lesson-heading h4 { font-size:13px!important; margin:0!important; line-height:1.2!important; }
+#lararvy .week-card .lesson-heading .lesson-edit-heading { font-size:13px!important; min-width:0!important; }
+#lararvy .week-card .lesson-heading .lesson-add-assessment { position:static!important; padding:2px 6px!important; font-size:11px!important; margin:0!important; white-space:nowrap!important; }
+#lararvy .week-card .lesson-heading .lesson-reorder-controls button,
+#lararvy .week-card .lesson-heading .lesson-heading-history button,
+#lararvy .week-card .lesson-heading > button.remove-small { padding:1px 3px!important; }
+#lararvy .week-card .lesson .topic { padding:3px!important; margin:0!important; }
+#lararvy .week-card .lesson .topic-grid { align-items:center!important; gap:4px!important; }
+#lararvy .week-card .lesson .topic-name textarea { field-sizing:content; height:auto!important; min-height:26px!important; max-height:none!important; overflow:hidden; resize:none; font-size:13px!important; padding:3px 5px!important; }
+#lararvy .week-card .lesson .topic-cell input,
+#lararvy .week-card .lesson .topic-cell textarea { height:26px!important; min-height:26px!important; max-height:26px!important; font-size:12px!important; padding:2px 5px!important; }
+#lararvy .week-card .lesson .topic-fixed-heading { height:14px!important; min-height:0!important; font-size:11px!important; overflow:hidden!important; padding:0 2px!important; }
+#lararvy .teacher-months-all-weeks .week-card .lessons { display:grid!important; grid-template-columns:repeat(5,minmax(0,1fr))!important; gap:8px!important; align-items:start!important; }
+#lararvy .teacher-months-all-weeks .week-card .lessons > .lesson { min-width:0!important; width:100%!important; max-width:100%!important; }
+#lararvy .week-card .lesson-heading > .lesson-edit-heading,
+#lararvy .week-card .lesson-heading > h4 { flex:1 1 auto!important; width:auto!important; min-width:0!important; max-width:none!important; }
+#lararvy .week-card .lesson-heading > .lesson-edit-heading > * { min-width:0!important; }
+#lararvy .week-card .lesson-heading h4 span { white-space:normal!important; }
