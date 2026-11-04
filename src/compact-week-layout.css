@@ -1,0 +1,26 @@
+/* Compact desktop layout for Årsplanering. Presentation only; no data changes. */
+@media (min-width: 700px) {
+  .planning-unified-navigation { min-height: 42px !important; padding-block: 4px !important; gap: 6px !important; }
+  .planning-unified-navigation button { min-height: 32px !important; padding: 5px 9px !important; }
+  .planning-unified-navigation .planning-active-plan-title { font-size: 16px !important; line-height: 1.15 !important; }
+  #lararvy .teacher-week-navigation { padding: 6px 9px !important; gap: 5px !important; min-height: 48px !important; }
+  #lararvy .teacher-week-navigation button { min-height: 32px !important; padding: 5px 9px !important; }
+  #lararvy .teacher-week-controls { gap: 4px !important; }
+  #lararvy .teacher-months-focused .week-card,
+  #lararvy .teacher-month-weeks .week-card { padding: 8px !important; }
+  #lararvy .teacher-month-weeks .week-top { padding: 5px 7px !important; margin: 0 !important; }
+  #lararvy .teacher-chapter-sticky { padding: 7px 10px !important; margin-block: 4px !important; }
+  #lararvy .teacher-chapter-sticky .chapter-heading { font-size: 1.4rem !important; margin-bottom: 3px !important; }
+  #lararvy .teacher-month-weeks .lesson { padding: 6px !important; }
+  #lararvy .teacher-month-weeks .lesson-heading { margin-bottom: 3px !important; }
+  #lararvy .teacher-month-weeks .lesson input,
+  #lararvy .teacher-month-weeks .lesson textarea { padding: 5px 6px !important; line-height: 1.25 !important; }
+  #lararvy .smart-four-week-overview { gap: 8px !important; }
+  #lararvy .smart-week-mini { min-width: 0 !important; }
+}
+@media (max-height: 800px) and (min-width: 700px) {
+  #lararvy .teacher-week-navigation { min-height: 40px !important; }
+  #lararvy .teacher-chapter-sticky { padding-block: 5px !important; }
+  #lararvy .teacher-month-weeks .week-card { padding: 6px !important; }
+}
+/* Never shrink the interface with CSS zoom: retain readable text and natural scrolling. */
