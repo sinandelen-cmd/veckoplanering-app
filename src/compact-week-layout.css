@@ -83,3 +83,12 @@
   width: 100% !important;
   overflow-wrap: anywhere;
 }
+
+/* Week layout: hide duplicates, keep two columns; all weeks stack vertically. */
+#lararvy .smart-four-week-overview{display:none!important}
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .teacher-month-section{display:contents!important}
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .teacher-chapter-sticky{display:none!important}
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .teacher-month-weeks{display:contents!important}
+#lararvy .teacher-months.teacher-months-all-weeks{display:block!important;max-height:none!important;overflow:visible!important}
+#lararvy .teacher-months.teacher-months-all-weeks .teacher-month-weeks{display:grid!important;grid-template-columns:minmax(0,1fr)!important;max-height:none!important;overflow:visible!important}
+#lararvy .teacher-months.teacher-months-all-weeks .chapter-week-group{width:100%!important;max-width:none!important}
