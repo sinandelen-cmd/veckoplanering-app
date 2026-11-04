@@ -8200,3 +8200,19 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
     font-size:12px!important;
   }
 }
+
+/* Grundplanering: exakt två hela veckor sida vid sida (standardläget). */
+#lararvy .expanded-weeks-inline .teacher-months:not(.teacher-months-all-weeks):not(.teacher-months-focused) .teacher-month-weeks {
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:16px!important;align-items:start!important;
+}
+#lararvy .expanded-weeks-inline .teacher-months:not(.teacher-months-all-weeks):not(.teacher-months-focused) .teacher-month-weeks > .chapter-week-group {
+  width:100%!important;min-width:0!important;margin:0!important;
+}
+
+/* Visa alla veckor: en komplett vecka per rad, i kronologisk ordning. */
+#lararvy .teacher-months-all-weeks .teacher-month-weeks {
+  display:flex!important;flex-direction:column!important;grid-template-columns:none!important;gap:16px!important;
+}
+#lararvy .teacher-months-all-weeks .teacher-month-weeks > .chapter-week-group {
+  width:100%!important;min-width:0!important;
+}
