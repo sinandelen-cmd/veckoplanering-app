@@ -938,7 +938,8 @@ function ClassWeekFit({ children }) {
 function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, busy, saveStatus }) {
   const [expanded, setExpanded] = useState(null)
   const [saving, setSaving] = useState(false)
-  const [visibleWeekCount, setVisibleWeekCount] = useState(3)
+  // Klassvyn visar alltid exakt två hela veckor sida vid sida.
+  const visibleWeekCount = 2
   const [expandedFullWeek, setExpandedFullWeek] = useState(null)
   const [classWeekOffset, setClassWeekOffset] = useState(0)
   const classHistory = useRef({ past: [], future: [] })
@@ -989,7 +990,6 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
   })
   if (!group) return null
   return <section className="class-real-two-weeks" aria-label={className+' – '+visibleWeekCount+' veckor'}>
-    <div className="class-real-two-weeks-header"><div className="class-week-count-controls" role="group" aria-label="Antal veckor att visa">{[1,2,3].map(n=><button key={n} type="button" className={visibleWeekCount===n?"active":""} aria-pressed={visibleWeekCount===n} onClick={()=>setVisibleWeekCount(n)}>{n} {n===1?"vecka":"veckor"}</button>)}</div></div>
     <div className="class-real-two-weeks-grid" style={{"--class-week-columns":visibleWeekCount}}>{weeks.map((week,_i)=><div className="class-real-week-column" key={week.weekStart}>
       <strong>{week.weekStart===currentStart?'Nuvarande vecka':`Vecka ${calendarWeekNumber(week.weekStart)}`}</strong>
       <CalendarWeekThumbnail classWeekView week={week} entryType={plan.entryType || 'lektion'} onOpen={()=>setExpandedFullWeek(week.weekStart)} onOpenLesson={lessonIndex=>setExpanded({weekStart:week.weekStart,lessonIndex})}/>
