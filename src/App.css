@@ -8249,3 +8249,7 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
 #lararvy .week-card .lesson-heading h4 span { white-space:nowrap!important; }
 #lararvy .week-card .lesson-heading .lesson-reorder-controls,
 #lararvy .week-card .lesson-heading .lesson-heading-history { display:flex!important; gap:0!important; }
+
+/* Alternativ 2 (godkänt): Examination som ikon i lektionsrubriken, och en gemensam ångra/gör om-knapp. */
+#lararvy .week-card .lesson-heading > .lesson-add-assessment span { display:none!important; }
+#lararvy .week-card .lesson-heading .lesson-heading-history button:nth-child(2) { display:none!important; }

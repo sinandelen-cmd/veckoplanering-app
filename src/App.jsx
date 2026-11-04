@@ -2925,7 +2925,8 @@ function lessonDayDate(weekStart, lessonName) {
   const date = new Date(weekStart + 'T12:00:00')
   if (Number.isNaN(date.getTime())) return ''
   date.setDate(date.getDate() - ((date.getDay() + 6) % 7) + index)
-  return formatDate(toIsoDate(date))
+  // Kort datum i lektionsrubriken, t.ex. "29 nov" (utan år).
+  return date.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' }).replace('.', '')
 }
 function PlanningActionIcon({ name, size = 16 }) {
   const paths = {
