@@ -1,0 +1,94 @@
+/* Compact desktop layout for Årsplanering. Presentation only; no data changes. */
+@media (min-width: 700px) {
+  .planning-unified-navigation { min-height: 42px !important; padding-block: 4px !important; gap: 6px !important; }
+  .planning-unified-navigation button { min-height: 32px !important; padding: 5px 9px !important; }
+  .planning-unified-navigation .planning-active-plan-title { font-size: 16px !important; line-height: 1.15 !important; }
+  #lararvy .teacher-week-navigation { padding: 6px 9px !important; gap: 5px !important; min-height: 48px !important; }
+  #lararvy .teacher-week-navigation button { min-height: 32px !important; padding: 5px 9px !important; }
+  #lararvy .teacher-week-controls { gap: 4px !important; }
+  #lararvy .teacher-months-focused .week-card,
+  #lararvy .teacher-month-weeks .week-card { padding: 8px !important; }
+  #lararvy .teacher-month-weeks .week-top { padding: 5px 7px !important; margin: 0 !important; }
+  #lararvy .teacher-chapter-sticky { padding: 7px 10px !important; margin-block: 4px !important; }
+  #lararvy .teacher-chapter-sticky .chapter-heading { font-size: 1.4rem !important; margin-bottom: 3px !important; }
+  #lararvy .teacher-month-weeks .lesson { padding: 6px !important; }
+  #lararvy .teacher-month-weeks .lesson-heading { margin-bottom: 3px !important; }
+  #lararvy .teacher-month-weeks .lesson input,
+  #lararvy .teacher-month-weeks .lesson textarea { padding: 5px 6px !important; line-height: 1.25 !important; }
+  #lararvy .smart-four-week-overview { gap: 8px !important; }
+  #lararvy .smart-week-mini { min-width: 0 !important; }
+}
+@media (max-height: 800px) and (min-width: 700px) {
+  #lararvy .teacher-week-navigation { min-height: 40px !important; }
+  #lararvy .teacher-chapter-sticky { padding-block: 5px !important; }
+  #lararvy .teacher-month-weeks .week-card { padding: 6px !important; }
+}
+/* Never shrink the interface with CSS zoom: retain readable text and natural scrolling. */
+
+/* Two-week class overview follows the teacher's desktop sketches. */
+@media (min-width: 700px) {
+ .class-two-week-view {margin:10px 0 16px;padding:12px;border:1px solid #d8e3e1;border-radius:12px;background:#fff;}
+ .class-two-week-heading {display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
+ .class-two-week-heading h3 {margin:0;font-size:1.3rem;}
+ .class-two-week-pager {display:flex;gap:6px;}
+ .class-two-week-pager button {min-height:32px;padding:5px 9px;}
+ .class-two-week-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+ .class-two-week-card {min-width:0;padding:12px;border:1px solid #d6e2e7;border-radius:10px;background:#f8fbfc;}
+ .class-two-week-card h4 {text-align:center;margin:0 0 10px;font-size:1.15rem;}
+ .class-two-week-lesson {display:flex;align-items:center;flex-wrap:wrap;gap:4px 12px;width:100%;margin:0 0 7px;padding:9px 11px;text-align:left;background:white;border:1px solid #dce5e7;border-radius:8px;cursor:pointer;}
+ .class-two-week-lesson:hover {border-color:#4e93ad;background:#f2faff;}
+ .class-two-week-lesson strong {font-size:14px;}
+ .class-two-week-lesson span {font-size:12px;color:#53636c;}
+ .class-two-week-lesson .class-two-week-description {flex-basis:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+}
+@media (max-width:699px) {
+ .class-two-week-view {padding:8px;margin:8px 0;}
+ .class-two-week-heading {display:flex;justify-content:space-between;flex-wrap:wrap;}
+ .class-two-week-grid {display:grid;grid-template-columns:1fr;gap:10px;}
+ .class-two-week-card {padding:10px;border:1px solid #d6e2e7;border-radius:8px;}
+ .class-two-week-lesson {display:block;width:100%;margin-bottom:6px;padding:8px;text-align:left;}
+ .class-two-week-lesson span {display:block;}
+}
+
+/* Isolated Cloudflare Pages preview build for desktop class overview. */
+
+/* Rebuild isolated preview with active Supabase authentication configuration. */
+
+/* Rebuild with verified active-project publishable key. */
+
+/* Two full weeks in Grundplanering, laptop-first test branch. */
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  align-items: start;
+  gap: 10px !important;
+  min-width: 0;
+}
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .teacher-month-section,
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .teacher-month-weeks,
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .chapter-week-group {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .teacher-month-weeks {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 8px !important;
+}
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .teacher-chapter-sticky {
+  position: static !important;
+}
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .week-card {
+  min-width: 0 !important;
+  width: 100% !important;
+  overflow-wrap: anywhere;
+}
+
+/* Week layout: hide duplicates, keep two columns; all weeks stack vertically. */
+#lararvy .smart-four-week-overview{display:none!important}
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .teacher-month-section{display:contents!important}
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .teacher-chapter-sticky{display:none!important}
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .teacher-month-weeks{display:contents!important}
+#lararvy .teacher-months.teacher-months-all-weeks{display:block!important;max-height:none!important;overflow:visible!important}
+#lararvy .teacher-months.teacher-months-all-weeks .teacher-month-weeks{display:grid!important;grid-template-columns:minmax(0,1fr)!important;max-height:none!important;overflow:visible!important}
+#lararvy .teacher-months.teacher-months-all-weeks .chapter-week-group{width:100%!important;max-width:none!important}
