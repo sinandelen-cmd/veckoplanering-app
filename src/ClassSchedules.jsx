@@ -13,6 +13,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
   const [name, setName] = React.useState('')
   const [addingClass, setAddingClass] = React.useState(false)
   const [selected, setSelected] = React.useState(0)
+  const [classWeekPage, setClassWeekPage] = React.useState(0)
   const [showAll, setShowAll] = React.useState(false)
   const [expandedWeek, setExpandedWeek] = React.useState(null)
   const [showClassMenu, setShowClassMenu] = React.useState(false)
@@ -51,15 +52,16 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
     }
     updateGroup({ overrides, pendingMoments: [...(group.pendingMoments || []), ...(carry ? [carry] : [])] })
   }
-  const grouped = schedule.reduce((result, item) => {
+  const grouped = React.useMemo(() => schedule.reduce((result, item) => {
     const weekStart = iso(monday(item.date))
     if (!result.length || result[result.length-1].weekStart !== weekStart) result.push({ weekStart, items: [] })
     result[result.length-1].items.push({...item, weekLessonNumber:result[result.length-1].items.length+1})
     return result
-  }, [])
+  }, []), [schedule])
   const weeksShown = showAll ? grouped : grouped.slice(0, 8)
-  const comparison = groups.map(g => ({name:g.name, weeks:buildClassSchedule(plan,g).reduce((acc,item)=>{const key=iso(monday(item.date));(acc[key] ||= []).push(item);return acc},{})}))
-  const comparisonWeeks = [...new Set(comparison.flatMap(g=>Object.keys(g.weeks)))].sort()
+  // Class comparisons are expensive: calculate them only when the comparison panel is open.
+  const comparison = React.useMemo(() => compare && showClassMenu ? groups.map(g => ({name:g.name, weeks:buildClassSchedule(plan,g).reduce((acc,item)=>{const key=iso(monday(item.date));(acc[key] ||= []).push(item);return acc},{})})) : [], [compare, showClassMenu, groups, plan])
+  const comparisonWeeks = React.useMemo(() => [...new Set(comparison.flatMap(g=>Object.keys(g.weeks)))].sort(), [comparison])
   const unscheduledGroups = groups.filter(g => !(g.days || []).length)
   return <section className="card" aria-label="Kopplade klasser">
 
