@@ -2179,12 +2179,6 @@ const addNewTeacherWeek = () => setPlan(p => {
       </div>,document.body)}
       {focusedTeacherWeek && <div className="teacher-mobile-week-overview"><div className="teacher-mobile-week-overview-actions"><strong>Vecka {calendarWeekNumber(weeks.find(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)?.weekStart) || ""} · Helvecksvy</strong><button type="button" className="secondary" aria-expanded={!teacherWeekOverview} onClick={()=>setTeacherWeekOverview(v=>!v)}>{teacherWeekOverview?"Visa och redigera detaljer":"Visa hela veckan"}</button></div>{teacherWeekOverview && <CalendarWeekThumbnail week={weeks.find(w=>String(w.weekStart||w.weekNumber)===focusedTeacherWeek)} entryType={plan.entryType||"lektion"} onOpen={()=>setTeacherWeekOverview(false)} onOpenLesson={()=>setTeacherWeekOverview(false)}/>}</div>}
 
-      {!focusedTeacherWeek && !showPastTeacherWeeks && <div className="smart-four-week-overview" aria-label="Fyra veckor i miniatyr">
-        {defaultTeacherWindow.map(({week}) => <div className="smart-week-mini" key={week.weekStart || week.weekNumber}>
-          <CalendarWeekThumbnail week={week} entryType={plan.entryType||"lektion"} onOpen={()=>{setFocusedTeacherWeek(String(week.weekStart||week.weekNumber));setTeacherWeekOverview(false)}} onOpenLesson={lessonIndex=>{if(lessonIndex<0)return;setLessonModal({weekKey:String(week.weekStart||week.weekNumber),lessonIndex});setLessonModalChanged(false)}}/>
-          
-        </div>)}
-      </div>}
       {lessonModal && (()=>{const modalIndex=weeks.findIndex(w=>String(w.weekStart||w.weekNumber)===lessonModal.weekKey);const modalWeek=weeks[modalIndex];if(!modalWeek)return null;return <div className="smart-lesson-overlay" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget){setLessonModal(null);setLessonModalChanged(false)}}}>
         <section className="smart-lesson-dialog" role="dialog" aria-modal="true" aria-label={`Redigera lektion ${lessonModal.lessonIndex+1} vecka ${calendarWeekNumber(modalWeek.weekStart)??modalWeek.weekNumber}`}>
           <div className="smart-lesson-dialog-header"><div><strong>Vecka {calendarWeekNumber(modalWeek.weekStart)??modalWeek.weekNumber}</strong><span> · Lektion {lessonModal.lessonIndex+1} av {modalWeek.lessons?.length||1}</span></div><button type="button" className={lessonModalChanged?'smart-lesson-dialog-done':'smart-lesson-dialog-close'} aria-label={lessonModalChanged?'Klar och återgå till fyra veckor':'Stäng utan ändringar'} onClick={()=>{setLessonModal(null);setLessonModalChanged(false)}}>{lessonModalChanged?'✓ Klar':'✕'}</button></div>
@@ -2193,8 +2187,8 @@ const addNewTeacherWeek = () => setPlan(p => {
       </div>})()}
       
       {(showPastTeacherWeeks || focusedTeacherWeek) && <div className="teacher-active-chapter-bar" aria-label="Aktuellt kapitel och vecka"><div className="teacher-active-chapter-content" /></div>}
-      <div className={`teacher-months ${focusedTeacherWeek ? "teacher-months-focused" : ""} ${focusedTeacherWeek && teacherWeekOverview ? "teacher-months-overview-hidden" : ""} ${!focusedTeacherWeek && !showPastTeacherWeeks ? "smart-months-mini-hidden" : ""} ${showPastTeacherWeeks && !focusedTeacherWeek ? "teacher-months-all-weeks" : ""} `}>
-        {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? (pastWeeksExpanded ? teacherDisplayWeeks : upcomingTeacherWeeks) : defaultTeacherWindow)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
+      <div className={`teacher-months ${focusedTeacherWeek ? "teacher-months-focused" : ""} ${focusedTeacherWeek && teacherWeekOverview ? "teacher-months-overview-hidden" : ""} ${showPastTeacherWeeks && !focusedTeacherWeek ? "teacher-months-all-weeks" : ""} `}>
+        {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? teacherDisplayWeeks : defaultTeacherWindow)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
           if (!chapters[chapterName]) chapters[chapterName] = { name: chapterName, items: [] }
           chapters[chapterName].items.push(item)
