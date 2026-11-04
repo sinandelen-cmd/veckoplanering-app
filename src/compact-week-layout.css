@@ -55,3 +55,31 @@
 /* Rebuild isolated preview with active Supabase authentication configuration. */
 
 /* Rebuild with verified active-project publishable key. */
+
+/* Two full weeks in Grundplanering, laptop-first test branch. */
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  align-items: start;
+  gap: 10px !important;
+  min-width: 0;
+}
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .teacher-month-section,
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .teacher-month-weeks,
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .chapter-week-group {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .teacher-month-weeks {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 8px !important;
+}
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .teacher-chapter-sticky {
+  position: static !important;
+}
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .week-card {
+  min-width: 0 !important;
+  width: 100% !important;
+  overflow-wrap: anywhere;
+}
