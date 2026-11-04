@@ -8216,3 +8216,14 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
 #lararvy .teacher-months-all-weeks .teacher-month-weeks > .chapter-week-group {
   width:100%!important;min-width:0!important;
 }
+
+/* FÖRHANDSVISNING (ej committad): kompaktare Moment-, Sida- och Uppgift-rutor i tvåveckorsläget. Mallens fält och ordning är oförändrade. */
+#lararvy .expanded-weeks-inline .teacher-months:not(.teacher-months-all-weeks):not(.teacher-months-focused) .week-card .lesson-heading { padding-top:4px!important; padding-bottom:4px!important; }
+#lararvy .expanded-weeks-inline .teacher-months:not(.teacher-months-all-weeks):not(.teacher-months-focused) .week-card .lesson-add-assessment { padding:2px 6px!important; }
+#lararvy .expanded-weeks-inline .teacher-months:not(.teacher-months-all-weeks):not(.teacher-months-focused) .week-card .topic-cell { min-height:0!important; height:auto!important; }
+#lararvy .expanded-weeks-inline .teacher-months:not(.teacher-months-all-weeks):not(.teacher-months-focused) .week-card .topic-cell textarea,
+#lararvy .expanded-weeks-inline .teacher-months:not(.teacher-months-all-weeks):not(.teacher-months-focused) .week-card .topic-cell input,
+#lararvy .expanded-weeks-inline .teacher-months:not(.teacher-months-all-weeks):not(.teacher-months-focused) .week-card .topic-name textarea,
+#lararvy .expanded-weeks-inline .teacher-months:not(.teacher-months-all-weeks):not(.teacher-months-focused) .week-card .topic-name input { min-height:28px!important; height:auto!important; padding:3px 6px!important; font-size:13px!important; }
+#lararvy .expanded-weeks-inline .teacher-months:not(.teacher-months-all-weeks):not(.teacher-months-focused) .week-card .topic-fixed-heading { padding:2px 4px!important; font-size:12px!important; }
+#lararvy .expanded-weeks-inline .teacher-months:not(.teacher-months-all-weeks):not(.teacher-months-focused) .week-card .topic-corner { padding:0!important; }
