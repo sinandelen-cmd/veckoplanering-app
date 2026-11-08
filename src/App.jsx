@@ -949,7 +949,7 @@ function ClassWeekFit({ children }) {
 function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, busy, saveStatus }) {
   const [expanded, setExpanded] = useState(null)
   const [saving, setSaving] = useState(false)
-  const [visibleWeekCount, setVisibleWeekCount] = useState(3)
+  const visibleWeekCount = 2
   const [expandedFullWeek, setExpandedFullWeek] = useState(null)
   const [classWeekOffset, setClassWeekOffset] = useState(0)
   const classHistory = useRef({ past: [], future: [] })
@@ -1000,7 +1000,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
   })
   if (!group) return null
   return <section className="class-real-two-weeks" aria-label={className+' – '+visibleWeekCount+' veckor'}>
-    <div className="class-real-two-weeks-header"><div className="class-week-count-controls" role="group" aria-label="Antal veckor att visa">{[1,2,3].map(n=><button key={n} type="button" className={visibleWeekCount===n?"active":""} aria-pressed={visibleWeekCount===n} onClick={()=>setVisibleWeekCount(n)}>{n} {n===1?"vecka":"veckor"}</button>)}</div></div>
+    <div className="class-real-two-weeks-header"><strong>Två veckor sida vid sida – alla lektioner</strong></div>
     <div className="class-real-two-weeks-grid" style={{"--class-week-columns":visibleWeekCount}}>{weeks.map((week,_i)=><div className="class-real-week-column" key={week.weekStart}>
       <strong>{week.weekStart===currentStart?'Nuvarande vecka':`Vecka ${calendarWeekNumber(week.weekStart)}`}</strong>
       <CalendarWeekThumbnail classWeekView week={week} entryType={plan.entryType || 'lektion'} onOpen={()=>setExpandedFullWeek(week.weekStart)} onOpenLesson={lessonIndex=>setExpanded({weekStart:week.weekStart,lessonIndex})}/>
@@ -1517,7 +1517,7 @@ const addNewTeacherWeek = () => setPlan(p => {
   }
   useEffect(() => { const home = () => { setFocusedTeacherWeek(null); setShowPastTeacherWeeks(false) }; window.addEventListener('planning-home', home); return () => window.removeEventListener('planning-home', home) }, [])
   const windowStart = Math.max(0, Math.min(teacherWindowStart ?? defaultWindowFirst, Math.max(0, teacherDisplayWeeks.length - 4)))
-  const defaultTeacherWindow = teacherDisplayWeeks.slice(windowStart, windowStart + 4)
+  const defaultTeacherWindow = teacherDisplayWeeks.slice(windowStart, windowStart + 2)
   const visibleTeacherWeeks = useMemo(() => weeks.filter(week => week && !week.hidden), [weeks])
   const weeksWithContent = useMemo(() => visibleTeacherWeeks.filter(week => Boolean(
     String(week.content || '').trim() || String(week.chapter || '').trim() ||
@@ -2248,7 +2248,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       
       {(showPastTeacherWeeks || focusedTeacherWeek) && <div className="teacher-active-chapter-bar" aria-label="Aktuellt kapitel och vecka"><div className="teacher-active-chapter-content" /></div>}
       <div className={`teacher-months ${focusedTeacherWeek ? "teacher-months-focused" : ""} ${focusedTeacherWeek && teacherWeekOverview ? "teacher-months-overview-hidden" : ""} ${!focusedTeacherWeek && !showPastTeacherWeeks ? "smart-months-mini-hidden" : ""} ${showPastTeacherWeeks && !focusedTeacherWeek ? "teacher-months-all-weeks" : ""} `}>
-        {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? (pastWeeksExpanded ? teacherDisplayWeeks : upcomingTeacherWeeks) : defaultTeacherWindow)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
+        {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? teacherDisplayWeeks : defaultTeacherWindow)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
           if (!chapters[chapterName]) chapters[chapterName] = { name: chapterName, items: [] }
           chapters[chapterName].items.push(item)
