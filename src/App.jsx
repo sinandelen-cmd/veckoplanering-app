@@ -1434,6 +1434,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   }, [])
   const openingPlanRef = useRef(false)
   const pendingPlanFetchRef = useRef(new Map())
+  const recentPrefetchedPlanRef = useRef(null)
   const initialPlansLoadedRef = useRef(false)
   const latestPlanRef = useRef(plan)
   useEffect(() => { latestPlanRef.current = plan }, [plan])
@@ -1785,7 +1786,6 @@ const addNewTeacherWeek = () => setPlan(p => {
     const uid = session?.user?.id
     if (!uid) return null
     // Dela pågående hämtning mellan förhandsladdning och klick.
-    // Behåll inte fullständiga planeringar i minnet efter hämtningen.
     const key = String(id)
     if (pendingPlanFetchRef.current.has(key)) return pendingPlanFetchRef.current.get(key)
     const request = (async () => {
@@ -1796,7 +1796,9 @@ const addNewTeacherWeek = () => setPlan(p => {
         if (!silent) setStatus(`Kunde inte öppna planeringen: ${error?.message || 'okänt fel'}`)
         return null
       }
-      return { ...data, is_summary: false }
+      const full = { ...data, is_summary: false }
+      if (silent) recentPrefetchedPlanRef.current = { key, userId: uid, row: full, fetchedAt: Date.now() }
+      return full
     })()
     pendingPlanFetchRef.current.set(key, request)
     try { return await request } finally { pendingPlanFetchRef.current.delete(key) }
@@ -1804,13 +1806,21 @@ const addNewTeacherWeek = () => setPlan(p => {
 
   function prefetchPlanRow(row) {
     if (busy || !row?.id || isFullPlanRow(row) || pendingPlanFetchRef.current.has(String(row.id))) return
-    // Förhandsladda på pekarfokus så att väntan börjar innan läraren klickar.
-    // Resultatet cachelagras inte: nästa klick hämtar alltid aktuell data om hämtningen redan avslutats.
+    // Förhandsladda på pekarfokus. Behåll högst en planering i högst 8 sekunder.
+    const cached = recentPrefetchedPlanRef.current
+    if (cached?.key === String(row.id) && Date.now() - cached.fetchedAt < 8000) return
     void fetchFullPlanRow(row.id, true)
   }
 
   async function ensureFullPlanRow(row) {
     if (isFullPlanRow(row)) return row
+    const cached = recentPrefetchedPlanRef.current
+    if (cached?.key === String(row.id) && cached.userId === session?.user?.id &&
+        Date.now() - cached.fetchedAt < 8000 &&
+        (!row.updated_at || row.updated_at === cached.row.updated_at)) {
+      recentPrefetchedPlanRef.current = null
+      return cached.row
+    }
     return fetchFullPlanRow(row.id)
   }
 
