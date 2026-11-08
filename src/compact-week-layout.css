@@ -92,3 +92,41 @@
 #lararvy .teacher-months.teacher-months-all-weeks{display:block!important;max-height:none!important;overflow:visible!important}
 #lararvy .teacher-months.teacher-months-all-weeks .teacher-month-weeks{display:grid!important;grid-template-columns:minmax(0,1fr)!important;max-height:none!important;overflow:visible!important}
 #lararvy .teacher-months.teacher-months-all-weeks .chapter-week-group{width:100%!important;max-width:none!important}
+
+
+/* Class editing must never inherit fullscreen library scroll locks or sticky
+   toolbars whose descendants can cover the entire viewport. */
+@media screen {
+  html:has(.planning-layout.view-class),
+  body:has(.planning-layout.view-class) {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: clip !important;
+  }
+  .planning-layout.view-class,
+  .planning-layout.view-class > .shell,
+  .planning-layout.view-class #lararvy {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+    pointer-events: auto !important;
+  }
+  .planning-layout.view-class #lararvy header.topbar,
+  .planning-layout.view-class #lararvy header.topbar:has(>.planning-header-toolbar),
+  .planning-layout.view-class #lararvy #kopplade-klasser {
+    position: static !important;
+    top: auto !important;
+    bottom: auto !important;
+    z-index: auto !important;
+    max-height: none !important;
+    pointer-events: auto !important;
+  }
+  .planning-layout.view-class #lararvy .class-real-two-weeks {
+    position: relative !important;
+    z-index: 0 !important;
+    overflow: visible !important;
+    pointer-events: auto !important;
+  }
+}
