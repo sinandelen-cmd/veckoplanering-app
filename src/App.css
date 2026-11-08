@@ -8200,3 +8200,44 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
     font-size:12px!important;
   }
 }
+
+
+/* Mallkrav: grundplaneringens normalvy och klassvyn visar alltid två veckor
+   sida vid sida, även på mindre laptopskärmar. Inget lektionskort klipps bort. */
+#lararvy .class-real-two-weeks .class-real-two-weeks-grid {
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  grid-auto-flow:row!important;
+  width:100%!important;
+}
+#lararvy .class-real-two-weeks-grid > .class-real-week-column {
+  max-height:none!important;
+  overflow-y:visible!important;
+  min-width:0!important;
+}
+#lararvy .teacher-months:not(.teacher-months-all-weeks):not(.teacher-months-focused) .teacher-month-weeks {
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  align-items:start!important;
+}
+/* Visa alla veckor: en hel vecka per rad, fem lektioner staplade,
+   och vertikal scrollning utan horisontell veckokarusell. */
+#lararvy .teacher-months-all-weeks .teacher-month-weeks {
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-auto-flow:row!important;
+  overflow-x:hidden!important;
+}
+#lararvy .teacher-months-all-weeks .chapter-week-group,
+#lararvy .teacher-months-all-weeks .week-card {
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  height:auto!important;
+  max-height:none!important;
+}
+#lararvy .teacher-months-all-weeks .week-card .lessons {
+  display:flex!important;
+  flex-direction:column!important;
+  flex-wrap:nowrap!important;
+}
