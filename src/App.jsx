@@ -2142,7 +2142,7 @@ const addNewTeacherWeek = () => setPlan(p => {
 
     
 
-    {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && <ClassTwoWeekCalendar plan={{...plan,weeksData:weeks}} className={editingClassView} onChangeClassGroups={groups=>setPlan(previous=>({...previous,classGroups:groups}))} onSave={()=>save(false)} busy={busy} saveStatus={status} />}
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && <ClassTwoWeekCalendar plan={classSchedulePlan} className={editingClassView} onChangeClassGroups={groups=>setPlan(previous=>({...previous,classGroups:groups}))} onSave={()=>save(false)} busy={busy} saveStatus={status} />}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && !editingClassView && <div className="expanded-weeks-inline">
     
 <section className="card teacher-year-review">
@@ -2514,7 +2514,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         </div>
       </section>
     </div>
-    <div className="teacher-tab-panel" hidden={teacherTab !== "bibliotek"}>
+    {teacherTab === "bibliotek" && <div className="teacher-tab-panel">
     <section className="card" id="mina-arsplaneringar">
 
       {planSearch && plans.some(row => Boolean(parseContent(row.content)?.archived) === showArchive) && !plans.some(row => Boolean(parseContent(row.content)?.archived) === showArchive && [row.title, row.subject, row.class_name, row.school_year].some(value => String(value || "").toLocaleLowerCase("sv").includes(planSearch.trim().toLocaleLowerCase("sv")))) && <p className="muted">Inga planeringar matchar sökningen. Prova ett annat ord eller rensa sökningen.</p>}
@@ -2564,7 +2564,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       </div></div>
       <p className="muted">Arkivering döljer bara planeringen från den aktiva listan. Publicerade elevlänkar påverkas inte.</p>
     </section>
-    </div>
+    </div>}
   </>}
   </main>{coursePicker && <div className="textbook-picker-backdrop" role="presentation"><form className="textbook-picker course-create-dialog" role="dialog" aria-modal="true" aria-label="Skapa ny kurs" onSubmit={event => {event.preventDefault();if(!coursePicker.course.trim())return;setBookQuery('');setBookPicker({...coursePicker,course:coursePicker.course.trim()});setCoursePicker(null)}}><h3>Skapa ny kurs</h3><p>Välj kursen som ska ligga under ämnet.</p><label>Ämne<input value={coursePicker.subject} readOnly aria-label="Ämne" /></label><label>Kursens namn<input autoFocus value={coursePicker.course} onChange={event=>setCoursePicker({...coursePicker,course:capitalizeFirstSwedish(event.target.value)})} placeholder={coursePicker.school === 'Gymnasiet' ? 'Exempel: Matematik 1b' : 'Exempel: Matematik åk 7'} required /></label>{coursePicker.school === 'Grundskola' && <label>Årskurs<select value={coursePicker.year} onChange={event=>setCoursePicker({...coursePicker,year:event.target.value})}>{Array.from({length:9},(_,i)=><option key={i+1} value={'Årskurs '+(i+1)}>Årskurs {i+1}</option>)}</select></label>}<div className="textbook-picker-actions"><button type="button" onClick={()=>setCoursePicker(null)}>← Tillbaka</button><button type="submit" disabled={!coursePicker.course.trim()}>Framåt →</button></div></form></div>}{bookPicker && <div className="textbook-picker-backdrop" role="presentation"><section className="textbook-picker" role="dialog" aria-modal="true" aria-label="Välj lärobok"><h3>Välj lärobok</h3><p><strong>Ämne:</strong> {bookPicker.subject} · <strong>Kurs:</strong> {bookPicker.course}</p><p>Sök bland svenska läromedelsserier. Förlag visas där uppgiften finns i katalogen. Du kan också skriva ett eget namn.</p><input autoFocus type="search" value={bookQuery} onChange={event => setBookQuery(event.target.value)} placeholder="Sök titel, förlag eller ämne…" /><div className="textbook-picker-results">{bookChoices.map(book => <button type="button" key={book.title} onClick={() => chooseBook(book.title)}><strong>📘 {book.title}</strong><small style={{display:"block",marginLeft:25,opacity:.75}}>{book.publisher} · {book.subject} · {book.levels}</small><small style={{display:"block",marginLeft:25,marginTop:4,fontWeight:700}}>{matchingBookPlan(book.title) ? (parseContent(matchingBookPlan(book.title).content)?.archived ? 'Finns i arkivet – återanvänd →' : 'Planeringen finns redan – öppna →') : 'Välj och skapa planering →'}</small></button>)}</div><div className="textbook-picker-actions"><button type="button" onClick={() => {setCoursePicker(bookPicker);setBookPicker(null)}}>← Tillbaka</button><button type="button" disabled={!bookQuery.trim()} onClick={() => chooseBook(bookQuery.trim())}>{matchingBookPlan(bookQuery.trim()) ? 'Öppna befintlig planering' : 'Skapa planering med eget boknamn'}</button></div></section></div>}</div>
 }
