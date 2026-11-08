@@ -992,7 +992,12 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
     <div className="class-real-two-weeks-header"><div className="class-week-count-controls" role="group" aria-label="Antal veckor att visa">{[2].map(n=><button key={n} type="button" className={visibleWeekCount===n?"active":""} aria-pressed={visibleWeekCount===n} onClick={()=>setVisibleWeekCount(n)}>{n} {n===1?"vecka":"veckor"}</button>)}</div></div>
     <div className="class-real-two-weeks-grid" style={{"--class-week-columns":visibleWeekCount}}>{weeks.map((week,_i)=><div className="class-real-week-column" key={week.weekStart}>
       <strong>{week.weekStart===currentStart?'Nuvarande vecka':`Vecka ${calendarWeekNumber(week.weekStart)}`}</strong>
-      <CalendarWeekThumbnail classWeekView week={week} entryType={plan.entryType || 'lektion'} onOpen={()=>setExpandedFullWeek(week.weekStart)} onOpenLesson={lessonIndex=>setExpanded({weekStart:week.weekStart,lessonIndex})}/>
+      <div className="class-week-fast-preview" style={{background:'#fff',border:'1px solid #d2dce8',borderRadius:12,padding:14,display:'flex',flexDirection:'column',gap:10,minHeight:190}}>
+        <button type="button" className="secondary" onClick={()=>setExpandedFullWeek(week.weekStart)} aria-label={`Öppna hela vecka ${calendarWeekNumber(week.weekStart)}`}>Öppna hela veckan</button>
+        {(week.lessons || []).length ? (week.lessons || []).map((lesson, lessonIndex) => <button type="button" key={lessonIndex} onClick={()=>setExpanded({weekStart:week.weekStart,lessonIndex})} style={{display:'block',width:'100%',textAlign:'left',padding:'12px',border:'1px solid #dce5ef',borderRadius:8,background:'#f7faff',color:'#243f58',cursor:'pointer'}}>
+          <strong>Lektion {lessonIndex+1}</strong><span style={{display:'block',fontSize:13,overflowWrap:'anywhere'}}>{String(lesson?.name || lesson?.title || lesson?.topics?.[0]?.name || 'Öppna för att redigera').slice(0,160)}</span>
+        </button>) : <p>Inga lektioner för denna vecka.</p>}
+      </div>
     </div>)}</div>
     {expandedFullWeek && createPortal(<div className="class-full-week-backdrop" role="presentation" style={{position:'fixed',inset:0,zIndex:10000,background:'rgba(22,35,45,.45)',display:'flex',alignItems:'center',justifyContent:'center',padding:8}}>
       <section className="class-full-week-panel" role="dialog" aria-modal="true" aria-label={`Hela vecka ${calendarWeekNumber(expandedFullWeek)} för ${className}`} style={{width:'100%',maxWidth:1100,height:'calc(100dvh - 16px)',maxHeight:'calc(100dvh - 16px)',display:'flex',flexDirection:'column',overflow:'hidden',padding:8,background:'#fff',borderRadius:12}}>
