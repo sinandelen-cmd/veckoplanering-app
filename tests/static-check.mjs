@@ -282,7 +282,9 @@ assert.doesNotMatch(nav, /sidebar-link[^\n]*>Lärarvy/)
 assert.match(nav, /planning-unified-navigation/)
 assert.match(app, /Kalendermatris/)
 assert.match(app, /Elevvy/)
-assert.match(app, /Redigera och importera underlag/)
+// Den gamla redigeraren var permanent dold men byggde upp alla veckors formulär.
+assert.doesNotMatch(app, /legacy-post-creation-panel/, 'Dold äldre redigerare får inte renderas')
+assert.match(app, /teacherTab === "bibliotek" && <div className="teacher-tab-panel">/, 'Dolt planeringsträd får inte renderas under Grundplanering')
 
 // Tillfälligt A4-demoinnehåll får inte följa med när läraren byter planering.
 assert.match(app, /setTeacherTab\('arsplan'\); setCalendarOpen\(false\); setEditingClassView\(className \|\| ""\); setPreviewStudents\(false\); setA4Demo\(false\); setStatus\(className \?/, 'Sparad planering ska öppna klassvyn och nollställa A4-demot')
