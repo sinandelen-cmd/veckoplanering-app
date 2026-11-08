@@ -935,6 +935,19 @@ function ClassWeekFit({ children }) {
   </div>
 }
 
+// Skriver en :root-variabel bara när värdet ändras. Varje skrivning till :root
+// gör att hela dokumentets stilar räknas om, så den får inte ske vid varje scroll.
+const rootVarCache = new Map()
+function setRootVar(name, value) {
+  if (rootVarCache.get(name) === value) return
+  rootVarCache.set(name, value)
+  document.documentElement.style.setProperty(name, value)
+}
+function removeRootVar(name) {
+  rootVarCache.delete(name)
+  document.documentElement.style.removeProperty(name)
+}
+
 function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, busy, saveStatus }) {
   const [expanded, setExpanded] = useState(null)
   const [saving, setSaving] = useState(false)
@@ -1342,11 +1355,11 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       const toolbarHeight = Math.ceil(toolbar.getBoundingClientRect().height)
       const boundary = headerBottom + toolbarHeight + 78
       if (reviewRect) {
-        document.documentElement.style.setProperty('--teacher-pinned-left', Math.max(0, reviewRect.left) + 'px')
-        document.documentElement.style.setProperty('--teacher-pinned-width', Math.min(reviewRect.width, window.innerWidth - Math.max(0, reviewRect.left)) + 'px')
+        setRootVar('--teacher-pinned-left', Math.max(0, reviewRect.left) + 'px')
+        setRootVar('--teacher-pinned-width', Math.min(reviewRect.width, window.innerWidth - Math.max(0, reviewRect.left)) + 'px')
       }
-      document.documentElement.style.setProperty('--teacher-pinned-top', (headerBottom + toolbarHeight) + 'px')
-      document.documentElement.style.setProperty('--teacher-review-sticky-top', headerBottom + 'px')
+      setRootVar('--teacher-pinned-top', (headerBottom + toolbarHeight) + 'px')
+      setRootVar('--teacher-review-sticky-top', headerBottom + 'px')
       let found = null
       for (const section of sections) {
         const rect = section.getBoundingClientRect()
@@ -1365,10 +1378,13 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       }
       setPinnedChapter(prev => prev?.name === found?.name && prev?.tone === found?.tone ? prev : found)
     }
+    // Scroll-uppdateringar samlas i en bildruta så att layoutläsningar inte körs flera gånger per frame.
+    let frame = 0
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; update() }) }
     update()
-    window.addEventListener('scroll', update, { passive: true })
-    window.addEventListener('resize', update)
-    return () => { window.removeEventListener('scroll', update); window.removeEventListener('resize', update) }
+    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', schedule)
+    return () => { window.removeEventListener('scroll', schedule); window.removeEventListener('resize', schedule); if (frame) cancelAnimationFrame(frame) }
   }, [teacherTab, showPastTeacherWeeks])
 
   useEffect(() => {
@@ -1423,12 +1439,16 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   }, [])
   const initialPlansLoadedRef = useRef(false)
   const latestPlanRef = useRef(plan)
-  useEffect(() => { latestPlanRef.current = plan }, [plan])
-  const historyRef = useRef({ past: [], current: JSON.stringify(plan), future: [] })
+  // Planen serialiseras bara när den ändras, inte vid varje render (den kan vara mycket stor).
+  const planJson = useMemo(() => JSON.stringify(plan), [plan])
+  const latestPlanJsonRef = useRef(planJson)
+  useEffect(() => { latestPlanRef.current = plan; latestPlanJsonRef.current = planJson }, [plan, planJson])
+  const historyRef = useRef(null)
+  if (historyRef.current === null) historyRef.current = { past: [], current: planJson, future: [] }
   const historySkipRef = useRef(false)
   const [, setHistoryVersion] = useState(0)
   useEffect(() => {
-    const next = JSON.stringify(plan)
+    const next = planJson
     const history = historyRef.current
     if (next === history.current) return
     if (historySkipRef.current) {
@@ -1441,7 +1461,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     history.current = next
     history.future = []
     setHistoryVersion(v => v + 1)
-  }, [plan])
+  }, [planJson])
   const undoPlan = () => {
     const h = historyRef.current
     if (!h.past.length) return
@@ -1460,13 +1480,13 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     setPlan(JSON.parse(h.current))
     setHistoryVersion(v => v + 1)
   }
-  const savedPlanRef = useRef(JSON.stringify(plan))
+  const savedPlanRef = useRef(planJson)
   const [, setSavedRevision] = useState(0)
-  const isDirty = JSON.stringify(plan) !== savedPlanRef.current
-  const confirmNavigation = () => JSON.stringify(latestPlanRef.current) === savedPlanRef.current || window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')
+  const isDirty = planJson !== savedPlanRef.current
+  const confirmNavigation = () => latestPlanJsonRef.current === savedPlanRef.current || window.confirm('Du har osparade ändringar. Vill du lämna dem utan att spara?')
   useEffect(() => {
     const warnBeforeLeave = event => {
-      if (JSON.stringify(latestPlanRef.current) === savedPlanRef.current) return
+      if (latestPlanJsonRef.current === savedPlanRef.current) return
       event.preventDefault()
       event.returnValue = ''
     }
@@ -2644,8 +2664,8 @@ function AnnualApp() {
     if (!header) return undefined
     const updateOffset = () => {
       const rect = header.getBoundingClientRect()
-      document.documentElement.style.setProperty('--teacher-review-sticky-top', Math.max(0, Math.ceil(rect.bottom)) + 'px')
-      document.documentElement.style.setProperty('--planning-nav-height', Math.max(0, Math.ceil(rect.bottom)) + 'px')
+      setRootVar('--teacher-review-sticky-top', Math.max(0, Math.ceil(rect.bottom)) + 'px')
+      setRootVar('--planning-nav-height', Math.max(0, Math.ceil(rect.bottom)) + 'px')
     }
     updateOffset()
     const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateOffset) : null
@@ -2656,8 +2676,8 @@ function AnnualApp() {
       observer?.disconnect()
       window.removeEventListener('resize', updateOffset)
       window.removeEventListener('scroll', updateOffset)
-      document.documentElement.style.removeProperty('--teacher-review-sticky-top')
-      document.documentElement.style.removeProperty('--planning-nav-height')
+      removeRootVar('--teacher-review-sticky-top')
+      removeRootVar('--planning-nav-height')
     }
   }, [session])
 
