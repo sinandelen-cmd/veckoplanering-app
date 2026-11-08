@@ -6,9 +6,11 @@ on:
       - main
       - feature/arsplanering-safe-updates-20261013
       - test/arsplanering-build-20261027
+      - fix/plan-summaries-20261102
   pull_request:
     branches:
       - main
+      - test/arsplanering-isolated-preview-20261102
 jobs:
   verify:
     runs-on: ubuntu-latest
