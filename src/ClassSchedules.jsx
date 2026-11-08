@@ -4,11 +4,10 @@ import { DAYS, DAY_SHORT, iso, monday, describe, buildClassSchedule } from './cl
 export default function ClassSchedules({ plan, onChange, publicSlug = "", editingClassView = "", setEditingClassView, onSelectClassPreview, onSetAllDisplayMode, allWeeksDisplayMode, weeksBusy }) {
   const groups = Array.isArray(plan.classGroups) ? plan.classGroups : []
   const preserveScrollOnClassChange = (className) => {
-    const top = window.scrollY
     setEditingClassView?.(className)
     onSelectClassPreview?.(Boolean(className))
-    // Avoid browser scroll anchoring jumping when the annual plan and class preview swap.
-    requestAnimationFrame(() => window.scrollTo({ top, behavior: 'instant' }))
+    // A shorter class view must not inherit an off-screen scroll position.
+    requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }))
   }
   const [name, setName] = React.useState('')
   const [addingClass, setAddingClass] = React.useState(false)
