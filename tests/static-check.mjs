@@ -284,6 +284,8 @@ assert.match(app, /Kalendermatris/)
 assert.match(app, /Elevvy/)
 // Den gamla redigeraren var permanent dold men byggde upp alla veckors formulär.
 assert.doesNotMatch(app, /legacy-post-creation-panel/, 'Dold äldre redigerare får inte renderas')
+assert.match(app, /teacherTab === "arsplan" && !editingClassView && <div className="expanded-weeks-inline">/, 'Klassvyn får inte rendera den tunga grundplaneringen i bakgrunden')
+assert.doesNotMatch(app, /className="expanded-weeks-inline" style=\{editingClassView/, 'Grundplaneringen får inte bara döljas med CSS')
 assert.match(app, /teacherTab === "bibliotek" && <div className="teacher-tab-panel">/, 'Dolt planeringsträd får inte renderas under Grundplanering')
 
 // Tillfälligt A4-demoinnehåll får inte följa med när läraren byter planering.
