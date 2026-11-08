@@ -1428,6 +1428,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     if (window.location.hash === '#elevvy') onNavigation()
     return () => window.removeEventListener('hashchange', onNavigation)
   }, [])
+  const openingPlanRef = useRef(false)
   const initialPlansLoadedRef = useRef(false)
   const latestPlanRef = useRef(plan)
   useEffect(() => { latestPlanRef.current = plan }, [plan])
@@ -1791,12 +1792,18 @@ const addNewTeacherWeek = () => setPlan(p => {
   }
 
   async function openPlanRow(row, navigationApproved = false) {
-    if (busy) return false
+    if (busy || openingPlanRef.current) return false
     if (!navigationApproved && !confirmNavigation()) return false
-    const full = await ensureFullPlanRow(row)
-    if (!full) return false
-    loadPlan(full, undefined, true)
-    return true
+    // Hindra dubbla klick från att starta överlappande stora hämtningar.
+    openingPlanRef.current = true
+    try {
+      const full = await ensureFullPlanRow(row)
+      if (!full) return false
+      loadPlan(full, undefined, true)
+      return true
+    } finally {
+      openingPlanRef.current = false
+    }
   }
 
   function loadPlan(row, className, navigationApproved = false) {
