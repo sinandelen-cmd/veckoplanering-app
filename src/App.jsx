@@ -466,12 +466,16 @@ function booksForSubject(school, subject) {
 const parsedContentCache = new Map()
 function parseContent(value) {
   const source = value || '{}'
-  if (parsedContentCache.has(source)) return parsedContentCache.get(source)
+  // Stora planeringar får inte lagras som ytterligare kopior i en global cache.
+  // Det kan annars låsa webbläsaren när flera årskurser/ämnen öppnas.
+  const cacheable = source.length <= 100_000
+  if (cacheable && parsedContentCache.has(source)) return parsedContentCache.get(source)
   let parsed = null
   try { parsed = JSON.parse(source) } catch { /* Ogiltigt innehåll hanteras som tidigare */ }
-  // Begränsa minnet även när en planering redigeras många gånger.
-  if (parsedContentCache.size >= 40) parsedContentCache.delete(parsedContentCache.keys().next().value)
-  parsedContentCache.set(source, parsed)
+  if (cacheable) {
+    if (parsedContentCache.size >= 20) parsedContentCache.delete(parsedContentCache.keys().next().value)
+    parsedContentCache.set(source, parsed)
+  }
   return parsed
 }
 
