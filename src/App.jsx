@@ -2424,7 +2424,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     </div>}
 
     </div>
-    <div className="teacher-tab-panel legacy-post-creation-panel" hidden={true}>
+    {false && <div className="teacher-tab-panel legacy-post-creation-panel" hidden={true}>
     <section className="card import-card"><h2>Redigera och importera underlag</h2>
       <p className="eyebrow">IMPORT</p><h2>Excel, Word, PDF eller text</h2>
       <p className="muted">Ladda upp ett underlag. Texten delas preliminärt över veckorna så att du kan granska och justera.</p>
@@ -2500,7 +2500,7 @@ const addNewTeacherWeek = () => setPlan(p => {
 
     </details>
 
-    </div>
+    </div>}
     <div className="teacher-tab-panel" id="panel-elevvy" role="tabpanel" aria-labelledby="tab-elevvy" hidden={teacherTab !== "elevvy"}>
     {previewStudents && <section className="student-preview-clean" id="elevvy"><PublishedStudentPreview slug={plan.published ? (plan.publicSlug || buildSlug(plan)) : ""} /></section>}
 
