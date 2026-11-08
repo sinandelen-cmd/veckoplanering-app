@@ -1447,7 +1447,10 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       return
     }
     history.past.push(history.current)
-    if (history.past.length > 60) history.past.shift()
+    // Stora årsplaneringar ska inte behålla 60 kompletta JSON-kopior i minnet.
+    // Det minskar minnestryck och risken för trög navigering utan att ändra layouten.
+    const historyLimit = next.length > 500_000 ? 12 : 60
+    while (history.past.length > historyLimit) history.past.shift()
     history.current = next
     history.future = []
     setHistoryVersion(v => v + 1)
