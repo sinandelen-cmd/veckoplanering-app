@@ -30,7 +30,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
   const activeClassIndex = groups.findIndex(g => g.name === editingClassView)
   const group = activeClassIndex >= 0 ? groups[activeClassIndex] : groups[selected]
   const lessonsPerWeek = group => (group.days || []).length
-  const schedule = React.useMemo(() => group ? buildClassSchedule(plan, group) : [], [plan, group])
+  const schedule = React.useMemo(() => group && showClassMenu && showClassDetails && !compare ? buildClassSchedule(plan, group) : [], [plan, group, showClassMenu, showClassDetails, compare])
   const updateGroup = changes => onChange({ ...plan, classGroups: groups.map((g, i) => i === (activeClassIndex >= 0 ? activeClassIndex : selected) ? { ...g, ...changes } : g) })
   const addClass = () => {
     if (!name.trim() || groups.some(g => g.name.toLocaleLowerCase('sv') === name.trim().toLocaleLowerCase('sv'))) return
