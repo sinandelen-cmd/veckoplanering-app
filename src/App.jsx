@@ -2235,7 +2235,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     
 
     {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && <ClassTwoWeekCalendar plan={classSchedulePlan} className={editingClassView} onChangeClassGroups={groups=>setPlan(previous=>({...previous,classGroups:groups}))} onSave={()=>save(false)} busy={busy} saveStatus={status} />}
-    {selectedId && !calendarOpen && teacherTab === "arsplan" && <div className="expanded-weeks-inline" style={editingClassView && plan.classGroups?.some(g=>g.name===editingClassView)?{display:"none"}:undefined}>
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && !editingClassView && <div className="expanded-weeks-inline">
     
 <section className="card teacher-year-review">
       <div className="teacher-year-review-bar" aria-label="Årsplaneringens verktygsrad">
