@@ -909,6 +909,27 @@ function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson, classWee
   </div>
 }
 
+// Veckans innehåll byggs först när veckan är nära skärmen (eller när planen skrivs ut).
+// Annars skapas tusentals fält för alla veckor direkt när planen öppnas.
+function LazyWeekContent({ render }) {
+  const ref = useRef(null)
+  const [shown, setShown] = useState(false)
+  useEffect(() => {
+    if (shown) return undefined
+    const show = () => setShown(true)
+    window.addEventListener("beforeprint", show)
+    const el = ref.current
+    let observer = null
+    if (el && typeof IntersectionObserver !== "undefined") {
+      observer = new IntersectionObserver(entries => { if (entries.some(entry => entry.isIntersecting)) show() }, { rootMargin: "3000px 0px" })
+      observer.observe(el)
+    } else show()
+    return () => { observer?.disconnect(); window.removeEventListener("beforeprint", show) }
+  }, [shown])
+  if (!shown) return <div ref={ref} className="teacher-week-lazy-placeholder" style={{ minHeight: 240 }} />
+  return render()
+}
+
 function ClassWeekFit({ children }) {
   const frame = useRef(null)
   const content = useRef(null)
@@ -2229,7 +2250,7 @@ const addNewTeacherWeek = () => setPlan(p => {
           {!(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) && <strong className="teacher-collapsed-week-label">Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>}
 
           </div>
-          <div className="teacher-week-collapsible-content" hidden={!(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen)}>
+          {(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) && <LazyWeekContent render={() => <div className="teacher-week-collapsible-content">
           <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><strong style={{ fontSize: "1.45rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 5 }}>Vecka <input type="text" inputMode="numeric" pattern="[0-9]*" aria-label="Ändra veckonummer" key={`${week.weekStart}-${week.weekNumber}`} style={{ width: "3.3ch", minWidth: 66, fontSize: "1.45rem", fontWeight: 800, padding: "4px 6px" }} defaultValue={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Skriv veckonummer direkt och tryck Enter" onFocus={e => e.target.select()} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') { e.currentTarget.value = String(calendarWeekNumber(week.weekStart) ?? week.weekNumber); e.currentTarget.blur() } }} onBlur={e => {
             const target = Number(e.target.value.trim())
             const current = calendarWeekNumber(week.weekStart)
@@ -2265,7 +2286,7 @@ const addNewTeacherWeek = () => setPlan(p => {
             <p className="muted">Använd i första hand momenten under varje lektion. Här kan du även lägga material för hela veckan.</p>
             <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
           </details>
-          </div>
+          </div>} />}
           {weeks.some(other=>other.weekStart>week.weekStart) && <div className="insert-week-between teacher-week-insert-inside"><button type="button" className="secondary" disabled={weeks.length>=52} onClick={()=>insertBlankWeekAfter(index)}>＋ Lägg till vecka efter denna</button></div>}
         </article></div>)}
           </div>
