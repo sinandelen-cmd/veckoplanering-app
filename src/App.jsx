@@ -2,6 +2,7 @@ function capitalizeFirstSwedish(value) { return String(value || '').replace(/^(\
 import UpdateNotices from './UpdateNotices.jsx'
 import { groupStudentWeeksForPrint } from './printGroups.js'
 import { Component, Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { createPortal } from 'react-dom'
 import * as XLSX from 'xlsx'
 import mammoth from 'mammoth'
@@ -917,14 +918,16 @@ function LazyWeekContent({ render }) {
   useEffect(() => {
     if (shown) return undefined
     const show = () => setShown(true)
-    window.addEventListener("beforeprint", show)
+    // Print needs the full DOM before the browser takes its print snapshot.
+    const showForPrint = () => flushSync(() => setShown(true))
+    window.addEventListener("beforeprint", showForPrint)
     const el = ref.current
     let observer = null
     if (el && typeof IntersectionObserver !== "undefined") {
       observer = new IntersectionObserver(entries => { if (entries.some(entry => entry.isIntersecting)) show() }, { rootMargin: "3000px 0px" })
       observer.observe(el)
     } else show()
-    return () => { observer?.disconnect(); window.removeEventListener("beforeprint", show) }
+    return () => { observer?.disconnect(); window.removeEventListener("beforeprint", showForPrint) }
   }, [shown])
   if (!shown) return <div ref={ref} className="teacher-week-lazy-placeholder" style={{ minHeight: 240 }} />
   return render()
