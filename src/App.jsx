@@ -1018,6 +1018,11 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
     onChangeClassGroups?.((plan.classGroups || []).map(g => g.name === className ? { ...g, overrides } : g))
     setClassHistoryVersion(n => n + 1)
   }
+  // Klassens veckoinnehåll sparas automatiskt en kort stund efter senaste ändringen.
+  const saveRef = useRef(onSave); saveRef.current = onSave
+  const autoSaveTimer = useRef(null)
+  useEffect(() => () => clearTimeout(autoSaveTimer.current), [])
+  const scheduleClassAutoSave = () => { clearTimeout(autoSaveTimer.current); autoSaveTimer.current = setTimeout(() => { void saveRef.current?.() }, 1500) }
   const undoClassLesson = () => {
     const previous = classHistory.current.past.pop()
     if (!previous) return
@@ -1060,7 +1065,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
         <button type="button" className="secondary" onClick={()=>setExpandedFullWeek(week.weekStart)} aria-label={`Öppna hela vecka ${calendarWeekNumber(week.weekStart)}`}>Öppna hela veckan</button>
         <ScaledWeek><article className="calendar-inline-week" style={{backgroundColor:weekColor(week.weekStart)}}>
           <div className="calendar-inline-week-heading"><h2>Vecka {calendarWeekNumber(week.weekStart)}</h2><span>{week.chapter}</span></div>
-          <LessonDetails week={week} entryType={plan.entryType||'lektion'} onUndo={undoClassLesson} onRedo={redoClassLesson} canUndo={classHistory.current.past.length>0} canRedo={classHistory.current.future.length>0} onChange={changes=>{const slots=scheduled.filter(item=>item.weekStart===week.weekStart);const overrides={...(group.overrides||{})};(changes.lessons||[]).forEach((lesson,i)=>{const slot=slots[i];if(!slot)return;const key=String(slot.lessonNumber-1);overrides[key]={...(overrides[key]||{}),lesson}});applyClassOverrides(overrides)}} />
+          <LessonDetails week={week} entryType={plan.entryType||'lektion'} onUndo={undoClassLesson} onRedo={redoClassLesson} canUndo={classHistory.current.past.length>0} canRedo={classHistory.current.future.length>0} onChange={changes=>{const slots=scheduled.filter(item=>item.weekStart===week.weekStart);const overrides={...(group.overrides||{})};(changes.lessons||[]).forEach((lesson,i)=>{const slot=slots[i];if(!slot)return;const key=String(slot.lessonNumber-1);overrides[key]={...(overrides[key]||{}),lesson}});applyClassOverrides(overrides);scheduleClassAutoSave()}} />
         </article></ScaledWeek>
       </div>
     </div>)}</div>
