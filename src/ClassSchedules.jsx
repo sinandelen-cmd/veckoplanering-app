@@ -33,7 +33,7 @@ export default function ClassSchedules({ plan, onChange, publicSlug = "", editin
   const updateGroup = changes => onChange({ ...plan, classGroups: groups.map((g, i) => i === (activeClassIndex >= 0 ? activeClassIndex : selected) ? { ...g, ...changes } : g) })
   const addClass = () => {
     if (!name.trim() || groups.some(g => g.name.toLocaleLowerCase('sv') === name.trim().toLocaleLowerCase('sv'))) return
-    onChange({ ...plan, classGroups: [...groups, { name: name.trim(), days: [...days], startDate: plan.startDate, cancelledDates: [], overrides: {} }] })
+    onChange({ ...plan, classGroups: [...groups, { name: name.trim(), days: [], startDate: plan.startDate, cancelledDates: [], overrides: {} }] })
     setSelected(groups.length); setName('')
   }
   const shiftClassLesson = item => {
