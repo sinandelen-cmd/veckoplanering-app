@@ -972,6 +972,33 @@ function removeRootVar(name) {
   document.documentElement.style.removeProperty(name)
 }
 
+// Skalar en vecka (960 px bred, samma layout som Grundplanering) till kolumnens bredd.
+function ScaledWeek({ children }) {
+  const frame = useRef(null)
+  const content = useRef(null)
+  const [scale, setScale] = useState(0.6)
+  const [height, setHeight] = useState(0)
+  useEffect(() => {
+    const update = () => {
+      if (!frame.current || !content.current) return
+      const width = frame.current.clientWidth
+      const natural = content.current.offsetHeight
+      if (!width || !natural) return
+      const next = Math.min(1, width / 960)
+      setScale(old => (Math.abs(old - next) > 0.002 ? next : old))
+      setHeight(Math.ceil(natural * next))
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    if (frame.current) observer.observe(frame.current)
+    if (content.current) observer.observe(content.current)
+    return () => observer.disconnect()
+  }, [])
+  return <div ref={frame} style={{ position: "relative", width: "100%", height, overflow: "hidden" }}>
+    <div ref={content} style={{ position: "absolute", top: 0, left: 0, width: 960, transformOrigin: "top left", transform: `scale(${scale})` }}>{children}</div>
+  </div>
+}
+
 function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, busy, saveStatus }) {
   const [expanded, setExpanded] = useState(null)
   const [saving, setSaving] = useState(false)
@@ -1031,9 +1058,10 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
       <strong>{week.weekStart===currentStart?'Nuvarande vecka':`Vecka ${calendarWeekNumber(week.weekStart)}`}</strong>
       <div className="class-week-fast-preview" style={{background:'#fff',border:'1px solid #d2dce8',borderRadius:12,padding:14,display:'flex',flexDirection:'column',gap:10,minHeight:190}}>
         <button type="button" className="secondary" onClick={()=>setExpandedFullWeek(week.weekStart)} aria-label={`Öppna hela vecka ${calendarWeekNumber(week.weekStart)}`}>Öppna hela veckan</button>
-        {(week.lessons || []).length ? (week.lessons || []).map((lesson, lessonIndex) => <button type="button" key={lessonIndex} onClick={()=>setExpanded({weekStart:week.weekStart,lessonIndex})} style={{display:'block',width:'100%',textAlign:'left',padding:'12px',border:'1px solid #dce5ef',borderRadius:8,background:'#f7faff',color:'#243f58',cursor:'pointer'}}>
-          <strong>{week.slotDays?.[lessonIndex] ? week.slotDays[lessonIndex]+" – " : ""}Lektion {lessonIndex+1}</strong>{(() => { const label = String(lesson?.name || lesson?.title || lesson?.topics?.[0]?.name || '').trim(); return label && label !== 'Lektion ' + (lessonIndex + 1) ? <span style={{display:'block',fontSize:13,overflowWrap:'anywhere'}}>{label.slice(0,160)}</span> : null })()}
-        </button>) : <p>Inga lektioner för denna vecka.</p>}
+        <ScaledWeek><article className="calendar-inline-week" style={{backgroundColor:weekColor(week.weekStart)}}>
+          <div className="calendar-inline-week-heading"><h2>Vecka {calendarWeekNumber(week.weekStart)}</h2><span>{week.chapter}</span></div>
+          <LessonDetails week={week} entryType={plan.entryType||'lektion'} onUndo={undoClassLesson} onRedo={redoClassLesson} canUndo={classHistory.current.past.length>0} canRedo={classHistory.current.future.length>0} onChange={changes=>{const slots=scheduled.filter(item=>item.weekStart===week.weekStart);const overrides={...(group.overrides||{})};(changes.lessons||[]).forEach((lesson,i)=>{const slot=slots[i];if(!slot)return;const key=String(slot.lessonNumber-1);overrides[key]={...(overrides[key]||{}),lesson}});applyClassOverrides(overrides)}} />
+        </article></ScaledWeek>
       </div>
     </div>)}</div>
     {expandedFullWeek && createPortal(<div className="class-full-week-backdrop" role="presentation" style={{position:'fixed',inset:0,zIndex:10000,background:'rgba(22,35,45,.45)',display:'flex',alignItems:'center',justifyContent:'center',padding:8}}>
