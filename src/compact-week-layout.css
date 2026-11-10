@@ -89,16 +89,8 @@
 #lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .teacher-month-section{display:contents!important}
 #lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .teacher-chapter-sticky{display:none!important}
 #lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .teacher-month-weeks{display:contents!important}
-/* Visa alla veckor: två veckor sida vid sida, parvis nedåt genom hela planeringen.
-   Kapitelrubriker tar hela raden; veckorna flyter över kapitelgränser. */
-#lararvy .teacher-months.teacher-months-all-weeks{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;column-gap:12px!important;row-gap:12px!important;align-items:start!important;max-height:none!important;overflow:visible!important}
-#lararvy .teacher-months.teacher-months-all-weeks>.teacher-month-section{display:contents!important}
-#lararvy .teacher-months.teacher-months-all-weeks .teacher-chapter-sticky{grid-column:1/-1!important;position:static!important}
-#lararvy .teacher-months.teacher-months-all-weeks .teacher-month-weeks{display:contents!important;max-height:none!important;overflow:visible!important}
-#lararvy .teacher-months.teacher-months-all-weeks .teacher-month-weeks>.chapter-week-group{display:contents!important;width:auto!important;max-width:none!important}
-#lararvy .teacher-months.teacher-months-all-weeks .teacher-month-weeks>.chapter-week-group>.week-card{min-width:0!important;width:auto!important;max-width:none!important}
-#lararvy .expanded-weeks-inline>.teacher-year-review:has(>.teacher-active-chapter-bar)>.teacher-months.teacher-months-all-weeks{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;column-gap:12px!important;row-gap:12px!important;align-items:start!important}
-@media (max-width:760px){#lararvy .teacher-months.teacher-months-all-weeks,#lararvy .expanded-weeks-inline>.teacher-year-review:has(>.teacher-active-chapter-bar)>.teacher-months.teacher-months-all-weeks{grid-template-columns:minmax(0,1fr)!important}}
+#lararvy .teacher-months.teacher-months-all-weeks{display:block!important;max-height:none!important;overflow:visible!important}
+#lararvy .teacher-months.teacher-months-all-weeks .teacher-month-weeks{display:grid!important;grid-template-columns:minmax(0,1fr)!important;max-height:none!important;overflow:visible!important}
 #lararvy .teacher-months.teacher-months-all-weeks .chapter-week-group{width:100%!important;max-width:none!important}
 
 
