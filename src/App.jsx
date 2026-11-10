@@ -170,6 +170,7 @@ function emptyPlan() {
     title: '', subject: '', schoolYear: '', className: '', county: '', municipality: '', schoolForm: '', grade: '', course: '', textbook: '', schoolClosures: [],
     startDate: addWeeks(mondayOf(), -1), startWeek: 1, entryType: 'lektion', lessonDisplay: 'bara-lektion', studentLayout: 'grid', studentColumns: 3, studentRows: 2, lessonsPerWeek: 3, lessonDays: ['Måndag', 'Onsdag', 'Fredag'], weeks: 2, weeksData: [],
     published: false, publicSlug: '', autoReleaseWeeks: false, visibleWeekCount: 2,
+    materials: [], pastedMaterial: '',
   }
 }
 
@@ -280,6 +281,8 @@ function distributeUnits(plan, units) {
 function unitsFromText(text) {
   const lines=normalizeLines(text)
   const units=[]
+  // Dokument med "Lektion N"-rubriker: övrig text hör till föregående lektion och blir aldrig egna lektioner.
+  const structured=lines.some(raw=>/^(?:lektion|pass)\s*\d+/i.test(raw.replace(/^[-•*]\s*/,'').trim()))
   let chapter='',week=null,last=null
   for (const raw of lines) {
     const line=raw.replace(/^[-•*]\s*/,'').trim()
@@ -292,6 +295,11 @@ function unitsFromText(text) {
     if(lessonMatch){if(lessonMatch[1]){last={week,chapter,topic:lessonMatch[1],details:''};units.push(last)}else last=null;continue}
     if (/^(?:sida|sidor|sid\.|uppgifter|material|länk|mål)\s*[:-]/i.test(line) && last) {
       last.details=[last.details,line].filter(Boolean).join('\n')
+      continue
+    }
+    if (structured) {
+      // Aktivitet, uppföljning och annan text under en lektion behålls i lektionen. Rubriker före första lektionen ignoreras här.
+      if (last) last.details=[last.details,line].filter(Boolean).join('\n')
       continue
     }
     if (/^#{1,3}\s*/.test(line)){chapter=line.replace(/^#+\s*/,'');last=null;continue}
@@ -362,6 +370,45 @@ async function recognizeImage(source) {
   const text=result?.data?.text?.trim()||''
   if(!text)throw new Error('Ingen läsbar text hittades i bilden. Prova en tydligare bild.')
   return text
+}
+
+// Bifogat material lagras privat per användarkonto i Supabase Storage.
+// Själva planeringen sparar bara metadata och den extraherade texten.
+const MATERIAL_BUCKET = 'planning-materials'
+const MATERIAL_TYPES = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png', 'txt']
+const MATERIAL_ACCEPT = MATERIAL_TYPES.map(type => '.' + type).join(',')
+const MATERIAL_MAX_BYTES = 20 * 1024 * 1024
+// Content-Type sätts från filändelsen, eftersom webbläsaren ibland skickar tom typ.
+const MATERIAL_MIME = {
+  pdf: 'application/pdf', doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xls: 'application/vnd.ms-excel', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ppt: 'application/vnd.ms-powerpoint', pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', txt: 'text/plain',
+}
+const MATERIAL_TEXT_LIMIT = 60000
+const MATERIAL_READABLE = ['txt', 'csv', 'xls', 'xlsx', 'docx', 'pdf', 'jpg', 'jpeg', 'png']
+function materialExtension(name) { return String(name || '').split('.').pop().toLowerCase() }
+function materialSafeName(name) { return String(name || 'fil').normalize('NFKD').replace(/[^A-Za-z0-9._-]+/g, '-').slice(-120) }
+async function readMaterialText(file) {
+  const ext = materialExtension(file.name)
+  if (ext === 'jpg' || ext === 'jpeg' || ext === 'png') return recognizeImage(file)
+  if (MATERIAL_READABLE.includes(ext)) return extractText(file)
+  return ''
+}
+async function uploadMaterialFile(userId, file) {
+  const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${materialSafeName(file.name)}`
+  const { error } = await supabase.storage.from(MATERIAL_BUCKET).upload(path, file, { contentType: MATERIAL_MIME[materialExtension(file.name)], upsert: false })
+  if (error) throw new Error(`${file.name} kunde inte sparas: ${error.message}`)
+  return path
+}
+async function materialSignedUrl(path) {
+  const { data, error } = await supabase.storage.from(MATERIAL_BUCKET).createSignedUrl(path, 600)
+  if (error || !data?.signedUrl) throw new Error(`Filen kunde inte öppnas: ${error?.message || 'okänt fel'}`)
+  return data.signedUrl
+}
+async function removeMaterialFile(path) {
+  const { error } = await supabase.storage.from(MATERIAL_BUCKET).remove([path])
+  if (error) throw new Error(error.message)
 }
 
 async function extractText(file) {
@@ -1477,7 +1524,9 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [navigationIndex, setNavigationIndex] = useState(0)
   const restoringNavigation = useRef(false)
 
-  const [pasteText, setPasteText] = useState('')
+  // Inklistrat material ligger i planeringen så att det sparas och finns kvar vid omladdning.
+  const pasteText = plan.pastedMaterial || ''
+  const setPasteText = value => setPlan(p => ({ ...p, pastedMaterial: typeof value === 'function' ? value(p.pastedMaterial || '') : value }))
   const [pendingImport, setPendingImport] = useState(null)
   const [fileImportState, setFileImportState] = useState({phase:'idle',message:''})
   const [previewStudents, setPreviewStudents] = useState(() => window.location.hash === '#elevvy')
@@ -1838,6 +1887,82 @@ const addNewTeacherWeek = () => setPlan(p => {
     if (!pasteText.trim()) return setStatus('Klistra in text innan du fördelar den över veckorna.')
     setPendingImport({ source: 'Inklistrad text', weeksData: distributeText(plan, pasteText) })
     setStatus('Texten är klar för förhandsgranskning. Inget har ersatts ännu.')
+  }
+
+  async function attachMaterialFiles(fileList) {
+    const files = Array.from(fileList || [])
+    if (!files.length || !session?.user?.id) return
+    setBusy(true)
+    const added = []
+    const problems = []
+    for (const file of files) {
+      const ext = materialExtension(file.name)
+      if (!MATERIAL_TYPES.includes(ext)) { problems.push(`${file.name} har en filtyp som inte stöds.`); continue }
+      if (file.size > MATERIAL_MAX_BYTES) { problems.push(`${file.name} är större än 20 MB.`); continue }
+      try {
+        setStatus(`Bifogar ${file.name}…`)
+        const path = await uploadMaterialFile(session.user.id, file)
+        let text = ''
+        let note = ''
+        try { text = String((await readMaterialText(file)) || '').trim() } catch (error) { note = error.message }
+        if (!text && !note) note = MATERIAL_READABLE.includes(ext) ? 'Ingen text kunde läsas. Klistra in innehållet nedan.' : 'Filen sparas, men texten läses inte automatiskt. Klistra in innehållet nedan om du vill använda det.'
+        added.push({ id: `${Date.now()}-${added.length}-${Math.random().toString(36).slice(2, 6)}`, name: file.name, ext, size: file.size, path, text: text.slice(0, MATERIAL_TEXT_LIMIT), note, addedAt: new Date().toISOString() })
+      } catch (error) { problems.push(error.message) }
+    }
+    if (added.length) setPlan(p => ({ ...p, materials: [...(p.materials || []), ...added] }))
+    setBusy(false)
+    setStatus([added.length ? `${added.length} fil(er) bifogade. Klicka Spara för att behålla dem.` : '', ...problems].filter(Boolean).join(' '))
+  }
+
+  async function removeMaterial(material) {
+    if (!window.confirm(`Ta bort ${material.name} från planeringen? Filen raderas permanent.`)) return
+    setPlan(p => ({ ...p, materials: (p.materials || []).filter(item => item.id !== material.id) }))
+    try { await removeMaterialFile(material.path) } catch (error) { setStatus(`Filen togs bort från planeringen, men lagringen svarade: ${error.message}`) }
+  }
+
+  async function openMaterial(material) {
+    const win = window.open('', '_blank', 'noopener')
+    try {
+      const url = await materialSignedUrl(material.path)
+      if (win) win.location.href = url
+      else window.location.href = url
+    } catch (error) { if (win) win.close(); setStatus(error.message) }
+  }
+
+  async function materialToWeeks(material) {
+    // Excel-filer med kapitel och delmoment fördelas på samma sätt som tidigare importer.
+    if (/^xlsx?$/.test(material.ext)) {
+      try {
+        const response = await fetch(await materialSignedUrl(material.path))
+        const workbook = XLSX.read(await response.arrayBuffer(), { type: 'array' })
+        setPendingImport({ source: material.name, weeksData: distributeChapterWorkbook(plan, workbook), structured: true })
+        return setStatus('Kapitel och delmoment är fördelade på planeringens lektioner. Granska före import.')
+      } catch (error) { return setStatus(error.message) }
+    }
+    if (!material.text.trim()) return setStatus('Det finns ingen läsbar text i filen. Klistra in texten i rutan nedan.')
+    setPendingImport({ source: material.name, weeksData: distributeText(plan, material.text) })
+    setStatus('Underlaget är klart för förhandsgranskning. Inget har ersatts ännu.')
+  }
+
+  function materialPanel() {
+    const materials = plan.materials || []
+    return <section className="material-panel" aria-label="Material till planeringen">
+      <h3>Material till planeringen</h3>
+      <p className="muted">Bifoga filer eller klistra in text. Materialet sparas med planeringen, är privat för ditt konto och finns kvar efter utloggning och inloggning.</p>
+      <label className="secondary material-attach">Bifoga fil<input type="file" multiple accept={MATERIAL_ACCEPT} disabled={busy} onChange={e => { const files = e.target.files; attachMaterialFiles(files); e.target.value = '' }} /></label>
+      <p className="muted material-hint">PDF, Word (.doc, .docx), Excel (.xls, .xlsx), PowerPoint (.ppt, .pptx), bilder (.jpg, .jpeg, .png) och textfiler (.txt). Max 20 MB per fil.</p>
+      {materials.length > 0 && <ul className="material-list">{materials.map(material => <li key={material.id}>
+        <strong>{material.name}</strong> <span className="muted">({Math.max(1, Math.round(material.size / 1024))} kB)</span>
+        {material.note && <p className="muted material-note">{material.note}</p>}
+        <div className="button-row">
+          <button type="button" className="secondary" onClick={() => openMaterial(material)}>Öppna</button>
+          <button type="button" className="secondary" disabled={busy || !material.text} onClick={() => materialToWeeks(material)}>Skapa veckor av texten</button>
+          <button type="button" className="secondary" disabled={busy} onClick={() => removeMaterial(material)}>Ta bort</button>
+        </div>
+      </li>)}</ul>}
+      <label className="material-paste">Klistra in material<textarea value={pasteText} placeholder="Klistra in text från PDF, Word, Excel eller andra dokument. Rubriker, stycken och listor bevaras så långt det går." onChange={e => setPasteText(e.target.value)} /></label>
+      <button type="button" className="secondary" disabled={busy || !pasteText.trim()} onClick={distributePastedText}>Skapa veckor av inklistrad text</button>
+    </section>
   }
 
   function loadPlan(row, className, navigationApproved = false) {
@@ -2273,6 +2398,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       </div>})()}
       
       {(showPastTeacherWeeks || focusedTeacherWeek) && <div className="teacher-active-chapter-bar" aria-label="Aktuellt kapitel och vecka"><div className="teacher-active-chapter-content" /></div>}
+      {!simpleSetup && <details className="material-disclosure"><summary>Material till planeringen ({(plan.materials || []).length} filer{pasteText.trim() ? ' + inklistrad text' : ''})</summary>{materialPanel()}{pendingImport && <div className="import-preview"><h3>Förhandsgranska: {pendingImport.source}</h3><p>Granska innan du använder importen.</p>{pendingImport.weeksData.slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'auto' }}>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length })); setPendingImport(null); setStatus('Underlaget har lagts in i grundplaneringen. Klicka Spara för att behålla ändringarna.') }}>Använd import</button><button type="button" className="secondary" onClick={() => setPendingImport(null)}>Avbryt</button></div></div>}</details>}
       <div className={`teacher-months ${focusedTeacherWeek ? "teacher-months-focused" : ""} ${focusedTeacherWeek && teacherWeekOverview ? "teacher-months-overview-hidden" : ""} ${showPastTeacherWeeks && !focusedTeacherWeek ? "teacher-months-all-weeks" : ""} `}>
         {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? teacherDisplayWeeks : defaultTeacherWindow)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
@@ -2338,7 +2464,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       {status && <p className="status">{status}</p>}
     </section>
     </div>}
-    {selectedId && calendarOpen && teacherTab === "arsplan" && <div id="teacher-year-calendar">{nationalExamsForPlan(plan).length > 0 && <p className="calendar-exam-note">Nationella prov – Skolverkets datum 2026/27 (kontrollerat 17 oktober 2026). Kontrollera aktuella provdatum hos Skolverket.</p>}{pendingImport && <section className="card import-preview" aria-live="polite" style={{marginBottom:14}}><h3>Förhandsgranska: {pendingImport.source}</h3><p>Filen har lästs in. Kontrollera innehållet innan du lägger in det i grundplaneringen.</p>{pendingImport.weeksData.slice(0,5).map((week,i)=><div key={i}><strong>Vecka {week.weekNumber}</strong><pre style={{whiteSpace:'pre-wrap',maxHeight:120,overflow:'auto'}}>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={()=>{if(!confirmReplacingWeeks(plan))return;setPlan(p=>({...p,weeksData:pendingImport.weeksData,weeks:pendingImport.weeksData.length}));setPendingImport(null);setStatus('Excel-filen har lagts in i grundplaneringen. Klicka Spara för att behålla ändringarna.')}}>Använd import</button><button type="button" className="secondary" onClick={()=>setPendingImport(null)}>Avbryt</button></div></section>}{status && !status.startsWith("Senast öppnade årsplanering") && <p className="status" role="status">{status}</p>}<YearCalendar key="month-overview" onImportFile={importFile} fileImportState={fileImportState} onBackToPrevious={() => { if (openedFromLibrary) returnToPlanningTree(); else if (navigationIndex > 0) restoreNavigation(-1); else { setCalendarOpen(false); setTeacherTab('mina') } }} embedded={false} onOpen={() => setCalendarOpen(true)} startOnFirstWeek={weeks.length === 1} weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={nationalExamsForPlan(plan)} onClose={() => { setCalendarOpen(false); setTeacherTab("arsplan"); window.scrollTo({ top: 0, behavior: "smooth" }) }} onUpdateWeek={updateWeek} onSetAllVisibility={setAllWeeksVisibility} onAddWeek={() => setPlan(p => {
+    {selectedId && calendarOpen && teacherTab === "arsplan" && <div id="teacher-year-calendar">{nationalExamsForPlan(plan).length > 0 && <p className="calendar-exam-note">Nationella prov – Skolverkets datum 2026/27 (kontrollerat 17 oktober 2026). Kontrollera aktuella provdatum hos Skolverket.</p>}{materialPanel()}{pendingImport &&<section className="card import-preview" aria-live="polite" style={{marginBottom:14}}><h3>Förhandsgranska: {pendingImport.source}</h3><p>Filen har lästs in. Kontrollera innehållet innan du lägger in det i grundplaneringen.</p>{pendingImport.weeksData.slice(0,5).map((week,i)=><div key={i}><strong>Vecka {week.weekNumber}</strong><pre style={{whiteSpace:'pre-wrap',maxHeight:120,overflow:'auto'}}>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={()=>{if(!confirmReplacingWeeks(plan))return;setPlan(p=>({...p,weeksData:pendingImport.weeksData,weeks:pendingImport.weeksData.length}));setPendingImport(null);setStatus('Excel-filen har lagts in i grundplaneringen. Klicka Spara för att behålla ändringarna.')}}>Använd import</button><button type="button" className="secondary" onClick={()=>setPendingImport(null)}>Avbryt</button></div></section>}{status && !status.startsWith("Senast öppnade årsplanering") && <p className="status" role="status">{status}</p>}<YearCalendar key="month-overview" onImportFile={importFile} fileImportState={fileImportState} onBackToPrevious={() => { if (openedFromLibrary) returnToPlanningTree(); else if (navigationIndex > 0) restoreNavigation(-1); else { setCalendarOpen(false); setTeacherTab('mina') } }} embedded={false} onOpen={() => setCalendarOpen(true)} startOnFirstWeek={weeks.length === 1} weeks={weeks} schoolClosures={plan.schoolClosures || []} nationalExams={nationalExamsForPlan(plan)} onClose={() => { setCalendarOpen(false); setTeacherTab("arsplan"); window.scrollTo({ top: 0, behavior: "smooth" }) }} onUpdateWeek={updateWeek} onSetAllVisibility={setAllWeeksVisibility} onAddWeek={() => setPlan(p => {
       const existing = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
       if (existing.length >= 52) return p
       const latest = [...existing].sort((a, b) => b.weekStart.localeCompare(a.weekStart))[0]
@@ -2365,14 +2491,10 @@ const addNewTeacherWeek = () => setPlan(p => {
         </details>
         {simpleMore && <div className="simple-extra-fields"><h3>Fler uppgifter</h3><label>Ämne – välj i listan eller skriv ett eget<input list="planning-subject-options" value={plan.subject || ""} onChange={e => setPlan(p => ({...p,subject:e.target.value}))} placeholder="Välj eller skriv ämne, t.ex. Modersmål" /><datalist id="planning-subject-options">{["Matematik","Svenska","Svenska som andraspråk","Engelska","Biologi","Fysik","Kemi","Teknik","Historia","Geografi","Religionskunskap","Samhällskunskap","Idrott och hälsa","Bild","Musik","Slöjd","Hem- och konsumentkunskap","Moderna språk","Modersmål","Entreprenörskap"].map(subject => <option key={subject} value={subject} />)}</datalist></label><div className="form-grid">{!creatingFromBranch && <label>Skolform<select value={plan.schoolForm || ""} onChange={e => setPlan(p => ({ ...p, schoolForm: e.target.value, grade: "", course: "" }))}><option value="">Välj skolform</option><option value="Grundskola">Grundskolan</option><option value="Gymnasieskola">Gymnasiet</option></select></label>}<label>Årskurs<input value={plan.grade || ""} onChange={e => setPlan(p => ({ ...p, grade: e.target.value }))} placeholder="6" /></label>{!creatingFromBranch && <label>Lektioner per vecka<input type="number" min="1" max="10" value={plan.lessonsPerWeek} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(10, Number(e.target.value) || 1)) }))} /></label>}<label>Kommun<input value={plan.municipality || ""} onChange={e => setPlan(p => ({ ...p, municipality: e.target.value }))} /></label></div>
         </div>}
-        <details className="simple-import-section" style={{marginTop:14}} aria-label="Importera underlag"><summary style={{cursor:"pointer",fontWeight:700}}>Importera underlag (valfritt)</summary>
-          <h3>Importera underlag (valfritt)</h3>
-          <p className="muted">Bifoga Excel, Word eller PDF, eller klistra in din planering här.</p>
-          <label>Bifoga planering<input type="file" accept=".xlsx,.xls,.docx,.pdf,.txt,.csv" disabled={busy} onChange={e => { const file = e.target.files?.[0]; e.target.value = ''; if (file) importFile(file) }} /></label>
-          <label>Klistra in planering<textarea value={pasteText} placeholder="Klistra in din planering, kursplan eller lektionsinnehåll…" onChange={e => setPasteText(e.target.value)} /></label>
-          <button type="button" className="secondary" disabled={busy || !pasteText.trim()} onClick={distributePastedText}>Importera inklistrad text</button>
+        <div className="simple-import-section" aria-label="Material och underlag" style={{marginTop:14}}>
+          {materialPanel()}
           {pendingImport && <div className="import-preview"><h3>Förhandsgranska: {pendingImport.source}</h3><p>Granska innan du använder importen.</p>{pendingImport.weeksData.slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length })); setPendingImport(null); setStatus('Importen är inlagd. Granska och skapa planeringen.') }}>Använd import</button><button type="button" className="secondary" onClick={() => setPendingImport(null)}>Avbryt</button></div></div>}
-        </details>
+        </div>
         <div className="button-row"><button type="submit" className="primary" disabled={busy}>{busy ? 'Skapar…' : 'Skapa planering'}</button><button type="button" className="secondary" onClick={() => setSimpleMore(v => !v)}>{simpleMore ? "Dölj fler inställningar" : "Fler inställningar"}</button></div>
       </form>
       {status && <p className="status" role="status">{status}</p>}

@@ -8220,3 +8220,18 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
 .login-note { margin:0; font-size:13px; line-height:1.5; color:#6b7280; }
 .login-page .status { margin:0; font-size:14px; color:#9b2c2c; }
 @media (max-width:480px) { .login-card { padding:22px 20px 18px; } }
+
+/* Material till planeringen: bifogade filer och inklistrad text. */
+.material-panel { margin: 14px 0; padding: 14px; border: 1px solid #e1d7c8; border-radius: 12px; background: #fff; display: grid; gap: 10px; }
+.material-panel h3 { margin: 0; }
+.material-panel .material-attach { display: inline-flex; align-items: center; justify-self: start; min-height: 36px; padding: 6px 14px; border-radius: 8px; cursor: pointer; }
+.material-panel .material-attach input { display: none; }
+.material-panel .material-hint { margin: 0; font-size: 13px; }
+.material-panel .material-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.material-panel .material-list li { padding: 10px 12px; border: 1px solid #e6e0d6; border-radius: 10px; background: #fcfbf9; }
+.material-panel .material-note { margin: 4px 0 0; font-size: 13px; }
+.material-panel .material-paste { display: grid; gap: 6px; font-weight: 600; }
+.material-panel .material-paste textarea { min-height: 120px; width: 100%; box-sizing: border-box; font: inherit; font-weight: 400; }
+.material-disclosure { margin: 10px 0; padding: 8px 12px; border: 1px solid #e1d7c8; border-radius: 10px; background: #fff; }
+.material-disclosure > summary { cursor: pointer; font-weight: 700; }
+.material-disclosure .material-panel { border: 0; padding: 10px 0 2px; margin: 8px 0 0; }
