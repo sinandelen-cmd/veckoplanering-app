@@ -1764,6 +1764,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     if (busy) return
     if (!String(plan.title || '').trim()) return setStatus('Skriv ett namn på årsplaneringen.')
     if (!String(plan.subject || '').trim()) return setStatus('Skriv ämne.')
+    if (simpleSetup && !['Grundskola', 'Gymnasiet'].includes(plan.schoolForm)) return setStatus('Välj skolstadium, Grundskola eller Gymnasiet, innan du skapar planeringen.')
     if ((plan.schoolClosures || []).some(item => !validSchoolClosure(item))) return setStatus('Rätta namn och datum för lov/studiedagar innan du sparar eller publicerar.')
     if (publish && !automatic && !weeks.some(week => week && !week.hidden && (
       String(week.content || '').trim() || String(week.chapter || '').trim() ||
@@ -2165,7 +2166,10 @@ const addNewTeacherWeek = () => setPlan(p => {
   const createPlan = () => {
     if (!confirmNavigation()) return false
     setCreatingFromBranch(false)
-    const fresh = {...emptyPlan(), lessonsPerWeek:5, lessonDays:['Måndag','Tisdag','Onsdag','Torsdag','Fredag']}
+    // Om ett ämne redan är öppet i mappträdet förvalas dess stadium och ämne.
+    const openStage = librarySchool === 'Grundskola' || librarySchool === 'Gymnasiet' ? librarySchool : ''
+    const openSubject = librarySubject && librarySubject.includes('|') ? librarySubject.split('|').slice(1).join('|') : ''
+    const fresh = {...emptyPlan(), lessonsPerWeek:5, lessonDays:['Måndag','Tisdag','Onsdag','Torsdag','Fredag'], schoolForm: openStage, subject: openSubject}
     try { window.sessionStorage.removeItem(`arsplanering-last-open-${session.user.id}`) } catch { /* Lagring kan vara blockerad */ }
     setSimpleSetup(true)
     setSimpleMore(false)
@@ -2479,7 +2483,13 @@ const addNewTeacherWeek = () => setPlan(p => {
       <p className="muted">Ämne, skolform, årskurs och lärobok följer med från din valda mapp. Du kan lägga till klasser, lektioner och material efteråt.</p>
       <form onSubmit={event => { event.preventDefault(); void save(false) }}>
         <div style={{marginBottom:14}}>
-          <label style={{display:"grid",gap:5}}><strong>Planeringens namn</strong><input required value={plan.title} onChange={event => setPlan(p => ({ ...p, title:event.target.value, subject: (!p.subject || p.subject===p.title) ? event.target.value : p.subject }))} placeholder="Exempel: Matematik 1b" /></label>
+          <label style={{display:"grid",gap:5}}><strong>Planeringens namn</strong><input required value={plan.title} onChange={event => setPlan(p => ({ ...p, title:event.target.value }))} placeholder="Exempel: Matematik 1b" /></label>
+          <div className="form-grid" style={{marginTop:10}}>
+            <label>Skolstadium<select required value={plan.schoolForm || ''} onChange={event => setPlan(p => ({ ...p, schoolForm: event.target.value }))}><option value="">Välj stadium</option><option value="Grundskola">Grundskola</option><option value="Gymnasiet">Gymnasiet</option></select></label>
+            <label>Ämne<input required list="planning-subject-choices" value={plan.subject || ''} onChange={event => setPlan(p => ({ ...p, subject: event.target.value }))} placeholder="Välj ett befintligt ämne eller skriv ett nytt" /></label>
+            <datalist id="planning-subject-choices">{[...new Set(plans.filter(row => (parseContent(row.content)?.schoolForm || '') === plan.schoolForm).map(row => String(parseContent(row.content)?.subject || row.subject || '').trim()).filter(Boolean))].map(name => <option key={name} value={name} />)}</datalist>
+          </div>
+          <p className="muted" style={{margin:"6px 0 0"}}>Kursen placeras under ämnet i {plan.schoolForm || 'valt stadium'} i mappträdet. Klasser ligger inte i mappträdet.</p>
         </div>
         {creatingFromBranch && <p className="muted">📚 {plan.subject} · {plan.grade || plan.course} {plan.textbook ? "· 📘 " + plan.textbook : ""} · {plan.lessonsPerWeek} lektioner/vecka</p>}
         <details style={{margin:"10px 0 14px",padding:"10px 12px",border:"1px solid #e1d7c8",borderRadius:10}}>
