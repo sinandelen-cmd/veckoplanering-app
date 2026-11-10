@@ -1019,7 +1019,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
   const weeks = weekStarts.map(start => {
     const source = (plan.weeksData || []).find(w => w.weekStart === start)
     const slots = scheduled.filter(item => item.weekStart === start)
-    return {...(source || {}), weekStart:start, weekNumber:calendarWeekNumber(start), lessons:slots.map(item => {
+    return {...(source || {}), weekStart:start, weekNumber:calendarWeekNumber(start), slotDays:slots.map(item => item.day), lessons:slots.map(item => {
       const text = item.override?.text
       return item.override?.lesson || (text != null ? {...item.lesson,name:text,topics:[]} : item.lesson)
     }), chapter:source?.chapter || ''}
@@ -1032,7 +1032,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
       <div className="class-week-fast-preview" style={{background:'#fff',border:'1px solid #d2dce8',borderRadius:12,padding:14,display:'flex',flexDirection:'column',gap:10,minHeight:190}}>
         <button type="button" className="secondary" onClick={()=>setExpandedFullWeek(week.weekStart)} aria-label={`Öppna hela vecka ${calendarWeekNumber(week.weekStart)}`}>Öppna hela veckan</button>
         {(week.lessons || []).length ? (week.lessons || []).map((lesson, lessonIndex) => <button type="button" key={lessonIndex} onClick={()=>setExpanded({weekStart:week.weekStart,lessonIndex})} style={{display:'block',width:'100%',textAlign:'left',padding:'12px',border:'1px solid #dce5ef',borderRadius:8,background:'#f7faff',color:'#243f58',cursor:'pointer'}}>
-          <strong>Lektion {lessonIndex+1}</strong><span style={{display:'block',fontSize:13,overflowWrap:'anywhere'}}>{String(lesson?.name || lesson?.title || lesson?.topics?.[0]?.name || 'Öppna för att redigera').slice(0,160)}</span>
+          <strong>{week.slotDays?.[lessonIndex] ? week.slotDays[lessonIndex]+" – " : ""}Lektion {lessonIndex+1}</strong><span style={{display:'block',fontSize:13,overflowWrap:'anywhere'}}>{String(lesson?.name || lesson?.title || lesson?.topics?.[0]?.name || 'Öppna för att redigera').slice(0,160)}</span>
         </button>) : <p>Inga lektioner för denna vecka.</p>}
       </div>
     </div>)}</div>
