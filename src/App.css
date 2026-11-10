@@ -5911,12 +5911,9 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
 /* Huvudmenyn (Startsida, Planering, Månadsvy, Administration, Logga ut) ligger kvar överst när man scrollar. */
 
 
-/* Hela sidan (övre menyn och flikarna) ryms i fönstret. Veckorna scrollar inuti sin egen ruta, så att både övre och nedre delen av veckan kan nås. */
+/* Veckorna i klassvyn växer med innehållet, så att sidan scrollas upp och ner precis som i Grundplanering. */
 #lararvy .class-real-two-weeks-grid > .class-real-week-column {
-  max-height:calc(100vh - 230px);
-  max-height:calc(100dvh - 230px);
-  overflow-y:auto!important;
-  -webkit-overflow-scrolling:touch;
+  overflow-y:visible!important;
 }
 
 /* Grundplanering: hela veckan ryms i skärmens bredd oavsett iPad-läge; lektionerna staplas och sidan scrollar vertikalt. */
