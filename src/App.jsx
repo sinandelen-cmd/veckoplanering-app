@@ -589,20 +589,24 @@ function publicationFields(publish, keepPublished, slug, publishedPayload) {
 
 function Login({ email, password, setEmail, setPassword, onSubmit, onSignUp, status }) {
   const [registering, setRegistering] = useState(false)
-  return <main className="shell narrow-shell">
-    <section className="brand-card">
-      <div className="brand-mark">Å</div>
-      <p className="eyebrow">LÄRARPORTAL</p>
-      <h1>{APP_TITLE}</h1>
-      <p className="muted">Planera, importera, klona och publicera.</p>
-    </section>
-    <form className="card" onSubmit={registering ? onSignUp : onSubmit}>
-      <h2>{registering ? 'Ansök om lärarkonto' : 'Logga in som lärare'}</h2>
-      <label>E-post<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label>
-      <label>Lösenord<input type="password" value={password} onChange={e => setPassword(e.target.value)} required /></label>
-      <button className="primary full" type="submit">{registering ? "Skapa konto" : "Logga in"}</button>
-      <button type="button" className="secondary full" onClick={() => setRegistering(value => !value)}>{registering ? "Har du redan konto? Logga in" : "Ny lärare? Ansök om konto"}</button>
-      {registering && <p className="muted">Använd din egen e-postadress och välj ett lösenord med minst 6 tecken. Du kan behöva bekräfta din e-post innan du loggar in.</p>}
+  return <main className="login-page">
+    <form className="login-card" onSubmit={registering ? onSignUp : onSubmit}>
+      <div className="login-brand">
+        <div className="login-brand-mark" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/></svg>
+        </div>
+        <div>
+          <div className="login-brand-name">Min planering</div>
+          <div className="login-brand-sub">FÖR LÄRARE</div>
+        </div>
+      </div>
+      <p className="login-intro">{registering ? 'Ansök om ett lärarkonto. Kontot aktiveras när administratören har godkänt det.' : 'Logga in med ditt lärarkonto.'}</p>
+      <label className="login-field">E-post<input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required /></label>
+      <label className="login-field">Lösenord<input type="password" autoComplete={registering ? 'new-password' : 'current-password'} value={password} onChange={e => setPassword(e.target.value)} required /></label>
+      <button className="login-submit" type="submit">{registering ? 'Skapa konto' : 'Logga in'}</button>
+      <div className="login-divider" />
+      <p className="login-switch">{registering ? 'Har du redan konto?' : 'Ny lärare?'} <button type="button" className="login-link" onClick={() => setRegistering(value => !value)}>{registering ? 'Logga in' : 'Skapa konto'}</button></p>
+      {registering && <p className="login-note">Använd din egen e-postadress och välj ett lösenord med minst 6 tecken. Du kan behöva bekräfta din e-post innan du loggar in.</p>}
       {status && <p className="status">{status}</p>}
     </form>
   </main>
@@ -2902,7 +2906,7 @@ function AnnualApp() {
   if (loading) return <><Navigation /><main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar...</p></section></main></>
   if (isGymnasiumDemoIndex) return <><Navigation /><GymnasiumDemoIndex /></>
   if (studentSlug) return <><Navigation /><StudentView plan={studentPlan} error={studentError} /></>
-  if (!session) return <><Navigation /><Login email={email} password={password} setEmail={setEmail} setPassword={setPassword} onSubmit={login} onSignUp={signUp} status={status} /></>
+  if (!session) return <Login email={email} password={password} setEmail={setEmail} setPassword={setPassword} onSubmit={login} onSignUp={signUp} status={status} />
   if (accessLoading) return <><Navigation /><main className="shell"><section className="card"><h2>Kontrollerar lärarbehörighet…</h2></section></main></>
   if (access !== 'approved') return <><Navigation /><main className="shell narrow-shell"><section className="card"><h1>Ansökan om lärarkonto</h1><p>{access === 'pending' ? 'Ditt konto väntar på administratörens godkännande.' : access === 'rejected' ? 'Din ansökan har avslagits.' : access === 'blocked' ? 'Ditt konto är spärrat. Dina planeringar finns kvar.' : access === 'expired' ? 'Kontots giltighetstid har gått ut. Dina planeringar finns kvar.' : 'Behörigheten kunde inte kontrolleras. Försök igen senare.'}</p><button type="button" onClick={() => supabase.auth.signOut()}>Logga ut</button></section></main></>
   if (isAdmin) {
