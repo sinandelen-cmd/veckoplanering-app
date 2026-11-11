@@ -15,6 +15,9 @@ jobs:
       - run: npm run lint
       - run: npm run check
       - run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://siirwdmgbxwycndrxduu.supabase.co
+          VITE_SUPABASE_ANON_KEY: sb_publishable_rxWH5Fp9KCEQ0madyKmjWw_uhIG5SiM
       - name: Publicera webbplatsens statiska filer
         run: npx --yes wrangler@4 deploy
         env:
