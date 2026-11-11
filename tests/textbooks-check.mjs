@@ -47,3 +47,13 @@ assert.equal(buildManualTextbook({ school: 'Grundskola', subject: 'Matematik', t
 assert.equal(isDuplicateTextbook(existing, { school: 'Grundskola', subject: 'Matematik', title: 'Favorit matematik' }), false, 'annat läromedel tillåts')
 
 console.log('Textbook checks: OK')
+
+// Wiring i bokväljaren (src/App.jsx)
+const fs = await import('node:fs')
+const appSource = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+assert.match(appSource, /searchTextbooks\(bookPicker\.school, bookQuery\)/, 'sökning går över alla ämnen i stadiet')
+assert.match(appSource, /Registrera läromedlet och välj/, 'manuell registrering finns i bokväljaren')
+assert.match(appSource, /buildManualTextbook\(\{school: bookPicker\.school/, 'manuell registrering validerar via textbooks.js')
+assert.match(appSource, /textbookIsbn:book\.isbn/, 'ISBN sparas med kursen när den finns')
+assert.doesNotMatch(appSource, /const TEXTBOOK_CATALOG/, 'katalogen ligger bara i textbooks.js')
+console.log('Textbook wiring checks: OK')
