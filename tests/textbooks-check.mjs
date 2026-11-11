@@ -57,3 +57,10 @@ assert.match(appSource, /buildManualTextbook\(\{school: bookPicker\.school/, 'ma
 assert.match(appSource, /textbookIsbn:book\.isbn/, 'ISBN sparas med kursen när den finns')
 assert.doesNotMatch(appSource, /const TEXTBOOK_CATALOG/, 'katalogen ligger bara i textbooks.js')
 console.log('Textbook wiring checks: OK')
+
+// Kapitelpanelen är kopplad till planeringens redigering
+const appSource2 = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+assert.match(appSource2, /import ChapterOutlinePanel from "\.\/ChapterOutlinePanel\.jsx"/, 'panelen importeras')
+assert.match(appSource2, /<ChapterOutlinePanel outline=\{plan\.chapters\}/, 'panelen visas i planeringens redigering')
+assert.match(appSource2, /setPlan\(p => \(\{ \.\.\.p, chapters: next \}\)\)/, 'ändringar går till planens state och sparas med planen')
+console.log('Chapter panel wiring checks: OK')
