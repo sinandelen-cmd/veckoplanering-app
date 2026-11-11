@@ -1815,7 +1815,8 @@ const addNewTeacherWeek = () => setPlan(p => {
     if (!selectedId || simpleSetup || busy || !isDirty || teacherTab === 'new') return undefined
     const timer = window.setTimeout(() => {
       if (JSON.stringify(latestPlanRef.current) !== savedPlanRef.current) {
-        void save(true, true)
+        // Autosparning sparar endast utkast. save(true) skulle publicera för eleverna.
+        void save(false, true)
       }
     }, 1400)
     return () => window.clearTimeout(timer)
@@ -2323,7 +2324,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       subject:book.subject || item.subject,grade:item.year || '',textbook:book.title,
       textbookPublisher:book.publisher || '', textbookIsbn:book.isbn || '',
       course:item.course || (item.school === 'Gymnasiet' ? item.subject : ''),
-      title:item.course ? item.subject+' – '+item.course : item.year ? item.subject+' – '+item.year : item.subject,
+      title:(() => { const subjectName = book.subject || item.subject; return item.course ? subjectName+' – '+item.course : item.year ? subjectName+' – '+item.year : subjectName })(),
       lessonsPerWeek:5,lessonDays:['Måndag','Tisdag','Onsdag','Torsdag','Fredag']
     }
     fresh.weeksData = makeWeeks(fresh)

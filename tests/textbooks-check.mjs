@@ -64,3 +64,8 @@ assert.match(appSource2, /import ChapterOutlinePanel from "\.\/ChapterOutlinePan
 assert.match(appSource2, /<ChapterOutlinePanel outline=\{plan\.chapters\}/, 'panelen visas i planeringens redigering')
 assert.match(appSource2, /setPlan\(p => \(\{ \.\.\.p, chapters: next \}\)\)/, 'ändringar går till planens state och sparas med planen')
 console.log('Chapter panel wiring checks: OK')
+
+// Autosparning får aldrig publicera för eleverna
+assert.doesNotMatch(appSource2, /void save\(true, true\)/, 'autosparning publicerar inte')
+assert.match(appSource2, /void save\(false, true\)/, 'autosparning sparar utkast')
+console.log('Autosave publish guard: OK')
