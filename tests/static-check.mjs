@@ -255,7 +255,7 @@ assert.match(css, /\.student-print-page \.lesson \{\s*display: block !important;
 assert.match(css, /\.student-print-page \.student-week-card,[\s\S]*?break-inside: auto !important;/, 'Långa veckor måste kunna fortsätta på nästa sida')
 assert.doesNotMatch(css, /\.student-print-page \.topic-cell span\s*\{[^}]*font-size:\s*8pt\s*!important;/, 'Sid- och uppgiftsrutor får inte använda 8 pt')
 
-assert.match(app, /const \[teacherTab, setTeacherTab\] = useState\("mina"\)/, "Startsidan ska vara första lärarfliken")
+assert.match(app, /const \[teacherTab, setTeacherTab\] = useState\("bibliotek"\)/, "Efter inloggning ska mappträdet (Grundskola/Gymnasiet) visas direkt")
 for (const tab of ['arsplan', 'elevvy', 'mina']) {
   assert.match(app, new RegExp('teacherTab !== "' + tab + '"'), 'Lärarflik saknas: ' + tab)
 }
@@ -358,8 +358,10 @@ assert.match(app, /Nästa vecka visas automatiskt/)
 const approvalSql = fs.readFileSync(new URL('../supabase/migrations/20261019_teacher_approval.sql', import.meta.url), 'utf8')
 assert.match(approvalSql, /alter table public\.teacher_access enable row level security/)
 assert.match(approvalSql, /revoke update,delete on public\.teacher_access from authenticated/)
-assert.match(approvalSql, /if auth\.uid\(\) is distinct from/)
-assert.match(approvalSql, /status='approved'/)
+assert.match(approvalSql, /public\.is_platform_admin\(\)/, 'Administratörsbehörighet ska kontrolleras via platform_admins, inte via hårdkodade id')
+assert.doesNotMatch(approvalSql, /fa85f509-bf1c-43c4-bc82-78777232a339/, 'Produktionskonto får inte vara hårdkodat i migrationer')
+assert.match(approvalSql, /t\.expires_at > now\(\)/, 'Utgångna konton ska inte kunna läsa eller skriva planeringar')
+assert.match(approvalSql, /status\s*=\s*'approved'/)
 assert.match(approvalSql, /approved teachers select/)
 assert.match(approvalSql, /approved teachers insert/)
 assert.match(approvalSql, /approved teachers update/)
