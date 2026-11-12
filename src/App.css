@@ -8244,3 +8244,22 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
 #lararvy .a4-sheet-view .class-week-fast-preview {background:#fff !important;border:1px solid #d9d4c9 !important;border-radius:4px !important;box-shadow:0 1px 2px rgba(40,34,20,.08),0 8px 22px rgba(40,34,20,.10) !important;padding:20px 22px !important;min-height:0 !important}
 #lararvy .a4-sheet-view .class-week-fast-preview > .secondary {align-self:flex-start}
 @media(max-width:900px){#lararvy .a4-sheet-view .class-real-two-weeks-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* Grundplanering: tre veckor sida vid sida på en A4-liknande yta. Kapitelrubriker står ovanför sin vecka;
+   när flera veckor i samma kapitel visas ligger de sida vid sida under en gemensam rubrik. */
+.teacher-months.teacher-months-three {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:start;background:#f4f2ee;border:1px solid #e2ddd3;border-radius:10px;padding:18px}
+.teacher-months.teacher-months-three > .teacher-chapter-section {min-width:0;background:transparent}
+.teacher-months.teacher-months-three > .teacher-chapter-section:has(.chapter-week-group:nth-child(2)) {display:contents}
+.teacher-months.teacher-months-three > .teacher-chapter-section:has(.chapter-week-group:nth-child(2)) > .teacher-chapter-sticky {grid-column:1 / -1}
+.teacher-months.teacher-months-three > .teacher-chapter-section:has(.chapter-week-group:nth-child(2)) > .teacher-month-weeks {display:contents}
+.teacher-months.teacher-months-three .chapter-week-group {min-width:0}
+.teacher-months.teacher-months-three .week-card {background:#fff !important;border:1px solid #d9d4c9 !important;border-radius:4px !important;box-shadow:0 1px 2px rgba(40,34,20,.08),0 8px 22px rgba(40,34,20,.10) !important;padding:18px 20px !important}
+@media(max-width:900px){.teacher-months.teacher-months-three{grid-template-columns:minmax(0,1fr)}.teacher-months.teacher-months-three > .teacher-chapter-section:has(.chapter-week-group:nth-child(2)) > .teacher-month-weeks{display:grid;grid-template-columns:minmax(0,1fr)}}
+/* Tvinga treveckorslayouten över den befintliga flex-layouten i "Visa alla veckor". */
+#lararvy .teacher-months.teacher-months-three {display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:18px!important;flex-direction:initial!important}
+#lararvy .teacher-months.teacher-months-three > .teacher-chapter-section:has(.chapter-week-group:nth-child(2)) > .teacher-month-weeks {display:contents!important}
+#lararvy .teacher-months.teacher-months-three > .teacher-chapter-section:not(:has(.chapter-week-group:nth-child(2))) > .teacher-month-weeks {display:block!important}
+#lararvy .teacher-months.teacher-months-three .chapter-week-group {margin:0!important;width:auto!important}
+#lararvy .teacher-months.teacher-months-three > .teacher-chapter-section > .teacher-chapter-sticky {grid-column:1 / -1}
+@media(max-width:900px){#lararvy .teacher-months.teacher-months-three{grid-template-columns:minmax(0,1fr)!important}}
+#lararvy .teacher-months.teacher-months-three.teacher-months-all-weeks,#lararvy .teacher-months.teacher-months-three.teacher-months-all-weeks.teacher-months-three {display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:18px!important;align-items:start!important;flex-direction:initial!important}
