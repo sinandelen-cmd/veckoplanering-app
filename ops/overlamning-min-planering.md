@@ -45,3 +45,15 @@ DEL 5 – Arkivering + återställning, synkronisering mellan sessioner/datorer,
 - Begrepp från fil kopplas till sista momentet i filen.
 - Import utan veckonummer placeras i ordning, inte efter val.
 - Testdata "Mitt kursnamn 7A" innehåller "REDIG1" (lokalt).
+
+## Uppdatering (ny session)
+- Automatiskt Chrome-test för del 1 (Grundplanering): C:\vp\harness\e2e\del1-grundplanering.mjs. Körs med `node del1-grundplanering.mjs` mot port 4200 och lokal Supabase. Resultat 8/8:
+  - tre veckokort på samma höjd, sida vid sida
+  - redigering i alla tre kolumner sparas automatiskt i databasen
+  - ändringarna finns kvar efter omladdning
+  - befintligt innehåll finns kvar
+  - sidan scrollar vertikalt
+  - "Dölj/visa innehåll" fungerar
+  - inga JavaScript-fel
+- Ej testat ännu i del 1: tio lektioner per vecka, veckor från olika kapitel, Klassvyns motsvarande tester, kompaktare fält, talintervall 999–1009.
+- Nästa kodsteg: lägg till tio lektioner per vecka i testet (ändra "Lektioner per vecka" i planeringens inställningar eller via lokal testdata) och ett test med två kapitel.
