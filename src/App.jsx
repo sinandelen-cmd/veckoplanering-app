@@ -1863,7 +1863,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     if (!selectedId || simpleSetup || busy || !isDirty || teacherTab === 'new') return undefined
     const timer = window.setTimeout(() => {
       if (JSON.stringify(latestPlanRef.current) !== savedPlanRef.current) {
-        void save(true, true)
+        void save(false, true)
       }
     }, 1400)
     return () => window.clearTimeout(timer)
@@ -2630,7 +2630,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     <section className="card calendar-primary-actions" aria-label="Spara och publicera årsplaneringen">
       <div className="button-row">
         <span className="autosave-info">Sparas automatiskt</span>
-        <span className="autosave-info">Publiceras automatiskt när det finns innehåll</span>
+        <span className="autosave-info">Sparas som utkast. Eleverna ser ändringar först när planeringen publiceras.</span>
         
       </div>
     </section>
@@ -2664,7 +2664,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       </div>}
     </section>
 
-    <div className="button-row" aria-label="Spara planering"><button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara ändringar</button><span className="autosave-info">Publiceras automatiskt när det finns innehåll</span></div>
+    <div className="button-row" aria-label="Spara planering"><button type="button" className="secondary" disabled={busy} onClick={() => save(false)}>Spara ändringar</button><span className="autosave-info">Sparas som utkast. Eleverna ser ändringar först när planeringen publiceras.</span></div>
     <div className="week-overview-toolbar" aria-label="Årskalender och zoom"><strong>Veckor i planeringen <span className="week-count-badge">{weeks.length} {weeks.length === 1 ? "vecka" : "veckor"}</span></strong><button type="button" className="primary" onClick={() => {
         setCalendarOpen(true)
         window.setTimeout(() => document.getElementById('teacher-year-calendar')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
