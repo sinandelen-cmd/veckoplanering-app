@@ -2326,7 +2326,9 @@ const addNewTeacherWeek = () => setPlan(p => {
   }
   const chooseBook = pick => {
     const book = typeof pick === 'string' ? { title: pick.trim() } : pick
-    const existing = matchingBookPlan(book.title, book.subject || bookPicker?.subject)
+    // Kursen ligger alltid i det ämne och skolstadium som läraren valt. Om läromedlets ämne skiljer sig varnas först.
+    if (bookPicker && book.subject && book.subject !== bookPicker.subject && !window.confirm(`Läromedlet ”${book.title}” tillhör ämnet ${book.subject}, men du har valt ${bookPicker.subject}. Vill du skapa kursen under ${bookPicker.subject} ändå?`)) return
+    const existing = matchingBookPlan(book.title, bookPicker?.subject)
     if (!existing) { void confirmBook(book); return }
     const archived = Boolean(parseContent(existing.content)?.archived)
     setBookPicker(null)
@@ -2347,10 +2349,10 @@ const addNewTeacherWeek = () => setPlan(p => {
     const fresh = {
       ...emptyPlan(), schoolYear:libraryYear === 'alla' ? '' : libraryYear,
       schoolForm:item.school === 'Gymnasiet' ? 'Gymnasieskola' : 'Grundskola',
-      subject:book.subject || item.subject,grade:item.year || '',textbook:book.title,
+      subject:item.subject,grade:item.year || '',textbook:book.title,
       textbookPublisher:book.publisher || '', textbookIsbn:book.isbn || '',
       course:item.course || (item.school === 'Gymnasiet' ? item.subject : ''),
-      title:(() => { const subjectName = book.subject || item.subject; return item.course ? subjectName+' – '+item.course : item.year ? subjectName+' – '+item.year : subjectName })(),
+      title:(() => { const subjectName = item.subject; return item.course ? subjectName+' – '+item.course : item.year ? subjectName+' – '+item.year : subjectName })(),
       lessonsPerWeek:5,lessonDays:['Måndag','Tisdag','Onsdag','Torsdag','Fredag']
     }
     fresh.weeksData = makeWeeks(fresh)
