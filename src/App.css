@@ -8263,3 +8263,21 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
 #lararvy .teacher-months.teacher-months-three > .teacher-chapter-section > .teacher-chapter-sticky {grid-column:1 / -1}
 @media(max-width:900px){#lararvy .teacher-months.teacher-months-three{grid-template-columns:minmax(0,1fr)!important}}
 #lararvy .teacher-months.teacher-months-three.teacher-months-all-weeks,#lararvy .teacher-months.teacher-months-three.teacher-months-all-weeks.teacher-months-three {display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:18px!important;align-items:start!important;flex-direction:initial!important}
+
+/* Lärarens utskrift i liggande A4: endast treveckorsvyn skrivs ut. Elevutskriften (stående) och den digitala vyn påverkas inte. */
+@media print {
+  body.teacher-print-mode * { visibility: hidden !important; }
+  body.teacher-print-mode .teacher-months.teacher-months-three,
+  body.teacher-print-mode .teacher-months.teacher-months-three * { visibility: visible !important; }
+  body.teacher-print-mode .teacher-months.teacher-months-three { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; margin: 0 !important; padding: 0 !important; background: #fff !important; border: 0 !important; box-shadow: none !important; }
+  body.teacher-print-mode .teacher-months.teacher-months-three .teacher-chapter-sticky { break-after: avoid; page-break-after: avoid; }
+  body.teacher-print-mode .teacher-months.teacher-months-three .week-card { break-inside: avoid; page-break-inside: avoid; box-shadow: none !important; }
+  body.teacher-print-mode .teacher-months.teacher-months-three button,
+  body.teacher-print-mode .teacher-months.teacher-months-three .teacher-week-collapse-toggle { display: none !important; }
+  body.teacher-print-mode .teacher-months.teacher-months-three input,
+  body.teacher-print-mode .teacher-months.teacher-months-three textarea { font-size: 9pt !important; border-color: #bbb !important; }
+}
+@media print {
+  body.teacher-print-mode .teacher-months.teacher-months-three .lesson,
+  body.teacher-print-mode .teacher-months.teacher-months-three .week-card { break-inside: avoid !important; page-break-inside: avoid !important; }
+}

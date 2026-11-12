@@ -1360,6 +1360,41 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     setLibrarySubject('')
   }
   const [librarySchool, setLibrarySchool] = useState('')
+  // Lärarens utskrift i liggande A4. Egen @page-regel läggs in bara under utskriften och tas bort direkt efteråt.
+  const [teacherPrintMode, setTeacherPrintMode] = useState(false)
+  useEffect(() => {
+    if (!teacherPrintMode) return undefined
+    const style = document.createElement('style')
+    style.id = 'teacher-print-style'
+    style.textContent = '@page { size: A4 landscape; margin: 10mm; }'
+    document.head.appendChild(style)
+    document.body.classList.add('teacher-print-mode')
+    // Fält som textareas och inputs klipper text. I utskriften visas innehållet som vanlig, radbruten text.
+    const swaps = []
+    document.querySelectorAll('.teacher-months-three textarea, .teacher-months-three input[type=text]').forEach(el => {
+      const copy = document.createElement('div')
+      copy.className = 'print-copy'
+      copy.textContent = el.value
+      copy.style.cssText = 'white-space:pre-wrap;word-break:break-word;font-size:9pt;line-height:1.3;border:1px solid #bbb;border-radius:3px;padding:3px 5px;background:#fff;color:#000'
+      el.style.display = 'none'
+      el.parentNode.insertBefore(copy, el)
+      swaps.push({ el, copy })
+    })
+    // Dölj allt som inte ligger i treveckorsvyn: syskon på varje nivå mellan vyn och body.
+    const hidden = []
+    const target = document.querySelector('.teacher-months-three')
+    let node = target
+    while (target && node && node !== document.body && node.parentElement) {
+      Array.from(node.parentElement.children).forEach(sibling => {
+        if (sibling !== node && !sibling.contains(target)) { hidden.push([sibling, sibling.style.display]); sibling.style.display = 'none' }
+      })
+      node = node.parentElement
+    }
+    const done = () => { document.body.classList.remove('teacher-print-mode'); swaps.forEach(({ el, copy }) => { el.style.display = ''; copy.remove() }); swaps.length = 0; hidden.forEach(([el, display]) => { el.style.display = display }); hidden.length = 0; style.remove(); setTeacherPrintMode(false) }
+    window.addEventListener('afterprint', done, { once: true })
+    const timer = window.setTimeout(() => window.print(), 300)
+    return () => { window.clearTimeout(timer); window.removeEventListener('afterprint', done); done() }
+  }, [teacherPrintMode])
   const [librarySubject, setLibrarySubject] = useState('')
   const [editingSubject, setEditingSubject] = useState('')
   const [editingSubjectValue, setEditingSubjectValue] = useState('')
@@ -2476,6 +2511,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       
               {selectedId && teacherTab === "arsplan" && !simpleSetup && <div className="publish-bar" aria-label="Publicering för elever" style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',margin:'8px 0'}}>
           <span className="muted">{plan.published ? 'Publicerad för elever. Eleverna ser den senast publicerade versionen tills du publicerar ändringarna.' : 'Ej publicerad. Eleverna ser inte planeringen.'}</span>
+          <button type="button" className="secondary" disabled={busy} onClick={() => { setShowPastTeacherWeeks(true); setPastWeeksExpanded(true); setTeacherPrintMode(true) }} title="Skriv ut eller spara som PDF i liggande A4">Skriv ut (liggande A4)</button>
           {plan.published
             ? <>
                 <button type="button" className="primary" disabled={busy} onClick={() => save(true)}>Publicera ändringar</button>
