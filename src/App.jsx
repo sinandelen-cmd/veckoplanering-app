@@ -2441,9 +2441,12 @@ const addNewTeacherWeek = () => setPlan(p => {
       
       
               {selectedId && teacherTab === "arsplan" && !simpleSetup && <div className="publish-bar" aria-label="Publicering för elever" style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',margin:'8px 0'}}>
-          <span className="muted">{plan.published ? 'Publicerad för elever' : 'Ej publicerad. Eleverna ser inte planeringen.'}</span>
+          <span className="muted">{plan.published ? 'Publicerad för elever. Eleverna ser den senast publicerade versionen tills du publicerar ändringarna.' : 'Ej publicerad. Eleverna ser inte planeringen.'}</span>
           {plan.published
-            ? <button type="button" className="secondary" disabled={busy} onClick={unpublishPlan}>Avpublicera för elever</button>
+            ? <>
+                <button type="button" className="primary" disabled={busy} onClick={() => save(true)}>Publicera ändringar</button>
+                <button type="button" className="secondary" disabled={busy} onClick={unpublishPlan}>Avpublicera för elever</button>
+              </>
             : <button type="button" className="primary" disabled={busy || isDirty} onClick={() => save(true)} title={isDirty ? 'Spara ändringarna först' : undefined}>Publicera för elever</button>}
         </div>}
       {AVSTANGD_GRANSSNITT && selectedId && teacherTab === "arsplan" && <div className="archive-plan-actions" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
