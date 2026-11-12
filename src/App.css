@@ -8235,3 +8235,12 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
 .material-disclosure { margin: 10px 0; padding: 8px 12px; border: 1px solid #e1d7c8; border-radius: 10px; background: #fff; }
 .material-disclosure > summary { cursor: pointer; font-weight: 700; }
 .material-disclosure .material-panel { border: 0; padding: 10px 0 2px; margin: 8px 0 0; }
+
+/* A4-känsla i Klassvyn: tre veckor sida vid sida på en ljus arbetsyta. Innehållet växer nedåt; ingen inre scroll. */
+#lararvy .class-real-two-weeks.a4-sheet-view {background:#f4f2ee;border:1px solid #e2ddd3;border-radius:10px;padding:18px}
+#lararvy .a4-sheet-view .class-real-two-weeks-grid {grid-template-columns:repeat(var(--class-week-columns,3),minmax(0,1fr));gap:18px;align-items:start}
+#lararvy .a4-sheet-view .class-real-week-column {min-width:0}
+#lararvy .a4-sheet-view .class-real-week-column > strong {display:block;margin:0 2px 8px;font-size:13px;letter-spacing:.02em;color:#4a5b6b}
+#lararvy .a4-sheet-view .class-week-fast-preview {background:#fff !important;border:1px solid #d9d4c9 !important;border-radius:4px !important;box-shadow:0 1px 2px rgba(40,34,20,.08),0 8px 22px rgba(40,34,20,.10) !important;padding:20px 22px !important;min-height:0 !important}
+#lararvy .a4-sheet-view .class-week-fast-preview > .secondary {align-self:flex-start}
+@media(max-width:900px){#lararvy .a4-sheet-view .class-real-two-weeks-grid{grid-template-columns:minmax(0,1fr)}}

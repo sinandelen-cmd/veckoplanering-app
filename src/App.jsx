@@ -1006,7 +1006,7 @@ function removeRootVar(name) {
 }
 
 // Skalar en vecka (960 px bred, samma layout som Grundplanering) till kolumnens bredd.
-function ScaledWeek({ children }) {
+function ScaledWeek({ children, designWidth = 960 }) {
   const frame = useRef(null)
   const content = useRef(null)
   const [scale, setScale] = useState(0.6)
@@ -1017,7 +1017,7 @@ function ScaledWeek({ children }) {
       const width = frame.current.clientWidth
       const natural = content.current.offsetHeight
       if (!width || !natural) return
-      const next = Math.min(1, width / 960)
+      const next = Math.min(1, width / designWidth)
       setScale(old => (Math.abs(old - next) > 0.002 ? next : old))
       setHeight(Math.ceil(natural * next))
     }
@@ -1028,14 +1028,14 @@ function ScaledWeek({ children }) {
     return () => observer.disconnect()
   }, [])
   return <div ref={frame} style={{ position: "relative", width: "100%", height, overflow: "hidden" }}>
-    <div ref={content} style={{ position: "absolute", top: 0, left: 0, width: 960, transformOrigin: "top left", transform: `scale(${scale})` }}>{children}</div>
+    <div ref={content} style={{ position: "absolute", top: 0, left: 0, width: designWidth, transformOrigin: "top left", transform: `scale(${scale})` }}>{children}</div>
   </div>
 }
 
 function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, busy, saveStatus }) {
   const [expanded, setExpanded] = useState(null)
   const [saving, setSaving] = useState(false)
-  const [visibleWeekCount, setVisibleWeekCount] = useState(2)
+  const [visibleWeekCount, setVisibleWeekCount] = useState(3)
   const [expandedFullWeek, setExpandedFullWeek] = useState(null)
   const [classWeekOffset, setClassWeekOffset] = useState(0)
   const classHistory = useRef({ past: [], future: [] })
@@ -1090,13 +1090,13 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
     }), chapter:source?.chapter || ''}
   })
   if (!group) return null
-  return <section className="class-real-two-weeks" aria-label={className+' – '+visibleWeekCount+' veckor'}>
-    <div className="class-real-two-weeks-header"><div className="class-week-count-controls" role="group" aria-label="Antal veckor att visa">{[2].map(n=><button key={n} type="button" className={visibleWeekCount===n?"active":""} aria-pressed={visibleWeekCount===n} onClick={()=>setVisibleWeekCount(n)}>{n} {n===1?"vecka":"veckor"}</button>)}</div></div>
+  return <section className="class-real-two-weeks a4-sheet-view" aria-label={className+' – '+visibleWeekCount+' veckor'}>
+    <div className="class-real-two-weeks-header"><div className="class-week-count-controls" role="group" aria-label="Antal veckor att visa">{[3,2].map(n=><button key={n} type="button" className={visibleWeekCount===n?"active":""} aria-pressed={visibleWeekCount===n} onClick={()=>setVisibleWeekCount(n)}>{n} {n===1?"vecka":"veckor"}</button>)}</div></div>
     <div className="class-real-two-weeks-grid" style={{"--class-week-columns":visibleWeekCount}}>{weeks.map((week,_i)=><div className="class-real-week-column" key={week.weekStart}>
       <strong>{week.weekStart===currentStart?'Nuvarande vecka':`Vecka ${calendarWeekNumber(week.weekStart)}`}</strong>
       <div className="class-week-fast-preview" style={{background:'#fff',border:'1px solid #d2dce8',borderRadius:12,padding:14,display:'flex',flexDirection:'column',gap:10,minHeight:190}}>
         <button type="button" className="secondary" onClick={()=>setExpandedFullWeek(week.weekStart)} aria-label={`Öppna hela vecka ${calendarWeekNumber(week.weekStart)}`}>Öppna hela veckan</button>
-        <ScaledWeek><article className="calendar-inline-week" style={{backgroundColor:weekColor(week.weekStart)}}>
+        <ScaledWeek designWidth={560}><article className="calendar-inline-week" style={{backgroundColor:weekColor(week.weekStart)}}>
           <div className="calendar-inline-week-heading"><h2>Vecka {calendarWeekNumber(week.weekStart)}</h2><span>{week.chapter}</span></div>
           <LessonDetails week={week} entryType={plan.entryType||'lektion'} onUndo={undoClassLesson} onRedo={redoClassLesson} canUndo={classHistory.current.past.length>0} canRedo={classHistory.current.future.length>0} onChange={changes=>{const slots=scheduled.filter(item=>item.weekStart===week.weekStart);const overrides={...(group.overrides||{})};(changes.lessons||[]).forEach((lesson,i)=>{const slot=slots[i];if(!slot)return;const key=String(slot.lessonNumber-1);overrides[key]={...(overrides[key]||{}),lesson}});applyClassOverrides(overrides);scheduleClassAutoSave()}} />
         </article></ScaledWeek>
