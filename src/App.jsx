@@ -16,6 +16,7 @@ import { buildClassSchedule } from './classScheduleUtils.js'
 import { MUNICIPALITIES_BY_COUNTY } from './swedishMunicipalities.js'
 import { NATIONAL_EXAMS_2026_27 } from './nationalExams.js'
 import { booksForSubject, searchTextbooks, buildManualTextbook, isValidIsbn, normalizeIsbn, isDuplicateTextbook } from "./textbooks.js"
+import { parseOutlineText } from "./chapters.js"
 import ChapterOutlinePanel from "./ChapterOutlinePanel.jsx"
 
 const APP_TITLE = 'Årsplanering'
@@ -267,7 +268,9 @@ function distributeUnits(plan, units) {
     current.units.push(unit)
   }
   return groups.map((group,index)=>{
-    const template = base[index] || makeWeeks({...plan,startDate:addWeeks(base[0]?.weekStart||plan.startDate,index),weeks:1},1)[0]
+    // Innehåll med veckonummer placeras i rätt vecka när den finns i planeringen. Annars används ordningen som förut.
+    const byNumber = group.week ? base.find(item => Number(item.weekNumber) === Number(group.week)) : null
+    const template = byNumber || base[index] || makeWeeks({...plan,startDate:addWeeks(base[0]?.weekStart||plan.startDate,index),weeks:1},1)[0]
     const lessons = Array.from({length:capacity},(_,i)=>{
       const unit=group.units[i]
       const previous=template.lessons?.[i]||{}
@@ -280,6 +283,25 @@ function distributeUnits(plan, units) {
   })
 }
 
+// En kort rubrik utan veckonummer är ett kapitel, aldrig en veckorubrik.
+function isChapterHeading(line) {
+  return line.length <= 40 && line.split(/\s+/).length <= 4 && !/[.:!?;,\d]/.test(line) && !/^(?:vecka|v\.|lektion|pass|sida|sidor|uppgift|material|länk|mål)\b/i.test(line)
+}
+// Kapitel, moment och viktiga begrepp ur filens text. Veckor och lektioner hämtas separat.
+function outlineFromText(text) {
+  const out = []
+  let chapter = ''
+  for (const raw of normalizeLines(text)) {
+    const line = raw.replace(/^[-•*]\s*/, '').trim()
+    if (!line) continue
+    const kap = line.match(/^(?:kapitel|chapter)\s*\d*\s*[:.\-–]\s*(.+)$/i)
+    if (kap) { chapter = kap[1].trim(); out.push(chapter); continue }
+    if (/^moment\s*:/i.test(line)) { for (const m of line.replace(/^moment\s*:/i, '').split(',')) if (m.trim()) out.push('- ' + m.trim()); continue }
+    if (/^viktiga begrepp\s*:/i.test(line)) { out.push('Begrepp: ' + line.replace(/^viktiga begrepp\s*:/i, '').trim()); continue }
+    if (!chapter && isChapterHeading(line)) { chapter = line; out.push(chapter); continue }
+  }
+  return parseOutlineText(out.join('\n'))
+}
 function unitsFromText(text) {
   const lines=normalizeLines(text)
   const units=[]
@@ -305,6 +327,8 @@ function unitsFromText(text) {
       continue
     }
     if (/^#{1,3}\s*/.test(line)){chapter=line.replace(/^#+\s*/,'');last=null;continue}
+    if (/^(?:moment|viktiga begrepp)\s*:/i.test(line)) { last=null; continue }
+    if (!week && isChapterHeading(line)) { chapter=line; last=null; continue }
     last={week,chapter,topic:line,details:''}
     units.push(last)
   }
@@ -328,7 +352,14 @@ function unitsFromWorkbook(workbook) {
       const topicCol=find(/^(delmoment|moment|innehåll|topic|lektion|rubrik)$/)
       const weekCol=find(/^(vecka|week)$/)
       if(chapterCol>=0 && cells[chapterCol])chapter=cells[chapterCol]
-      if(weekCol>=0 && /^\d{1,2}$/.test(cells[weekCol]))week=Number(cells[weekCol])
+      const weekText=weekCol>=0?String(cells[weekCol]||'').match(/^(?:vecka\s*)?(\d{1,2})$/i):null
+      if(weekText)week=Number(weekText[1])
+      // Bredtabell: veckor på rader och veckodagar som kolumner. Varje cell blir en egen lektion i rätt vecka.
+      const dayCols=(headers||[]).map((v,i)=>/^(måndag|tisdag|onsdag|torsdag|fredag)$/.test(v)?i:-1).filter(i=>i>=0)
+      if(topicCol<0 && dayCols.length && weekText){
+        for(const i of dayCols){const topic=cells[i];if(topic)units.push({chapter,week,topic,details:headers[i]})}
+        continue
+      }
       if(topicCol>=0){
         const topic=cells[topicCol]
         if(topic)units.push({chapter,week,topic,details:cells.filter((v,i)=>v&&i!==chapterCol&&i!==topicCol&&i!==weekCol).join(' · ')})
@@ -1857,7 +1888,8 @@ const addNewTeacherWeek = () => setPlan(p => {
       const chapterWeeks = /[.]xlsx?$/i.test(file.name) ? distributeChapterWorkbook(plan, XLSX.read(await file.arrayBuffer(),{type:'array'})) : null
       const text = chapterWeeks ? '' : await extractText(file)
       const weeksData = chapterWeeks || distributeText(plan,text)
-      setPendingImport({ source: file.name, weeksData, structured: true })
+      const outline = text ? outlineFromText(text) : null
+      setPendingImport({ source: file.name, weeksData, structured: true, outline })
       setStatus(chapterWeeks ? 'Kapitel och delmoment är fördelade på planeringens lektioner. Granska före import.' : 'Importen är klar för förhandsgranskning. Inget har ersatts ännu.'); setFileImportState({phase:'success',message:`${file.name} är inläst – granska nedan.`})
     } catch (error) { const message=error.message || 'Importen misslyckades.'; setStatus(message); setFileImportState({phase:'error',message}) }
     setBusy(false)
@@ -2542,7 +2574,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       {(showPastTeacherWeeks || focusedTeacherWeek) && <div className="teacher-active-chapter-bar" aria-label="Aktuellt kapitel och vecka"><div className="teacher-active-chapter-content" /></div>}
       {!simpleSetup && (plan.textbook || plan.chapters) && <ChapterOutlinePanel outline={plan.chapters} onChange={next => setPlan(p => ({ ...p, chapters: next }))} textbook={plan.textbook} />}
       {!simpleSetup && <section className="course-import-block" aria-label="Importera planering" style={{margin:'12px 0',display:'grid',gap:6}}><strong>Ladda upp planering</strong><p className="muted" style={{margin:0}}>Word, PDF, Excel eller textfil. Du granskar innehållet i förhandsgranskningen innan något sparas.</p><div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}><label className="secondary">Välj fil<input type="file" accept=".xlsx,.xls,.docx,.pdf,.txt,.csv" disabled={busy} style={{marginLeft:8}} onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) importFile(f) }} /></label><button type="button" className="secondary" disabled={busy} onClick={() => setStatus('Planeringen fortsätter utan fil. Lägg till kapitel och veckor manuellt.')}>Fortsätt utan fil</button></div></section>}
-      {!simpleSetup && <details className="material-disclosure" open={Boolean(pendingImport)}><summary>Material till planeringen ({(plan.materials || []).length} filer{pasteText.trim() ? ' + inklistrad text' : ''})</summary>{materialPanel()}{pendingImport && <div className="import-preview"><h3>Förhandsgranska: {pendingImport.source}</h3><p>Granska innan du använder importen.</p>{pendingImport.weeksData.slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'auto' }}>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length })); setPendingImport(null); setStatus('Importen är godkänd och sparas automatiskt i grundplaneringen.') }}>Använd import</button><button type="button" className="secondary" onClick={() => setPendingImport(null)}>Avbryt</button></div></div>}</details>}
+      {!simpleSetup && <details className="material-disclosure" open={Boolean(pendingImport)}><summary>Material till planeringen ({(plan.materials || []).length} filer{pasteText.trim() ? ' + inklistrad text' : ''})</summary>{materialPanel()}{pendingImport && <div className="import-preview"><h3>Förhandsgranska: {pendingImport.source}</h3><p>Granska innan du använder importen.</p>{pendingImport.outline?.chapters?.length ? <p className="muted" style={{margin:"6px 0"}}>Kapitel och moment som läggs till: {pendingImport.outline.chapters.map(ch => ch.title + " (" + ch.moments.map(m => m.title + (m.concepts.length ? ": " + m.concepts.join(", ") : "")).join("; ") + ")").join(" · ")}</p> : null}{pendingImport.weeksData.slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'auto' }}>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length, ...(pendingImport.outline?.chapters?.length ? { chapters: { chapters: [...(p.chapters?.chapters || []), ...pendingImport.outline.chapters] } } : {}) })); setPendingImport(null); setStatus('Importen är godkänd och sparas automatiskt i grundplaneringen.') }}>Använd import</button><button type="button" className="secondary" onClick={() => setPendingImport(null)}>Avbryt</button></div></div>}</details>}
       <div className={`teacher-months ${focusedTeacherWeek ? "teacher-months-focused" : ""} ${focusedTeacherWeek && teacherWeekOverview ? "teacher-months-overview-hidden" : ""} ${showPastTeacherWeeks && !focusedTeacherWeek ? "teacher-months-all-weeks" : ""} `}>
         {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? teacherDisplayWeeks : defaultTeacherWindow)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
@@ -2643,7 +2675,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         </div>}
         <div className="simple-import-section" aria-label="Material och underlag" style={{marginTop:14}}>
           {materialPanel()}
-          {pendingImport && <div className="import-preview"><h3>Förhandsgranska: {pendingImport.source}</h3><p>Granska innan du använder importen.</p>{pendingImport.weeksData.slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length })); setPendingImport(null); setStatus('Importen är inlagd. Granska och skapa planeringen.') }}>Använd import</button><button type="button" className="secondary" onClick={() => setPendingImport(null)}>Avbryt</button></div></div>}
+          {pendingImport && <div className="import-preview"><h3>Förhandsgranska: {pendingImport.source}</h3><p>Granska innan du använder importen.</p>{pendingImport.outline?.chapters?.length ? <p className="muted" style={{margin:"6px 0"}}>Kapitel och moment som läggs till: {pendingImport.outline.chapters.map(ch => ch.title + " (" + ch.moments.map(m => m.title + (m.concepts.length ? ": " + m.concepts.join(", ") : "")).join("; ") + ")").join(" · ")}</p> : null}{pendingImport.weeksData.slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length, ...(pendingImport.outline?.chapters?.length ? { chapters: { chapters: [...(p.chapters?.chapters || []), ...pendingImport.outline.chapters] } } : {}) })); setPendingImport(null); setStatus('Importen är inlagd. Granska och skapa planeringen.') }}>Använd import</button><button type="button" className="secondary" onClick={() => setPendingImport(null)}>Avbryt</button></div></div>}
         </div>
         <div className="button-row"><button type="submit" className="primary" disabled={busy}>{busy ? 'Skapar…' : 'Skapa planering'}</button><button type="button" className="secondary" onClick={() => setSimpleMore(v => !v)}>{simpleMore ? "Dölj fler inställningar" : "Fler inställningar"}</button></div>
       </form>
@@ -2791,11 +2823,11 @@ const addNewTeacherWeek = () => setPlan(p => {
       {pendingImport && <div className="import-preview">
         <h3>Förhandsgranska import: {pendingImport.source}</h3>
         <p className="muted">Inget har ersatts. De första fem veckorna visas nedan.</p>
-        {pendingImport.weeksData.slice(0, 5).map((week, i) => <div className="import-preview-week" key={i}><strong>Vecka {week.weekNumber}</strong><pre>{week.content || '(Tom vecka)'}</pre></div>)}
+        {pendingImport.outline?.chapters?.length ? <p className="muted" style={{margin:"6px 0"}}>Kapitel och moment som läggs till: {pendingImport.outline.chapters.map(ch => ch.title + " (" + ch.moments.map(m => m.title + (m.concepts.length ? ": " + m.concepts.join(", ") : "")).join("; ") + ")").join(" · ")}</p> : null}{pendingImport.weeksData.slice(0, 5).map((week, i) => <div className="import-preview-week" key={i}><strong>Vecka {week.weekNumber}</strong><pre>{week.content || '(Tom vecka)'}</pre></div>)}
         <div className="button-row">
           <button type="button" className="primary" onClick={() => {
             if (!confirmReplacingWeeks(plan)) return
-            setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length }))
+            setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length, ...(pendingImport.outline?.chapters?.length ? { chapters: { chapters: [...(p.chapters?.chapters || []), ...pendingImport.outline.chapters] } } : {}) }))
             setPendingImport(null)
             setStatus('Importen har lagts i redigeraren. Granska innan du sparar.')
           }}>Använd import</button>
