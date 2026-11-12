@@ -1,16 +1,17 @@
 name: Publicera klassens helvecksvy till testlänken
+# INAKTIVERAD: förhandsvisningen byggdes mot produktionsdatabasen och publicerades automatiskt vid varje push till main.
+# Körs bara manuellt, och kör först en isolerad testmiljö.
 on:
-  push:
-    branches: [main]
-    paths:
-      - .github/workflows/publish-class-week-preview.yml
-      - src/App.css
-      - src/App.jsx
+  workflow_dispatch:
 jobs:
   publish-preview:
     runs-on: ubuntu-latest
     environment: production
     steps:
+      - name: Stoppas medvetet
+        run: |
+          echo "Denna förhandsvisning är inaktiverad. Den använde produktionsdatabasen." >&2
+          exit 1
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
