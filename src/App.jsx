@@ -1809,6 +1809,32 @@ const addNewTeacherWeek = () => setPlan(p => {
     }
   }
 
+  // Avpublicering görs endast av läraren med bekräftelse. Innehållet behålls, så att en ny publicering kan använda samma elevlänk.
+  // RLS begränsar uppdateringen till lärarens egna planeringar.
+  async function unpublishPlan() {
+    if (!selectedId || busy) return
+    if (!window.confirm('Avpublicera planeringen? Eleverna kan inte längre se den förrän du publicerar igen.')) return
+    setBusy(true)
+    setStatus('Avpublicerar…')
+    try {
+      const { data: row, error: readError } = await supabase.from('veckoplanering').select('content').eq('id', selectedId).eq('user_id', session.user.id).single()
+      if (readError) throw readError
+      const content = { ...parseContent(row.content), published: false }
+      const { error } = await supabase.from('veckoplanering').update({ published: false, content: JSON.stringify(content), updated_at: new Date().toISOString() }).eq('id', selectedId).eq('user_id', session.user.id)
+      if (error) throw error
+      const next = { ...plan, published: false }
+      setPlan(next)
+      savedPlanRef.current = JSON.stringify(next)
+      setSavedRevision(revision => revision + 1)
+      await loadPlans()
+      setStatus('Planeringen är avpublicerad. Eleverna kan inte längre se den.')
+    } catch (error) {
+      setStatus(`Kunde inte avpublicera: ${error.message}`)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   // Spara automatiskt enbart redan skapade planeringar som utkast.
   // Publicerad elevversion påverkas inte förrän läraren väljer Publicera.
   useEffect(() => {
@@ -2414,6 +2440,12 @@ const addNewTeacherWeek = () => setPlan(p => {
       </div>
       
       
+              {selectedId && teacherTab === "arsplan" && !simpleSetup && <div className="publish-bar" aria-label="Publicering för elever" style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',margin:'8px 0'}}>
+          <span className="muted">{plan.published ? 'Publicerad för elever' : 'Ej publicerad. Eleverna ser inte planeringen.'}</span>
+          {plan.published
+            ? <button type="button" className="secondary" disabled={busy} onClick={unpublishPlan}>Avpublicera för elever</button>
+            : <button type="button" className="primary" disabled={busy || isDirty} onClick={() => save(true)} title={isDirty ? 'Spara ändringarna först' : undefined}>Publicera för elever</button>}
+        </div>}
       {AVSTANGD_GRANSSNITT && selectedId && teacherTab === "arsplan" && <div className="archive-plan-actions" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <button type="button" className="secondary" disabled={busy || !plans.some(row => row.id === selectedId)} style={{ fontSize: '1rem', fontWeight: 850, padding: '13px 18px', borderRadius: 12, background: '#f9e5ed', border: '2px solid #c87e9b', color: '#73394f' }} onClick={() => { const row = plans.find(item => item.id === selectedId); if (row) void setArchived(row, true) }}>🗂 Arkivera planeringen</button>
         
