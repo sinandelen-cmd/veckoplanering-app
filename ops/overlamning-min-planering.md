@@ -93,3 +93,10 @@ DEL 5 – Arkivering + återställning, synkronisering mellan sessioner/datorer,
 - Knappen "Exportera Word" i Grundplanering. Frågar om från/till-vecka (tomt = alla synliga veckor).
 - Verifierat i Chrome mot lokal Supabase: nedladdad fil 186 KB, 12 veckor, 120 lektioner, texten med ÅÄÖ och talintervall (999–1009, 1000–1050) bevarad. Zipen och word/document.xml kontrollerade med .NET (korrekt XML).
 - Ej testat: öppning i Microsoft Word (ingen Word-installation här). Ej gjort än: Klassvyns Word-export (hela planen), filimport med val av startvecka, övriga funktioner.
+
+## Word-export för Klassvyn (2026-11-13)
+- Knappen "Exportera Word" i klassvyn: frågar efter från/till-vecka (tomt = alla) och om dolda veckor ska ingå. Exporterar klassens veckor med lektioner (hela klassplanen som standard).
+- Grundplanering: dolda veckor ingår bara efter att läraren svarat ja på frågan.
+- Verifierat i Chrome: klass 8A → 12 veckor, 60 lektioner, titel = klassnamn, XML välformad (kontrollerad med .NET).
+- Ej gjort: test med valt intervall i klassvyn och med dolda veckor i klassen (ingen dold vecka i testdata); öppning i riktig Word (ingen Word här).
+- Kvar: kompaktare fält, autosparningsstatus, ångra/versionshistorik, kopiera, sökning, arkivering, synkronisering, import med startvecka, begreppskoppling, slutliga tester, PDF för hela klassen (utöver fönstret), omtest av elevutskrift.

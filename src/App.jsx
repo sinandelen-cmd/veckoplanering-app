@@ -1042,6 +1042,25 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
   const [classWeekOffset, setClassWeekOffset] = useState(0)
   // Klassens utskrift i liggande A4 med samma separata utskriftskomponent som Grundplanering.
   const [classPrinting, setClassPrinting] = useState(false)
+  // Hela klassplanen: alla veckor där klassen har lektioner, inklusive dolda veckor när läraren väljer det.
+  const exportClassWord = () => {
+    const from = window.prompt('Exportera från vecka (lämna tomt för första veckan)', '')
+    if (from === null) return
+    const to = window.prompt('Till och med vecka (lämna tomt för sista veckan)', '')
+    if (to === null) return
+    const includeHidden = window.confirm('Ska dolda veckor också ingå i exporten?\n\nOK = ja.\nAvbryt = nej, bara synliga veckor.')
+    const first = from.trim() ? Number(from) : null
+    const last = to.trim() ? Number(to) : null
+    const starts = [...new Set(scheduled.map(item => item.weekStart))].sort()
+    const all = starts.map(start => {
+      const source = (plan.weeksData || []).find(w => w.weekStart === start)
+      const slots = scheduled.filter(item => item.weekStart === start)
+      return { ...(source || {}), weekStart: start, weekNumber: calendarWeekNumber(start), printWeekNumber: calendarWeekNumber(start), hidden: Boolean(source?.hidden) && !includeHidden, chapter: source?.chapter || '', lessons: slots.map(item => { const text = item.override?.text; return item.override?.lesson || (text != null ? { ...item.lesson, name: text, topics: [] } : item.lesson) }) }
+    })
+    const chosen = all.filter(week => !week.hidden).filter(week => (first === null || week.printWeekNumber >= first) && (last === null || week.printWeekNumber <= last))
+    if (!chosen.length) { window.alert('Det finns inga veckor med lektioner i det valda intervallet.'); return }
+    downloadDocx(className, chosen)
+  }
   useEffect(() => {
     if (!classPrinting) return undefined
     const style = document.createElement('style')
@@ -1107,7 +1126,7 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
   if (!group) return null
   return <section className="class-real-two-weeks a4-sheet-view" aria-label={className+' – '+visibleWeekCount+' veckor'}>
     {classPrinting && createPortal(<TeacherPrintSheet title={className} weeks={weeks.map(w => ({ ...w, printWeekNumber: calendarWeekNumber(w.weekStart) ?? w.weekNumber }))} />, document.body)}
-    <div className="class-real-two-weeks-header"><button type="button" className="secondary" onClick={() => setClassPrinting(true)} title="Skriv ut eller spara som PDF i liggande A4">Skriv ut (liggande A4)</button><div className="class-week-count-controls" role="group" aria-label="Antal veckor att visa">{[3,2].map(n=><button key={n} type="button" className={visibleWeekCount===n?"active":""} aria-pressed={visibleWeekCount===n} onClick={()=>setVisibleWeekCount(n)}>{n} {n===1?"vecka":"veckor"}</button>)}</div></div>
+    <div className="class-real-two-weeks-header"><button type="button" className="secondary" onClick={() => setClassPrinting(true)} title="Skriv ut eller spara som PDF i liggande A4">Skriv ut (liggande A4)</button><button type="button" className="secondary" onClick={exportClassWord} title="Exportera klassens planering som redigerbar Word-fil (.docx)">Exportera Word</button><div className="class-week-count-controls" role="group" aria-label="Antal veckor att visa">{[3,2].map(n=><button key={n} type="button" className={visibleWeekCount===n?"active":""} aria-pressed={visibleWeekCount===n} onClick={()=>setVisibleWeekCount(n)}>{n} {n===1?"vecka":"veckor"}</button>)}</div></div>
     <div className="class-real-two-weeks-grid" style={{"--class-week-columns":visibleWeekCount}}>{weeks.map((week,_i)=><div className="class-real-week-column" key={week.weekStart}>
       {week.weekStart===currentStart && <strong>Nuvarande vecka</strong>}
       <div className="class-week-fast-preview" style={{background:'#fff',border:'1px solid #d2dce8',borderRadius:12,padding:14,display:'flex',flexDirection:'column',gap:10,minHeight:190}}>
@@ -1386,7 +1405,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     if (to === null) return
     const first = from.trim() ? Number(from) : null
     const last = to.trim() ? Number(to) : null
-    const chosen = weeks.filter(week => week && !week.hidden).filter(week => {
+    const includeHidden = window.confirm('Ska dolda veckor också ingå i exporten?\n\nOK = ja, med alla veckor i intervallet.\nAvbryt = nej, bara synliga veckor.')
+    const chosen = weeks.filter(week => week && (includeHidden || !week.hidden)).filter(week => {
       const number = calendarWeekNumber(week.weekStart) ?? week.weekNumber
       return (first === null || number >= first) && (last === null || number <= last)
     })
