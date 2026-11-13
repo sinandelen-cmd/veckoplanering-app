@@ -64,3 +64,9 @@ DEL 5 – Arkivering + återställning, synkronisering mellan sessioner/datorer,
 - Kvarstår i utskriften: ett blått band överst (ej identifierat element; elementFromPoint ger body), smala Moment/Sida/Uppgift-fält, ej testat med lång planering eller tio lektioner per vecka i PDF.
 - Nästa steg: hitta bandets källa (kontrollera teacher-week-navigation/ChapterVocabulary i utskriftsläge), gör fälten bredare i utskrift, testa tio lektioner och lång planering, sedan Klassvyns utskrift, sedan Word-export.
 - Elevutskriften (stående) är inte omtestad efter ändringen.
+
+## Blått band och utskrift – status (2026-11-13)
+- Bandet: element NAV.planning-unified-navigation.planning-original-top (sticky, bakgrund rgb(219,233,247)) syns i utskriften. Att dölja den med CSS (display none) och med JS hjälpte inte i PDF:en; bytes i PDF:en var oförändrade, så orsaken är inte fullt klarlagd.
+- Experimentet (lås upp förfäderns höjd/overflow under utskrift) gav 7 sidor där första sidan bara innehöll bandet. Det är inte godkänt. Experimentet ligger i C:\vp\harness\print-experiment-uncommitted.patch och är INTE committat.
+- Committat läge: c1e9a09 (2 sidor, bandet kvar, vissa kort klipps nederst på sida 1 p.g.a. förfäders overflow/höjd).
+- Nästa steg: 1) reproducera med page.pdf() och jämför DOM-träd för vilket element som ritar bandet (använd elementFromPoint i PDF-läget, inte emulateMedia); 2) lås upp förfäder i utskriftsläge enbart för .teacher-months-kedjan; 3) verifiera sidantal och klippfritt med pdf.js-rendering av alla sidor; 4) därefter Word-export.
