@@ -53,3 +53,9 @@ Branch: feature/server-subjects. Senaste lokala commits: 51b4577 (startvecka i i
 - Autosave-vakt (autosave-guard): innehåll sparas, publiceringsflaggan är oförändrad, status visar "Sparat". Grön.
 - Prestanda (lokal Chrome, 12 veckor, testdata): öppna plan till första fält ca 356 ms. Cirka 2 600 DOM-noder. Cirka 25 MB JS-heap. Inte belastningstest.
 - Klassvy-konflikt och lektionsnivå-ångra: inte körda i denna omgång.
+
+## Tillägg: Klassvy-konflikt och ångra på lektionsnivå
+
+- Ångra på lektionsnivå i Klassvy: ändring sparas, ångra tar bort den i fältet och i databasen. Grön.
+- Klassvy två sessioner: session 2 sparar först. Session 1 får konfliktpanel. Session 2:s text skrivs inte över. Session 1:s text skrivs inte under konflikten. Efter "Spara min version ändå" finns session 1:s text i databasen och session 2:s text finns kvar i versionshistoriken. Grön.
+- Fel som hittades och rättades: konfliktpanelen fanns bara i Grundplanering. Den visas nu också i Klassvy (commit 94b1554).
