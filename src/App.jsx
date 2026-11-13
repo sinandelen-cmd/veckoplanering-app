@@ -1399,6 +1399,42 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [teacherPrintMode, setTeacherPrintMode] = useState(false)
   // Autosparningsstatus. "saved" sätts endast när databasen har bekräftat skrivningen.
   const [autoSaveState, setAutoSaveState] = useState('idle')
+  // Kopiera en vecka eller en lektion till en annan vecka/lektion. Visar källa och mål och kräver bekräftelse om målet har innehåll.
+  const weekNumberOf = week => calendarWeekNumber(week.weekStart) ?? week.weekNumber
+  const hasLessonContent = lesson => Boolean(lesson && ((lesson.topics || []).some(t => String(t?.name || '').trim() || String(t?.description || '').trim() || (t?.assignments || []).some(Boolean) || (t?.pages || []).some(Boolean))))
+  const copyToPlan = (mutate, sourceLabel, targetLabel, targetHasContent) => {
+    if (targetHasContent && !window.confirm('Källa: ' + sourceLabel + '\nMål: ' + targetLabel + '\n\nMålet har redan innehåll som skrivs över. Vill du fortsätta?')) return
+    if (!targetHasContent && !window.confirm('Källa: ' + sourceLabel + '\nMål: ' + targetLabel + '\n\nKopiera?')) return
+    setPlan(p => ({ ...p, weeksData: mutate(weeks.map(week => ({ ...week, lessons: (week.lessons || []).map(l => JSON.parse(JSON.stringify(l))) }))), weeks: weeks.length }))
+    setStatus('Kopian är gjord och sparas automatiskt. Ångra finns om något blev fel.')
+  }
+  const copyWeek = () => {
+    const from = window.prompt('Kopiera från vecka (nummer)', '')
+    if (from === null) return
+    const to = window.prompt('Till vecka (nummer)', '')
+    if (to === null) return
+    const source = weeks.find(w => String(weekNumberOf(w)) === from.trim())
+    const target = weeks.find(w => String(weekNumberOf(w)) === to.trim())
+    if (!source || !target || source === target) { window.alert('Hittar inte båda veckorna, eller så är de samma.'); return }
+    const targetHasContent = (target.lessons || []).some(hasLessonContent)
+    copyToPlan(list => list.map(w => w.weekStart === target.weekStart ? { ...w, lessons: JSON.parse(JSON.stringify(source.lessons || [])) } : w), 'vecka ' + weekNumberOf(source), 'vecka ' + weekNumberOf(target), targetHasContent)
+  }
+  const copyLesson = () => {
+    const from = window.prompt('Kopiera lektion från vecka (nummer)', '')
+    if (from === null) return
+    const fromLesson = window.prompt('Lektionsnummer (1–10)', '1')
+    if (fromLesson === null) return
+    const to = window.prompt('Till vecka (nummer)', '')
+    if (to === null) return
+    const toLesson = window.prompt('Till lektionsnummer (1–10)', '1')
+    if (toLesson === null) return
+    const source = weeks.find(w => String(weekNumberOf(w)) === from.trim())
+    const target = weeks.find(w => String(weekNumberOf(w)) === to.trim())
+    const si = Number(fromLesson) - 1, ti = Number(toLesson) - 1
+    if (!source || !target || !source.lessons?.[si] || !target.lessons?.[ti]) { window.alert('Hittar inte källan eller målet.'); return }
+    const targetHasContent = hasLessonContent(target.lessons[ti])
+    copyToPlan(list => list.map(w => w.weekStart === target.weekStart ? { ...w, lessons: w.lessons.map((l, i) => i === ti ? JSON.parse(JSON.stringify(source.lessons[si])) : l) } : w), 'vecka ' + weekNumberOf(source) + ', lektion ' + (si + 1), 'vecka ' + weekNumberOf(target) + ', lektion ' + (ti + 1), targetHasContent)
+  }
   // Word-export av valda veckor (tomt intervall = alla synliga veckor). Dolda veckor ingår inte.
   const exportTeacherWord = () => {
     const from = window.prompt('Exportera från vecka (lämna tomt för första veckan)', '')
@@ -2558,6 +2594,8 @@ const addNewTeacherWeek = () => setPlan(p => {
           <span className="autosave-status" role="status" aria-live="polite">{autoSaveState === 'saving' ? 'Sparar…' : autoSaveState === 'saved' ? 'Sparat' : autoSaveState === 'error' ? 'Kunde inte spara – ändringen finns inte i databasen' : ''}</span>
           <button type="button" className="secondary" disabled={busy} onClick={() => { setShowPastTeacherWeeks(true); setPastWeeksExpanded(true); setTeacherPrintMode(true) }} title="Skriv ut eller spara som PDF i liggande A4">Skriv ut (liggande A4)</button>
           <button type="button" className="secondary" disabled={busy || !historyRef.current.past.length} onClick={undoPlan} title="Ångra senaste ändringen i planeringen (Ctrl+Z)" data-testid="plan-undo">Ångra</button>
+          <button type="button" className="secondary" disabled={busy} onClick={copyWeek} title="Kopiera en hel vecka till en annan vecka">Kopiera vecka</button>
+          <button type="button" className="secondary" disabled={busy} onClick={copyLesson} title="Kopiera en lektion till en annan lektion">Kopiera lektion</button>
           <button type="button" className="secondary" disabled={busy} onClick={exportTeacherWord} title="Exportera veckorna som redigerbar Word-fil (.docx)">Exportera Word</button>
           {plan.published
             ? <>
