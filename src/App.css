@@ -8324,3 +8324,10 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
   line-height: 1.35 !important;
   field-sizing: content;
 }
+/* Veckorubriken är inte klibbig i treveckorsvyn. En klibbig rubrik (top:0, z-index 30) lade sig över lektionsfält när man scrollade. */
+#lararvy .teacher-months-three .week-top,
+#lararvy .teacher-months.teacher-months-three .teacher-week-collapsible-content > .week-top {
+  position: static !important;
+  top: auto !important;
+  z-index: auto !important;
+}

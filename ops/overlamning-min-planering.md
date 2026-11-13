@@ -114,3 +114,8 @@ DEL 5 – Arkivering + återställning, synkronisering mellan sessioner/datorer,
 ## REGRESSION: del1-grundplanering.mjs FAILAR nu (2026-11-13)
 - Testet klickar på ett fält i varje kolumn. Med testplanen på 12 veckor (lokal testdata från long-plan.mjs) avbryts klicket: ett <div class="week-top"> ligger över fältet ("intercepts pointer events").
 - Okänt om det beror på testdatan (12 veckor i stället för 3) eller på de nya kompakta fälten/utskriftsändringarna. Nästa steg: köra testet med en plan på 3 veckor, och om det passerar, hitta vad som överlappar i 12-veckorsvyn. Får inte räknas som klart förrän det passerar.
+
+## Rött regressionstest: ORSAK OCH RÄTTNING (2026-11-13)
+- Orsak: veckorubriken .week-top var position: sticky; top: 0; z-index 30 i treveckorsvyn. När man scrollar lades rubriken över lektionsfält i samma kort, och klick träffade rubriken i stället för fältet. Ett riktigt användarfel, inte bara testdata.
+- Rättning: veckorubriken är statisk i treveckorsvyn (CSS i App.css, #lararvy .teacher-months-three .week-top).
+- Verifierat: del1-grundplanering.mjs 8/8 passerar med 12 veckor i testdatan.
