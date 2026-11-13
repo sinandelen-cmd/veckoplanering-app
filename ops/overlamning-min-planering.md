@@ -70,3 +70,10 @@ DEL 5 – Arkivering + återställning, synkronisering mellan sessioner/datorer,
 - Experimentet (lås upp förfäderns höjd/overflow under utskrift) gav 7 sidor där första sidan bara innehöll bandet. Det är inte godkänt. Experimentet ligger i C:\vp\harness\print-experiment-uncommitted.patch och är INTE committat.
 - Committat läge: c1e9a09 (2 sidor, bandet kvar, vissa kort klipps nederst på sida 1 p.g.a. förfäders overflow/höjd).
 - Nästa steg: 1) reproducera med page.pdf() och jämför DOM-träd för vilket element som ritar bandet (använd elementFromPoint i PDF-läget, inte emulateMedia); 2) lås upp förfäder i utskriftsläge enbart för .teacher-months-kedjan; 3) verifiera sidantal och klippfritt med pdf.js-rendering av alla sidor; 4) därefter Word-export.
+
+## PDF-utskrift: separat komponent (2026-11-13, commit f21dadf)
+- Ny komponent src/TeacherPrintSheet.jsx, renderas via createPortal direkt under body endast under utskrift. Ingen DOM-manipulation av appen längre. Det blå bandet är borta eftersom navigeringen inte renderas i utskriften.
+- Innehåll: tre veckor per rad, veckorubrik med datum, kapitel, samtliga lektioner, fälten Moment, Sida, Uppgift i ordning. Lektioner bryts inte mitt över sidgräns.
+- Verifierat med page.pdf() + pdf.js-rendering: kort planering = 1 sida liggande A4 (841,9 × 595 pt), tio lektioner per vecka synliga, bandet borta. Lång planering (12 veckor, 10 lektioner, lång text, talintervall 999–1009 och 1000–1050 brytna korrekt) = 7 sidor, sida 2 kontrollerad visuellt.
+- Kvar: 1) veckorubrik upprepas inte på fortsättningssidor; 2) sida 7 ej granskad visuellt; 3) Klassvyns utskrift; 4) elevutskriften (stående) ej omtestad; 5) Word-export; 6) kompaktare fält i redigeringsvyerna; 7) övriga funktioner i listan.
+- Testdata: "Mitt kursnamn 7A" har nu 12 veckor (lokalt). Återställ vid behov via data i C:\vp\harness\e2e\long-plan.mjs (skriver över weeksData, endast lokal test-DB).
