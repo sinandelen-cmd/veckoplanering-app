@@ -150,3 +150,11 @@ DEL 5 – Arkivering + återställning, synkronisering mellan sessioner/datorer,
 ## Arkivering och återställning (2026-11-13)
 - Fanns redan i appen. Verifierat med ops/archive-test.mjs i Chrome: arkivering sätter arkiv-flaggan, innehållet finns kvar i databasen, planen försvinner från den aktiva listan, syns i arkivvyn, och återställning ger samma innehåll.
 - Ej testat: permanent radering från arkivet med bekräftelse (kräver skriven bekräftelse enligt tidigare beslut) och att annan lärare inte kan arkivera/radera (täcks av RLS-test i permissions-test, ej arkiv-specifikt).
+
+## Status efter senaste omgången (lokal Chrome mot lokal Supabase)
+
+Lokala commits (inga pushar, inga merger, ingen publicering): 51b4577, f0f0d9c, 7f92e67, d1a1928, 22089df, 94b1554, 67a5a9e.
+
+Grönt i senaste körningen: import (txt, docx, pdf, xlsx, startvecka, begreppsval, avbryt, godkänn), arkiv och permanent radering, sök, behörighet (10/10), konflikt (Grundplanering och Klassvy), versionshistorik, ångra (plan och lektion i Klassvy), kopiera, autosave-vakt, grundplanering (8/8), klassutskrift (synliga veckor och hela planeringen), elevutskrift stående A4, Word-struktur (zip, XML, liggande A4).
+
+Öppet: Word-filen har inte öppnats i Microsoft Word eller annat program. Netlify- och Workers-förhandsbyggen är inte verifierade som stoppade. Ingen belastningstest. Se ops/publiceringsrapport-min-planering.md.
