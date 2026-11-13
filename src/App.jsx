@@ -3,7 +3,6 @@ import UpdateNotices from './UpdateNotices.jsx'
 import { groupStudentWeeksForPrint } from './printGroups.js'
 import { Component, Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { createPortal } from 'react-dom'
 import * as XLSX from 'xlsx'
 import mammoth from 'mammoth'
 import * as pdfjsLib from 'pdfjs-dist'
@@ -18,6 +17,8 @@ import { NATIONAL_EXAMS_2026_27 } from './nationalExams.js'
 import { booksForSubject, searchTextbooks, buildManualTextbook, isValidIsbn, normalizeIsbn, isDuplicateTextbook } from "./textbooks.js"
 import { parseOutlineText } from "./chapters.js"
 import ChapterOutlinePanel from "./ChapterOutlinePanel.jsx"
+import TeacherPrintSheet from "./TeacherPrintSheet.jsx"
+import { createPortal } from 'react-dom'
 
 const APP_TITLE = 'Årsplanering'
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker
@@ -1364,35 +1365,14 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [teacherPrintMode, setTeacherPrintMode] = useState(false)
   useEffect(() => {
     if (!teacherPrintMode) return undefined
+    // Egen @page för liggande A4 läggs in endast under utskriften och tas bort direkt efteråt.
     const style = document.createElement('style')
     style.id = 'teacher-print-style'
     style.textContent = '@page { size: A4 landscape; margin: 10mm; }'
     document.head.appendChild(style)
-    document.body.classList.add('teacher-print-mode')
-    // Fält som textareas och inputs klipper text. I utskriften visas innehållet som vanlig, radbruten text.
-    const swaps = []
-    document.querySelectorAll('.teacher-months-three textarea, .teacher-months-three input[type=text]').forEach(el => {
-      const copy = document.createElement('div')
-      copy.className = 'print-copy'
-      copy.textContent = el.value
-      copy.style.cssText = 'white-space:pre-wrap;word-break:break-word;font-size:9pt;line-height:1.3;border:1px solid #bbb;border-radius:3px;padding:3px 5px;background:#fff;color:#000'
-      el.style.display = 'none'
-      el.parentNode.insertBefore(copy, el)
-      swaps.push({ el, copy })
-    })
-    // Dölj allt som inte ligger i treveckorsvyn: syskon på varje nivå mellan vyn och body.
-    const hidden = []
-    const target = document.querySelector('.teacher-months-three')
-    let node = target
-    while (target && node && node !== document.body && node.parentElement) {
-      Array.from(node.parentElement.children).forEach(sibling => {
-        if (sibling !== node && !sibling.contains(target)) { hidden.push([sibling, sibling.style.display]); sibling.style.display = 'none' }
-      })
-      node = node.parentElement
-    }
-    const done = () => { document.body.classList.remove('teacher-print-mode'); swaps.forEach(({ el, copy }) => { el.style.display = ''; copy.remove() }); swaps.length = 0; hidden.forEach(([el, display]) => { el.style.display = display }); hidden.length = 0; style.remove(); setTeacherPrintMode(false) }
+    const done = () => { style.remove(); setTeacherPrintMode(false) }
     window.addEventListener('afterprint', done, { once: true })
-    const timer = window.setTimeout(() => window.print(), 300)
+    const timer = window.setTimeout(() => window.print(), 200)
     return () => { window.clearTimeout(timer); window.removeEventListener('afterprint', done); done() }
   }, [teacherPrintMode])
   const [librarySubject, setLibrarySubject] = useState('')
@@ -2608,6 +2588,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       </div>})()}
       
       {(showPastTeacherWeeks || focusedTeacherWeek) && <div className="teacher-active-chapter-bar" aria-label="Aktuellt kapitel och vecka"><div className="teacher-active-chapter-content" /></div>}
+      {teacherPrintMode && createPortal(<TeacherPrintSheet title={plan.title || plan.subject || 'Årsplanering'} weeks={weeks.map(w => ({ ...w, printWeekNumber: calendarWeekNumber(w.weekStart) ?? w.weekNumber }))} />, document.body)}
       {!simpleSetup && (plan.textbook || plan.chapters) && <ChapterOutlinePanel outline={plan.chapters} onChange={next => setPlan(p => ({ ...p, chapters: next }))} textbook={plan.textbook} />}
       {!simpleSetup && <section className="course-import-block" aria-label="Importera planering" style={{margin:'12px 0',display:'grid',gap:6}}><strong>Ladda upp planering</strong><p className="muted" style={{margin:0}}>Word, PDF, Excel eller textfil. Du granskar innehållet i förhandsgranskningen innan något sparas.</p><div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}><label className="secondary">Välj fil<input type="file" accept=".xlsx,.xls,.docx,.pdf,.txt,.csv" disabled={busy} style={{marginLeft:8}} onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) importFile(f) }} /></label><button type="button" className="secondary" disabled={busy} onClick={() => setStatus('Planeringen fortsätter utan fil. Lägg till kapitel och veckor manuellt.')}>Fortsätt utan fil</button></div></section>}
       {!simpleSetup && <details className="material-disclosure" open={Boolean(pendingImport)}><summary>Material till planeringen ({(plan.materials || []).length} filer{pasteText.trim() ? ' + inklistrad text' : ''})</summary>{materialPanel()}{pendingImport && <div className="import-preview"><h3>Förhandsgranska: {pendingImport.source}</h3><p>Granska innan du använder importen.</p>{pendingImport.outline?.chapters?.length ? <p className="muted" style={{margin:"6px 0"}}>Kapitel och moment som läggs till: {pendingImport.outline.chapters.map(ch => ch.title + " (" + ch.moments.map(m => m.title + (m.concepts.length ? ": " + m.concepts.join(", ") : "")).join("; ") + ")").join(" · ")}</p> : null}{pendingImport.weeksData.slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'auto' }}>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length, ...(pendingImport.outline?.chapters?.length ? { chapters: { chapters: [...(p.chapters?.chapters || []), ...pendingImport.outline.chapters] } } : {}) })); setPendingImport(null); setStatus('Importen är godkänd och sparas automatiskt i grundplaneringen.') }}>Använd import</button><button type="button" className="secondary" onClick={() => setPendingImport(null)}>Avbryt</button></div></div>}</details>}
