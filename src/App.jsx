@@ -1408,6 +1408,18 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     setPlan(p => ({ ...p, weeksData: mutate(weeks.map(week => ({ ...week, lessons: (week.lessons || []).map(l => JSON.parse(JSON.stringify(l))) }))), weeks: weeks.length }))
     setStatus('Kopian är gjord och sparas automatiskt. Ångra finns om något blev fel.')
   }
+  const [showVersions, setShowVersions] = useState(false)
+  const [versionPreview, setVersionPreview] = useState(null)
+  const restoreVersion = index => {
+    const version = (plan.versions || [])[index]
+    if (!version) return
+    if (!window.confirm('Återställa planeringen till versionen från ' + new Date(version.at).toLocaleString('sv-SE') + '?\n\nNuvarande innehåll sparas som en återställningspunkt. Inget publiceras för eleverna.')) return
+    const current = { at: new Date().toISOString(), weeksData: weeks.map(w => ({ ...w })) }
+    setPlan(p => ({ ...p, weeksData: JSON.parse(JSON.stringify(version.weeksData)), weeks: version.weeksData.length, versions: [...(p.versions || []), current].slice(-15) }))
+    setVersionPreview(null)
+    setShowVersions(false)
+    setStatus('Versionen är återställd och sparas automatiskt som utkast. Den publiceras inte för eleverna.')
+  }
   const copyWeek = () => {
     const from = window.prompt('Kopiera från vecka (nummer)', '')
     if (from === null) return
@@ -1853,6 +1865,18 @@ const addNewTeacherWeek = () => setPlan(p => {
   }
 
 
+  // Versionshistorik sparas i planeringens eget innehåll (ingen ny tabell). Högst en version per tio minuter, och högst 15.
+  const withVersion = (current, lastSavedJson) => {
+    if (!lastSavedJson) return current
+    let previous = null
+    try { previous = JSON.parse(lastSavedJson) } catch { return current }
+    if (!previous || !Array.isArray(previous.weeksData)) return current
+    const versions = Array.isArray(current.versions) ? current.versions : []
+    const newest = versions[versions.length - 1]
+    if (newest && Date.now() - new Date(newest.at).getTime() < 10 * 60 * 1000) return current
+    if (newest && JSON.stringify(newest.weeksData) === JSON.stringify(previous.weeksData)) return current
+    return { ...current, versions: [...versions, { at: new Date().toISOString(), weeksData: previous.weeksData }].slice(-15) }
+  }
   async function save(publish, automatic = false) {
     if (busy) return
     if (!String(plan.title || '').trim()) return setStatus('Skriv ett namn på årsplaneringen.')
@@ -1904,7 +1928,8 @@ const addNewTeacherWeek = () => setPlan(p => {
       }
       const keepPublished = !publish && databasePublished
       const slug = publish ? (databaseSlug || buildSlug(plan)) : (databaseSlug || '')
-      const payload = { kind: 'arsplanering-v2', ...plan, themeId: plan.themeId || planTheme(plan, selectedId).id, weeksData: weeks, published: publish || keepPublished, publicSlug: slug }
+      const planWithVersion = withVersion(plan, savedPlanRef.current)
+      const payload = { kind: 'arsplanering-v2', ...planWithVersion, themeId: plan.themeId || planTheme(plan, selectedId).id, weeksData: weeks, published: publish || keepPublished, publicSlug: slug }
       const publishedPayload = publish ? sanitizeForStudents(payload) : null
       const row = {
         user_id: session.user.id,
@@ -2594,6 +2619,7 @@ const addNewTeacherWeek = () => setPlan(p => {
           <span className="autosave-status" role="status" aria-live="polite">{autoSaveState === 'saving' ? 'Sparar…' : autoSaveState === 'saved' ? 'Sparat' : autoSaveState === 'error' ? 'Kunde inte spara – ändringen finns inte i databasen' : ''}</span>
           <button type="button" className="secondary" disabled={busy} onClick={() => { setShowPastTeacherWeeks(true); setPastWeeksExpanded(true); setTeacherPrintMode(true) }} title="Skriv ut eller spara som PDF i liggande A4">Skriv ut (liggande A4)</button>
           <button type="button" className="secondary" disabled={busy || !historyRef.current.past.length} onClick={undoPlan} title="Ångra senaste ändringen i planeringen (Ctrl+Z)" data-testid="plan-undo">Ångra</button>
+          <button type="button" className="secondary" disabled={busy} onClick={() => setShowVersions(v => !v)} title="Tidigare versioner av planeringen">Versionshistorik</button>
           <button type="button" className="secondary" disabled={busy} onClick={copyWeek} title="Kopiera en hel vecka till en annan vecka">Kopiera vecka</button>
           <button type="button" className="secondary" disabled={busy} onClick={copyLesson} title="Kopiera en lektion till en annan lektion">Kopiera lektion</button>
           <button type="button" className="secondary" disabled={busy} onClick={exportTeacherWord} title="Exportera veckorna som redigerbar Word-fil (.docx)">Exportera Word</button>
@@ -2653,6 +2679,23 @@ const addNewTeacherWeek = () => setPlan(p => {
         </div>
       </div>
       {<div className="teacher-pinned-chapter-shell" aria-label="Aktuellt kapitel"><div className={`teacher-pinned-chapter-heading ${pinnedChapter?.tone || ""}`}>{pinnedChapter?.name || "Kapitel"}</div>{pinnedChapter?.name && <ChapterVocabulary chapter={pinnedChapter.name} weeks={weeks.filter(week => (week.chapter?.trim() || "Utan kapitel") === pinnedChapter.name)} />}</div>}
+      {showVersions && <section className="card version-history-panel" aria-label="Versionshistorik" style={{ margin: '12px 0', display: 'grid', gap: 8 }}>
+        <strong>Versionshistorik</strong>
+        <p className="muted" style={{ margin: 0 }}>Tidigare sparade versioner av planeringen. Förhandsgranska innan du återställer. Återställning publicerar aldrig något för eleverna.</p>
+        {(plan.versions || []).length === 0 && <p className="muted">Inga tidigare versioner ännu. En version sparas när du ändrar och sparar planeringen igen.</p>}
+        {[...(plan.versions || [])].map((version, index) => ({ version, index })).reverse().map(({ version, index }) => (
+          <div key={index} style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', borderTop: '1px solid #e5e1d8', paddingTop: 6 }}>
+            <span>{new Date(version.at).toLocaleString('sv-SE')}</span>
+            <span className="muted">{version.weeksData.length} veckor</span>
+            <button type="button" className="secondary" onClick={() => setVersionPreview(versionPreview === index ? null : index)}>{versionPreview === index ? 'Dölj förhandsgranskning' : 'Förhandsgranska'}</button>
+            <button type="button" className="secondary" disabled={busy} onClick={() => restoreVersion(index)}>Återställ</button>
+            {versionPreview === index && <div style={{ width: '100%', fontSize: 13, background: '#faf8f4', borderRadius: 6, padding: 8 }}>
+              {version.weeksData.slice(0, 3).map((week, wi) => <div key={wi}><strong>Vecka {week.weekNumber}</strong>{week.chapter ? ' · ' + week.chapter : ''}: {(week.lessons || []).slice(0, 3).map(lesson => (lesson?.topics || []).map(t => t?.name).filter(Boolean).join(', ')).filter(Boolean).join(' | ') || '(tomt)'}</div>)}
+              {version.weeksData.length > 3 && <div className="muted">… och {version.weeksData.length - 3} veckor till</div>}
+            </div>}
+          </div>
+        ))}
+      </section>}
       {!focusedTeacherWeek && pastTeacherWeeks.length > 0 && <div className="teacher-past-weeks-banner">
         <div className="teacher-past-weeks-banner-copy"><strong>✓ Klara veckor</strong><span>{pastTeacherWeeks.length} passerade veckor är dolda</span></div>
         <button type="button" className="teacher-past-weeks-toggle" aria-expanded={pastWeeksExpanded} onClick={() => {setPastWeeksExpanded(value => !value); if (!showPastTeacherWeeks) setShowPastTeacherWeeks(true)}}>{pastWeeksExpanded ? 'Dölj passerade veckor' : 'Visa passerade veckor'}</button>
