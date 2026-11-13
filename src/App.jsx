@@ -1399,6 +1399,9 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [teacherPrintMode, setTeacherPrintMode] = useState(false)
   // Autosparningsstatus. "saved" sätts endast när databasen har bekräftat skrivningen.
   const [autoSaveState, setAutoSaveState] = useState('idle')
+  // Samtidighetskontroll: den uppdateringstid som planen laddades eller senast sparades med. Skrivningen villkoras på den i databasen.
+  const knownUpdatedAtRef = useRef(null)
+  const [saveConflict, setSaveConflict] = useState(null)
   // Kopiera en vecka eller en lektion till en annan vecka/lektion. Visar källa och mål och kräver bekräftelse om målet har innehåll.
   const weekNumberOf = week => calendarWeekNumber(week.weekStart) ?? week.weekNumber
   const hasLessonContent = lesson => Boolean(lesson && ((lesson.topics || []).some(t => String(t?.name || '').trim() || String(t?.description || '').trim() || (t?.assignments || []).some(Boolean) || (t?.pages || []).some(Boolean))))
@@ -1419,6 +1422,30 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     setVersionPreview(null)
     setShowVersions(false)
     setStatus('Versionen är återställd och sparas automatiskt som utkast. Den publiceras inte för eleverna.')
+  }
+  // Konfliktlösning. Inget tyst skrivs över: den andra sessionens innehåll sparas först som en version i historiken.
+  const fetchRemotePlan = async () => {
+    const { data, error } = await supabase.from('veckoplanering').select('id,title,content,updated_at,published,public_slug').eq('id', selectedId).eq('user_id', session.user.id).single()
+    if (error) { window.alert('Kunde inte hämta den nyare versionen: ' + error.message); return null }
+    return data
+  }
+  const resolveKeepMine = async () => {
+    const remote = await fetchRemotePlan()
+    if (!remote || !window.confirm('Din version skriver över den nyare versionen i databasen. Den nyare versionen sparas i versionshistoriken innan det sker. Vill du fortsätta?')) return
+    const remoteWeeks = (JSON.parse(remote.content || '{}').weeksData) || []
+    knownUpdatedAtRef.current = null
+    await save(false, false, { at: new Date().toISOString(), weeksData: remoteWeeks })
+    setSaveConflict(null)
+  }
+  const resolveTakeRemote = async () => {
+    const remote = await fetchRemotePlan()
+    if (!remote) return
+    if (!window.confirm('Öppna den nyare versionen? Din osparade version sparas först i versionshistoriken, så ingenting går förlorat.')) return
+    const parsed = JSON.parse(remote.content || '{}')
+    const versions = Array.isArray(parsed.versions) ? parsed.versions : []
+    const content = JSON.stringify({ ...parsed, versions: [...versions, { at: new Date().toISOString(), weeksData: weeks }].slice(-15) })
+    loadPlan({ ...remote, content }, undefined, true)
+    setSaveConflict(null)
   }
   const copyWeek = () => {
     const from = window.prompt('Kopiera från vecka (nummer)', '')
@@ -1877,7 +1904,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     if (newest && JSON.stringify(newest.weeksData) === JSON.stringify(previous.weeksData)) return current
     return { ...current, versions: [...versions, { at: new Date().toISOString(), weeksData: previous.weeksData }].slice(-15) }
   }
-  async function save(publish, automatic = false) {
+  async function save(publish, automatic = false, forcedWithVersion = null) {
     if (busy) return
     if (!String(plan.title || '').trim()) return setStatus('Skriv ett namn på årsplaneringen.')
     if (!String(plan.subject || '').trim()) return setStatus('Skriv ämne.')
@@ -1928,7 +1955,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       }
       const keepPublished = !publish && databasePublished
       const slug = publish ? (databaseSlug || buildSlug(plan)) : (databaseSlug || '')
-      const planWithVersion = withVersion(plan, savedPlanRef.current)
+      const planWithVersion = forcedWithVersion ? { ...withVersion(plan, savedPlanRef.current), versions: [...(plan.versions || []), forcedWithVersion].slice(-15) } : withVersion(plan, savedPlanRef.current)
       const payload = { kind: 'arsplanering-v2', ...planWithVersion, themeId: plan.themeId || planTheme(plan, selectedId).id, weeksData: weeks, published: publish || keepPublished, publicSlug: slug }
       const publishedPayload = publish ? sanitizeForStudents(payload) : null
       const row = {
@@ -1944,13 +1971,22 @@ const addNewTeacherWeek = () => setPlan(p => {
         ...(publish || !selectedId ? publicationFields(publish, false, slug, publishedPayload) : {}),
         updated_at: new Date().toISOString(),
       }
-      const query = selectedId
-        ? supabase.from('veckoplanering').update(row).eq('id', selectedId).eq('user_id', session.user.id).select('id').single()
-        : supabase.from('veckoplanering').insert(row).select('id').single()
+      // Skrivningen villkoras på att databasens uppdateringstid fortfarande är den som planen laddades med (atomärt i samma UPDATE).
+      let query = supabase.from('veckoplanering').update(row).eq('id', selectedId || '').eq('user_id', session.user.id)
+      if (selectedId && knownUpdatedAtRef.current && !forcedWithVersion) query = query.eq('updated_at', knownUpdatedAtRef.current)
+      query = selectedId ? query.select('id').single() : supabase.from('veckoplanering').insert(row).select('id').single()
       const { data, error } = await query
+      if (selectedId && error && error.code === 'PGRST116') {
+        setAutoSaveState('error')
+        setSaveConflict({ localJson: JSON.stringify(payload), localPlan: plan })
+        setStatus('Konflikt: planeringen har sparats i en annan session efter att du öppnade den. Inget har skrivits över. Välj hur konflikten ska lösas nedan.')
+        return false
+      }
       if (error) { setAutoSaveState('error'); setStatus(`Kunde inte spara: ${error.message}`); return false }
       else {
         setAutoSaveState('saved')
+        if (row.updated_at) knownUpdatedAtRef.current = row.updated_at
+        setSaveConflict(null)
         if (simpleSetup) { setSimpleSetup(false); setTeacherTab('arsplan'); setCalendarOpen(false) }
         setSelectedId(data.id)
         try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(data.id)) } catch { /* Lagring kan vara blockerad */ }
@@ -2121,6 +2157,8 @@ const addNewTeacherWeek = () => setPlan(p => {
     if (busy) return
     if (!navigationApproved && !confirmNavigation()) return false
     try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(row.id)) } catch { /* Lagring kan vara blockerad */ }
+    knownUpdatedAtRef.current = row.updated_at || null
+    setSaveConflict(null)
     setOpenedFromLibrary(teacherTab === 'bibliotek')
     const openedPlan = planFromRow(row)
     setSimpleSetup(false); setSelectedId(row.id); savedPlanRef.current = JSON.stringify(openedPlan); setSavedRevision(revision => revision + 1); setPlan(openedPlan); setTeacherTab('arsplan'); setCalendarOpen(false); setEditingClassView(className || ""); setPreviewStudents(false); setA4Demo(false); setStatus(className ? `Klassen ${className} tillhör grundplaneringen. Öppna klassernas schema nedan.` : ''); requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }))
@@ -2679,6 +2717,15 @@ const addNewTeacherWeek = () => setPlan(p => {
         </div>
       </div>
       {<div className="teacher-pinned-chapter-shell" aria-label="Aktuellt kapitel"><div className={`teacher-pinned-chapter-heading ${pinnedChapter?.tone || ""}`}>{pinnedChapter?.name || "Kapitel"}</div>{pinnedChapter?.name && <ChapterVocabulary chapter={pinnedChapter.name} weeks={weeks.filter(week => (week.chapter?.trim() || "Utan kapitel") === pinnedChapter.name)} />}</div>}
+      {saveConflict && <section className="card save-conflict-panel" role="alert" style={{ margin: '12px 0', display: 'grid', gap: 8, borderColor: '#d9a441' }}>
+        <strong>Konflikt: planeringen har ändrats i en annan session</strong>
+        <p className="muted" style={{ margin: 0 }}>Din osparade version finns kvar här. Inget har skrivits över. Välj hur du vill gå vidare.</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button type="button" className="primary" onClick={resolveTakeRemote}>Öppna den nyare versionen</button>
+          <button type="button" className="secondary" onClick={resolveKeepMine}>Spara min version ändå</button>
+          <button type="button" className="secondary" onClick={() => setSaveConflict(null)}>Avbryt</button>
+        </div>
+      </section>}
       {showVersions && <section className="card version-history-panel" aria-label="Versionshistorik" style={{ margin: '12px 0', display: 'grid', gap: 8 }}>
         <strong>Versionshistorik</strong>
         <p className="muted" style={{ margin: 0 }}>Tidigare sparade versioner av planeringen. Förhandsgranska innan du återställer. Återställning publicerar aldrig något för eleverna.</p>
