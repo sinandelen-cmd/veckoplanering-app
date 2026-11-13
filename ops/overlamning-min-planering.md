@@ -77,3 +77,8 @@ DEL 5 – Arkivering + återställning, synkronisering mellan sessioner/datorer,
 - Verifierat med page.pdf() + pdf.js-rendering: kort planering = 1 sida liggande A4 (841,9 × 595 pt), tio lektioner per vecka synliga, bandet borta. Lång planering (12 veckor, 10 lektioner, lång text, talintervall 999–1009 och 1000–1050 brytna korrekt) = 7 sidor, sida 2 kontrollerad visuellt.
 - Kvar: 1) veckorubrik upprepas inte på fortsättningssidor; 2) sida 7 ej granskad visuellt; 3) Klassvyns utskrift; 4) elevutskriften (stående) ej omtestad; 5) Word-export; 6) kompaktare fält i redigeringsvyerna; 7) övriga funktioner i listan.
 - Testdata: "Mitt kursnamn 7A" har nu 12 veckor (lokalt). Återställ vid behov via data i C:\vp\harness\e2e\long-plan.mjs (skriver över weeksData, endast lokal test-DB).
+
+## Uppdatering: utskrift med upprepade veckorubriker (commit 34c8027)
+- TeacherPrintSheet: varje rad med upp till tre veckor är en tabell. Veckorubrikerna ligger i tabellhuvudet och upprepas på fortsättningssidor.
+- Lång testplan (12 veckor × 10 lektioner, lokal testdata): 8 sidor liggande A4. Sida 2 och sida 8 granskade visuellt; alla lektioner och fält finns med.
+- Kvar: Klassvyns utskrift; elevutskriften (stående) omtestas; Word-export; kompaktare fält i redigeringsvyer; autosparningsstatus; ångra/versionshistorik; kopiera; sökning; arkivering/återställning; synkronisering; import med startvecka; begreppskoppling; samtliga tester (funktion, säkerhet, behörighet, prestanda, regression) och slutrapport.
