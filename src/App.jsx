@@ -1615,17 +1615,24 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       history.current = next
       return
     }
-    history.past.push(history.current)
-    if (history.past.length > 60) history.past.shift()
+    // Ändringar som kommer i en följd (skrivning tecken för tecken) slås ihop till ett ångra-steg.
+    const now = Date.now()
+    const continuing = history.past.length > 0 && history.lastChangeAt && now - history.lastChangeAt < 1500
+    history.lastChangeAt = now
+    if (!continuing) {
+      history.past.push(history.current)
+      if (history.past.length > 60) history.past.shift()
+      setHistoryVersion(v => v + 1)
+    }
     history.current = next
     history.future = []
-    setHistoryVersion(v => v + 1)
   }, [planJson])
   const undoPlan = () => {
     const h = historyRef.current
     if (!h.past.length) return
     h.future.unshift(h.current)
     h.current = h.past.pop()
+    h.lastChangeAt = 0
     historySkipRef.current = true
     setPlan(JSON.parse(h.current))
     setHistoryVersion(v => v + 1)
@@ -2548,6 +2555,7 @@ const addNewTeacherWeek = () => setPlan(p => {
           <span className="muted">{plan.published ? 'Publicerad för elever. Eleverna ser den senast publicerade versionen tills du publicerar ändringarna.' : 'Ej publicerad. Eleverna ser inte planeringen.'}</span>
           <span className="autosave-status" role="status" aria-live="polite">{autoSaveState === 'saving' ? 'Sparar…' : autoSaveState === 'saved' ? 'Sparat' : autoSaveState === 'error' ? 'Kunde inte spara – ändringen finns inte i databasen' : ''}</span>
           <button type="button" className="secondary" disabled={busy} onClick={() => { setShowPastTeacherWeeks(true); setPastWeeksExpanded(true); setTeacherPrintMode(true) }} title="Skriv ut eller spara som PDF i liggande A4">Skriv ut (liggande A4)</button>
+          <button type="button" className="secondary" disabled={busy || !historyRef.current.past.length} onClick={undoPlan} title="Ångra senaste ändringen i planeringen (Ctrl+Z)" data-testid="plan-undo">Ångra</button>
           <button type="button" className="secondary" disabled={busy} onClick={exportTeacherWord} title="Exportera veckorna som redigerbar Word-fil (.docx)">Exportera Word</button>
           {plan.published
             ? <>

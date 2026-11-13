@@ -119,3 +119,10 @@ DEL 5 – Arkivering + återställning, synkronisering mellan sessioner/datorer,
 - Orsak: veckorubriken .week-top var position: sticky; top: 0; z-index 30 i treveckorsvyn. När man scrollar lades rubriken över lektionsfält i samma kort, och klick träffade rubriken i stället för fältet. Ett riktigt användarfel, inte bara testdata.
 - Rättning: veckorubriken är statisk i treveckorsvyn (CSS i App.css, #lararvy .teacher-months-three .week-top).
 - Verifierat: del1-grundplanering.mjs 8/8 passerar med 12 veckor i testdatan.
+
+## ÅNGRA – EJ VERIFIERAT (2026-11-13, WIP)
+- Plan-nivå-ångra finns (historyRef/undoPlan). Ändringar i följd slås nu ihop till ett steg (1,5 s). En knapp "Ångra" lades i Grundplanering-raden (data-testid="plan-undo").
+- Test undo-test.mjs: knappen finns och klickas, men markören i fältet försvinner INTE och ändringen tas inte bort i databasen. Ej löst.
+- Varje lektion har också en egen "Ångra senaste ändringen"-knapp (lektionsnivå). Den testades inte; den verkar inte påverka textfält.
+- Nästa steg: 1) logga plan-historiken (past.length) före/efter klick i webbläsaren; 2) kontrollera att textfält är kontrollerade (value från plan) och inte har eget lokalt state i LessonDetails; 3) säkerställ att autosparningen inte skriver tillbaka det ångrade värdet.
+- Kopiera lektion/vecka, versionshistorik: ej påbörjade.
