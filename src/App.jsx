@@ -296,26 +296,34 @@ function outlineFromText(text) {
   const chapters = []
   let chapter = null
   let moment = null
-  const addChapter = title => { chapter = { id: 'ch' + chapters.length + '-' + chapters.length, title, moments: [] }; chapters.push(chapter); moment = null; return chapter }
+  let ambiguous = false
+  // Begrepp utan tydlig koppling samlas här. Läraren väljer moment i förhandsgranskningen.
+  const unplaced = []
+  const addChapter = title => { chapter = { id: 'ch' + chapters.length + '-' + chapters.length, title, moments: [] }; chapters.push(chapter); moment = null; ambiguous = false; return chapter }
   const addMoment = title => { if (!chapter) addChapter('Kapitel 1'); moment = { id: 'mo' + chapter.moments.length + '-' + chapters.length, title, concepts: [] }; chapter.moments.push(moment); return moment }
   for (const raw of normalizeLines(text)) {
     const line = raw.replace(/^[-•*]\s*/, '').trim()
     if (!line) continue
     const kap = line.match(/^(?:kapitel|chapter)\s*\d*\s*[:.\-–]\s*(.+)$/i)
     if (kap) { addChapter(kap[1].trim()); continue }
-    if (/^moment\s*:/i.test(line)) { for (const m of line.replace(/^moment\s*:/i, '').split(',')) if (m.trim()) addMoment(m.trim()); continue }
+    if (/^moment\s*:/i.test(line)) { const names = line.replace(/^moment\s*:/i, '').split(',').map(s => s.trim()).filter(Boolean); names.forEach(name => addMoment(name)); ambiguous = names.length > 1; continue }
     const concepts = line.match(/^viktiga begrepp(?:\s+(?:för|i)\s+([^:]+))?\s*:(.*)$/i)
     if (concepts) {
       if (!chapter) addChapter('Kapitel 1')
       const named = concepts[1] ? chapter.moments.find(m => m.title.toLowerCase() === concepts[1].trim().toLowerCase()) : null
-      const target = named || moment || addMoment('Viktiga begrepp')
+      // Flera moment på en rad och inget namngivet moment: begreppen blir eget moment i stället för att gissas till ett.
       const items = concepts[2].split(',').map(s => s.trim()).filter(Boolean)
+      let target = named || (moment && !ambiguous ? moment : null)
+      if (!target) { target = addMoment('Viktiga begrepp'); unplaced.push({ id: 'up' + unplaced.length, chapterId: chapter.id, momentId: target.id, concepts: [] }) }
+      const group = unplaced.find(g => g.momentId === target.id)
+      if (group) group.concepts.push(...items)
+      ambiguous = false
       target.concepts = [...new Set([...target.concepts, ...items])]
       continue
     }
     if (!chapter && isChapterHeading(line)) { addChapter(line); continue }
   }
-  return { chapters: chapters.filter(ch => ch.moments.length || ch.title) }
+  return { chapters: chapters.filter(ch => ch.moments.length || ch.title), unplaced }
 }
 function unitsFromText(text) {
   const lines=normalizeLines(text)
@@ -2095,6 +2103,28 @@ const addNewTeacherWeek = () => setPlan(p => {
     return <label className="import-start-week" style={{ display: 'block', margin: '8px 0' }}>Startvecka för importen (filen har inga veckonummer): <select value={pendingImport.startWeekIndex || 0} onChange={event => { const index = Number(event.target.value); setPendingImport(p => ({ ...p, startWeekIndex: index, weeksData: importWeeksFrom(p.text, index) })) }}>{base.map((week, i) => <option key={i} value={i}>Vecka {week.weekNumber}{week.weekStart ? ' (' + week.weekStart + ')' : ''}</option>)}</select></label>
   }
 
+  // Flyttar begreppsgruppen till valt moment. Det tillfälliga momentet tas bort när det blir tomt.
+  function moveImportConcepts(outline, group, targetId) {
+    if (targetId === group.momentId) return outline
+    const chapters = outline.chapters.map(ch => ({ ...ch, moments: ch.moments.map(m => {
+      if (m.id === group.momentId) return { ...m, concepts: m.concepts.filter(c => !group.concepts.includes(c)) }
+      if (m.id === targetId) return { ...m, concepts: [...new Set([...m.concepts, ...group.concepts])] }
+      return m
+    }).filter(m => !(m.id === group.momentId && m.title === 'Viktiga begrepp' && m.concepts.length === 0)) }))
+    const unplacedGroups = (outline.unplaced || []).map(g => g.id === group.id ? { ...g, momentId: targetId } : g)
+    return { ...outline, chapters, unplaced: unplacedGroups }
+  }
+
+  function importConceptPicker() {
+    const groups = pendingImport?.outline?.unplaced || []
+    if (!groups.length) return null
+    return <div className="import-concept-choice" style={{ margin: '8px 0' }}>{groups.map(group => {
+      const chapter = pendingImport.outline.chapters.find(ch => ch.id === group.chapterId)
+      if (!chapter) return null
+      return <label key={group.id} style={{ display: 'block', margin: '4px 0' }}>Vilket moment hör dessa begrepp till? <strong>{group.concepts.join(', ')}</strong>: <select value={group.momentId} onChange={event => { const targetId = event.target.value; setPendingImport(p => ({ ...p, outline: moveImportConcepts(p.outline, group, targetId) })) }}>{chapter.moments.map(m => <option key={m.id} value={m.id}>{m.title}</option>)}</select></label>
+    })}</div>
+  }
+
   async function importFile(file) {
     if (!file) return
     setBusy(true); setStatus(`Läser ${file.name}...`); setPendingImport(null); setFileImportState({phase:'loading',message:`Läser ${file.name}…`})
@@ -2826,7 +2856,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       {teacherPrintMode && createPortal(<TeacherPrintSheet title={plan.title || plan.subject || 'Årsplanering'} weeks={weeks.map(w => ({ ...w, printWeekNumber: calendarWeekNumber(w.weekStart) ?? w.weekNumber }))} />, document.body)}
       {!simpleSetup && (plan.textbook || plan.chapters) && <ChapterOutlinePanel outline={plan.chapters} onChange={next => setPlan(p => ({ ...p, chapters: next }))} textbook={plan.textbook} />}
       {!simpleSetup && <section className="course-import-block" aria-label="Importera planering" style={{margin:'12px 0',display:'grid',gap:6}}><strong>Ladda upp planering</strong><p className="muted" style={{margin:0}}>Word, PDF, Excel eller textfil. Du granskar innehållet i förhandsgranskningen innan något sparas.</p><div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}><label className="secondary">Välj fil<input type="file" accept=".xlsx,.xls,.docx,.pdf,.txt,.csv" disabled={busy} style={{marginLeft:8}} onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) importFile(f) }} /></label><button type="button" className="secondary" disabled={busy} onClick={() => setStatus('Planeringen fortsätter utan fil. Lägg till kapitel och veckor manuellt.')}>Fortsätt utan fil</button></div></section>}
-      {!simpleSetup && <details className="material-disclosure" open={Boolean(pendingImport)}><summary>Material till planeringen ({(plan.materials || []).length} filer{pasteText.trim() ? ' + inklistrad text' : ''})</summary>{materialPanel()}{pendingImport && <div className="import-preview"><h3>Förhandsgranska: {pendingImport.source}</h3><p>Granska innan du använder importen.</p>{importStartWeekPicker()}{pendingImport.outline?.chapters?.length ? <p className="muted" style={{margin:"6px 0"}}>Kapitel och moment som läggs till: {pendingImport.outline.chapters.map(ch => ch.title + " (" + ch.moments.map(m => m.title + (m.concepts.length ? ": " + m.concepts.join(", ") : "")).join("; ") + ")").join(" · ")}</p> : null}{pendingImport.weeksData.slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'auto' }}>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length, ...(pendingImport.outline?.chapters?.length ? { chapters: { chapters: [...(p.chapters?.chapters || []), ...pendingImport.outline.chapters] } } : {}) })); setPendingImport(null); setStatus('Importen är godkänd och sparas automatiskt i grundplaneringen.') }}>Använd import</button><button type="button" className="secondary" onClick={() => setPendingImport(null)}>Avbryt</button></div></div>}</details>}
+      {!simpleSetup && <details className="material-disclosure" open={Boolean(pendingImport)}><summary>Material till planeringen ({(plan.materials || []).length} filer{pasteText.trim() ? ' + inklistrad text' : ''})</summary>{materialPanel()}{pendingImport && <div className="import-preview"><h3>Förhandsgranska: {pendingImport.source}</h3><p>Granska innan du använder importen.</p>{importStartWeekPicker()}{importConceptPicker()}{pendingImport.outline?.chapters?.length ? <p className="muted" style={{margin:"6px 0"}}>Kapitel och moment som läggs till: {pendingImport.outline.chapters.map(ch => ch.title + " (" + ch.moments.map(m => m.title + (m.concepts.length ? ": " + m.concepts.join(", ") : "")).join("; ") + ")").join(" · ")}</p> : null}{pendingImport.weeksData.slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'auto' }}>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length, ...(pendingImport.outline?.chapters?.length ? { chapters: { chapters: [...(p.chapters?.chapters || []), ...pendingImport.outline.chapters] } } : {}) })); setPendingImport(null); setStatus('Importen är godkänd och sparas automatiskt i grundplaneringen.') }}>Använd import</button><button type="button" className="secondary" onClick={() => setPendingImport(null)}>Avbryt</button></div></div>}</details>}
       <div className={`teacher-months ${!focusedTeacherWeek ? "teacher-months-three" : ""} ${focusedTeacherWeek ? "teacher-months-focused" : ""} ${focusedTeacherWeek && teacherWeekOverview ? "teacher-months-overview-hidden" : ""} ${showPastTeacherWeeks && !focusedTeacherWeek ? "teacher-months-all-weeks" : ""} `}>
         {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? teacherDisplayWeeks : defaultTeacherWindow)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
@@ -2927,7 +2957,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         </div>}
         <div className="simple-import-section" aria-label="Material och underlag" style={{marginTop:14}}>
           {materialPanel()}
-          {pendingImport && <div className="import-preview"><h3>Förhandsgranska: {pendingImport.source}</h3><p>Granska innan du använder importen.</p>{importStartWeekPicker()}{pendingImport.outline?.chapters?.length ? <p className="muted" style={{margin:"6px 0"}}>Kapitel och moment som läggs till: {pendingImport.outline.chapters.map(ch => ch.title + " (" + ch.moments.map(m => m.title + (m.concepts.length ? ": " + m.concepts.join(", ") : "")).join("; ") + ")").join(" · ")}</p> : null}{pendingImport.weeksData.slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length, ...(pendingImport.outline?.chapters?.length ? { chapters: { chapters: [...(p.chapters?.chapters || []), ...pendingImport.outline.chapters] } } : {}) })); setPendingImport(null); setStatus('Importen är inlagd. Granska och skapa planeringen.') }}>Använd import</button><button type="button" className="secondary" onClick={() => setPendingImport(null)}>Avbryt</button></div></div>}
+          {pendingImport && <div className="import-preview"><h3>Förhandsgranska: {pendingImport.source}</h3><p>Granska innan du använder importen.</p>{importStartWeekPicker()}{importConceptPicker()}{pendingImport.outline?.chapters?.length ? <p className="muted" style={{margin:"6px 0"}}>Kapitel och moment som läggs till: {pendingImport.outline.chapters.map(ch => ch.title + " (" + ch.moments.map(m => m.title + (m.concepts.length ? ": " + m.concepts.join(", ") : "")).join("; ") + ")").join(" · ")}</p> : null}{pendingImport.weeksData.slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length, ...(pendingImport.outline?.chapters?.length ? { chapters: { chapters: [...(p.chapters?.chapters || []), ...pendingImport.outline.chapters] } } : {}) })); setPendingImport(null); setStatus('Importen är inlagd. Granska och skapa planeringen.') }}>Använd import</button><button type="button" className="secondary" onClick={() => setPendingImport(null)}>Avbryt</button></div></div>}
         </div>
         <div className="button-row"><button type="submit" className="primary" disabled={busy}>{busy ? 'Skapar…' : 'Skapa planering'}</button><button type="button" className="secondary" onClick={() => setSimpleMore(v => !v)}>{simpleMore ? "Dölj fler inställningar" : "Fler inställningar"}</button></div>
       </form>
@@ -3075,7 +3105,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       {pendingImport && <div className="import-preview">
         <h3>Förhandsgranska import: {pendingImport.source}</h3>
         <p className="muted">Inget har ersatts. De första fem veckorna visas nedan.</p>
-        {importStartWeekPicker()}{pendingImport.outline?.chapters?.length ? <p className="muted" style={{margin:"6px 0"}}>Kapitel och moment som läggs till: {pendingImport.outline.chapters.map(ch => ch.title + " (" + ch.moments.map(m => m.title + (m.concepts.length ? ": " + m.concepts.join(", ") : "")).join("; ") + ")").join(" · ")}</p> : null}{pendingImport.weeksData.slice(0, 5).map((week, i) => <div className="import-preview-week" key={i}><strong>Vecka {week.weekNumber}</strong><pre>{week.content || '(Tom vecka)'}</pre></div>)}
+        {importStartWeekPicker()}{importConceptPicker()}{pendingImport.outline?.chapters?.length ? <p className="muted" style={{margin:"6px 0"}}>Kapitel och moment som läggs till: {pendingImport.outline.chapters.map(ch => ch.title + " (" + ch.moments.map(m => m.title + (m.concepts.length ? ": " + m.concepts.join(", ") : "")).join("; ") + ")").join(" · ")}</p> : null}{pendingImport.weeksData.slice(0, 5).map((week, i) => <div className="import-preview-week" key={i}><strong>Vecka {week.weekNumber}</strong><pre>{week.content || '(Tom vecka)'}</pre></div>)}
         <div className="button-row">
           <button type="button" className="primary" onClick={() => {
             if (!confirmReplacingWeeks(plan)) return
