@@ -57,3 +57,10 @@ DEL 5 – Arkivering + återställning, synkronisering mellan sessioner/datorer,
   - inga JavaScript-fel
 - Ej testat ännu i del 1: tio lektioner per vecka, veckor från olika kapitel, Klassvyns motsvarande tester, kompaktare fält, talintervall 999–1009.
 - Nästa kodsteg: lägg till tio lektioner per vecka i testet (ändra "Lektioner per vecka" i planeringens inställningar eller via lokal testdata) och ett test med två kapitel.
+
+## Uppdatering: PDF-export för lärarens Grundplanering (2026-11-13)
+- Knapp "Skriv ut (liggande A4)" i publiceringsraden. Commit 5572b9c, plus CSS-tillägg för vit bakgrund under utskrift.
+- Verifierat med page.pdf(): 2 sidor, liggande A4 (841,9 × 595 pt). Sida 1 renderad med pdf.js och granskad.
+- Kvarstår i utskriften: ett blått band överst (ej identifierat element; elementFromPoint ger body), smala Moment/Sida/Uppgift-fält, ej testat med lång planering eller tio lektioner per vecka i PDF.
+- Nästa steg: hitta bandets källa (kontrollera teacher-week-navigation/ChapterVocabulary i utskriftsläge), gör fälten bredare i utskrift, testa tio lektioner och lång planering, sedan Klassvyns utskrift, sedan Word-export.
+- Elevutskriften (stående) är inte omtestad efter ändringen.

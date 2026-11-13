@@ -8281,3 +8281,6 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
   body.teacher-print-mode .teacher-months.teacher-months-three .lesson,
   body.teacher-print-mode .teacher-months.teacher-months-three .week-card { break-inside: avoid !important; page-break-inside: avoid !important; }
 }
+@media print {
+  body.teacher-print-mode, body.teacher-print-mode #root, body.teacher-print-mode main, body.teacher-print-mode #lararvy, body.teacher-print-mode .planning-layout, body.teacher-print-mode .teacher-year-review, body.teacher-print-mode .teacher-months { background: #fff !important; box-shadow: none !important; border: 0 !important; margin-top: 0 !important; padding-top: 0 !important; }
+}
