@@ -138,3 +138,7 @@ DEL 5 – Arkivering + återställning, synkronisering mellan sessioner/datorer,
 - Sparning villkoras på databasens updated_at (eq i samma UPDATE). Vid konflikt (0 rader) skrivs inget. Konfliktpanel: Öppna den nyare versionen (din version sparas i historiken) eller Spara min version ändå (den nyare sparas i historiken först).
 - conflict-test.mjs (kopia i ops/, kör från C:p\harness2e): 10/10 med två webbläsarsessioner. Regressionstester del1 8/8, undo 4/4, versioner 7/7.
 - Ej gjort: samma skydd verifierat i Klassvyn separat; återställning från historik under konflikt (ingår via save, ej testat i två sessioner); behörighetstest mot andra lärares planer (RLS används, ej separat testat).
+
+## Behörighet (2026-11-13)
+- ops/permissions-test.mjs (kör från C:p\harness2e): direkta REST-anrop med lärare A mot lärare B:s planering. 10/10: A kan inte läsa, lista, publicera, ändra, radera eller skapa planering för B; anonym kan inte läsa; B:s egen planering är opublicerad.
+- Ej gjort: återställning av historik i två sessioner, Klassvyns konfliktskydd separat, sökning, arkivering, synkronisering, import med startvecka, begreppskoppling, PDF för hela klassen, omtest av elevutskrift, slutlig Word-kontroll.
