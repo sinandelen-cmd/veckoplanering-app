@@ -110,3 +110,7 @@ DEL 5 – Arkivering + återställning, synkronisering mellan sessioner/datorer,
 - Momentfält i treveckorsvyerna (Grundplanering och Klassvy): en kompakt rad som växer med texten, max ungefär fem rader (8,5 em), 11 px, med scroll därefter. Höga selektorer under #lararvy väger upp de befintliga regler som satte 264–288 px.
 - Verifierat: höjden blir 93,5 px för ett långt moment i ett smalt fält; regressionstestet del1-grundplanering (8/8) passerar.
 - Ej gjort: Sida- och Uppgift-fälten har samma behov (inte kontrollerade i detalj); visuell granskning med skärmbild; text i fält som scrollas är inte synlig utan att klicka.
+
+## REGRESSION: del1-grundplanering.mjs FAILAR nu (2026-11-13)
+- Testet klickar på ett fält i varje kolumn. Med testplanen på 12 veckor (lokal testdata från long-plan.mjs) avbryts klicket: ett <div class="week-top"> ligger över fältet ("intercepts pointer events").
+- Okänt om det beror på testdatan (12 veckor i stället för 3) eller på de nya kompakta fälten/utskriftsändringarna. Nästa steg: köra testet med en plan på 3 veckor, och om det passerar, hitta vad som överlappar i 12-veckorsvyn. Får inte räknas som klart förrän det passerar.
