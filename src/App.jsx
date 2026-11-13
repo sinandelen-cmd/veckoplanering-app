@@ -1898,6 +1898,8 @@ const addNewTeacherWeek = () => setPlan(p => {
         savedPlanRef.current = JSON.stringify(payload)
         setSavedRevision(revision => revision + 1)
         const newerEdits = latestPlanRef.current !== plan
+        // Det som sparats är inte en ny användaränd­ring: den får inte bli ett ångra-steg.
+        if (!newerEdits && JSON.stringify(payload) !== JSON.stringify(plan)) historySkipRef.current = true
         setPlan(current => current === plan ? payload : current)
         const message = !refreshed ? 'Sparad, men listan kunde inte uppdateras. Ladda om för att kontrollera.' : publish
           ? `Publicerad: ${window.location.origin}/elev/${slug}`
