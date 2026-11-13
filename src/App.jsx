@@ -1039,6 +1039,19 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
   const [visibleWeekCount, setVisibleWeekCount] = useState(3)
   const [expandedFullWeek, setExpandedFullWeek] = useState(null)
   const [classWeekOffset, setClassWeekOffset] = useState(0)
+  // Klassens utskrift i liggande A4 med samma separata utskriftskomponent som Grundplanering.
+  const [classPrinting, setClassPrinting] = useState(false)
+  useEffect(() => {
+    if (!classPrinting) return undefined
+    const style = document.createElement('style')
+    style.id = 'class-print-style'
+    style.textContent = '@page { size: A4 landscape; margin: 10mm; }'
+    document.head.appendChild(style)
+    const done = () => { style.remove(); setClassPrinting(false) }
+    window.addEventListener('afterprint', done, { once: true })
+    const timer = window.setTimeout(() => window.print(), 200)
+    return () => { window.clearTimeout(timer); window.removeEventListener('afterprint', done); done() }
+  }, [classPrinting])
   const classHistory = useRef({ past: [], future: [] })
   const [, setClassHistoryVersion] = useState(0)
   const applyClassOverrides = (overrides, record = true) => {
@@ -1092,7 +1105,8 @@ function ClassTwoWeekCalendar({ plan, className, onChangeClassGroups, onSave, bu
   })
   if (!group) return null
   return <section className="class-real-two-weeks a4-sheet-view" aria-label={className+' – '+visibleWeekCount+' veckor'}>
-    <div className="class-real-two-weeks-header"><div className="class-week-count-controls" role="group" aria-label="Antal veckor att visa">{[3,2].map(n=><button key={n} type="button" className={visibleWeekCount===n?"active":""} aria-pressed={visibleWeekCount===n} onClick={()=>setVisibleWeekCount(n)}>{n} {n===1?"vecka":"veckor"}</button>)}</div></div>
+    {classPrinting && createPortal(<TeacherPrintSheet title={className} weeks={weeks.map(w => ({ ...w, printWeekNumber: calendarWeekNumber(w.weekStart) ?? w.weekNumber }))} />, document.body)}
+    <div className="class-real-two-weeks-header"><button type="button" className="secondary" onClick={() => setClassPrinting(true)} title="Skriv ut eller spara som PDF i liggande A4">Skriv ut (liggande A4)</button><div className="class-week-count-controls" role="group" aria-label="Antal veckor att visa">{[3,2].map(n=><button key={n} type="button" className={visibleWeekCount===n?"active":""} aria-pressed={visibleWeekCount===n} onClick={()=>setVisibleWeekCount(n)}>{n} {n===1?"vecka":"veckor"}</button>)}</div></div>
     <div className="class-real-two-weeks-grid" style={{"--class-week-columns":visibleWeekCount}}>{weeks.map((week,_i)=><div className="class-real-week-column" key={week.weekStart}>
       {week.weekStart===currentStart && <strong>Nuvarande vecka</strong>}
       <div className="class-week-fast-preview" style={{background:'#fff',border:'1px solid #d2dce8',borderRadius:12,padding:14,display:'flex',flexDirection:'column',gap:10,minHeight:190}}>

@@ -82,3 +82,8 @@ DEL 5 – Arkivering + återställning, synkronisering mellan sessioner/datorer,
 - TeacherPrintSheet: varje rad med upp till tre veckor är en tabell. Veckorubrikerna ligger i tabellhuvudet och upprepas på fortsättningssidor.
 - Lång testplan (12 veckor × 10 lektioner, lokal testdata): 8 sidor liggande A4. Sida 2 och sida 8 granskade visuellt; alla lektioner och fält finns med.
 - Kvar: Klassvyns utskrift; elevutskriften (stående) omtestas; Word-export; kompaktare fält i redigeringsvyer; autosparningsstatus; ångra/versionshistorik; kopiera; sökning; arkivering/återställning; synkronisering; import med startvecka; begreppskoppling; samtliga tester (funktion, säkerhet, behörighet, prestanda, regression) och slutrapport.
+
+## Klassvyns utskrift (2026-11-13)
+- Knappen "Skriv ut (liggande A4)" i klassvyns rubrik använder samma TeacherPrintSheet via portal under body. Skriver ut de tre veckor som visas i klassvyn (fönstret), inte hela planen.
+- Verifierat med page.pdf() för klass 8A: 1 sida liggande A4, tre veckor sida vid sida, fem lektioner per vecka synliga, rubrik med klassnamn. Ingen lektion saknas.
+- Kvar: utskrift av alla veckor i klassvyn (inte bara fönstret), och tio lektioner per vecka i klassvyn (ej testat i PDF).
