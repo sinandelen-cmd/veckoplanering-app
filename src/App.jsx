@@ -18,6 +18,7 @@ import { booksForSubject, searchTextbooks, buildManualTextbook, isValidIsbn, nor
 import { parseOutlineText } from "./chapters.js"
 import ChapterOutlinePanel from "./ChapterOutlinePanel.jsx"
 import TeacherPrintSheet from "./TeacherPrintSheet.jsx"
+import { downloadDocx } from "./docxExport.js"
 import { createPortal } from 'react-dom'
 
 const APP_TITLE = 'Årsplanering'
@@ -1377,6 +1378,21 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [librarySchool, setLibrarySchool] = useState('')
   // Lärarens utskrift i liggande A4. Egen @page-regel läggs in bara under utskriften och tas bort direkt efteråt.
   const [teacherPrintMode, setTeacherPrintMode] = useState(false)
+  // Word-export av valda veckor (tomt intervall = alla synliga veckor). Dolda veckor ingår inte.
+  const exportTeacherWord = () => {
+    const from = window.prompt('Exportera från vecka (lämna tomt för första veckan)', '')
+    if (from === null) return
+    const to = window.prompt('Till och med vecka (lämna tomt för sista veckan)', '')
+    if (to === null) return
+    const first = from.trim() ? Number(from) : null
+    const last = to.trim() ? Number(to) : null
+    const chosen = weeks.filter(week => week && !week.hidden).filter(week => {
+      const number = calendarWeekNumber(week.weekStart) ?? week.weekNumber
+      return (first === null || number >= first) && (last === null || number <= last)
+    })
+    if (!chosen.length) { setStatus('Det finns inga synliga veckor i det valda intervallet.'); return }
+    downloadDocx(plan.title || plan.subject || 'Årsplanering', chosen.map(week => ({ ...week, printWeekNumber: calendarWeekNumber(week.weekStart) ?? week.weekNumber })))
+  }
   useEffect(() => {
     if (!teacherPrintMode) return undefined
     // Egen @page för liggande A4 läggs in endast under utskriften och tas bort direkt efteråt.
@@ -2506,6 +2522,7 @@ const addNewTeacherWeek = () => setPlan(p => {
               {selectedId && teacherTab === "arsplan" && !simpleSetup && <div className="publish-bar" aria-label="Publicering för elever" style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',margin:'8px 0'}}>
           <span className="muted">{plan.published ? 'Publicerad för elever. Eleverna ser den senast publicerade versionen tills du publicerar ändringarna.' : 'Ej publicerad. Eleverna ser inte planeringen.'}</span>
           <button type="button" className="secondary" disabled={busy} onClick={() => { setShowPastTeacherWeeks(true); setPastWeeksExpanded(true); setTeacherPrintMode(true) }} title="Skriv ut eller spara som PDF i liggande A4">Skriv ut (liggande A4)</button>
+          <button type="button" className="secondary" disabled={busy} onClick={exportTeacherWord} title="Exportera veckorna som redigerbar Word-fil (.docx)">Exportera Word</button>
           {plan.published
             ? <>
                 <button type="button" className="primary" disabled={busy} onClick={() => save(true)}>Publicera ändringar</button>

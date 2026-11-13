@@ -87,3 +87,9 @@ DEL 5 – Arkivering + återställning, synkronisering mellan sessioner/datorer,
 - Knappen "Skriv ut (liggande A4)" i klassvyns rubrik använder samma TeacherPrintSheet via portal under body. Skriver ut de tre veckor som visas i klassvyn (fönstret), inte hela planen.
 - Verifierat med page.pdf() för klass 8A: 1 sida liggande A4, tre veckor sida vid sida, fem lektioner per vecka synliga, rubrik med klassnamn. Ingen lektion saknas.
 - Kvar: utskrift av alla veckor i klassvyn (inte bara fönstret), och tio lektioner per vecka i klassvyn (ej testat i PDF).
+
+## Word-export (2026-11-13)
+- src/zipStore.js (ZIP utan komprimering, CRC32) och src/docxExport.js (bygger .docx i liggande A4: veckorubriker, kapitel, lektioner med Moment/Sida/Uppgift i ordning; dolda veckor utelämnas).
+- Knappen "Exportera Word" i Grundplanering. Frågar om från/till-vecka (tomt = alla synliga veckor).
+- Verifierat i Chrome mot lokal Supabase: nedladdad fil 186 KB, 12 veckor, 120 lektioner, texten med ÅÄÖ och talintervall (999–1009, 1000–1050) bevarad. Zipen och word/document.xml kontrollerade med .NET (korrekt XML).
+- Ej testat: öppning i Microsoft Word (ingen Word-installation här). Ej gjort än: Klassvyns Word-export (hela planen), filimport med val av startvecka, övriga funktioner.
