@@ -47,3 +47,9 @@ Branch: feature/server-subjects. Senaste lokala commits: 51b4577 (startvecka i i
 1. Ditt godkännande av denna rapport.
 2. Bekräftelse att Netlify-förhandsbyggen och Workers-förhandsbyggen är stoppade för repot.
 3. Öppning av Word-exporten i Word eller motsvarande program.
+
+## Tillägg: körningar efter första rapporten
+
+- Autosave-vakt (autosave-guard): innehåll sparas, publiceringsflaggan är oförändrad, status visar "Sparat". Grön.
+- Prestanda (lokal Chrome, 12 veckor, testdata): öppna plan till första fält ca 356 ms. Cirka 2 600 DOM-noder. Cirka 25 MB JS-heap. Inte belastningstest.
+- Klassvy-konflikt och lektionsnivå-ångra: inte körda i denna omgång.
