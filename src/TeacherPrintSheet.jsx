@@ -1,5 +1,8 @@
 // Separat utskriftsvy för lärarens Grundplanering i liggande A4.
 // Renderas bara under utskrift, direkt under body. Ingen knapp, navigering eller modal ingår, och den vanliga vyn påverkas inte.
+// Varje rad med upp till tre veckor är en tabell. Veckorubrikerna ligger i tabellhuvudet, som upprepas på varje sida
+// när en rad fortsätter, så att det alltid framgår vilka veckor fortsättningen tillhör.
+
 function lessonFields(lesson) {
   const topics = Array.isArray(lesson?.topics) ? lesson.topics : []
   return topics.map((topic, index) => ({
@@ -19,30 +22,44 @@ export default function TeacherPrintSheet({ title, weeks }) {
       <div className="tps-sheet">
         <header className="tps-header"><h1>{title}</h1></header>
         {rows.map((row, rowIndex) => (
-          <div className="tps-row" key={rowIndex}>
-            {row.map(week => {
-              const number = week.printWeekNumber ?? week.weekNumber
-              const lessons = Array.isArray(week.lessons) ? week.lessons : []
-              return (
-                <section className="tps-week" key={week.weekStart || week.weekNumber}>
-                  <div className="tps-week-heading"><strong>Vecka {number}</strong><span>{week.weekStart || ''}</span></div>
-                  {week.chapter && <div className="tps-chapter">{String(week.chapter).trim()}</div>}
-                  {lessons.map((lesson, li) => (
-                    <div className="tps-lesson" key={li}>
-                      <div className="tps-lesson-name">{lesson?.name || `Lektion ${li + 1}`}</div>
-                      {lessonFields(lesson).map(field => (
-                        <div className="tps-field" key={field.key}>
-                          {field.moment && <div className="tps-moment"><b>Moment</b> {field.moment}</div>}
-                          {field.sida && <div className="tps-sida"><b>Sida</b> {field.sida}</div>}
-                          {field.uppgift && <div className="tps-uppgift"><b>Uppgift</b> {field.uppgift}</div>}
+          <table className="tps-table" key={rowIndex}>
+            <thead>
+              <tr>
+                {row.map(week => {
+                  const number = week.printWeekNumber ?? week.weekNumber
+                  return (
+                    <th className="tps-week-heading" key={week.weekStart || week.weekNumber}>
+                      <div className="tps-week-title"><strong>Vecka {number}</strong><span>{week.weekStart || ''}</span></div>
+                      {week.chapter && <div className="tps-chapter">{String(week.chapter).trim()}</div>}
+                    </th>
+                  )
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                {row.map(week => {
+                  const lessons = Array.isArray(week.lessons) ? week.lessons : []
+                  return (
+                    <td className="tps-week" key={week.weekStart || week.weekNumber}>
+                      {lessons.map((lesson, li) => (
+                        <div className="tps-lesson" key={li}>
+                          <div className="tps-lesson-name">{lesson?.name || `Lektion ${li + 1}`}</div>
+                          {lessonFields(lesson).map(field => (
+                            <div className="tps-field" key={field.key}>
+                              {field.moment && <div className="tps-moment"><b>Moment</b> {field.moment}</div>}
+                              {field.sida && <div className="tps-sida"><b>Sida</b> {field.sida}</div>}
+                              {field.uppgift && <div className="tps-uppgift"><b>Uppgift</b> {field.uppgift}</div>}
+                            </div>
+                          ))}
                         </div>
                       ))}
-                    </div>
-                  ))}
-                </section>
-              )
-            })}
-          </div>
+                    </td>
+                  )
+                })}
+              </tr>
+            </tbody>
+          </table>
         ))}
       </div>
     </div>
