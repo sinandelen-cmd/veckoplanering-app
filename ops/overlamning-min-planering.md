@@ -146,3 +146,7 @@ DEL 5 – Arkivering + återställning, synkronisering mellan sessioner/datorer,
 ## Sökning i egna planeringar (2026-11-13)
 - Sökfältet i biblioteket (fanns som tillstånd men saknade inmatning) är nu kopplat. Söker i titel, ämne, klass, läsår, kurs, lärobok, kapitel, lektionsnamn, moment, beskrivning, uppgifter och sidor. Arkiverade planeringar ingår inte. Klick öppnar planeringen.
 - search-test.mjs: sökning hittar innehåll (6 träffar för "Triangel"), tom sökning visar meddelande, klick öppnar planen. Ej testat: andra lärares planeringar syns inte (RLS verifierad i permissions-test).
+
+## Arkivering och återställning (2026-11-13)
+- Fanns redan i appen. Verifierat med ops/archive-test.mjs i Chrome: arkivering sätter arkiv-flaggan, innehållet finns kvar i databasen, planen försvinner från den aktiva listan, syns i arkivvyn, och återställning ger samma innehåll.
+- Ej testat: permanent radering från arkivet med bekräftelse (kräver skriven bekräftelse enligt tidigare beslut) och att annan lärare inte kan arkivera/radera (täcks av RLS-test i permissions-test, ej arkiv-specifikt).
