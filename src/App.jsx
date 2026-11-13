@@ -1373,6 +1373,17 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [plans, setPlans] = useState([])
   const [showArchive, setShowArchive] = useState(false)
   const [planSearch, setPlanSearch] = useState("")
+  // Sökning i lärarens egna, ej arkiverade planeringar: titel, ämne, kurs, lärobok, kapitel, lektionsnamn, moment och innehåll.
+  const planSearchResults = (() => {
+    const query = planSearch.trim().toLocaleLowerCase('sv')
+    if (!query) return []
+    return plans.filter(row => {
+      const c = parseContent(row.content) || {}
+      if (c.archived) return false
+      const text = [row.title, row.subject, row.class_name, row.school_year, c.title, c.subject, c.course, c.textbook, ...((c.weeksData || []).flatMap(w => [w.chapter, ...((w.lessons || []).flatMap(l => [l.name, ...((l.topics || []).flatMap(t => [t.name, t.description, ...(t.assignments || []), ...(t.pages || [])]))]))]))].filter(Boolean).join(' ').toLocaleLowerCase('sv')
+      return text.includes(query)
+    }).slice(0, 30)
+  })()
   const [libraryYear, setLibraryYear] = useState('alla')
   const [subjectRows, setSubjectRows] = useState([])
   const [personalSchool, setPersonalSchool] = useState(() => { try { return localStorage.getItem('arsplanering-personal-school') || 'Grundskola' } catch { return 'Grundskola' } })
@@ -3114,6 +3125,13 @@ const addNewTeacherWeek = () => setPlan(p => {
     {teacherTab === "bibliotek" && <div className="teacher-tab-panel">
     <section className="card" id="mina-arsplaneringar">
 
+      <div className="plan-search" role="search" style={{ display: 'grid', gap: 6, margin: '8px 0 12px' }}>
+        <input type="search" aria-label="Sök i mina planeringar" placeholder="Sök kurs, ämne, kapitel, moment eller innehåll…" value={planSearch} onChange={event => setPlanSearch(event.target.value)} />
+        {planSearch.trim() && <ul aria-label="Sökresultat" style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 4 }}>
+          {planSearchResults.map(row => <li key={row.id}><button type="button" className="secondary" style={{ width: '100%', textAlign: 'left' }} onClick={() => { setPlanSearch(''); loadPlan(row) }}>{row.title}</button></li>)}
+          {planSearchResults.length === 0 && <li className="muted">Inga planeringar matchar sökningen.</li>}
+        </ul>}
+      </div>
       {planSearch && plans.some(row => Boolean(parseContent(row.content)?.archived) === showArchive) && !plans.some(row => Boolean(parseContent(row.content)?.archived) === showArchive && [row.title, row.subject, row.class_name, row.school_year].some(value => String(value || "").toLocaleLowerCase("sv").includes(planSearch.trim().toLocaleLowerCase("sv")))) && <p className="muted">Inga planeringar matchar sökningen. Prova ett annat ord eller rensa sökningen.</p>}
       <div className="visual-planning-tree planning-board" id="planeringstrad"><div className="planning-board-bar"><div className="planning-board-tools"><div className="school-filter"><button type="button" className="secondary school-filter-toggle" aria-expanded={schoolFilterOpen} onClick={()=>setSchoolFilterOpen(value=>!value)}>⚙ Visa skolformer</button>{schoolFilterOpen && <div className="school-filter-panel"><strong>Visa i planeringsträdet</strong>{['Grundskola','Gymnasiet'].map(school=><label key={school}><input type="checkbox" checked={visibleSchoolForms.includes(school)} onChange={()=>toggleVisibleSchoolForm(school)}/>{school}</label>)}<small>Valet sparas på den här enheten. Inga planeringar tas bort.</small><button type="button" className="secondary" onClick={()=>setSchoolFilterOpen(false)}>✓ Klar</button></div>}</div><button type="button" className="planning-board-new-plan" onClick={createPlan}>＋ Ny planering</button><button type="button" className="secondary" aria-pressed={showArchive} onClick={() => { setShowArchive(value => !value); setLibrarySchool(''); setLibrarySubject('') }}>{showArchive ? '📂 Visa aktiva' : '🗃 Arkiv'}</button><label htmlFor="library-year-select">Läsår</label><select id="library-year-select" value={libraryYear} onChange={event => { setLibraryYear(event.target.value); setLibrarySchool(''); setLibrarySubject('') }}><option value="alla">Alla läsår</option>{[...new Set(plans.map(row => String(row.school_year || parseContent(row.content)?.schoolYear || '').trim()).filter(Boolean))].sort((a,b) => b.localeCompare(a,'sv',{numeric:true})).map(year => <option key={year} value={year}>{year}</option>)}</select><button type="button" className="secondary" onClick={() => { const year = window.prompt('Nytt läsår (exempelvis 2027–2028):'); if (year?.trim()) { setLibraryYear(year.trim()); setLibrarySchool(''); setLibrarySubject('') } }}>＋ Läsår</button></div></div><div className="visual-tree-schools" ref={boardTreeRef}>
                 {Object.entries(plans.filter(row => Boolean(parseContent(row.content)?.archived) === showArchive && (libraryYear === 'alla' || String(row.school_year || parseContent(row.content)?.schoolYear || '').trim() === libraryYear) && [row.title, row.subject, row.class_name, row.school_year].some(value => String(value || "").toLocaleLowerCase("sv").includes(planSearch.trim().toLocaleLowerCase("sv")))).reduce((groups, row) => {

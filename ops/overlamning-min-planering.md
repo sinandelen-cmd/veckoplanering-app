@@ -142,3 +142,7 @@ DEL 5 – Arkivering + återställning, synkronisering mellan sessioner/datorer,
 ## Behörighet (2026-11-13)
 - ops/permissions-test.mjs (kör från C:p\harness2e): direkta REST-anrop med lärare A mot lärare B:s planering. 10/10: A kan inte läsa, lista, publicera, ändra, radera eller skapa planering för B; anonym kan inte läsa; B:s egen planering är opublicerad.
 - Ej gjort: återställning av historik i två sessioner, Klassvyns konfliktskydd separat, sökning, arkivering, synkronisering, import med startvecka, begreppskoppling, PDF för hela klassen, omtest av elevutskrift, slutlig Word-kontroll.
+
+## Sökning i egna planeringar (2026-11-13)
+- Sökfältet i biblioteket (fanns som tillstånd men saknade inmatning) är nu kopplat. Söker i titel, ämne, klass, läsår, kurs, lärobok, kapitel, lektionsnamn, moment, beskrivning, uppgifter och sidor. Arkiverade planeringar ingår inte. Klick öppnar planeringen.
+- search-test.mjs: sökning hittar innehåll (6 träffar för "Triangel"), tom sökning visar meddelande, klick öppnar planen. Ej testat: andra lärares planeringar syns inte (RLS verifierad i permissions-test).
