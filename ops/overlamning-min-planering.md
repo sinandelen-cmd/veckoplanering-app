@@ -126,3 +126,10 @@ DEL 5 – Arkivering + återställning, synkronisering mellan sessioner/datorer,
 - Varje lektion har också en egen "Ångra senaste ändringen"-knapp (lektionsnivå). Den testades inte; den verkar inte påverka textfält.
 - Nästa steg: 1) logga plan-historiken (past.length) före/efter klick i webbläsaren; 2) kontrollera att textfält är kontrollerade (value från plan) och inte har eget lokalt state i LessonDetails; 3) säkerställ att autosparningen inte skriver tillbaka det ångrade värdet.
 - Kopiera lektion/vecka, versionshistorik: ej påbörjade.
+
+## Ångra: VERIFIERAT (2026-11-13, commit b5ccac4)
+- Orsak: varje autosparning ersatte planen med serverversionen, vilket registrerades som ett nytt ångra-steg. Ångra återställde då till samma värde.
+- Rättning: sparning skapar inte längre ett ångra-steg. Skrivning i följd slås ihop till ett steg (1,5 s).
+- undo-test.mjs 4/4 (fält, databas, omladdning). del1-grundplanering 8/8.
+- Ej testat: lektionens egen ångra-knapp.
+- Kvar: kopiera lektion/vecka, versionshistorik, sökning, arkivering, synkronisering, import med startvecka, begreppskoppling, PDF för klass, Word-kontroll, slutlig testning.
