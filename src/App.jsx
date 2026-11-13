@@ -1397,6 +1397,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [librarySchool, setLibrarySchool] = useState('')
   // Lärarens utskrift i liggande A4. Egen @page-regel läggs in bara under utskriften och tas bort direkt efteråt.
   const [teacherPrintMode, setTeacherPrintMode] = useState(false)
+  // Autosparningsstatus. "saved" sätts endast när databasen har bekräftat skrivningen.
+  const [autoSaveState, setAutoSaveState] = useState('idle')
   // Word-export av valda veckor (tomt intervall = alla synliga veckor). Dolda veckor ingår inte.
   const exportTeacherWord = () => {
     const from = window.prompt('Exportera från vecka (lämna tomt för första veckan)', '')
@@ -1878,8 +1880,9 @@ const addNewTeacherWeek = () => setPlan(p => {
         ? supabase.from('veckoplanering').update(row).eq('id', selectedId).eq('user_id', session.user.id).select('id').single()
         : supabase.from('veckoplanering').insert(row).select('id').single()
       const { data, error } = await query
-      if (error) { setStatus(`Kunde inte spara: ${error.message}`); return false }
+      if (error) { setAutoSaveState('error'); setStatus(`Kunde inte spara: ${error.message}`); return false }
       else {
+        setAutoSaveState('saved')
         if (simpleSetup) { setSimpleSetup(false); setTeacherTab('arsplan'); setCalendarOpen(false) }
         setSelectedId(data.id)
         try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(data.id)) } catch { /* Lagring kan vara blockerad */ }
@@ -1938,7 +1941,9 @@ const addNewTeacherWeek = () => setPlan(p => {
     const timer = window.setTimeout(() => {
       if (JSON.stringify(latestPlanRef.current) !== savedPlanRef.current) {
         // Autosparning sparar endast utkast. save(true) skulle publicera för eleverna.
-        void save(false, true)
+        setAutoSaveState('saving')
+        // Om save avbröts före skrivningen (validering) står status kvar som 'saving' och visas som ej sparat.
+        void save(false, true).then(() => setAutoSaveState(current => (current === 'saving' ? 'error' : current)))
       }
     }, 1400)
     return () => window.clearTimeout(timer)
@@ -2541,6 +2546,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       
               {selectedId && teacherTab === "arsplan" && !simpleSetup && <div className="publish-bar" aria-label="Publicering för elever" style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',margin:'8px 0'}}>
           <span className="muted">{plan.published ? 'Publicerad för elever. Eleverna ser den senast publicerade versionen tills du publicerar ändringarna.' : 'Ej publicerad. Eleverna ser inte planeringen.'}</span>
+          <span className="autosave-status" role="status" aria-live="polite">{autoSaveState === 'saving' ? 'Sparar…' : autoSaveState === 'saved' ? 'Sparat' : autoSaveState === 'error' ? 'Kunde inte spara – ändringen finns inte i databasen' : ''}</span>
           <button type="button" className="secondary" disabled={busy} onClick={() => { setShowPastTeacherWeeks(true); setPastWeeksExpanded(true); setTeacherPrintMode(true) }} title="Skriv ut eller spara som PDF i liggande A4">Skriv ut (liggande A4)</button>
           <button type="button" className="secondary" disabled={busy} onClick={exportTeacherWord} title="Exportera veckorna som redigerbar Word-fil (.docx)">Exportera Word</button>
           {plan.published

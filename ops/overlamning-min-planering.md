@@ -100,3 +100,8 @@ DEL 5 – Arkivering + återställning, synkronisering mellan sessioner/datorer,
 - Verifierat i Chrome: klass 8A → 12 veckor, 60 lektioner, titel = klassnamn, XML välformad (kontrollerad med .NET).
 - Ej gjort: test med valt intervall i klassvyn och med dolda veckor i klassen (ingen dold vecka i testdata); öppning i riktig Word (ingen Word här).
 - Kvar: kompaktare fält, autosparningsstatus, ångra/versionshistorik, kopiera, sökning, arkivering, synkronisering, import med startvecka, begreppskoppling, slutliga tester, PDF för hela klassen (utöver fönstret), omtest av elevutskrift.
+
+## Autosparningsstatus (2026-11-13)
+- Status i publiceringsraden: "Sparar…" under skrivning, "Sparat" först när databasen bekräftat, "Kunde inte spara – ändringen finns inte i databasen" vid fel.
+- Verifierat i Chrome: normal sparning visar Sparat; simulerat nätverksfel (route abort) visar Kunde inte spara och aldrig Sparat.
+- Ej gjort: visa "Sparar…" just under skrivning (testet fångade inte fönstret), långsam-anslutningstest, status vid manuell sparning.
