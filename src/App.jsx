@@ -2787,6 +2787,7 @@ const addNewTeacherWeek = () => setPlan(p => {
 
     
 
+    {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && saveConflict && <section className="card save-conflict-panel" role="alert" style={{ margin: '12px 0', display: 'grid', gap: 8, borderColor: '#d9a441' }}><strong>Konflikt: planeringen har ändrats i en annan session</strong><p className="muted" style={{ margin: 0 }}>Din osparade version finns kvar här. Inget har skrivits över. Välj hur du vill gå vidare.</p><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><button type="button" className="primary" onClick={resolveTakeRemote}>Öppna den nyare versionen</button><button type="button" className="secondary" onClick={resolveKeepMine}>Spara min version ändå</button><button type="button" className="secondary" onClick={() => setSaveConflict(null)}>Avbryt</button></div></section>}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && editingClassView && <ClassTwoWeekCalendar plan={classSchedulePlan} className={editingClassView} onChangeClassGroups={groups=>setPlan(previous=>({...previous,classGroups:groups}))} onSave={()=>save(false)} busy={busy} saveStatus={status} />}
     {selectedId && !calendarOpen && teacherTab === "arsplan" && !editingClassView && <div className="expanded-weeks-inline">
     
