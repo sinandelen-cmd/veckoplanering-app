@@ -1,8 +1,16 @@
 name: Publicera årsplanering till Cloudflare
 on:
   workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Skriv exakt PUBLICERA för att bekräfta publicering till produktion'
+        required: true
+        type: string
 jobs:
   deploy:
+    # Tre spärrar: körs bara från main, kräver repo-variabeln ALLOW_PRODUCTION_DEPLOY="true",
+    # och kräver att bekräftelsetexten är exakt PUBLICERA.
+    if: github.ref == 'refs/heads/main' && vars.ALLOW_PRODUCTION_DEPLOY == 'true' && inputs.confirm == 'PUBLICERA'
     runs-on: ubuntu-latest
     environment: production
     steps:
