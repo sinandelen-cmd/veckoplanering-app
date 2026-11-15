@@ -18,6 +18,8 @@ const base = 'http://localhost:5191'
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] }).catch(() => chromium.launch())
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'a4-fit-'))
 const results = []
+// Varje sida registrerar externa anrop. Alla icke-lokala anrop avbryts och räknas, så att inget kan nå produktionsdatabasen.
+const externalRequests = []
 const report = (name, ok, detail = '') => { results.push(ok); console.log((ok ? 'PASS' : 'FAIL') + ' ' + name + (detail ? ' :: ' + detail : '')) }
 
 // Förväntade markörer: varje moment ska finnas exakt en gång i utskriften.
@@ -35,6 +37,7 @@ function expectedMarkers(scenario) {
 
 for (const scenario of Object.keys(SCENARIOS)) {
   const page = await browser.newPage({ viewport: { width: 1100, height: 900 } })
+  page.on('request', request => { if (!request.url().startsWith(base)) externalRequests.push(request.url()) })
   await page.route(/^https?:\/\/(?!localhost)/, route => route.abort())
   const klass = CLASS_SCENARIOS.includes(scenario) ? '&klass=7A' : ''
   await page.goto(`${base}/tests/print/harness.html?scenario=${encodeURIComponent(scenario)}${klass}`, { waitUntil: 'networkidle' })
@@ -92,6 +95,7 @@ for (const scenario of Object.keys(SCENARIOS)) {
 }
 await browser.close()
 await server.close()
+report('inga anrop till externa värdar (produktion, Supabase) under utskriftstesterna', externalRequests.length === 0, externalRequests.length ? 'försök=' + externalRequests.slice(0, 3).join(' ') : 'inga')
 const allOk = results.every(Boolean)
 console.log(allOk ? 'ALLA UTSKRIFTSTESTER GODKÄNDA' : 'NÅGOT UTSKRIFTSTEST MISSLYCKADES')
 process.exit(allOk ? 0 : 1)
