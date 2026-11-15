@@ -76,6 +76,26 @@ for (const [columns, rows, expected] of [[3, 2, 6], [2, 2, 4], [1, 2, 2], [3, 99
   const actual = Array.from({ length: pages }, (_, page) => weekIds.slice(page * pageSize, (page + 1) * pageSize)).flat()
   assert.deepEqual(actual, weekIds, 'Pagination must neither duplicate nor skip weeks')
 }
+// Automatisk programuppdatering: ingen manuell notis, ingen bekräftelseknapp, ingen service worker.
+const appVersion = fs.readFileSync(new URL('../src/appVersion.js', import.meta.url), 'utf8')
+const weeklyApp = fs.readFileSync(new URL('../src/weekly/App.jsx', import.meta.url), 'utf8')
+const viteConfig = fs.readFileSync(new URL('../vite.config.js', import.meta.url), 'utf8')
+const headers = fs.readFileSync(new URL('../public/_headers', import.meta.url), 'utf8')
+const allSource = [app, weeklyApp, appVersion, fs.readFileSync(new URL('../src/main.jsx', import.meta.url), 'utf8')].join('\n')
+assert.equal(fs.existsSync(new URL('../src/UpdateNotices.jsx', import.meta.url)), false, 'Den manuella notisfunktionen ska vara borttagen')
+assert.doesNotMatch(allSource, /UpdateNotices|Bekräfta och ladda om|Skicka senaste programuppdateringen|app_update_/)
+assert.doesNotMatch(allSource, /serviceWorker|navigator\.serviceWorker|caches\.open/, 'Ingen service worker eller egen cache ska användas')
+assert.match(appVersion, /export function startAutoUpdate\(\)/)
+assert.match(appVersion, /fetch\(`\$\{VERSION_URL\}\?t=\$\{Date\.now\(\)\}`, \{ cache: 'no-store' \}\)/)
+assert.match(appVersion, /if \(!pendingBuildId \|\| hasUnsavedWork\(\)\) return/, 'Ingen omladdning får ske med osparat arbete')
+assert.match(appVersion, /readGuard\(\) === pendingBuildId/, 'Loopskydd saknas')
+assert.match(app, /setUnsavedWork\('arsplanering', isDirty \|\| busy\)/)
+assert.match(weeklyApp, /setUnsavedWork\('veckoplanering', hasUnsaved\)/)
+assert.match(viteConfig, /__APP_BUILD_ID__/)
+assert.match(viteConfig, /fileName: 'version\.json'/)
+assert.match(headers, /\/version\.json\n\s+Cache-Control: no-store/)
+assert.match(headers, /\/index\.html\n\s+Cache-Control: no-cache/)
+assert.match(headers, /\/veckoplanering\.html\n\s+Cache-Control: no-cache/)
 console.log('Static security/routing checks: OK')
 
 // Lovförslag får inte dupliceras efter att läraren har flyttat datumet.

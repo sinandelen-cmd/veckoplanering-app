@@ -1,5 +1,5 @@
 function capitalizeFirstSwedish(value) { return String(value || '').replace(/^(\s*)([a-zåäö])/i, (_, spaces, letter) => spaces + letter.toLocaleUpperCase('sv-SE')) }
-import UpdateNotices from './UpdateNotices.jsx'
+import { setUnsavedWork } from './appVersion.js'
 import { groupStudentWeeksForPrint } from './printGroups.js'
 import { Component, Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
@@ -1603,6 +1603,11 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     window.addEventListener('beforeunload', warnBeforeLeave)
     return () => window.removeEventListener('beforeunload', warnBeforeLeave)
   }, [])
+  // Den automatiska versionsuppdateringen väntar tills det inte finns osparat arbete.
+  useEffect(() => {
+    setUnsavedWork('arsplanering', isDirty || busy)
+    return () => setUnsavedWork('arsplanering', false)
+  }, [isDirty, busy])
 
 
   const weeks = useMemo(() => displayWeeks(plan), [plan])
@@ -2295,7 +2300,6 @@ const addNewTeacherWeek = () => setPlan(p => {
     window.scrollTo({top:0,behavior:'smooth'})
   }
   return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "mina" ? "view-home" : teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}${teacherTab === "arsplan" && editingClassView ? " view-class" : ""}`}>{teacherTab !== "mina" && <Navigation planTitle={teacherTab === "bibliotek" ? "Mina planeringar" : (teacherTab === "arsplan" || teacherTab === "elevvy") && selectedId ? (plan.title || plan.subject || "Min planering") : ""} previousLabel={previousStepLabel} onPrevious={goToPreviousStep} onAllWeeks={() => { setFocusedTeacherWeek(null); setFocusedTeacherLesson(null); setShowPastTeacherWeeks(value => !value); setTeacherWeekOverview(true); setTeacherTab("arsplan"); setCalendarOpen(false) }} allWeeksOpen={showPastTeacherWeeks} active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={(id, planningHome = false) => { if (!confirmNavigation()) return false; if (planningHome) window.dispatchEvent(new Event('planning-home')); if (id === 'bibliotek') { setLibrarySchool(''); setLibrarySubject(''); setLibraryBoardPage(0); setShowArchive(false) } setTeacherTab(id); setCalendarOpen(false); if (id === 'elevvy') { setPreviewStudents(true); setCalendarOpen(false) } else { setPreviewStudents(false) } }} onOpenExample={() => { if (!confirmNavigation()) return false; return openExample() }} onOpenArchive={() => { if (!confirmNavigation()) return false; setShowArchive(true); setTeacherTab('bibliotek') }} onToggleCalendar={() => { if (!confirmNavigation()) return false; setTeacherTab('arsplan'); setCalendarOpen(true) }} calendarOpen={calendarOpen} hasOpenPlan={Boolean(selectedId && teacherTab === 'arsplan')} isAdmin={isAdmin} adminOpen={adminOpen} onOpenAdmin={() => { if (!confirmNavigation()) return false; onToggleAdmin?.(); return true }} onCloseAdmin={() => { if (adminOpen) onToggleAdmin?.() }} onSignOut={() => { if (!confirmNavigation()) return false; return supabase.auth.signOut() }} pendingCount={pendingCount} planSearch={planSearch} onPlanSearchChange={setPlanSearch} showArchive={showArchive} planContext={selectedId && teacherTab === 'arsplan' ? {subject:plan.subject || plan.title, textbook:plan.textbook, grade:plan.grade || plan.course} : null} onPrintPlan={selectedId && teacherTab === 'arsplan' ? () => { document.body.classList.add("teacher-plan-print"); const cleanup = () => document.body.classList.remove("teacher-plan-print"); window.addEventListener("afterprint", cleanup, { once:true }); window.print(); setTimeout(cleanup,1500) } : null} /> }<main className={`shell${adminOpen ? " admin-workspace" : ""}`} id="lararvy">
-  {!isAdmin && <UpdateNotices userId={session.user.id} isAdmin={false} />}
   {adminOpen ? adminContent : <>
     {teacherTab !== "elevvy" && teacherTab !== "mina" && <header className="topbar">
       
@@ -3047,7 +3051,6 @@ function AnnualApp() {
     const approved = colleagues.filter(item => item.status === 'approved')
     const rejected = colleagues.filter(item => item.status === 'rejected')
     return <TeacherApp key={session.user.id} session={session} isAdmin adminOpen={showAdminPanel} pendingCount={pending.length} onToggleAdmin={() => setShowAdminPanel(value => !value)} adminContent={<>
-      <UpdateNotices userId={session.user.id} isAdmin approvedTeachers={approved} />
       <section className="card" id="admin-teacher-panel">
       <h2>Administratör – lärarkonton</h2>
       <p>Endast du kan godkänna nya lärarkonton.</p>

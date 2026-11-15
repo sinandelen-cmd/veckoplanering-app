@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../supabase'
+import { setUnsavedWork } from '../appVersion.js'
 import './App.css'
 const dagar = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag']
 
@@ -150,6 +151,12 @@ function WeeklyApp() {
   const [redigeraTitel, setRedigeraTitel] = useState('')
 const [redigeraInnehall, setRedigeraInnehall] = useState(tommaDagar())
   const [redigeraDetaljer, setRedigeraDetaljer] = useState(tommaDetaljer())
+  // Osparat: en öppen redigering eller ett påbörjat formulär. Den automatiska uppdateringen väntar då.
+  useEffect(() => {
+    const hasUnsaved = Boolean(redigerarId || titel.trim())
+    setUnsavedWork('veckoplanering', hasUnsaved)
+    return () => setUnsavedWork('veckoplanering', false)
+  }, [redigerarId, titel])
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
