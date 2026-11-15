@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../supabase'
+import { setUnsavedWork } from '../appVersion.js'
 import './App.css'
 const dagar = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag']
 
@@ -150,6 +151,16 @@ function WeeklyApp() {
   const [redigeraTitel, setRedigeraTitel] = useState('')
 const [redigeraInnehall, setRedigeraInnehall] = useState(tommaDagar())
   const [redigeraDetaljer, setRedigeraDetaljer] = useState(tommaDetaljer())
+  // Osparat: en öppen redigering eller ett påbörjat formulär. Den automatiska uppdateringen väntar då.
+  // Ifyllt formulär (titel, dagar eller detaljer) räknas som osparat, även utan titel.
+  const formHasContent = Boolean(titel.trim())
+    || Object.values(innehall).some(value => String(value || '').trim())
+    || Object.values(detaljer).some(item => item && (item.delmoment || item.uppgiftsnummer || item.sidnummer))
+  useEffect(() => {
+    const hasUnsaved = Boolean(redigerarId || formHasContent)
+    setUnsavedWork('veckoplanering', hasUnsaved)
+    return () => setUnsavedWork('veckoplanering', false)
+  }, [redigerarId, formHasContent])
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)

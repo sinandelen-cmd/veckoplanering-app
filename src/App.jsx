@@ -1,7 +1,7 @@
 function capitalizeFirstSwedish(value) { return String(value || '').replace(/^(\s*)([a-zåäö])/i, (_, spaces, letter) => spaces + letter.toLocaleUpperCase('sv-SE')) }
-import UpdateNotices from './UpdateNotices.jsx'
-import { groupStudentWeeksForPrint } from './printGroups.js'
-import { Component, Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { setUnsavedWork } from './appVersion.js'
+import { installMeasureRules, measureWeeks, planPrintGroups } from './printFit.js'
+import { Component, Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { createPortal } from 'react-dom'
 import * as XLSX from 'xlsx'
@@ -132,6 +132,8 @@ function validSchoolClosure(item) {
 // Ljus färgidentitet per planering; befintliga planer får en stabil färg utifrån ID.
 // Gränssnittsdelar som är avstängda tills de är färdiga. Ändra till true för att visa dem.
 const AVSTANGD_GRANSSNITT = false
+// Elevutskriften (A4-sidor med mätning). Styrs separat så att andra avstängda delar inte påverkas.
+const UTSKRIFT_AKTIV = true
 const PLAN_THEMES = [
   { id: 'rose', name: 'Rosa', light: '#fff0f2', soft: '#ffe0e6', accent: '#ad5269', ink: '#79364b' },
   { id: 'sun', name: 'Solgul', light: '#fff9e6', soft: '#fff0bd', accent: '#986420', ink: '#704a22' },
@@ -781,9 +783,16 @@ function ImportantDatesForWeek({ week, plan }) {
   </div>
 }
 
-function StudentView({ plan, error, preview = false, printPage = null, printWeekStart = null, initialClass = "", hideSelector = false, _publishedOnly = false }) {
+// Skalar en utskriftssida med transform. Vid skala 1 läggs ingen extra wrapper till.
+function PrintScaleBox({ scale, height, children }) {
+  if (!(scale < 1)) return children
+  return <div className="print-scale-box" style={{ zoom: scale }}>{children}</div>
+}
+
+export function StudentView({ plan, error, preview = false, printPage = null, printWeekStart = null, initialClass = "", hideSelector = false, _publishedOnly = false, printLayout = null }) {
   useState(0)
   const [singlePrintWeek, setSinglePrintWeek] = useState(null)
+  const [fit, setFit] = useState(null)
   const [previewClass, setPreviewClass] = useState(initialClass)
   const [linkCopied, setLinkCopied] = useState(false)
   useEffect(()=>{setLinkCopied(false)},[previewClass])
@@ -851,17 +860,31 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   const currentStudentWeekStart = mondayOf(new Date())
   const currentStudentWeek = studentWeeks.find(week => week.weekStart === currentStudentWeekStart)
   const upcomingStudentWeek = [...studentWeeks].reverse().find(week => week.weekStart >= currentStudentWeekStart)
-  // Längre elevveckor får mer plats på A4. Grupperna består alltid av hela veckor.
-  const printGroups = singlePrintWeek ? [{ weeks: studentWeeks.filter(week => week.weekStart === singlePrintWeek) }] : groupStudentWeeksForPrint(studentWeeks)
+  // A4-planering: mätta sidbrytningar och skalor. Utan mätning används den gamla uppskattningen.
+  const activeFit = printLayout || fit
+  const printGroups = singlePrintWeek ? [{ weeks: studentWeeks.filter(week => week.weekStart === singlePrintWeek) }] : (activeFit?.groups || studentWeeks.map(week => ({ weeks: [week], flow: false })))
   const visibleWeeks = printPage === null
     ? studentWeeks
     : (printWeekStart ? studentWeeks.filter(week => week.weekStart === printWeekStart) : (printGroups[printPage]?.weeks || []))
+  // Utskriftssidans skala och höjd (en vecka per sida). Skalan görs med transform, inte zoom, eftersom zoom gav tomma sidor i Chrome.
+  const printBlockWeek = printPage !== null && !printWeekStart && visibleWeeks.length === 1 ? visibleWeeks[0] : null
+  const printBlockScale = printBlockWeek ? (printBlockWeek.printScale ?? activeFit?.scales?.[printBlockWeek.weekStart] ?? 1) : 1
+  const printBlockHeight = printBlockWeek?.printBox
+  // Mätningen görs i en dold container med samma utskriftsregler. Kör bara på skärmen, inte i utskriftssidorna.
+  const fitKey = UTSKRIFT_AKTIV && printPage === null ? JSON.stringify([previewClass, studentWeeks]) : ''
+  const measureRef = useRef(null)
+  useLayoutEffect(() => {
+    if (!UTSKRIFT_AKTIV || printPage !== null || !measureRef.current || !studentWeeks.length) return
+    installMeasureRules()
+    setFit(planPrintGroups(studentWeeks, measureWeeks(measureRef.current)))
+  }, [fitKey])
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
   if (!preview && requestedClass && plan && !selectedClass) return <main className="shell"><section className="card"><h2>Klassen hittades inte</h2><p>Kontrollera elevlänken med din lärare.</p></section></main>
   const previewClassSelector = preview && !hideSelector && plan?.classGroups?.length>0 && <div className="student-preview-classbar"><div className="student-preview-class-buttons">{plan.classGroups.map(g=><button key={g.name} type="button" className={previewClass===g.name?'active':''} onClick={()=>setPreviewClass(g.name)}>🏫 {g.name}</button>)}</div><button type="button" className="student-class-copy-link" aria-label={linkCopied ? "Elevlänken kopierad" : "Kopiera elevlänk för "+(previewClass || "grundplaneringen")} title={linkCopied ? "Elevlänken kopierad" : "Kopiera elevlänk för "+(previewClass || "grundplaneringen")} disabled={!plan?.published||!plan?.publicSlug} onClick={async()=>{const url=window.location.origin+'/elev/'+encodeURIComponent(plan.publicSlug)+(previewClass?'?klass='+encodeURIComponent(previewClass):'');try{await navigator.clipboard.writeText(url);setLinkCopied(true)}catch{window.prompt('Kopiera elevlänk',url)}}}><span aria-hidden="true">{linkCopied?'✓':'🔗'}</span></button></div>
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
-  return <>{previewClassSelector}<main style={planThemeStyle(plan)} className={`shell student-shell ${printPage === null ? "student-screen-view" : "student-print-page"} ${printPage !== null && visibleWeeks.length === 1 ? "student-print-spacious" : ""}`}>
+  return <>{previewClassSelector}<main style={planThemeStyle(plan)} data-print-week={printWeekStart || undefined} className={`shell student-shell ${printPage === null ? "student-screen-view" : "student-print-page"} ${printPage !== null && visibleWeeks.length === 1 ? "student-print-spacious" : ""} ${printPage !== null && printGroups[printPage]?.flow ? "print-flow-page" : ""}`}>
 
+    <PrintScaleBox scale={printBlockScale} height={printBlockHeight}>
     <header className="student-header student-header-simple">
       <div className="student-heading-title">
         <h1>{plan.subject || plan.title}</h1>
@@ -873,13 +896,24 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
       </div>
     </header>
     {studentWeeks.length === 0 && <p className="card empty" role="status">{plan.autoReleaseWeeks ? "Ingen vecka är publicerad för elever ännu. Nästa vecka visas automatiskt när dess måndag börjar." : "Det finns inga synliga veckor i den här planeringen ännu."}</p>}
+    {printPage === null && UTSKRIFT_AKTIV && fit?.notices?.length > 0 && <section className="print-fit-notice" role="status" aria-label="Utskriftsvarning">
+      {fit.notices.map(notice => {
+        const week = studentWeeks.find(item => item.weekStart === notice.weekStart)
+        const number = week ? (calendarWeekNumber(week.weekStart) ?? week.weekNumber) : ''
+        if (notice.fits) {
+          const percent = Math.round(notice.scale * 100)
+          return <p key={notice.weekStart}><strong>Vecka {number}</strong> skrivs ut med {percent} % textstorlek för att ryms på en A4-sida. Ingen text är borttagen.</p>
+        }
+        return <p key={notice.weekStart} className="print-fit-warning"><strong>Varning: vecka {number} ryms inte på en A4-sida</strong> med minst 50 % textstorlek. Den delas över {notice.pages} A4-sidor i full textstorlek, med veckans rubrik på varje sida. Ingen text är borttagen eller avklippt.{notice.oversize ? " En enskild lektion är större än en sida och fortsätter på nästa sida." : ""}</p>
+      })}
+    </section>}
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
       {visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
         {week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}{week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <ChapterVocabulary chapter={week.chapter} weeks={visibleWeeks.filter(w => w.chapter === week.chapter)} />}
         <article id={"student-week-" + week.weekStart} className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
 
         <div className="week-top student-week-top">
-          <div className="student-week-identity"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span className="calendar-month-corner calendar-tile-month">{weekMonthLabel(week.weekStart)}</span><span>{studentWeekDateRange(week.weekStart)}</span></div>
+          <div className="student-week-identity"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>{week.chunkLabel && <span className="student-chunk-label">{week.chunkLabel}</span>}<span className="calendar-month-corner calendar-tile-month">{weekMonthLabel(week.weekStart)}</span><span>{studentWeekDateRange(week.weekStart)}</span></div>
           {printPage !== null && studentMonthInfo(week.weekStart) && <div className="student-month-info" style={{ backgroundColor: studentMonthInfo(week.weekStart).color }}><strong>{studentMonthInfo(week.weekStart).name}</strong><span>{studentMonthInfo(week.weekStart).weeks}</span></div>}
         </div>
         {!/^Vecka\s+\d+$/i.test(week.title || '') && week.title?.trim() && <h3>{week.title}</h3>}
@@ -889,9 +923,13 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
         <WeekDetails week={week} />
       </article></div>)}
     </section>
+    </PrintScaleBox>
   </main>
-  {AVSTANGD_GRANSSNITT && printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">
-    {Array.from({ length: printGroups.length }, (_, index) => <StudentView key={index} plan={plan} preview={preview} printPage={index} printWeekStart={singlePrintWeek} />)}
+  {UTSKRIFT_AKTIV && printPage === null && studentWeeks.length > 0 && <div className="a4-measure" ref={measureRef} aria-hidden="true">
+    {studentWeeks.map((week, index) => <StudentView key={`measure-${previewClass}-${index}-${week.weekStart}`} plan={plan} preview={preview} initialClass={previewClass} hideSelector printPage={0} printWeekStart={week.weekStart} />)}
+  </div>}
+  {UTSKRIFT_AKTIV && printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">
+    {Array.from({ length: printGroups.length }, (_, index) => <StudentView key={`print-${previewClass}-${index}`} plan={plan} preview={preview} initialClass={previewClass} hideSelector printPage={index} printWeekStart={singlePrintWeek} printLayout={fit} />)}
   </div>}
 </>
 }
@@ -1603,6 +1641,11 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     window.addEventListener('beforeunload', warnBeforeLeave)
     return () => window.removeEventListener('beforeunload', warnBeforeLeave)
   }, [])
+  // Den automatiska versionsuppdateringen väntar tills det inte finns osparat arbete.
+  useEffect(() => {
+    setUnsavedWork('arsplanering', isDirty || busy)
+    return () => setUnsavedWork('arsplanering', false)
+  }, [isDirty, busy])
 
 
   const weeks = useMemo(() => displayWeeks(plan), [plan])
@@ -2295,7 +2338,6 @@ const addNewTeacherWeek = () => setPlan(p => {
     window.scrollTo({top:0,behavior:'smooth'})
   }
   return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "mina" ? "view-home" : teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}${teacherTab === "arsplan" && editingClassView ? " view-class" : ""}`}>{teacherTab !== "mina" && <Navigation planTitle={teacherTab === "bibliotek" ? "Mina planeringar" : (teacherTab === "arsplan" || teacherTab === "elevvy") && selectedId ? (plan.title || plan.subject || "Min planering") : ""} previousLabel={previousStepLabel} onPrevious={goToPreviousStep} onAllWeeks={() => { setFocusedTeacherWeek(null); setFocusedTeacherLesson(null); setShowPastTeacherWeeks(value => !value); setTeacherWeekOverview(true); setTeacherTab("arsplan"); setCalendarOpen(false) }} allWeeksOpen={showPastTeacherWeeks} active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={(id, planningHome = false) => { if (!confirmNavigation()) return false; if (planningHome) window.dispatchEvent(new Event('planning-home')); if (id === 'bibliotek') { setLibrarySchool(''); setLibrarySubject(''); setLibraryBoardPage(0); setShowArchive(false) } setTeacherTab(id); setCalendarOpen(false); if (id === 'elevvy') { setPreviewStudents(true); setCalendarOpen(false) } else { setPreviewStudents(false) } }} onOpenExample={() => { if (!confirmNavigation()) return false; return openExample() }} onOpenArchive={() => { if (!confirmNavigation()) return false; setShowArchive(true); setTeacherTab('bibliotek') }} onToggleCalendar={() => { if (!confirmNavigation()) return false; setTeacherTab('arsplan'); setCalendarOpen(true) }} calendarOpen={calendarOpen} hasOpenPlan={Boolean(selectedId && teacherTab === 'arsplan')} isAdmin={isAdmin} adminOpen={adminOpen} onOpenAdmin={() => { if (!confirmNavigation()) return false; onToggleAdmin?.(); return true }} onCloseAdmin={() => { if (adminOpen) onToggleAdmin?.() }} onSignOut={() => { if (!confirmNavigation()) return false; return supabase.auth.signOut() }} pendingCount={pendingCount} planSearch={planSearch} onPlanSearchChange={setPlanSearch} showArchive={showArchive} planContext={selectedId && teacherTab === 'arsplan' ? {subject:plan.subject || plan.title, textbook:plan.textbook, grade:plan.grade || plan.course} : null} onPrintPlan={selectedId && teacherTab === 'arsplan' ? () => { document.body.classList.add("teacher-plan-print"); const cleanup = () => document.body.classList.remove("teacher-plan-print"); window.addEventListener("afterprint", cleanup, { once:true }); window.print(); setTimeout(cleanup,1500) } : null} /> }<main className={`shell${adminOpen ? " admin-workspace" : ""}`} id="lararvy">
-  {!isAdmin && <UpdateNotices userId={session.user.id} isAdmin={false} />}
   {adminOpen ? adminContent : <>
     {teacherTab !== "elevvy" && teacherTab !== "mina" && <header className="topbar">
       
@@ -2451,7 +2493,7 @@ const addNewTeacherWeek = () => setPlan(p => {
           {!/^Vecka\s+\d+$/i.test(week.title || '') && <input className="week-title" aria-label="Egen veckorubrik" value={week.title || ''} onChange={e => updateWeek(index, { title: e.target.value })} />}
           {!isGeneratedLessonSummary(week.content, week.chapter) && <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />}
           <LessonDetails week={week} entryType={plan.entryType || 'lektion'} onChange={changes => updateWeek(index, changes)} onUndo={undoPlan} onRedo={redoPlan} canUndo={historyRef.current.past.length > 0} canRedo={historyRef.current.future.length > 0} />
-          <details className="legacy-week-details" defaultOpen={Boolean(week.pages?.length || week.assignments?.length || week.links?.length)}>
+          <details className="legacy-week-details" open={Boolean(week.pages?.length || week.assignments?.length || week.links?.length)}>
             <summary>Extra veckomaterial (sidor, uppgifter och länkar)</summary>
             <p className="muted">Använd i första hand momenten under varje lektion. Här kan du även lägga material för hela veckan.</p>
             <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
@@ -2689,7 +2731,7 @@ const addNewTeacherWeek = () => setPlan(p => {
           {!/^Vecka\s+\d+$/i.test(week.title || '') && <input className="week-title" aria-label="Egen veckorubrik" value={week.title || ''} onChange={e => updateWeek(index, { title: e.target.value })} />}
           {!isGeneratedLessonSummary(week.content, week.chapter) && <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />}
           <LessonDetails week={week} entryType={plan.entryType || 'lektion'} onChange={changes => updateWeek(index, changes)} onUndo={undoPlan} onRedo={redoPlan} canUndo={historyRef.current.past.length > 0} canRedo={historyRef.current.future.length > 0} />
-          <details className="legacy-week-details" defaultOpen={Boolean(week.pages?.length || week.assignments?.length || week.links?.length)}>
+          <details className="legacy-week-details" open={Boolean(week.pages?.length || week.assignments?.length || week.links?.length)}>
             <summary>Extra veckomaterial (sidor, uppgifter och länkar)</summary>
             <p className="muted">Använd i första hand momenten under varje lektion. Här kan du även lägga material för hela veckan.</p>
             <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
@@ -3047,7 +3089,6 @@ function AnnualApp() {
     const approved = colleagues.filter(item => item.status === 'approved')
     const rejected = colleagues.filter(item => item.status === 'rejected')
     return <TeacherApp key={session.user.id} session={session} isAdmin adminOpen={showAdminPanel} pendingCount={pending.length} onToggleAdmin={() => setShowAdminPanel(value => !value)} adminContent={<>
-      <UpdateNotices userId={session.user.id} isAdmin approvedTeachers={approved} />
       <section className="card" id="admin-teacher-panel">
       <h2>Administratör – lärarkonton</h2>
       <p>Endast du kan godkänna nya lärarkonton.</p>

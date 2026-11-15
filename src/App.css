@@ -2548,23 +2548,17 @@ background: #fff5cf;
   padding: 0 !important;
   min-width: 0 !important;
 }
-#lararvy.admin-workspace > .card,
-#lararvy.admin-workspace > .app-update-notices {
+#lararvy.admin-workspace > .card {
   width: 100%;
   max-width: none;
   margin-inline: 0;
 }
-#lararvy.admin-workspace .app-update-notices,
 #lararvy.admin-workspace #admin-teacher-panel {
   padding: clamp(18px, 2.5vw, 30px);
   font-size: 15px;
   line-height: 1.5;
 }
-#lararvy.admin-workspace .app-update-notices label,
 #lararvy.admin-workspace #admin-teacher-panel label { font-size: 14px; }
-#lararvy.admin-workspace .app-update-notices input,
-#lararvy.admin-workspace .app-update-notices textarea,
-#lararvy.admin-workspace .app-update-notices select { min-height: 42px; }
 #lararvy.admin-workspace #admin-teacher-panel { overflow-x: auto; }
 @media (max-width: 750px) {
   .planning-layout #lararvy.admin-workspace {
@@ -8134,15 +8128,7 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
 }
 
 
-/* Admin: välj mottagare till senaste programnotisen och radera konto separat. */
-.admin-update-send {display:flex;flex-direction:column;gap:10px;max-width:100%}
-.admin-update-send > label {display:flex;flex-direction:column;gap:5px}
-.admin-update-send :is(input[type="text"],input:not([type]),textarea) {max-width:100%;box-sizing:border-box}
-.admin-update-recipients {border:1px solid #d7c6a6;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0}
-.admin-update-recipients > label {display:flex;flex-direction:row;align-items:center;gap:9px;font-weight:600}
-.admin-update-recipients input[type="radio"],.admin-update-teacher-row input[type="checkbox"] {flex:0 0 18px;width:18px;height:18px;margin:0}
-.admin-update-teacher-list {display:flex;flex-direction:column;gap:5px;max-height:240px;overflow-y:auto;padding:6px 0}
-.admin-update-teacher-row {display:flex;flex-direction:row;align-items:center;gap:9px;padding:7px 8px;border:1px solid #e0e7eb;border-radius:7px;background:#fff;min-width:0;overflow-wrap:anywhere}
+/* Admin: radera konto separat. */
 .admin-delete-account {color:#8f2732!important;background:#fff1f1!important;border:1px solid #e4bec2!important;border-radius:7px!important;font-size:12px!important}
 .admin-delete-account:disabled {opacity:.5!important}
 
@@ -8235,3 +8221,64 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
 .material-disclosure { margin: 10px 0; padding: 8px 12px; border: 1px solid #e1d7c8; border-radius: 10px; background: #fff; }
 .material-disclosure > summary { cursor: pointer; font-weight: 700; }
 .material-disclosure .material-panel { border: 0; padding: 10px 0 2px; margin: 8px 0 0; }
+
+/* A4-mätning: en dold container med exakt samma utskriftsregler som utskriften (se src/printFit.js).
+   Den måste ha layout för att kunna mätas, men syns aldrig på skärm eller på papper. */
+.a4-measure { position:fixed; left:-10000px; top:0; width:192mm; visibility:hidden; pointer-events:none; }
+@media print { .a4-measure, .print-fit-notice { display:none !important; } }
+
+/* Skärmvarning för utskrift: visas för läraren, aldrig på papperet. */
+.print-fit-notice { margin:0 0 14px; padding:12px 14px; border:1px solid #d9c27a; border-radius:10px; background:#fff8e1; color:#4a3a06; font-size:14px; line-height:1.5; }
+.print-fit-notice p { margin:4px 0; }
+.print-fit-notice .print-fit-warning { color:#8a1c1c; font-weight:700; background:#fff0f0; border:1px solid #d99a9a; border-radius:8px; padding:8px 10px; }
+/* Veckor som inte ryms även i 50 % textstorlek får brytas mellan sidor. Innehåll kapas aldrig. */
+@media print {
+  .student-print-page .chapter-week-group.print-flow,
+  .student-print-page .student-week-card.print-flow { break-inside: auto !important; page-break-inside: auto !important; }
+}
+/* Övre marginal på första elementen i en vecka ska vara 0. Zoomade veckor gav annars tomma A4-sidor i Chrome. */
+@media print {
+  .student-print-page .chapter-week-group,
+  .student-print-page .chapter-heading,
+  .student-print-page .student-header,
+  .student-print-page .student-week-top,
+  .student-print-page .student-week-card > * { margin-top: 0 !important; }
+}
+/* Sidgrupper: ingen tvingad sidbrytning mellan grupper (den gav tomma A4-sidor). En grupp som ryms hålls ihop
+   och flyttas i stället till nästa sida. Grupper som inte ryms får brytas. */
+@media print {
+  .student-print-page + .student-print-page { break-before: page !important; page-break-before: always !important; }
+  .student-print-page:not(.print-flow-page) { break-inside: avoid-page !important; page-break-inside: avoid !important; }
+  .student-print-page.print-flow-page { break-inside: auto !important; page-break-inside: auto !important; }
+}
+/* Nedre marginal i en vecka ska inte ge en tom sida efter zoomad vecka. */
+@media print {
+  .student-print-page,
+  .student-print-page .chapter-week-group,
+  .student-print-page .student-week-card,
+  .student-print-page .student-week-card > :last-child { margin-bottom: 0 !important; padding-bottom: 0 !important; }
+  .student-print-page .student-week-card { padding-bottom: 2mm !important; }
+}
+/* Ingen kantlinje överst i en vecka eller i elevhuvudet. Den gav annars en tom sida med en streck när en vecka flödar. */
+@media print {
+  .student-print-page .student-header,
+  .student-print-page .student-week-card,
+  .student-print-page .chapter-week-group { border-top: 0 !important; }
+  .student-print-page .student-header { border-bottom: 0 !important; }
+}
+/* Flytande veckor i blockläge (inte flex): flex-fragmentering gav en tom sida före en vecka som bryts över sidor. */
+@media print {
+  .student-print-page.print-flow-page { display: block !important; }
+}
+.student-chunk-label { margin-left:8px; padding:2px 8px; border-radius:999px; background:#fff3cd; color:#5b4300; font-size:12px; font-weight:700; white-space:nowrap; }
+/* Skalning av en utskriftssida med transform (ingen zoom). Boxens höjd är den skalade höjden, så att sidbrytningen stämmer. */
+.print-scale-box { overflow: visible; }
+.print-scale-inner { transform-origin: top left; width: 100%; }
+/* Utrymmesoptimering i utskrift: Moment och Uppgift får mer bredd, Sida är bara en kort sidreferens.
+   Lektionsmallen är oförändrad: samma tre kolumner, på samma rad. */
+@media print {
+  .student-print-page .topic-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 0.8fr) minmax(0, 1.4fr) !important;
+    gap: 1.5mm !important;
+  }
+}

@@ -1,0 +1,10 @@
+/
+  Cache-Control: no-cache, must-revalidate
+/index.html
+  Cache-Control: no-cache, must-revalidate
+/veckoplanering.html
+  Cache-Control: no-cache, must-revalidate
+/version.json
+  Cache-Control: no-store, max-age=0
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
