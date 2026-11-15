@@ -1,11 +1,8 @@
 name: Publicera klassens helvecksvy till testlänken
+# Manuell körning endast. Bygget använder produktionens Supabase-URL och publicerbara nyckel,
+# så att den inte får köras automatiskt vid merge till main (då skulle en testlänk nå produktionsdatabasen).
 on:
-  push:
-    branches: [main]
-    paths:
-      - .github/workflows/publish-class-week-preview.yml
-      - src/App.css
-      - src/App.jsx
+  workflow_dispatch:
 jobs:
   publish-preview:
     runs-on: ubuntu-latest
