@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
 const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
-const printSource = fs.readFileSync(new URL('../src/printGroups.js', import.meta.url), 'utf8')
+const printSource = fs.readFileSync(new URL('../src/printFit.js', import.meta.url), 'utf8')
 const css = fs.readFileSync(new URL('../src/App.css', import.meta.url), 'utf8')
 const sql = fs.readFileSync(new URL('../supabase-migration.sql', import.meta.url), 'utf8')
 const wrangler = fs.readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8')
@@ -22,7 +22,7 @@ assert.equal(fs.existsSync(new URL('../public/_redirects', import.meta.url)), fa
 // Regression checks for the student view and publication safety.
 assert.match(app, /const pageSize = Math\.min\(6, columns \* rows\)/)
 assert.match(app, /\? studentWeeks\s*:/)
-assert.match(app, /const printGroups = singlePrintWeek \? \[\{ weeks: studentWeeks\.filter\(week => week\.weekStart === singlePrintWeek\) \}\] : \(activeFit\?\.groups \|\| groupStudentWeeksForPrint\(studentWeeks\)\)/)
+assert.match(app, /const printGroups = singlePrintWeek \? \[\{ weeks: studentWeeks\.filter\(week => week\.weekStart === singlePrintWeek\) \}\] : \(activeFit\?\.groups \|\| studentWeeks\.map\(week => \(\{ weeks: \[week\], flow: false \}\)\)\)/)
 // Långa veckor får brytas mellan lektioner, aldrig avsiktligt mitt i en lektion.
 assert.match(css, /\.student-print-page \.student-week-card,[\s\S]*?break-inside: auto !important/)
 assert.match(css, /\.student-print-page \.lesson \{[\s\S]*?break-inside: avoid-page !important/)
@@ -103,6 +103,10 @@ assert.match(app, /className="a4-measure" ref=\{measureRef\}/)
 assert.match(fs.readFileSync(new URL('../src/printFit.js', import.meta.url), 'utf8'), /const A4_CONTENT_MM = 297 - 2 \* 9/)
 assert.match(fs.readFileSync(new URL('../src/printFit.js', import.meta.url), 'utf8'), /export const MIN_PRINT_SCALE = 0\.5/)
 assert.doesNotMatch(app, /\{AVSTANGD_GRANSSNITT && printPage === null && studentWeeks/)
+// Osparat arbete i veckoplaneringen: ifyllt formulär (även utan titel) och öppen redigering skyddas mot automatisk omladdning.
+assert.match(weeklyApp, /const formHasContent = Boolean\(titel\.trim\(\)\)/)
+assert.match(weeklyApp, /Object\.values\(innehall\)\.some/)
+assert.match(weeklyApp, /setUnsavedWork\('veckoplanering', hasUnsaved\)/)
 console.log('Static security/routing checks: OK')
 
 // Lovförslag får inte dupliceras efter att läraren har flyttat datumet.
@@ -144,11 +148,9 @@ assert.doesNotMatch(app, /JSON\.stringify\(week\)\.length/)
 
 assert.match(app, /weekContentScore = week =>/)
 assert.match(app, /topic\.links\?\.length \|\| 0/)
-assert.match(printSource, /\.\.\.\(week\.links \|\| \[\]\)/)
 
 assert.match(app, /week\.lessons\.filter\(lesson => lesson && typeof lesson === 'object'\)/)
 assert.match(app, /lesson\.topics\.filter\(topic => topic && typeof topic === 'object'\)/)
-assert.match(printSource, /week\.lessons\) \? week\.lessons\.filter\(Boolean\)/)
 
 assert.match(app, /parsed\.username \|\| parsed\.password/)
 assert.match(app, /host === 'drive\.google\.com'/)
@@ -245,16 +247,12 @@ for (const secret of ['HEMLIG LÄRARNOTERING', 'ENDAST LÄRARE', 'Privat planeri
 }
 assert.equal(studentFixture.weeksData[0].links.length, 2, 'Publicering får inte ändra lärarens data')
 
-const { groupStudentWeeksForPrint } = await import('../src/printGroups.js')
-const printShortWeek = index => ({ weekStart: '2027-01-' + String(index).padStart(2, '0'), content: 'Kort vecka' })
-const fourShort = groupStudentWeeksForPrint([1, 2, 3, 4, 5].map(printShortWeek))
-assert.deepEqual(fourShort.map(group => group.weeks.length), [4, 1])
-const longWeek = { content: 'Långt innehåll '.repeat(100), lessons: [{ name: 'Lektion', topics: Array.from({ length: 18 }, (_, i) => ({ name: 'Moment ' + i })) }] }
-const mixedGroups = groupStudentWeeksForPrint([printShortWeek(1), longWeek, printShortWeek(2)])
-assert.deepEqual(mixedGroups.map(group => group.weeks.length), [1, 1, 1])
-assert.equal(mixedGroups[1].weight, 4)
-assert.deepEqual(groupStudentWeeksForPrint([]), [])
-assert.equal(groupStudentWeeksForPrint([{ content: 'Vecka', lessons: [null, { topics: [null, { name: 'Tal' }] }] }]).length, 1)
+// Ny A4-planering: en vecka per sida, 50 % golv, delning på lektioner (ingen packning av flera veckor).
+assert.match(printSource, /export const MIN_PRINT_SCALE = 0\.5/)
+assert.match(printSource, /planPrintGroups/)
+assert.match(printSource, /section\.lesson\[data-lesson-index\]/)
+assert.match(printSource, /chunkLabel: count > 1/)
+assert.doesNotMatch(printSource, /groupStudentWeeksForPrint|PRINT_GAP|textLength/)
 
 // A4-kontrakt: stående format, en kolumn och minst 10 pt även för importerat innehåll.
 assert.match(css, /@page\s*\{\s*size:\s*A4 portrait/)
@@ -262,8 +260,6 @@ assert.match(css, /\.student-print-page\s+\*\s*\{\s*font-size:\s*10pt\s*!importa
 assert.match(css, /\.student-print-page\s+\.lessons,[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\)\s*!important/)
 assert.match(css, /\.student-print-page\s+\.topic-cell span[\s\S]*?overflow:\s*visible\s*!important/)
 assert.doesNotMatch(app, /className="print-single-week"/)
-assert.match(printSource, /textLength > 1100/)
-assert.match(printSource, /groups.push/)
 
 
 // Regression: specifik stil för uppgiftstext ska inte vara mindre än 10 pt.

@@ -152,11 +152,15 @@ function WeeklyApp() {
 const [redigeraInnehall, setRedigeraInnehall] = useState(tommaDagar())
   const [redigeraDetaljer, setRedigeraDetaljer] = useState(tommaDetaljer())
   // Osparat: en öppen redigering eller ett påbörjat formulär. Den automatiska uppdateringen väntar då.
+  // Ifyllt formulär (titel, dagar eller detaljer) räknas som osparat, även utan titel.
+  const formHasContent = Boolean(titel.trim())
+    || Object.values(innehall).some(value => String(value || '').trim())
+    || Object.values(detaljer).some(item => item && (item.delmoment || item.uppgiftsnummer || item.sidnummer))
   useEffect(() => {
-    const hasUnsaved = Boolean(redigerarId || titel.trim())
+    const hasUnsaved = Boolean(redigerarId || formHasContent)
     setUnsavedWork('veckoplanering', hasUnsaved)
     return () => setUnsavedWork('veckoplanering', false)
-  }, [redigerarId, titel])
+  }, [redigerarId, formHasContent])
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)

@@ -38,8 +38,14 @@ export function buildClassSchedule(plan, group, { includeHiddenWeeks = false } =
       const count = closure?.type === 'Halvdag' ? Math.max(0,scheduledCount - Math.max(1,Number(closure.cancelledLessons)||1)) : scheduledCount
       for (let n = 0; n < count; n++) slots.push({date:dateKey,day,slot:n+1,time:group.lessonTimes?.[day]?.[n] || ''})
     }
+    // Lektioner placeras på rätt veckodag: klassens första lektion på måndag får grundplanens första måndagslektion.
+    // Äldre planeringar utan veckodag placeras i ordning, som tidigare.
+    const dayKey = item => item?.day || item?.name
+    const hasDayKeys = source.some(item => DAYS.includes(dayKey(item)))
     return slots.map((slot, index) => {
-      const lesson = source[index] || {name:'Lektion '+(index+1),topics:[]}
+      const lesson = hasDayKeys
+        ? (source.filter(item => dayKey(item) === slot.day)[slot.slot - 1] || {name:'Lektion '+slot.slot,topics:[]})
+        : (source[index] || {name:'Lektion '+(index+1),topics:[]})
       lessonNumber++
       return {...slot,lesson:group.overrides?.[String(lessonNumber-1)]?.lesson || lesson,weekNumber:week.weekNumber,weekTitle:week.title,weekStart:week.weekStart,index,lessonNumber,override:group.overrides?.[String(lessonNumber-1)] || null}
     })

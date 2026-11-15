@@ -8247,7 +8247,38 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
 /* Sidgrupper: ingen tvingad sidbrytning mellan grupper (den gav tomma A4-sidor). En grupp som ryms hålls ihop
    och flyttas i stället till nästa sida. Grupper som inte ryms får brytas. */
 @media print {
-  .student-print-page + .student-print-page { break-before: auto !important; page-break-before: auto !important; }
+  .student-print-page + .student-print-page { break-before: page !important; page-break-before: always !important; }
   .student-print-page:not(.print-flow-page) { break-inside: avoid-page !important; page-break-inside: avoid !important; }
   .student-print-page.print-flow-page { break-inside: auto !important; page-break-inside: auto !important; }
+}
+/* Nedre marginal i en vecka ska inte ge en tom sida efter zoomad vecka. */
+@media print {
+  .student-print-page,
+  .student-print-page .chapter-week-group,
+  .student-print-page .student-week-card,
+  .student-print-page .student-week-card > :last-child { margin-bottom: 0 !important; padding-bottom: 0 !important; }
+  .student-print-page .student-week-card { padding-bottom: 2mm !important; }
+}
+/* Ingen kantlinje överst i en vecka eller i elevhuvudet. Den gav annars en tom sida med en streck när en vecka flödar. */
+@media print {
+  .student-print-page .student-header,
+  .student-print-page .student-week-card,
+  .student-print-page .chapter-week-group { border-top: 0 !important; }
+  .student-print-page .student-header { border-bottom: 0 !important; }
+}
+/* Flytande veckor i blockläge (inte flex): flex-fragmentering gav en tom sida före en vecka som bryts över sidor. */
+@media print {
+  .student-print-page.print-flow-page { display: block !important; }
+}
+.student-chunk-label { margin-left:8px; padding:2px 8px; border-radius:999px; background:#fff3cd; color:#5b4300; font-size:12px; font-weight:700; white-space:nowrap; }
+/* Skalning av en utskriftssida med transform (ingen zoom). Boxens höjd är den skalade höjden, så att sidbrytningen stämmer. */
+.print-scale-box { overflow: visible; }
+.print-scale-inner { transform-origin: top left; width: 100%; }
+/* Utrymmesoptimering i utskrift: Moment och Uppgift får mer bredd, Sida är bara en kort sidreferens.
+   Lektionsmallen är oförändrad: samma tre kolumner, på samma rad. */
+@media print {
+  .student-print-page .topic-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 0.8fr) minmax(0, 1.4fr) !important;
+    gap: 1.5mm !important;
+  }
 }

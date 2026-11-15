@@ -1,7 +1,6 @@
 function capitalizeFirstSwedish(value) { return String(value || '').replace(/^(\s*)([a-zåäö])/i, (_, spaces, letter) => spaces + letter.toLocaleUpperCase('sv-SE')) }
 import { setUnsavedWork } from './appVersion.js'
-import { groupStudentWeeksForPrint } from './printGroups.js'
-import { installMeasureRules, measureWeekHeights, planPrintGroups } from './printFit.js'
+import { installMeasureRules, measureWeeks, planPrintGroups } from './printFit.js'
 import { Component, Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { createPortal } from 'react-dom'
@@ -784,6 +783,12 @@ function ImportantDatesForWeek({ week, plan }) {
   </div>
 }
 
+// Skalar en utskriftssida med transform. Vid skala 1 läggs ingen extra wrapper till.
+function PrintScaleBox({ scale, height, children }) {
+  if (!(scale < 1)) return children
+  return <div className="print-scale-box" style={{ zoom: scale }}>{children}</div>
+}
+
 export function StudentView({ plan, error, preview = false, printPage = null, printWeekStart = null, initialClass = "", hideSelector = false, _publishedOnly = false, printLayout = null }) {
   useState(0)
   const [singlePrintWeek, setSinglePrintWeek] = useState(null)
@@ -857,19 +862,21 @@ export function StudentView({ plan, error, preview = false, printPage = null, pr
   const upcomingStudentWeek = [...studentWeeks].reverse().find(week => week.weekStart >= currentStudentWeekStart)
   // A4-planering: mätta sidbrytningar och skalor. Utan mätning används den gamla uppskattningen.
   const activeFit = printLayout || fit
-  // Veckor som inte ryms även i 50 % får flytande sidbrytning. Annars tvingar "undvik brytning" fram tomma sidor.
-  const overflowingWeeks = new Set((activeFit?.notices || []).filter(notice => !notice.fits).map(notice => notice.weekStart))
-  const printGroups = singlePrintWeek ? [{ weeks: studentWeeks.filter(week => week.weekStart === singlePrintWeek) }] : (activeFit?.groups || groupStudentWeeksForPrint(studentWeeks))
+  const printGroups = singlePrintWeek ? [{ weeks: studentWeeks.filter(week => week.weekStart === singlePrintWeek) }] : (activeFit?.groups || studentWeeks.map(week => ({ weeks: [week], flow: false })))
   const visibleWeeks = printPage === null
     ? studentWeeks
     : (printWeekStart ? studentWeeks.filter(week => week.weekStart === printWeekStart) : (printGroups[printPage]?.weeks || []))
+  // Utskriftssidans skala och höjd (en vecka per sida). Skalan görs med transform, inte zoom, eftersom zoom gav tomma sidor i Chrome.
+  const printBlockWeek = printPage !== null && !printWeekStart && visibleWeeks.length === 1 ? visibleWeeks[0] : null
+  const printBlockScale = printBlockWeek ? (printBlockWeek.printScale ?? activeFit?.scales?.[printBlockWeek.weekStart] ?? 1) : 1
+  const printBlockHeight = printBlockWeek?.printBox
   // Mätningen görs i en dold container med samma utskriftsregler. Kör bara på skärmen, inte i utskriftssidorna.
   const fitKey = UTSKRIFT_AKTIV && printPage === null ? JSON.stringify([previewClass, studentWeeks]) : ''
   const measureRef = useRef(null)
   useLayoutEffect(() => {
     if (!UTSKRIFT_AKTIV || printPage !== null || !measureRef.current || !studentWeeks.length) return
     installMeasureRules()
-    setFit(planPrintGroups(studentWeeks, measureWeekHeights(measureRef.current)))
+    setFit(planPrintGroups(studentWeeks, measureWeeks(measureRef.current)))
   }, [fitKey])
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
   if (!preview && requestedClass && plan && !selectedClass) return <main className="shell"><section className="card"><h2>Klassen hittades inte</h2><p>Kontrollera elevlänken med din lärare.</p></section></main>
@@ -877,6 +884,7 @@ export function StudentView({ plan, error, preview = false, printPage = null, pr
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
   return <>{previewClassSelector}<main style={planThemeStyle(plan)} data-print-week={printWeekStart || undefined} className={`shell student-shell ${printPage === null ? "student-screen-view" : "student-print-page"} ${printPage !== null && visibleWeeks.length === 1 ? "student-print-spacious" : ""} ${printPage !== null && printGroups[printPage]?.flow ? "print-flow-page" : ""}`}>
 
+    <PrintScaleBox scale={printBlockScale} height={printBlockHeight}>
     <header className="student-header student-header-simple">
       <div className="student-heading-title">
         <h1>{plan.subject || plan.title}</h1>
@@ -892,19 +900,20 @@ export function StudentView({ plan, error, preview = false, printPage = null, pr
       {fit.notices.map(notice => {
         const week = studentWeeks.find(item => item.weekStart === notice.weekStart)
         const number = week ? (calendarWeekNumber(week.weekStart) ?? week.weekNumber) : ''
-        const percent = Math.round(notice.scale * 100)
-        return notice.fits
-          ? <p key={notice.weekStart}><strong>Vecka {number}</strong> skrivs ut med {percent} % textstorlek för att ryms på en A4-sida. Ingen text är borttagen.</p>
-          : <p key={notice.weekStart} className="print-fit-warning"><strong>Varning: vecka {number} ryms inte på en A4-sida</strong> även med 50 % textstorlek. Den skrivs ut i full textstorlek över flera sidor. Ingen text är borttagen eller avklippt.</p>
+        if (notice.fits) {
+          const percent = Math.round(notice.scale * 100)
+          return <p key={notice.weekStart}><strong>Vecka {number}</strong> skrivs ut med {percent} % textstorlek för att ryms på en A4-sida. Ingen text är borttagen.</p>
+        }
+        return <p key={notice.weekStart} className="print-fit-warning"><strong>Varning: vecka {number} ryms inte på en A4-sida</strong> med minst 50 % textstorlek. Den delas över {notice.pages} A4-sidor i full textstorlek, med veckans rubrik på varje sida. Ingen text är borttagen eller avklippt.{notice.oversize ? " En enskild lektion är större än en sida och fortsätter på nästa sida." : ""}</p>
       })}
     </section>}
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
-      {visibleWeeks.map((week, index) => <div className={`chapter-week-group${overflowingWeeks.has(week.weekStart) ? " print-flow" : ""}`} key={`${week.weekNumber}-${week.weekStart}`}>
+      {visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
         {week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}{week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <ChapterVocabulary chapter={week.chapter} weeks={visibleWeeks.filter(w => w.chapter === week.chapter)} />}
-        <article id={"student-week-" + week.weekStart} className={`week-card student-week-card${overflowingWeeks.has(week.weekStart) ? " print-flow" : ""}`} style={{ ...studentWeekStyle(week.weekStart), ...(printPage !== null && activeFit?.scales?.[week.weekStart] < 1 ? { zoom: activeFit.scales[week.weekStart] } : {}) }}>
+        <article id={"student-week-" + week.weekStart} className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
 
         <div className="week-top student-week-top">
-          <div className="student-week-identity"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span className="calendar-month-corner calendar-tile-month">{weekMonthLabel(week.weekStart)}</span><span>{studentWeekDateRange(week.weekStart)}</span></div>
+          <div className="student-week-identity"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>{week.chunkLabel && <span className="student-chunk-label">{week.chunkLabel}</span>}<span className="calendar-month-corner calendar-tile-month">{weekMonthLabel(week.weekStart)}</span><span>{studentWeekDateRange(week.weekStart)}</span></div>
           {printPage !== null && studentMonthInfo(week.weekStart) && <div className="student-month-info" style={{ backgroundColor: studentMonthInfo(week.weekStart).color }}><strong>{studentMonthInfo(week.weekStart).name}</strong><span>{studentMonthInfo(week.weekStart).weeks}</span></div>}
         </div>
         {!/^Vecka\s+\d+$/i.test(week.title || '') && week.title?.trim() && <h3>{week.title}</h3>}
@@ -914,6 +923,7 @@ export function StudentView({ plan, error, preview = false, printPage = null, pr
         <WeekDetails week={week} />
       </article></div>)}
     </section>
+    </PrintScaleBox>
   </main>
   {UTSKRIFT_AKTIV && printPage === null && studentWeeks.length > 0 && <div className="a4-measure" ref={measureRef} aria-hidden="true">
     {studentWeeks.map((week, index) => <StudentView key={`measure-${previewClass}-${index}-${week.weekStart}`} plan={plan} preview={preview} initialClass={previewClass} hideSelector printPage={0} printWeekStart={week.weekStart} />)}

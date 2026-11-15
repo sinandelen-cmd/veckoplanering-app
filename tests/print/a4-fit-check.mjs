@@ -7,7 +7,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import assert from 'node:assert/strict'
-import { SCENARIOS, CLASS_SCENARIOS, buildFixturePlan } from './fixtures.js'
+import { SCENARIOS, CLASS_SCENARIOS, CLASS_DAYS, buildFixturePlan } from './fixtures.js'
 
 const require = createRequire(import.meta.url)
 const { chromium } = require('playwright')
@@ -22,9 +22,15 @@ const report = (name, ok, detail = '') => { results.push(ok); console.log((ok ? 
 
 // Förväntade markörer: varje moment ska finnas exakt en gång i utskriften.
 // Klassvyn visar bara lektioner för klassens schemalagda tider (här 3 per vecka).
+// Klassvyn: klassens veckodagar, första lektionen varje dag (slot 1), placerad på rätt veckodag.
 function expectedMarkers(scenario) {
-  const perWeek = CLASS_SCENARIOS.includes(scenario) ? 3 : Infinity
-  return SCENARIOS[scenario]().flatMap(week => week.lessons.slice(0, perWeek).flatMap(lesson => lesson.topics.map(topic => topic.name.match(/markor[a-z0-9]+/)[0])))
+  const isClass = CLASS_SCENARIOS.includes(scenario)
+  return SCENARIOS[scenario]().flatMap(week => {
+    const picked = isClass
+      ? CLASS_DAYS.map(day => week.lessons.find(lesson => lesson.day === day)).filter(Boolean)
+      : week.lessons
+    return picked.flatMap(lesson => lesson.topics.map(topic => topic.name.match(/markor[a-z0-9]+/)[0]))
+  })
 }
 
 for (const scenario of Object.keys(SCENARIOS)) {
@@ -46,12 +52,24 @@ for (const scenario of Object.keys(SCENARIOS)) {
   const clipped = await page.evaluate(() => [...document.querySelectorAll('.student-print-page *')]
     .filter(el => /hidden|clip/.test(getComputedStyle(el).overflow) && el.scrollHeight > el.clientHeight + 1).length)
   report(`[${scenario}] inget utskriftselement kapas (overflow)`, clipped === 0, `kapade=${clipped}`)
+  // Moment, Sida och Uppgift ska ligga på samma rad: samma överkant för alla tre kolumner i en moment-rad.
+  const rowsAligned = await page.evaluate(() => [...document.querySelectorAll('.student-print-page .topic-grid')].every(grid => {
+    const tops = [...grid.children].map(cell => Math.round(cell.getBoundingClientRect().top))
+    return tops.length < 2 || tops.every(top => Math.abs(top - tops[0]) <= 2)
+  }))
+  report(`[${scenario}] Moment, Sida och Uppgift på samma rad`, rowsAligned)
   const pdfPath = path.join(tmp, scenario.replace(/\W+/g, '_') + '.pdf')
   await page.pdf({ path: pdfPath, format: 'A4', printBackground: true, margin: { top: '9mm', bottom: '9mm', left: '9mm', right: '9mm' }, preferCSSPageSize: true })
   const pageCount = Number(execFileSync('pdfinfo', [pdfPath]).toString().match(/Pages:\s+(\d+)/)[1])
   const pdfText = execFileSync('pdftotext', [pdfPath, '-']).toString().replace(/\s+/g, '')
   const missing = markers.filter(marker => !pdfText.includes(marker))
   const duplicated = markers.filter(marker => pdfText.split(marker).length - 1 > 1)
+  if (CLASS_SCENARIOS.includes(scenario)) {
+    const dayLabels = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag']
+    const shown = dayLabels.filter(day => pdfText.includes(day + '·'))
+    const expectedDays = CLASS_DAYS.filter(day => shown.includes(day))
+    report(`[${scenario}] Klassvy visar bara klassens veckodagar`, shown.length === CLASS_DAYS.length && shown.every(day => CLASS_DAYS.includes(day)), `visade=${shown.join(',')}`)
+  }
   report(`[${scenario}] alla moment finns i PDF:en`, missing.length === 0, `saknas=${missing.length}`)
   report(`[${scenario}] inga dubbletter i PDF:en (mätcontainern skrivs inte ut)`, duplicated.length === 0, `dubbletter=${duplicated.length}`)
   // Textstorlek mäts bara på utskriftssidorna, inte i mätcontainern.

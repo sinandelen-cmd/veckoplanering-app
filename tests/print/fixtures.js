@@ -20,10 +20,17 @@ export const SCENARIOS = {
   normal: () => [week(WEEK_44, 44, 1, 1, 4), week(addDays(WEEK_44, 7), 45, 1, 2, 6)],
   // Klassvy: samma veckor som 'vecka44-lång', men klassen har lektioner måndag–onsdag (3 per vecka).
   'klassvy-lång': () => SCENARIOS['vecka44-lång'](),
+  // Hela läsåret: 21 veckor från vecka 34. Vecka 44 är tyngst.
+  'alla-21': () => Array.from({ length: 21 }, (_, i) => {
+    const weekNumber = 34 + i
+    const heavy = weekNumber === 44
+    return week(addDays('2026-08-17', 7 * i), weekNumber, heavy ? 3 : 1 + (i % 2), heavy ? 4 : 1 + (i % 3), heavy ? 26 : 4 + (i % 5) * 3)
+  }),
 }
 export const CLASS_SCENARIOS = ['klassvy-lång']
+export const CLASS_DAYS = ['Måndag', 'Tisdag', 'Onsdag']
 export function buildFixturePlan(scenario) {
   const build = SCENARIOS[scenario] || SCENARIOS.normal
-  const classGroups = CLASS_SCENARIOS.includes(scenario) ? [{ name: '7A', days: ['Måndag', 'Tisdag', 'Onsdag'], startDate: '2026-08-01', momentsPerDay: {} }] : []
+  const classGroups = CLASS_SCENARIOS.includes(scenario) ? [{ name: '7A', days: CLASS_DAYS, startDate: '2026-08-01', momentsPerDay: {} }] : []
   return { title: 'Fiktiv testplanering', subject: 'Testämne', schoolYear: 'Testår', entryType: 'lektion', studentColumns: 1, studentRows: 1, weeksData: build(), classGroups }
 }
