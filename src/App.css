@@ -8221,3 +8221,33 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
 .material-disclosure { margin: 10px 0; padding: 8px 12px; border: 1px solid #e1d7c8; border-radius: 10px; background: #fff; }
 .material-disclosure > summary { cursor: pointer; font-weight: 700; }
 .material-disclosure .material-panel { border: 0; padding: 10px 0 2px; margin: 8px 0 0; }
+
+/* A4-mätning: en dold container med exakt samma utskriftsregler som utskriften (se src/printFit.js).
+   Den måste ha layout för att kunna mätas, men syns aldrig på skärm eller på papper. */
+.a4-measure { position:fixed; left:-10000px; top:0; width:192mm; visibility:hidden; pointer-events:none; }
+@media print { .a4-measure, .print-fit-notice { display:none !important; } }
+
+/* Skärmvarning för utskrift: visas för läraren, aldrig på papperet. */
+.print-fit-notice { margin:0 0 14px; padding:12px 14px; border:1px solid #d9c27a; border-radius:10px; background:#fff8e1; color:#4a3a06; font-size:14px; line-height:1.5; }
+.print-fit-notice p { margin:4px 0; }
+.print-fit-notice .print-fit-warning { color:#8a1c1c; font-weight:700; background:#fff0f0; border:1px solid #d99a9a; border-radius:8px; padding:8px 10px; }
+/* Veckor som inte ryms även i 50 % textstorlek får brytas mellan sidor. Innehåll kapas aldrig. */
+@media print {
+  .student-print-page .chapter-week-group.print-flow,
+  .student-print-page .student-week-card.print-flow { break-inside: auto !important; page-break-inside: auto !important; }
+}
+/* Övre marginal på första elementen i en vecka ska vara 0. Zoomade veckor gav annars tomma A4-sidor i Chrome. */
+@media print {
+  .student-print-page .chapter-week-group,
+  .student-print-page .chapter-heading,
+  .student-print-page .student-header,
+  .student-print-page .student-week-top,
+  .student-print-page .student-week-card > * { margin-top: 0 !important; }
+}
+/* Sidgrupper: ingen tvingad sidbrytning mellan grupper (den gav tomma A4-sidor). En grupp som ryms hålls ihop
+   och flyttas i stället till nästa sida. Grupper som inte ryms får brytas. */
+@media print {
+  .student-print-page + .student-print-page { break-before: auto !important; page-break-before: auto !important; }
+  .student-print-page:not(.print-flow-page) { break-inside: avoid-page !important; page-break-inside: avoid !important; }
+  .student-print-page.print-flow-page { break-inside: auto !important; page-break-inside: auto !important; }
+}

@@ -22,7 +22,7 @@ assert.equal(fs.existsSync(new URL('../public/_redirects', import.meta.url)), fa
 // Regression checks for the student view and publication safety.
 assert.match(app, /const pageSize = Math\.min\(6, columns \* rows\)/)
 assert.match(app, /\? studentWeeks\s*:/)
-assert.match(app, /const printGroups = singlePrintWeek \? \[\{ weeks: studentWeeks\.filter\(week => week\.weekStart === singlePrintWeek\) \}\] : groupStudentWeeksForPrint\(studentWeeks\)/)
+assert.match(app, /const printGroups = singlePrintWeek \? \[\{ weeks: studentWeeks\.filter\(week => week\.weekStart === singlePrintWeek\) \}\] : \(activeFit\?\.groups \|\| groupStudentWeeksForPrint\(studentWeeks\)\)/)
 // Långa veckor får brytas mellan lektioner, aldrig avsiktligt mitt i en lektion.
 assert.match(css, /\.student-print-page \.student-week-card,[\s\S]*?break-inside: auto !important/)
 assert.match(css, /\.student-print-page \.lesson \{[\s\S]*?break-inside: avoid-page !important/)
@@ -96,6 +96,13 @@ assert.match(viteConfig, /fileName: 'version\.json'/)
 assert.match(headers, /\/version\.json\n\s+Cache-Control: no-store/)
 assert.match(headers, /\/index\.html\n\s+Cache-Control: no-cache/)
 assert.match(headers, /\/veckoplanering\.html\n\s+Cache-Control: no-cache/)
+// A4-utskrift: utskriftssidorna ska vara aktiva och mätningen ska använda samma utskriftsregler.
+assert.match(app, /const UTSKRIFT_AKTIV = true/)
+assert.match(app, /\{UTSKRIFT_AKTIV && printPage === null && studentWeeks\.length > 0 && <div className="student-print-pages">/)
+assert.match(app, /className="a4-measure" ref=\{measureRef\}/)
+assert.match(fs.readFileSync(new URL('../src/printFit.js', import.meta.url), 'utf8'), /const A4_CONTENT_MM = 297 - 2 \* 9/)
+assert.match(fs.readFileSync(new URL('../src/printFit.js', import.meta.url), 'utf8'), /export const MIN_PRINT_SCALE = 0\.5/)
+assert.doesNotMatch(app, /\{AVSTANGD_GRANSSNITT && printPage === null && studentWeeks/)
 console.log('Static security/routing checks: OK')
 
 // Lovförslag får inte dupliceras efter att läraren har flyttat datumet.

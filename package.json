@@ -8,7 +8,9 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "check": "node tests/static-check.mjs"
+    "check": "node tests/static-check.mjs",
+    "test": "for f in tests/*-check.mjs tests/static-check.mjs; do node \"$f\" >/dev/null || exit 1; done && echo 'Alla kontroller: OK'",
+    "test:print": "node tests/print/a4-fit-check.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",

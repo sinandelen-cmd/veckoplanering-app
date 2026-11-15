@@ -1,7 +1,8 @@
 function capitalizeFirstSwedish(value) { return String(value || '').replace(/^(\s*)([a-zåäö])/i, (_, spaces, letter) => spaces + letter.toLocaleUpperCase('sv-SE')) }
 import { setUnsavedWork } from './appVersion.js'
 import { groupStudentWeeksForPrint } from './printGroups.js'
-import { Component, Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { installMeasureRules, measureWeekHeights, planPrintGroups } from './printFit.js'
+import { Component, Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { createPortal } from 'react-dom'
 import * as XLSX from 'xlsx'
@@ -132,6 +133,8 @@ function validSchoolClosure(item) {
 // Ljus färgidentitet per planering; befintliga planer får en stabil färg utifrån ID.
 // Gränssnittsdelar som är avstängda tills de är färdiga. Ändra till true för att visa dem.
 const AVSTANGD_GRANSSNITT = false
+// Elevutskriften (A4-sidor med mätning). Styrs separat så att andra avstängda delar inte påverkas.
+const UTSKRIFT_AKTIV = true
 const PLAN_THEMES = [
   { id: 'rose', name: 'Rosa', light: '#fff0f2', soft: '#ffe0e6', accent: '#ad5269', ink: '#79364b' },
   { id: 'sun', name: 'Solgul', light: '#fff9e6', soft: '#fff0bd', accent: '#986420', ink: '#704a22' },
@@ -781,9 +784,10 @@ function ImportantDatesForWeek({ week, plan }) {
   </div>
 }
 
-function StudentView({ plan, error, preview = false, printPage = null, printWeekStart = null, initialClass = "", hideSelector = false, _publishedOnly = false }) {
+export function StudentView({ plan, error, preview = false, printPage = null, printWeekStart = null, initialClass = "", hideSelector = false, _publishedOnly = false, printLayout = null }) {
   useState(0)
   const [singlePrintWeek, setSinglePrintWeek] = useState(null)
+  const [fit, setFit] = useState(null)
   const [previewClass, setPreviewClass] = useState(initialClass)
   const [linkCopied, setLinkCopied] = useState(false)
   useEffect(()=>{setLinkCopied(false)},[previewClass])
@@ -851,16 +855,27 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
   const currentStudentWeekStart = mondayOf(new Date())
   const currentStudentWeek = studentWeeks.find(week => week.weekStart === currentStudentWeekStart)
   const upcomingStudentWeek = [...studentWeeks].reverse().find(week => week.weekStart >= currentStudentWeekStart)
-  // Längre elevveckor får mer plats på A4. Grupperna består alltid av hela veckor.
-  const printGroups = singlePrintWeek ? [{ weeks: studentWeeks.filter(week => week.weekStart === singlePrintWeek) }] : groupStudentWeeksForPrint(studentWeeks)
+  // A4-planering: mätta sidbrytningar och skalor. Utan mätning används den gamla uppskattningen.
+  const activeFit = printLayout || fit
+  // Veckor som inte ryms även i 50 % får flytande sidbrytning. Annars tvingar "undvik brytning" fram tomma sidor.
+  const overflowingWeeks = new Set((activeFit?.notices || []).filter(notice => !notice.fits).map(notice => notice.weekStart))
+  const printGroups = singlePrintWeek ? [{ weeks: studentWeeks.filter(week => week.weekStart === singlePrintWeek) }] : (activeFit?.groups || groupStudentWeeksForPrint(studentWeeks))
   const visibleWeeks = printPage === null
     ? studentWeeks
     : (printWeekStart ? studentWeeks.filter(week => week.weekStart === printWeekStart) : (printGroups[printPage]?.weeks || []))
+  // Mätningen görs i en dold container med samma utskriftsregler. Kör bara på skärmen, inte i utskriftssidorna.
+  const fitKey = UTSKRIFT_AKTIV && printPage === null ? JSON.stringify([previewClass, studentWeeks]) : ''
+  const measureRef = useRef(null)
+  useLayoutEffect(() => {
+    if (!UTSKRIFT_AKTIV || printPage !== null || !measureRef.current || !studentWeeks.length) return
+    installMeasureRules()
+    setFit(planPrintGroups(studentWeeks, measureWeekHeights(measureRef.current)))
+  }, [fitKey])
   if (error) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>{error}</p></section></main>
   if (!preview && requestedClass && plan && !selectedClass) return <main className="shell"><section className="card"><h2>Klassen hittades inte</h2><p>Kontrollera elevlänken med din lärare.</p></section></main>
   const previewClassSelector = preview && !hideSelector && plan?.classGroups?.length>0 && <div className="student-preview-classbar"><div className="student-preview-class-buttons">{plan.classGroups.map(g=><button key={g.name} type="button" className={previewClass===g.name?'active':''} onClick={()=>setPreviewClass(g.name)}>🏫 {g.name}</button>)}</div><button type="button" className="student-class-copy-link" aria-label={linkCopied ? "Elevlänken kopierad" : "Kopiera elevlänk för "+(previewClass || "grundplaneringen")} title={linkCopied ? "Elevlänken kopierad" : "Kopiera elevlänk för "+(previewClass || "grundplaneringen")} disabled={!plan?.published||!plan?.publicSlug} onClick={async()=>{const url=window.location.origin+'/elev/'+encodeURIComponent(plan.publicSlug)+(previewClass?'?klass='+encodeURIComponent(previewClass):'');try{await navigator.clipboard.writeText(url);setLinkCopied(true)}catch{window.prompt('Kopiera elevlänk',url)}}}><span aria-hidden="true">{linkCopied?'✓':'🔗'}</span></button></div>
   if (!plan) return <main className="shell"><section className="card empty"><h1>{APP_TITLE}</h1><p>Laddar planeringen...</p></section></main>
-  return <>{previewClassSelector}<main style={planThemeStyle(plan)} className={`shell student-shell ${printPage === null ? "student-screen-view" : "student-print-page"} ${printPage !== null && visibleWeeks.length === 1 ? "student-print-spacious" : ""}`}>
+  return <>{previewClassSelector}<main style={planThemeStyle(plan)} data-print-week={printWeekStart || undefined} className={`shell student-shell ${printPage === null ? "student-screen-view" : "student-print-page"} ${printPage !== null && visibleWeeks.length === 1 ? "student-print-spacious" : ""} ${printPage !== null && printGroups[printPage]?.flow ? "print-flow-page" : ""}`}>
 
     <header className="student-header student-header-simple">
       <div className="student-heading-title">
@@ -873,10 +888,20 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
       </div>
     </header>
     {studentWeeks.length === 0 && <p className="card empty" role="status">{plan.autoReleaseWeeks ? "Ingen vecka är publicerad för elever ännu. Nästa vecka visas automatiskt när dess måndag börjar." : "Det finns inga synliga veckor i den här planeringen ännu."}</p>}
+    {printPage === null && UTSKRIFT_AKTIV && fit?.notices?.length > 0 && <section className="print-fit-notice" role="status" aria-label="Utskriftsvarning">
+      {fit.notices.map(notice => {
+        const week = studentWeeks.find(item => item.weekStart === notice.weekStart)
+        const number = week ? (calendarWeekNumber(week.weekStart) ?? week.weekNumber) : ''
+        const percent = Math.round(notice.scale * 100)
+        return notice.fits
+          ? <p key={notice.weekStart}><strong>Vecka {number}</strong> skrivs ut med {percent} % textstorlek för att ryms på en A4-sida. Ingen text är borttagen.</p>
+          : <p key={notice.weekStart} className="print-fit-warning"><strong>Varning: vecka {number} ryms inte på en A4-sida</strong> även med 50 % textstorlek. Den skrivs ut i full textstorlek över flera sidor. Ingen text är borttagen eller avklippt.</p>
+      })}
+    </section>}
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
-      {visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
+      {visibleWeeks.map((week, index) => <div className={`chapter-week-group${overflowingWeeks.has(week.weekStart) ? " print-flow" : ""}`} key={`${week.weekNumber}-${week.weekStart}`}>
         {week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}{week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <ChapterVocabulary chapter={week.chapter} weeks={visibleWeeks.filter(w => w.chapter === week.chapter)} />}
-        <article id={"student-week-" + week.weekStart} className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
+        <article id={"student-week-" + week.weekStart} className={`week-card student-week-card${overflowingWeeks.has(week.weekStart) ? " print-flow" : ""}`} style={{ ...studentWeekStyle(week.weekStart), ...(printPage !== null && activeFit?.scales?.[week.weekStart] < 1 ? { zoom: activeFit.scales[week.weekStart] } : {}) }}>
 
         <div className="week-top student-week-top">
           <div className="student-week-identity"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong><span className="calendar-month-corner calendar-tile-month">{weekMonthLabel(week.weekStart)}</span><span>{studentWeekDateRange(week.weekStart)}</span></div>
@@ -890,8 +915,11 @@ function StudentView({ plan, error, preview = false, printPage = null, printWeek
       </article></div>)}
     </section>
   </main>
-  {AVSTANGD_GRANSSNITT && printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">
-    {Array.from({ length: printGroups.length }, (_, index) => <StudentView key={index} plan={plan} preview={preview} printPage={index} printWeekStart={singlePrintWeek} />)}
+  {UTSKRIFT_AKTIV && printPage === null && studentWeeks.length > 0 && <div className="a4-measure" ref={measureRef} aria-hidden="true">
+    {studentWeeks.map((week, index) => <StudentView key={`measure-${previewClass}-${index}-${week.weekStart}`} plan={plan} preview={preview} initialClass={previewClass} hideSelector printPage={0} printWeekStart={week.weekStart} />)}
+  </div>}
+  {UTSKRIFT_AKTIV && printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">
+    {Array.from({ length: printGroups.length }, (_, index) => <StudentView key={`print-${previewClass}-${index}`} plan={plan} preview={preview} initialClass={previewClass} hideSelector printPage={index} printWeekStart={singlePrintWeek} printLayout={fit} />)}
   </div>}
 </>
 }
