@@ -26,7 +26,7 @@ RPC: `get_public_annual_plan`, `register_teacher_application`, `admin_list_teach
 | `supports_automatic_week_release` | ja | nej | Krävs för automatisk veckopublicering. Saknas den stoppas publiceringen med meddelande. |
 | `create_plan_share_invite`, `claim_plan_share_invite` | ja | nej | Kollegadelning, bakom avstängd flagga. **Saknas i produktion enligt skrivskyddad kontroll.** |
 | `planning_visit_events` | ja | nej | |
-| `app_update_notices`, `app_update_acknowledgements` | ja (tidigare) | nej | Inte längre använda av appen. Kan tas bort efter beslut. |
+| `app_update_notices`, `app_update_acknowledgements` | nej (nuvarande kod) | nej | Nuvarande kod använder dem inte. Föregående version (före automatisk uppdatering) gjorde det, och gamla öppna flikar kan fortfarande köra den. **Behålls tills gamla klienter inte längre finns.** |
 | Bucket `planning-materials` | ja | ja (migration) | |
 
 Slutsats: repot innehåller inte hela produktionsschemat. En databas byggd enbart från repot saknar flera RPC-funktioner som adminpanelen och kollegadelningen anropar.
@@ -62,3 +62,28 @@ Det finns ingen automatisk lokal Supabase i den här sessionen: Docker-avbilder 
 - Efter applicering saknas fortfarande de RPC-funktioner och tabeller som listats ovan.
 
 Slutsats: repot kan inte ensamt återskapa produktionsdatabasen. Det krävs export av produktionens DDL (skrivskyddat) för alla funktioner, policyer och tabeller som saknas.
+
+## Migrationsordning (verifierad lokalt)
+
+- `20261019_teacher_application_trigger.sql` skapar funktionen och triggern utan fel, även när `teacher_access` saknas.
+- Enda felet är backfill-satsen sist i filen (`insert into public.teacher_access ... select ... from auth.users`). Den kräver tabellen.
+- `20261019_teacher_approval.sql` skapar tabellen. Den innehåller även en hårdkodad admin-UUID som godkänns automatiskt, och den kräver att användaren finns i `auth.users`.
+- Alltså: en databas från grunden blir korrekt om `20261019_teacher_approval.sql` körs före backfill-satsen. Ordningen kan inte bestämmas av filnamnen.
+
+Förslag, i prioritetsordning:
+1. **Ingen ändring av befintliga migrationer.** Dokumentera ett bootstrap-förfarande för testdatabaser: applicera `supabase-migration.sql`, sedan `20261019_teacher_approval.sql` (efter att ett fiktivt admin-konto skapats med samma UUID i testmiljön), sedan övriga filer i ordning. Ingen produktionsmigration påverkas.
+2. **Senare, med godkännande:** samla bootstrap-schemat i `supabase-migration.sql` (idempotent, utan hårdkodad admin-insert). Då behövs ingen manuell ordning för testdatabaser. Produktion körs inte mot det skriptet.
+3. **Undviks:** att döpa om befintliga migrationsfiler. Supabase CLI spårar dem efter version.
+
+## Admin-identitet
+
+Admin är hårdkodad på två ställen: klienten (`src/App.jsx`, `isAdmin`) och SQL (`20261019_teacher_approval.sql`). Klientkontrollen är bara UI. Det verkliga skyddet ligger i SQL-funktionerna, som kontrollerar `auth.uid()`. En testmiljö måste därför använda ett fiktivt konto med samma UUID eller ändra båda ställen. Det senare kräver en ändring i koden, och ska göras medvetet.
+
+## Saknas fortfarande för en fullständig lokal testmiljö
+
+- DDL-export från produktion för RPC-funktionerna `admin_list_teacher_accounts`, `admin_set_teacher_access`, `admin_set_teacher_expiry`, `request_teacher_extension`, `supports_automatic_week_release`, `create_plan_share_invite`, `claim_plan_share_invite`.
+- Produktionens RLS-policyer utöver de 13 i repot (35 i produktion, enligt skrivskyddad kontroll).
+- Tabellen `planning_visit_events`.
+- Storage-bucketens inställningar (till exempel `file_size_limit`), som bara finns i Supabase Storage.
+- En riktig Supabase-instans eller Supabase-kompatibel stack för auth och PostgREST. Docker-avbilder blockeras i sessionen.
+- Fiktiva konton med testlösenord, skapade i testmiljöns Auth. Inga riktiga lärarkonton används.

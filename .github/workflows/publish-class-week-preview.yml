@@ -5,6 +5,9 @@ on:
   workflow_dispatch:
 jobs:
   publish-preview:
+    # Spärr: körs bara om repo-variabeln ALLOW_PROD_LINKED_PREVIEW uttryckligen är "true".
+    # Variabeln är inte satt, så jobbet hoppas över. Förhandsvisningen är kopplad till produktionsdatabasen.
+    if: vars.ALLOW_PROD_LINKED_PREVIEW == 'true'
     runs-on: ubuntu-latest
     environment: production
     steps:
