@@ -44,7 +44,11 @@ export function installMeasureRules() {
       if (rule.type !== 4 || !/print/i.test(rule.media?.mediaText || '')) continue
       for (const inner of Array.from(rule.cssRules)) {
         if (inner.type !== 1) continue
-        const selectors = splitSelectors(inner.selectorText).map(selector => `.${MEASURE_CLASS} ${selector}`)
+        // Regler som börjar med #lararvy gäller även i utskriften. Mätcontainern ligger inne i #lararvy,
+        // så prefixet måste sättas efter #lararvy, annars matchar regeln aldrig i mätningen.
+        const selectors = splitSelectors(inner.selectorText).map(selector => selector.startsWith('#lararvy ')
+          ? `#lararvy .${MEASURE_CLASS} ${selector.slice('#lararvy '.length)}`
+          : `.${MEASURE_CLASS} ${selector}`)
         lines.push(`${selectors.join(', ')} { ${inner.style.cssText} }`)
       }
     }
