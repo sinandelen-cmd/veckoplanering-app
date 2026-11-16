@@ -1003,12 +1003,14 @@ function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson, classWee
 // Annars skapas tusentals fält för alla veckor direkt när planen öppnas.
 function LazyWeekContent({ render, eager = false }) {
   const ref = useRef(null)
-  const [shown, setShown] = useState(eager)
+  // `eager` styrs av föräldern och kan bli sann senare (stegvis ritning), därför läses den varje render.
+  const [revealed, setRevealed] = useState(false)
+  const shown = eager || revealed
   useEffect(() => {
     if (shown) return undefined
-    const show = () => setShown(true)
+    const show = () => setRevealed(true)
     // Print needs the full DOM before the browser takes its print snapshot.
-    const showForPrint = () => flushSync(() => setShown(true))
+    const showForPrint = () => flushSync(() => setRevealed(true))
     window.addEventListener("beforeprint", showForPrint)
     const el = ref.current
     let observer = null
@@ -1444,6 +1446,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [showPastTeacherWeeks, setShowPastTeacherWeeks] = useState(true)
   const [pastWeeksExpanded, setPastWeeksExpanded] = useState(false)
   const [allWeekContentsOpen, setAllWeekContentsOpen] = useState(true)
+  // Hur många veckors innehåll som ritas. Resten ritas i små steg i stället för allt på en gång när planen öppnas.
+  const [weekRenderBudget, setWeekRenderBudget] = useState(3)
   const [weekContentOverrides, setWeekContentOverrides] = useState({})
   const [pinnedChapter, setPinnedChapter] = useState(null)
 
@@ -1671,6 +1675,13 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const weeks = useMemo(() => displayWeeks(plan), [plan])
   const classSchedulePlan = useMemo(() => ({ ...plan, weeksData: weeks }), [plan, weeks])
   const teacherDisplayWeeks = useMemo(() => weeks.map((week, index) => ({week, index})), [weeks]) // Alla veckor finns kvar; passerade veckor kan fällas ut kapitelvis
+  // Ny planering: börja om med få veckor och lägg sedan till 3 veckor per steg tills alla visar sitt innehåll.
+  useEffect(() => { setWeekRenderBudget(3) }, [selectedId])
+  useEffect(() => {
+    if (weekRenderBudget >= weeks.length) return undefined
+    const timer = setTimeout(() => setWeekRenderBudget(count => Math.min(weeks.length, count * 2)), 16)
+    return () => clearTimeout(timer)
+  }, [weekRenderBudget, weeks.length])
   const pastTeacherWeeks = teacherDisplayWeeks.filter(({week}) => week.weekStart && week.weekStart < mondayOf(new Date()))
   const upcomingTeacherWeeks = teacherDisplayWeeks.filter(({week}) => !week.weekStart || week.weekStart >= mondayOf(new Date()))
   // Standardvyn visar tre veckor: föregående, nuvarande och nästa (utan att användaren behöver klicka "Alla veckor").
@@ -2483,7 +2494,7 @@ const addNewTeacherWeek = () => setPlan(p => {
           {!(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) && <strong className="teacher-collapsed-week-label">Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>}
 
           </div>
-          {(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) && <LazyWeekContent eager={showPastTeacherWeeks && !focusedTeacherWeek} render={() => <div className="teacher-week-collapsible-content">
+          {(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) && <LazyWeekContent eager={Boolean(focusedTeacherWeek) || index < weekRenderBudget} render={() => <div className="teacher-week-collapsible-content">
           <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><strong style={{ fontSize: "1.45rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 5 }}>Vecka <input type="text" inputMode="numeric" pattern="[0-9]*" aria-label="Ändra veckonummer" key={`${week.weekStart}-${week.weekNumber}`} style={{ width: "3.3ch", minWidth: 66, fontSize: "1.45rem", fontWeight: 800, padding: "4px 6px" }} defaultValue={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Skriv veckonummer direkt och tryck Enter" onFocus={e => e.target.select()} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') { e.currentTarget.value = String(calendarWeekNumber(week.weekStart) ?? week.weekNumber); e.currentTarget.blur() } }} onBlur={e => {
             const target = Number(e.target.value.trim())
             const current = calendarWeekNumber(week.weekStart)
