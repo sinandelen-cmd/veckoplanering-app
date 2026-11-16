@@ -31,6 +31,8 @@ function planRow(id, weeksData) {
 
 // Plan A: sparad i omvänd ordning (inte kronologisk), alla 21 veckor.
 const reversedRow = planRow('omvand', [...allWeeks].reverse())
+// Plan C: vecka 48 finns, men lades till sist i den sparade listan (som när en vecka infogas i slutet).
+const appendedRow = planRow('tillagd', [...allWeeks.filter((_, i) => i !== 11), allWeeks[11]])
 // Plan B: slutar vid aktuell vecka (ingen vecka 48 i planen).
 const endsAtCurrentRow = planRow('slutar', allWeeks.slice(0, 11))
 
@@ -76,6 +78,15 @@ await check('högerpil visar nästa två veckor och bevarar två kort bredvid va
   assert.ok(Math.abs(cards[0].y - cards[1].y) < 3 && cards[1].x > cards[0].x, 'kort 49/50 ligger inte bredvid varandra')
 })
 await planA.page.close()
+
+const planC = await openPlan('Veckotest tillagd', [appendedRow])
+await check('vecka 48 sist i sparad lista: vecka 47 och 48 visas bredvid varandra', async () => {
+  const cards = await visibleCards(planC.page)
+  assert.deepEqual(cards.map(c => c.wk), ['47', '48'], 'visade veckor: ' + cards.map(c => c.wk).join(','))
+  assert.ok(Math.abs(cards[0].y - cards[1].y) < 3 && cards[1].x >= cards[0].x + cards[0].w - 2, 'kort 47 och 48 ligger inte bredvid varandra')
+  assert.equal(await planC.page.locator('.paper-missing-week').count(), 0, 'platshållare får inte visas när vecka 48 finns')
+})
+await planC.page.close()
 
 const planB = await openPlan('Veckotest slutar', [endsAtCurrentRow])
 await check('plan som slutar vid vecka 47: ett kort och ett tydligt platshållarpapper, ingen tom grå yta', async () => {
