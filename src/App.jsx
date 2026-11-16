@@ -1,7 +1,7 @@
 function capitalizeFirstSwedish(value) { return String(value || '').replace(/^(\s*)([a-zåäö])/i, (_, spaces, letter) => spaces + letter.toLocaleUpperCase('sv-SE')) }
 import { setUnsavedWork } from './appVersion.js'
 import { installMeasureRules, measureWeeks, planPrintGroups } from './printFit.js'
-import { Component, Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Component, Fragment, memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { createPortal } from 'react-dom'
 import * as XLSX from 'xlsx'
@@ -1389,6 +1389,72 @@ function PublishedStudentPreview({ slug, initialClass = "" }) {
   return <StudentView key={slug} plan={publishedPlan} preview hideSelector={Boolean(initialClass)} publishedOnly initialClass={initialClass || publishedPlan.classGroups?.[0]?.name || ''} />
 }
 
+// Ett veckokort. Memoiseras så att bara kortet som ändras ritas om, inte hela lärarvyn.
+const A4_SCREEN_PX = Math.round((297 / 210) * 794) // Höjden för ett A4-papper på skärmen (210 mm = 794 px).
+const TeacherWeekCard = memo(function TeacherWeekCard({ week, index, open, eager, entryType, hasLaterWeek, atMaxWeeks, soleWeek, canUndo, canRedo, actions }) {
+  const cardRef = useRef(null)
+  const [pageCount, setPageCount] = useState(1)
+  // Hur många A4-sidor veckan blir vid utskrift, mätt från kortets verkliga höjd. Utskriften delar på lektionsgränser.
+  useEffect(() => {
+    const el = cardRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return undefined
+    const update = () => setPageCount(Math.max(1, Math.ceil(el.offsetHeight / A4_SCREEN_PX)))
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+  return (
+          <article ref={cardRef} className={`week-card teacher-collapsible-week ${((open)) ? "teacher-week-open" : "teacher-week-closed"}`} id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
+          <div className="paper-page-count" aria-live="polite">{pageCount > 1 ? `Vid utskrift: ${pageCount} A4-sidor` : "Vid utskrift: 1 A4-sida"}</div>
+          <div className="teacher-week-controls">
+          <button type="button" className="teacher-week-collapse-toggle" aria-expanded={open} onClick={()=>{actions.toggleWeekContent(week.weekStart || `${index}`)}} title={(open) ? "Dölj innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber) : "Visa innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber)} aria-label={(open) ? "Dölj innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber) : "Visa innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber)}><span aria-hidden="true">{(open) ? "▾" : "▸"}</span></button>
+
+          {!(open) && <strong className="teacher-collapsed-week-label">Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>}
+
+          </div>
+          {(open) && <LazyWeekContent eager={eager} render={() => <div className="teacher-week-collapsible-content">
+          <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><strong style={{ fontSize: "1.45rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 5 }}>Vecka <input type="text" inputMode="numeric" pattern="[0-9]*" aria-label="Ändra veckonummer" key={`${week.weekStart}-${week.weekNumber}`} style={{ width: "3.3ch", minWidth: 66, fontSize: "1.45rem", fontWeight: 800, padding: "4px 6px" }} defaultValue={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Skriv veckonummer direkt och tryck Enter" onFocus={e => e.target.select()} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') { e.currentTarget.value = String(calendarWeekNumber(week.weekStart) ?? week.weekNumber); e.currentTarget.blur() } }} onBlur={e => {
+            const target = Number(e.target.value.trim())
+            const current = calendarWeekNumber(week.weekStart)
+            if (!/^\\d{1,2}$/.test(e.target.value.trim()) || !Number.isInteger(target) || target < 1 || target > 53 || current === null) { e.target.value = String(current ?? week.weekNumber); return }
+            if (target === current) return
+            const nextDate = addWeeks(week.weekStart, target - current)
+            if (calendarWeekNumber(nextDate) !== target) { actions.setStatus('Veckonumret finns inte vid detta årsskifte.'); e.target.value = String(current); return }
+            actions.setPlan(previous => {
+              const source = displayWeeks(previous)
+              const updated = source.map((item, itemIndex) => itemIndex === index ? {
+                ...item,
+                weekStart: nextDate,
+                weekNumber: target,
+                title: !item.title || /^Vecka\\s+\\d+$/i.test(item.title) ? 'Vecka '+target : item.title
+              } : item)
+              return {...previous, weeksData: updated}
+            })
+            actions.setStatus('Vecka '+target+' är ändrad. Lektionerna är kvar.')
+          }} /></strong><span style={{ fontSize: "1.15rem", fontWeight: 700 }}>{formatDate(week.weekStart)}</span>
+            <button type="button" className="remove-small teacher-week-delete-icon" aria-label={`Ta bort vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`} title="Ta bort vecka" disabled={soleWeek} onClick={() => {
+              if (hasWeekWork(week, index) && !window.confirm(`Ta bort vecka ${week.weekNumber} och allt innehåll i veckan?`)) return
+              actions.setPlan(p => {
+                const current = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
+                const remaining = current.filter((_, i) => i !== index)
+                return { ...p, weeks: remaining.length, weeksData: remaining, startWeek: Number(remaining[0]?.weekNumber) || p.startWeek }
+              })
+            }}><PlanningActionIcon name="trash" /></button></div>
+          {!/^Vecka\s+\d+$/i.test(week.title || '') && <input className="week-title" aria-label="Egen veckorubrik" value={week.title || ''} onChange={e => actions.updateWeek(index, { title: e.target.value })} />}
+          {!isGeneratedLessonSummary(week.content, week.chapter) && <textarea value={week.content} onChange={e => actions.updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />}
+          <LessonDetails week={week} entryType={entryType} onChange={changes => actions.updateWeek(index, changes)} onOpenLesson={lessonIndex => actions.openLesson(String(week.weekStart || week.weekNumber), lessonIndex)} onUndo={actions.undoPlan} onRedo={actions.redoPlan} canUndo={canUndo} canRedo={canRedo} />
+          <details className="legacy-week-details" open={Boolean(week.pages?.length || week.assignments?.length || week.links?.length)}>
+            <summary>Extra veckomaterial (sidor, uppgifter och länkar)</summary>
+            <p className="muted">Använd i första hand momenten under varje lektion. Här kan du även lägga material för hela veckan.</p>
+            <WeekDetails week={week} onChange={changes => actions.updateWeek(index, changes)} />
+          </details>
+          </div>} />}
+          {hasLaterWeek && <div className="insert-week-between teacher-week-insert-inside"><button type="button" className="secondary" disabled={atMaxWeeks} onClick={()=>actions.insertBlankWeekAfter(index)}>＋ Lägg till vecka efter denna</button></div>}
+        </article>
+  )
+})
+
 function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin, adminContent, pendingCount = 0 }) {
   const [editingClassView,setEditingClassView] = useState('')
   const [, setClassStudentPreview] = useState(false)
@@ -1693,6 +1759,21 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     const timer = setTimeout(() => setWeekRenderState({ key: weekRenderKey, count: Math.min(weeks.length, weekRenderBudget * 2) }), 16)
     return () => clearTimeout(timer)
   }, [stagedWeeks, weekRenderBudget, weekRenderKey, weekRenderState.key, weeks.length])
+  // Stabila åtgärder för veckokorten. Korten memoiseras, och de anropar alltid de senaste funktionerna via ref.
+  const actionsRef = useRef(null)
+  useLayoutEffect(() => {
+    actionsRef.current = { updateWeek, undoPlan, redoPlan, insertBlankWeekAfter, setPlan, setStatus, setLessonModal, setLessonModalChanged, setWeekContentOverrides, allWeekContentsOpen }
+  })
+  const weekActions = useMemo(() => ({
+    updateWeek: (...args) => actionsRef.current.updateWeek(...args),
+    undoPlan: () => actionsRef.current.undoPlan(),
+    redoPlan: () => actionsRef.current.redoPlan(),
+    insertBlankWeekAfter: index => actionsRef.current.insertBlankWeekAfter(index),
+    setPlan: (...args) => actionsRef.current.setPlan(...args),
+    setStatus: (...args) => actionsRef.current.setStatus(...args),
+    openLesson: (weekKey, lessonIndex) => { actionsRef.current.setLessonModal({ weekKey, lessonIndex }); actionsRef.current.setLessonModalChanged(false) },
+    toggleWeekContent: key => actionsRef.current.setWeekContentOverrides(prev => ({ ...prev, [key]: !(prev[key] ?? actionsRef.current.allWeekContentsOpen) })),
+  }), [])
   const pastTeacherWeeks = teacherDisplayWeeks.filter(({week}) => week.weekStart && week.weekStart < mondayOf(new Date()))
   const upcomingTeacherWeeks = teacherDisplayWeeks.filter(({week}) => !week.weekStart || week.weekStart >= mondayOf(new Date()))
   // Standardvyn visar tre veckor: föregående, nuvarande och nästa (utan att användaren behöver klicka "Alla veckor").
@@ -2499,52 +2580,8 @@ const addNewTeacherWeek = () => setPlan(p => {
           <div className="teacher-chapter-sticky"><h3 className={`chapter-heading chapter-tone-${chapterTone(group.name)}`}>{group.name}</h3>{group.name !== "Utan kapitel" && <ChapterVocabulary chapter={group.name} weeks={group.items.map(item => item.week)} />}</div>
           <div className="teacher-month-weeks">
           {group.items.map(({ week, index }) => <div className="chapter-week-group" data-week={calendarWeekNumber(week.weekStart) ?? week.weekNumber} key={`${week.weekStart || week.weekNumber}-${index}`}>
-          <article className={`week-card teacher-collapsible-week ${((weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen)) ? "teacher-week-open" : "teacher-week-closed"}`} id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
-          <div className="teacher-week-controls">
-          <button type="button" className="teacher-week-collapse-toggle" aria-expanded={weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen} onClick={()=>{const key=week.weekStart || `${index}`;setWeekContentOverrides(prev=>({...prev,[key]:!(prev[key] ?? allWeekContentsOpen)}))}} title={(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) ? "Dölj innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber) : "Visa innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber)} aria-label={(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) ? "Dölj innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber) : "Visa innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber)}><span aria-hidden="true">{(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) ? "▾" : "▸"}</span></button>
-
-          {!(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) && <strong className="teacher-collapsed-week-label">Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>}
-
-          </div>
-          {(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) && <LazyWeekContent eager={Boolean(focusedTeacherWeek) || !showPastTeacherWeeks || !allWeekContentsOpen || index < weekRenderBudget} render={() => <div className="teacher-week-collapsible-content">
-          <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><strong style={{ fontSize: "1.45rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 5 }}>Vecka <input type="text" inputMode="numeric" pattern="[0-9]*" aria-label="Ändra veckonummer" key={`${week.weekStart}-${week.weekNumber}`} style={{ width: "3.3ch", minWidth: 66, fontSize: "1.45rem", fontWeight: 800, padding: "4px 6px" }} defaultValue={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Skriv veckonummer direkt och tryck Enter" onFocus={e => e.target.select()} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') { e.currentTarget.value = String(calendarWeekNumber(week.weekStart) ?? week.weekNumber); e.currentTarget.blur() } }} onBlur={e => {
-            const target = Number(e.target.value.trim())
-            const current = calendarWeekNumber(week.weekStart)
-            if (!/^\\d{1,2}$/.test(e.target.value.trim()) || !Number.isInteger(target) || target < 1 || target > 53 || current === null) { e.target.value = String(current ?? week.weekNumber); return }
-            if (target === current) return
-            const nextDate = addWeeks(week.weekStart, target - current)
-            if (calendarWeekNumber(nextDate) !== target) { setStatus('Veckonumret finns inte vid detta årsskifte.'); e.target.value = String(current); return }
-            setPlan(previous => {
-              const source = displayWeeks(previous)
-              const updated = source.map((item, itemIndex) => itemIndex === index ? {
-                ...item,
-                weekStart: nextDate,
-                weekNumber: target,
-                title: !item.title || /^Vecka\\s+\\d+$/i.test(item.title) ? 'Vecka '+target : item.title
-              } : item)
-              return {...previous, weeksData: updated}
-            })
-            setStatus('Vecka '+target+' är ändrad. Lektionerna är kvar.')
-          }} /></strong><span style={{ fontSize: "1.15rem", fontWeight: 700 }}>{formatDate(week.weekStart)}</span>
-            <button type="button" className="remove-small teacher-week-delete-icon" aria-label={`Ta bort vecka ${calendarWeekNumber(week.weekStart) ?? week.weekNumber}`} title="Ta bort vecka" disabled={weeks.length <= 1} onClick={() => {
-              if (hasWeekWork(week, index) && !window.confirm(`Ta bort vecka ${week.weekNumber} och allt innehåll i veckan?`)) return
-              setPlan(p => {
-                const current = Array.isArray(p.weeksData) && p.weeksData.length ? p.weeksData : makeWeeks(p)
-                const remaining = current.filter((_, i) => i !== index)
-                return { ...p, weeks: remaining.length, weeksData: remaining, startWeek: Number(remaining[0]?.weekNumber) || p.startWeek }
-              })
-            }}><PlanningActionIcon name="trash" /></button></div>
-          {!/^Vecka\s+\d+$/i.test(week.title || '') && <input className="week-title" aria-label="Egen veckorubrik" value={week.title || ''} onChange={e => updateWeek(index, { title: e.target.value })} />}
-          {!isGeneratedLessonSummary(week.content, week.chapter) && <textarea value={week.content} onChange={e => updateWeek(index, { content: e.target.value })} placeholder="Vad ska eleverna arbeta med?" />}
-          <LessonDetails week={week} entryType={plan.entryType || 'lektion'} onChange={changes => updateWeek(index, changes)} onOpenLesson={lessonIndex => { setLessonModal({ weekKey: String(week.weekStart || week.weekNumber), lessonIndex }); setLessonModalChanged(false) }} onUndo={undoPlan} onRedo={redoPlan} canUndo={historyRef.current.past.length > 0} canRedo={historyRef.current.future.length > 0} />
-          <details className="legacy-week-details" open={Boolean(week.pages?.length || week.assignments?.length || week.links?.length)}>
-            <summary>Extra veckomaterial (sidor, uppgifter och länkar)</summary>
-            <p className="muted">Använd i första hand momenten under varje lektion. Här kan du även lägga material för hela veckan.</p>
-            <WeekDetails week={week} onChange={changes => updateWeek(index, changes)} />
-          </details>
-          </div>} />}
-          {weeks.some(other=>other.weekStart>week.weekStart) && <div className="insert-week-between teacher-week-insert-inside"><button type="button" className="secondary" disabled={weeks.length>=52} onClick={()=>insertBlankWeekAfter(index)}>＋ Lägg till vecka efter denna</button></div>}
-        </article></div>)}
+          <TeacherWeekCard week={week} index={index} open={Boolean(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen)} eager={Boolean(focusedTeacherWeek) || !showPastTeacherWeeks || !allWeekContentsOpen || index < weekRenderBudget} entryType={plan.entryType || 'lektion'} hasLaterWeek={weeks.some(other=>other.weekStart>week.weekStart)} atMaxWeeks={weeks.length>=52} soleWeek={weeks.length<=1} canUndo={historyRef.current.past.length > 0} canRedo={historyRef.current.future.length > 0} actions={weekActions} />
+        </div>)}
           </div>
         </section>)}
       </div>
@@ -3266,6 +3303,12 @@ function MomentLinkItem({ link, index, editable, onChange, onDelete }) {
   </div>
 }
 
+// Storleken på en textarea följer innehållet. Stabil funktion, så React inte kör om den vid varje render.
+function fitTextarea(node) {
+  if (!node) return
+  node.style.height = 'auto'
+  node.style.height = `${node.scrollHeight}px`
+}
 function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 'bara-lektion', onlyLessonIndex = null, onPreviousLesson = null, onNextLesson = null, lessonCount = null, onUndo = null, onRedo = null, canUndo = false, canRedo = false, onOpenLesson = null }) {
   const lessons = Array.isArray(week?.lessons) ? week.lessons : []
   const editable = typeof onChange === 'function'
@@ -3325,7 +3368,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
         const rows = editable ? Math.max(1, pages.length, assignments.length) : Math.max(lastFilledRow(pages), lastFilledRow(assignments))
         return <div className="topic" key={j}>
           <div className={`topic-grid ${topic.hidePages ? "without-pages" : ""} ${topic.hideAssignments ? "without-assignments" : ""}`}>
-            <div className="topic-name">{editable ? <textarea aria-label="Momentets namn" placeholder="Skriv moment" rows={1} ref={node => { if (node) { node.style.height = "auto"; node.style.height = `${node.scrollHeight}px` } }} value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong className="topic-name-display">{topic.name || 'Moment'}</strong>}
+            <div className="topic-name">{editable ? <textarea aria-label="Momentets namn" placeholder="Skriv moment" rows={1} ref={fitTextarea} value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong className="topic-name-display">{topic.name || 'Moment'}</strong>}
             <div className="topic-links moment-inner-links">
             {links.map((link, k) => <MomentLinkItem
               key={k}
@@ -3349,12 +3392,12 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
             {['pages', 'assignments'].filter(field => !topic[field === 'pages' ? 'hidePages' : 'hideAssignments']).map(field => <div className={`topic-column ${field}`} key={field}>
               <div className="topic-fixed-heading">{!editable && <h5>{field === 'pages' ? 'Sida' : 'Uppgift'}</h5>}{editable && <button type="button" className="remove-small remove-topic-column" title={`Ta bort hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan`} aria-label={`Ta bort hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan`} onClick={() => { if ((field === 'pages' ? pages : assignments).some(value => String(value).trim()) && !window.confirm(`Dölj hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan? Innehållet sparas och kan visas igen.`)) return; updateTopic({ ...topic, [field === 'pages' ? 'hidePages' : 'hideAssignments']: true }) }}><PlanningActionIcon name="trash" /></button>}</div>
               {Array.from({ length: rows }, (_, row) => <div className="topic-cell" key={row}>
-                {editable ? <><input aria-label={`${(field === 'pages' ? topic.pagesLabel : topic.assignmentsLabel)?.trim() || (field === 'pages' ? 'Sida' : 'Uppgift')} rad ${row + 1}`} placeholder={field === 'pages' ? 'Skriv sida' : 'Skriv uppgift'} value={(field === 'pages' ? pages : assignments)[row] || ''} onChange={e => {
+                {editable ? <><textarea rows={1} className="topic-value-input" ref={fitTextarea} aria-label={`${(field === 'pages' ? topic.pagesLabel : topic.assignmentsLabel)?.trim() || (field === 'pages' ? 'Sida' : 'Uppgift')} rad ${row + 1}`} placeholder={field === 'pages' ? 'Skriv sida' : 'Skriv uppgift'} value={(field === 'pages' ? pages : assignments)[row] || ''} onChange={e => {
                   const next = [...(field === 'pages' ? pages : assignments)]
                   while (next.length <= row) next.push('')
                   next[row] = e.target.value
                   updateTopic({ ...topic, [field]: next })
-                }} /><button className="remove-small" type="button" aria-label={`Ta bort ${field === "pages" ? "sida" : "uppgift"} på rad ${row + 1}`} onClick={() => updateTopic({ ...topic, [field]: (field === 'pages' ? pages : assignments).filter((_, index) => index !== row) })}><PlanningActionIcon name="trash" /></button></> : <span>{(field === 'pages' ? pages : assignments)[row] || ' '}</span>}
+                }} onInput={e => fitTextarea(e.target)}></textarea><button className="remove-small" type="button" aria-label={`Ta bort ${field === "pages" ? "sida" : "uppgift"} på rad ${row + 1}`} onClick={() => updateTopic({ ...topic, [field]: (field === 'pages' ? pages : assignments).filter((_, index) => index !== row) })}><PlanningActionIcon name="trash" /></button></> : <span>{(field === 'pages' ? pages : assignments)[row] || ' '}</span>}
               </div>)}
               {editable && <button type="button" className={`add-detail lesson-bare-icon topic-corner-add ${field === 'pages' ? 'lesson-bare-page' : 'lesson-bare-task'}`} title={field === 'pages' ? 'Lägg till sida' : 'Lägg till uppgift'} aria-label={field === 'pages' ? 'Lägg till sida' : 'Lägg till uppgift'} onClick={() => updateTopic({ ...topic, [field]: Array.from({ length: rows + 1 }, (_, index) => (field === 'pages' ? pages : assignments)[index] || '') })}>+</button>}
             </div>)}

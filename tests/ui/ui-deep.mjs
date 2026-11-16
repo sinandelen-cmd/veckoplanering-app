@@ -86,7 +86,9 @@ await check('Visa alla veckor: en vecka per rad och alla 21 veckor visar sitt in
   await page.locator('button:visible', { hasText: 'Dölj alla veckor' }).first().click().catch(() => {})
   await page.waitForTimeout(300)
   await page.locator('button:visible', { hasText: 'Visa alla veckor' }).first().click()
-  await page.waitForTimeout(800)
+  // Veckorna ritas stegvis, så testet väntar på villkoret (max 8 s) i stället för en fast tid.
+  await page.waitForFunction(() => document.querySelectorAll('.week-card').length >= 21 && [...document.querySelectorAll('.week-card')].every(e => e.querySelectorAll('.lesson').length > 0 || e.getBoundingClientRect().height === 0), null, { timeout: 8000 }).catch(() => {})
+  await page.waitForTimeout(100)
   const m = await page.evaluate(() => {
     const cards = [...document.querySelectorAll('.week-card')].map(e => { const r = e.getBoundingClientRect(); return { x: Math.round(r.left), h: Math.round(r.height), lessons: e.querySelectorAll('.lesson').length } }).filter(c => c.h > 0)
     return { cards: cards.length, columns: new Set(cards.map(c => c.x)).size, empty: cards.filter(c => c.lessons === 0).length, placeholders: document.querySelectorAll('.teacher-week-lazy-placeholder').length }

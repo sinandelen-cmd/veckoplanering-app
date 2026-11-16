@@ -82,3 +82,75 @@
 #lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) {
   grid-template-columns: minmax(0, 1fr) !important;
 }
+
+/* Sida- och Uppgift-fält i lektionen: flerradiga och helt synliga. Texten bryts i stället för att klippas. */
+#lararvy .topic-cell textarea.topic-value-input {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 0 !important;
+  height: auto;
+  resize: none;
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+  padding: 5px 7px;
+  box-sizing: border-box;
+  font: inherit;
+}
+
+/* Information om hur många A4-sidor veckan blir vid utskrift. Visas bara på skärmen. */
+#lararvy .teacher-collapsible-week.week-card { position: relative; }
+#lararvy .paper-page-count {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #eef3f7;
+  border: 1px solid #c5d2de;
+  color: #35506a;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+@media print { #lararvy .paper-page-count { display: none !important; } }
+
+/* Kompakt A4-papper: lektionerna tar mindre plats, så att en vanlig vecka ryms på en A4-sida.
+   Gäller bara veckokorten på skärmen. Text och fält är oförändrade, bara marginaler och storlek. */
+#lararvy .teacher-collapsible-week.week-card .lesson { padding: 4px !important; }
+#lararvy .teacher-collapsible-week.week-card .lesson-edit-heading { flex-wrap: wrap; gap: 4px 8px; }
+#lararvy .teacher-collapsible-week.week-card .lesson-number-inline {
+  font-size: 0.95rem !important;
+  padding: 3px 10px !important;
+  line-height: 1.25;
+}
+#lararvy .teacher-collapsible-week.week-card .lesson-zoom-open { margin-left: 0; min-height: 28px; padding: 2px 8px; font-size: 0.8rem; }
+#lararvy .teacher-collapsible-week.week-card .lesson-heading { margin-bottom: 2px; }
+#lararvy .teacher-collapsible-week.week-card .topic { margin-top: 4px !important; padding-top: 4px !important; }
+#lararvy .teacher-collapsible-week.week-card .topic-name textarea { font-size: 0.95rem; padding: 3px 6px; min-height: 0 !important; }
+#lararvy .teacher-collapsible-week.week-card .topic-name { padding: 6px 4px !important; }
+#lararvy .teacher-collapsible-week.week-card .topic-column { padding: 4px !important; }
+#lararvy .teacher-collapsible-week.week-card .topic-fixed-heading { margin-bottom: 2px !important; }
+#lararvy .teacher-collapsible-week.week-card .topic-cell { min-height: 0 !important; margin-bottom: 2px !important; }
+#lararvy .teacher-collapsible-week.week-card textarea.topic-value-input { font-size: 0.85rem; padding: 3px 5px; line-height: 1.25; }
+#lararvy .teacher-collapsible-week.week-card .lesson-add-assessment { margin: 2px 0 !important; min-height: 24px !important; padding: 3px 8px !important; }
+#lararvy .teacher-collapsible-week.week-card .topic-restore-columns { margin: 2px 0; }
+
+/* Ytterligare kompaktering: momentnamn i samma storlek som övrig text, fältet och raderingsknappen bredvid varandra,
+   och lektionens rubrikknappar på en rad. */
+#lararvy .teacher-collapsible-week.week-card .topic-name textarea { font-size: 0.95rem !important; }
+#lararvy .teacher-collapsible-week.week-card .topic-cell { display: flex !important; align-items: flex-start; gap: 4px; }
+#lararvy .teacher-collapsible-week.week-card .topic-cell textarea.topic-value-input { flex: 1 1 auto; min-width: 0; }
+#lararvy .teacher-collapsible-week.week-card .topic-cell > button.remove-small { flex: 0 0 auto; margin-top: 2px; }
+#lararvy .teacher-collapsible-week.week-card .lesson-heading { display: flex !important; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+#lararvy .teacher-collapsible-week.week-card .lesson-heading > .lesson-edit-heading { flex: 1 1 260px; min-width: 0; }
+#lararvy .teacher-collapsible-week.week-card .lesson-heading > .lesson-reorder-controls,
+#lararvy .teacher-collapsible-week.week-card .lesson-heading > .lesson-heading-history { flex: 0 0 auto; }
+
+/* Lektionens rubrik och knappar ligger på en rad. Momentblocket tar hela bredden under. */
+#lararvy .teacher-collapsible-week.week-card .lesson { display: flex !important; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+#lararvy .teacher-collapsible-week.week-card .lesson > .lesson-heading { flex: 1 1 240px; min-width: 0; margin-bottom: 0 !important; }
+#lararvy .teacher-collapsible-week.week-card .lesson > .topic { flex: 1 1 100%; min-width: 0; }
+#lararvy .teacher-collapsible-week.week-card .lesson > .lesson-reorder-controls,
+#lararvy .teacher-collapsible-week.week-card .lesson > .lesson-heading-history,
+#lararvy .teacher-collapsible-week.week-card .lesson > button.remove-small { flex: 0 0 auto; }
