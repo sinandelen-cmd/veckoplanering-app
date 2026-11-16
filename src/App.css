@@ -8282,3 +8282,16 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
     gap: 1.5mm !important;
   }
 }
+
+/* Lärarens utskrift: elevvyns A4-sidor (en vecka per sida). Hosten mäts på skärmen men syns inte. */
+.teacher-print-host { position:absolute; left:-10000px; top:0; width:192mm; height:0; overflow:hidden; visibility:hidden; pointer-events:none; }
+@media print {
+  .teacher-print-host { position:static !important; left:auto !important; width:auto !important; height:auto !important; overflow:visible !important; visibility:visible !important; pointer-events:auto; }
+}
+/* Lärarens utskrift: skriv bara ut elevutskriften, inte lärarens topbar, meny eller planeringsvy. */
+@media print {
+  body:has(.teacher-print-host) .planning-layout > :not(#lararvy) { display:none !important; }
+  body:has(.teacher-print-host) #lararvy > :not(.teacher-print-host) { display:none !important; }
+}
+/* Kontoinformation på skärmen ska inte skrivas ut på varje utskriftssida. */
+@media print { .account-validity-notice { display:none !important; } }

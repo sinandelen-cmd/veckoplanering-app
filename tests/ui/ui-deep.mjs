@@ -147,6 +147,16 @@ await check('21 veckor: tidsmätning av planering och klassvy', async () => {
   assert.ok(t < 3000, 'klassvy tog ' + t + ' ms')
 })
 
+await check('lärarens utskriftsknapp skriver ut elevvyns A4-sidor (en vecka per sida)', async () => {
+  await page.evaluate(() => { window.__printCalls = 0; window.print = () => { window.__printCalls++ } })
+  await page.locator('button:visible', { hasText: '🖨' }).first().click()
+  await page.waitForFunction(() => window.__printCalls > 0, null, { timeout: 15000 })
+  const pages = await page.evaluate(() => document.querySelectorAll('.teacher-print-host .student-print-page').length)
+  assert.ok(pages >= 21, 'utskriftssidor saknas: ' + pages)
+  const banners = await page.evaluate(() => document.querySelectorAll('.teacher-print-host .account-validity-notice').length)
+  assert.equal(banners, 0, 'kontobanner ska inte finnas i utskriften')
+})
+
 await check('inga sidfel, inga React-varningar och inga externa anrop', async () => {
   assert.deepEqual(errors, [], 'konsol: ' + errors.slice(0, 2).join(' / ').slice(0, 300))
   assert.deepEqual(external, [], 'externa anrop: ' + external.slice(0, 2).join(' '))
