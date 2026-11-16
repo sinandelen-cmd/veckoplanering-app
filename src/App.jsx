@@ -1517,7 +1517,6 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   // Knuten till vilken planering budgeten gäller, så att en annan planering börjar om från få veckor utan setState i effekt.
   const [weekRenderState, setWeekRenderState] = useState({ key: null, count: 3 })
   const [weekContentOverrides, setWeekContentOverrides] = useState({})
-  const [pinnedChapter, setPinnedChapter] = useState(null)
 
   // Fast rubrik i själva planeringen: samma stora kapitelruta, uppdaterad
   // efter den vecka som befinner sig under rubriken vid scroll åt båda håll.
@@ -1562,11 +1561,10 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   }, [teacherTab, showPastTeacherWeeks, focusedTeacherWeek, pastWeeksExpanded])
 
   useEffect(() => {
-    if (teacherTab !== "arsplan") { setPinnedChapter(null); return undefined }
+    if (teacherTab !== "arsplan") return undefined
     const update = () => {
       const toolbar = document.querySelector('#lararvy .teacher-year-review-bar')
-      const sections = document.querySelectorAll('#lararvy .teacher-chapter-section')
-      if (!toolbar || !sections.length) { setPinnedChapter(null); return }
+      if (!toolbar) return
       const header = document.querySelector('.planning-layout > .planning-unified-navigation')
       const headerBottom = header ? Math.max(0, header.getBoundingClientRect().bottom) : 0
       const reviewRect = toolbar.closest('.teacher-year-review')?.getBoundingClientRect()
@@ -1578,23 +1576,6 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       }
       setRootVar('--teacher-pinned-top', (headerBottom + toolbarHeight) + 'px')
       setRootVar('--teacher-review-sticky-top', headerBottom + 'px')
-      let found = null
-      for (const section of sections) {
-        const rect = section.getBoundingClientRect()
-        const heading = section.querySelector(':scope > .chapter-heading')
-        if (heading && rect.top <= boundary && rect.bottom > boundary) {
-          found = { name: heading.textContent.trim(), tone: heading.className.match(/chapter-tone-[0-9]+/)?.[0] || '' }
-          break
-        }
-      }
-      if (!found) {
-        const first = sections[0]
-        const last = sections[sections.length - 1]
-        const candidate = first.getBoundingClientRect().top > boundary ? first : last
-        const heading = candidate.querySelector(':scope > .chapter-heading')
-        if (heading) found = { name: heading.textContent.trim(), tone: heading.className.match(/chapter-tone-[0-9]+/)?.[0] || '' }
-      }
-      setPinnedChapter(prev => prev?.name === found?.name && prev?.tone === found?.tone ? prev : found)
     }
     // Scroll-uppdateringar samlas i en bildruta så att layoutläsningar inte körs flera gånger per frame.
     let frame = 0
@@ -2528,7 +2509,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         <div className="teacher-review-actions">
         </div>
       </div>
-      {<div className="teacher-pinned-chapter-shell" aria-label="Aktuellt kapitel"><div className={`teacher-pinned-chapter-heading ${pinnedChapter?.tone || ""}`}>{pinnedChapter?.name || "Kapitel"}</div>{pinnedChapter?.name && <ChapterVocabulary chapter={pinnedChapter.name} weeks={weeks.filter(week => (week.chapter?.trim() || "Utan kapitel") === pinnedChapter.name)} />}</div>}
+      {/* Aktuellt kapitel visas inte längre som fastklistrad rubrik. Kapitelrubriken ligger kvar i sitt kapitel. */}
       {!focusedTeacherWeek && pastTeacherWeeks.length > 0 && <div className="teacher-past-weeks-banner">
         <div className="teacher-past-weeks-banner-copy"><strong>✓ Klara veckor</strong><span>{pastTeacherWeeks.length} passerade veckor är dolda</span></div>
         <button type="button" className="teacher-past-weeks-toggle" aria-expanded={pastWeeksExpanded} onClick={() => {setPastWeeksExpanded(value => !value); if (!showPastTeacherWeeks) setShowPastTeacherWeeks(true)}}>{pastWeeksExpanded ? 'Dölj passerade veckor' : 'Visa passerade veckor'}</button>
@@ -2572,9 +2553,13 @@ const addNewTeacherWeek = () => setPlan(p => {
       {!simpleSetup && <details className="material-disclosure"><summary>Material till planeringen ({(plan.materials || []).length} filer{pasteText.trim() ? ' + inklistrad text' : ''})</summary>{materialPanel()}{pendingImport && <div className="import-preview"><h3>Förhandsgranska: {pendingImport.source}</h3><p>Granska innan du använder importen.</p>{pendingImport.weeksData.slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'auto' }}>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length })); setPendingImport(null); setStatus('Underlaget har lagts in i grundplaneringen. Klicka Spara för att behålla ändringarna.') }}>Använd import</button><button type="button" className="secondary" onClick={() => setPendingImport(null)}>Avbryt</button></div></div>}</details>}
       <div className={`teacher-months ${focusedTeacherWeek ? "teacher-months-focused" : ""} ${focusedTeacherWeek && teacherWeekOverview ? "teacher-months-overview-hidden" : ""} ${showPastTeacherWeeks && !focusedTeacherWeek ? "teacher-months-all-weeks" : ""} `}>
         {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? teacherDisplayWeeks : defaultTeacherWindow)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
+          // I tvåveckorsvyn ligger de två veckorna i en och samma grid, även om de tillhör olika kapitel.
+          // Annars hamnar den andra veckan under den första i stället för bredvid den.
           const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
-          if (!chapters[chapterName]) chapters[chapterName] = { name: chapterName, items: [] }
-          chapters[chapterName].items.push(item)
+          const flatWindow = !showPastTeacherWeeks && !focusedTeacherWeek
+          const groupKey = flatWindow ? '__tvåveckorsfönster__' : chapterName
+          if (!chapters[groupKey]) chapters[groupKey] = { name: chapterName, items: [] }
+          chapters[groupKey].items.push(item)
           return chapters
         }, {})).map(group => <section className="teacher-month-section teacher-chapter-section" data-chapter={group.name} key={group.name}>
           <div className="teacher-chapter-sticky"><h3 className={`chapter-heading chapter-tone-${chapterTone(group.name)}`}>{group.name}</h3>{group.name !== "Utan kapitel" && <ChapterVocabulary chapter={group.name} weeks={group.items.map(item => item.week)} />}</div>

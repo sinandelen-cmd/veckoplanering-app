@@ -154,3 +154,34 @@
 #lararvy .teacher-collapsible-week.week-card .lesson > .lesson-reorder-controls,
 #lararvy .teacher-collapsible-week.week-card .lesson > .lesson-heading-history,
 #lararvy .teacher-collapsible-week.week-card .lesson > button.remove-small { flex: 0 0 auto; }
+
+/* Kapitelrubrik och begrepp följer sitt eget kapitel när man scrollar. Ingen sticky eller fixed kapitelrad. */
+#lararvy .teacher-chapter-section > .chapter-heading,
+#lararvy .teacher-chapter-section .teacher-chapter-sticky,
+#lararvy .teacher-chapter-sticky,
+#lararvy .teacher-chapter-sticky .chapter-heading,
+#lararvy .teacher-months .teacher-chapter-sticky {
+  position: static !important;
+  top: auto !important;
+  z-index: auto !important;
+  transform: none !important;
+}
+/* Den fasta kapitelraden som fylldes med kapitelnamn vid scroll tas bort. */
+#lararvy .teacher-active-chapter-bar,
+#lararvy .teacher-pinned-chapter-shell { display: none !important; }
+/* Samma sak med högre specificitet, eftersom äldre regler i kaskaden visar baren. */
+#lararvy section.teacher-year-review .teacher-active-chapter-bar,
+#lararvy .teacher-year-review .teacher-active-chapter-bar.teacher-active-chapter-bar { display: none !important; }
+/* Kapitelrubriken visas i sitt eget kapitel i Visa alla veckor. Den rullar med veckorna och är inte fastklistrad. */
+#lararvy .teacher-year-review .teacher-months.teacher-months-all-weeks .teacher-chapter-sticky {
+  display: block !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  position: static !important;
+  padding: 0 !important;
+  margin: 0 0 8px !important;
+  border: 0 !important;
+}
+/* Sista regeln för den fasta kapitelbaren, med samma specificitet som den regel som visar den. */
+#lararvy .expanded-weeks-inline > .teacher-year-review:has(> .teacher-active-chapter-bar) > .teacher-active-chapter-bar { display: none !important; }
