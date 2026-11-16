@@ -1447,7 +1447,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [pastWeeksExpanded, setPastWeeksExpanded] = useState(false)
   const [allWeekContentsOpen, setAllWeekContentsOpen] = useState(true)
   // Hur många veckors innehåll som ritas. Resten ritas i små steg i stället för allt på en gång när planen öppnas.
-  const [weekRenderBudget, setWeekRenderBudget] = useState(3)
+  // Knuten till vilken planering budgeten gäller, så att en annan planering börjar om från få veckor utan setState i effekt.
+  const [weekRenderState, setWeekRenderState] = useState({ planId: null, count: 3 })
   const [weekContentOverrides, setWeekContentOverrides] = useState({})
   const [pinnedChapter, setPinnedChapter] = useState(null)
 
@@ -1675,13 +1676,13 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const weeks = useMemo(() => displayWeeks(plan), [plan])
   const classSchedulePlan = useMemo(() => ({ ...plan, weeksData: weeks }), [plan, weeks])
   const teacherDisplayWeeks = useMemo(() => weeks.map((week, index) => ({week, index})), [weeks]) // Alla veckor finns kvar; passerade veckor kan fällas ut kapitelvis
-  // Ny planering: börja om med få veckor och lägg sedan till 3 veckor per steg tills alla visar sitt innehåll.
-  useEffect(() => { setWeekRenderBudget(3) }, [selectedId])
+  // Ny planering börjar med få veckor. Sedan fördubblas antalet veckor som ritas, tills alla visar sitt innehåll.
+  const weekRenderBudget = weekRenderState.planId === selectedId ? weekRenderState.count : 3
   useEffect(() => {
     if (weekRenderBudget >= weeks.length) return undefined
-    const timer = setTimeout(() => setWeekRenderBudget(count => Math.min(weeks.length, count * 2)), 16)
+    const timer = setTimeout(() => setWeekRenderState({ planId: selectedId, count: Math.min(weeks.length, weekRenderBudget * 2) }), 16)
     return () => clearTimeout(timer)
-  }, [weekRenderBudget, weeks.length])
+  }, [weekRenderBudget, weeks.length, selectedId])
   const pastTeacherWeeks = teacherDisplayWeeks.filter(({week}) => week.weekStart && week.weekStart < mondayOf(new Date()))
   const upcomingTeacherWeeks = teacherDisplayWeeks.filter(({week}) => !week.weekStart || week.weekStart >= mondayOf(new Date()))
   // Standardvyn visar tre veckor: föregående, nuvarande och nästa (utan att användaren behöver klicka "Alla veckor").
