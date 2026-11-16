@@ -185,3 +185,25 @@
 }
 /* Sista regeln för den fasta kapitelbaren, med samma specificitet som den regel som visar den. */
 #lararvy .expanded-weeks-inline > .teacher-year-review:has(> .teacher-active-chapter-bar) > .teacher-active-chapter-bar { display: none !important; }
+
+/* Platshållare för en saknad vecka i tvåveckorsläget. Ser ut som ett A4-papper, men innehåller ingen vecka. */
+#lararvy .teacher-months .paper-missing-week {
+  width: 100%;
+  max-width: 210mm;
+  aspect-ratio: 210 / 297;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 28px 32px;
+  background: #ffffff;
+  border: 2px dashed #8a98a6;
+  border-radius: 3px;
+  color: #35506a;
+  text-align: center;
+}
+#lararvy .teacher-months .paper-missing-week strong { font-size: 1.15rem; }
+#lararvy .teacher-months .paper-missing-week span { color: #5b6f82; }
+@media print { #lararvy .paper-missing-week { display: none !important; } }
