@@ -1440,7 +1440,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [teacherWeekOverview, setTeacherWeekOverview] = useState(true)
   const [simpleSetup, setSimpleSetup] = useState(true)
   const [simpleMore, setSimpleMore] = useState(false)
-  const [teacherTab, setTeacherTab] = useState("mina")
+  const [teacherTab, setTeacherTab] = useState("bibliotek")
   const [showPastTeacherWeeks, setShowPastTeacherWeeks] = useState(true)
   const [pastWeeksExpanded, setPastWeeksExpanded] = useState(false)
   const [allWeekContentsOpen, setAllWeekContentsOpen] = useState(true)
