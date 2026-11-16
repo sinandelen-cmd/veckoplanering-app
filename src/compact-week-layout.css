@@ -90,7 +90,8 @@
 #lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .teacher-chapter-sticky{display:none!important}
 #lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .teacher-month-weeks{display:contents!important}
 #lararvy .teacher-months.teacher-months-all-weeks{display:block!important;max-height:none!important;overflow:visible!important}
-#lararvy .teacher-months.teacher-months-all-weeks .teacher-month-weeks{display:grid!important;grid-template-columns:minmax(0,1fr)!important;max-height:none!important;overflow:visible!important}
+#lararvy .teacher-months.teacher-months-all-weeks .teacher-month-weeks{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;max-height:none!important;overflow:visible!important}
+@media (max-width:699px){#lararvy .teacher-months.teacher-months-all-weeks .teacher-month-weeks{grid-template-columns:minmax(0,1fr)!important}}
 #lararvy .teacher-months.teacher-months-all-weeks .chapter-week-group{width:100%!important;max-width:none!important}
 
 

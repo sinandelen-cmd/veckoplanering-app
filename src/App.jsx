@@ -1001,9 +1001,9 @@ function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson, classWee
 
 // Veckans innehåll byggs först när veckan är nära skärmen (eller när planen skrivs ut).
 // Annars skapas tusentals fält för alla veckor direkt när planen öppnas.
-function LazyWeekContent({ render }) {
+function LazyWeekContent({ render, eager = false }) {
   const ref = useRef(null)
-  const [shown, setShown] = useState(false)
+  const [shown, setShown] = useState(eager)
   useEffect(() => {
     if (shown) return undefined
     const show = () => setShown(true)
@@ -2462,7 +2462,7 @@ const addNewTeacherWeek = () => setPlan(p => {
           {!(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) && <strong className="teacher-collapsed-week-label">Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>}
 
           </div>
-          {(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) && <LazyWeekContent render={() => <div className="teacher-week-collapsible-content">
+          {(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) && <LazyWeekContent eager={showPastTeacherWeeks && !focusedTeacherWeek} render={() => <div className="teacher-week-collapsible-content">
           <div className="week-top" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}><strong style={{ fontSize: "1.45rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 5 }}>Vecka <input type="text" inputMode="numeric" pattern="[0-9]*" aria-label="Ändra veckonummer" key={`${week.weekStart}-${week.weekNumber}`} style={{ width: "3.3ch", minWidth: 66, fontSize: "1.45rem", fontWeight: 800, padding: "4px 6px" }} defaultValue={calendarWeekNumber(week.weekStart) ?? week.weekNumber} title="Skriv veckonummer direkt och tryck Enter" onFocus={e => e.target.select()} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') { e.currentTarget.value = String(calendarWeekNumber(week.weekStart) ?? week.weekNumber); e.currentTarget.blur() } }} onBlur={e => {
             const target = Number(e.target.value.trim())
             const current = calendarWeekNumber(week.weekStart)

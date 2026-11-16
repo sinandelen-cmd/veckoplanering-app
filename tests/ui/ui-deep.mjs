@@ -79,6 +79,21 @@ await check('detalj som startar öppen (vecka med sidor) kan stängas och stäng
   assert.equal(await target.evaluate(d => d.open), false, 'stängningen ska bestå efter omrendering')
 })
 
+await check('Visa alla veckor: två kolumner och alla 21 veckor visar sitt innehåll', async () => {
+  await page.locator('button:visible', { hasText: 'Dölj alla veckor' }).first().click().catch(() => {})
+  await page.waitForTimeout(300)
+  await page.locator('button:visible', { hasText: 'Visa alla veckor' }).first().click()
+  await page.waitForTimeout(800)
+  const m = await page.evaluate(() => {
+    const cards = [...document.querySelectorAll('.week-card')].map(e => { const r = e.getBoundingClientRect(); return { x: Math.round(r.left), h: Math.round(r.height), lessons: e.querySelectorAll('.lesson').length } }).filter(c => c.h > 0)
+    return { cards: cards.length, columns: new Set(cards.map(c => c.x)).size, empty: cards.filter(c => c.lessons === 0).length, placeholders: document.querySelectorAll('.teacher-week-lazy-placeholder').length }
+  })
+  assert.equal(m.cards, 21, 'alla 21 veckor ska finnas')
+  assert.equal(m.columns, 2, 'exakt två kolumner')
+  assert.equal(m.empty, 0, 'inga tomma veckor')
+  assert.equal(m.placeholders, 0, 'inga kvarvarande placeholders')
+})
+
 await check('klassbyte fungerar upprepade gånger och Grundplanering går att återgå till', async () => {
   const times = []
   for (let i = 0; i < 6; i++) {
