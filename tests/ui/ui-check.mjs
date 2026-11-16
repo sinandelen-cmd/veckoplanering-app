@@ -36,6 +36,15 @@ await page.goto(base + '/', { waitUntil: 'networkidle' })
 await check('startsida visar fiktiv lärare och planeringar', async () => {
   await page.getByText('Mina planeringar').first().waitFor({ timeout: 10000 })
 })
+await check('efter inloggning och efter omladdning: mapparna visas direkt, ingen startsida', async () => {
+  for (const phase of ['första laddning', 'omladdning']) {
+    if (phase === 'omladdning') await page.reload({ waitUntil: 'networkidle' })
+    await page.waitForTimeout(600)
+    const text = await page.locator('body').innerText()
+    assert.ok(text.includes('Grundskola') && text.includes('Gymnasiet'), phase + ': mapparna Grundskola och Gymnasiet saknas')
+    assert.ok(!text.includes('Vad vill du göra?'), phase + ': startsidan visas fortfarande')
+  }
+})
 await page.getByText('Mina planeringar').first().click()
 await page.getByText('Övriga planeringar').first().click().catch(() => {})
 await page.getByText('Testämne', { exact: false }).first().click().catch(() => {})
