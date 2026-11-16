@@ -8282,3 +8282,52 @@ body > .class-full-week-backdrop .week-modal-navigation button:disabled{opacity:
     gap: 1.5mm !important;
   }
 }
+
+/* Lärarens utskrift: elevvyns A4-sidor (en vecka per sida). Hosten mäts på skärmen men syns inte. */
+.teacher-print-host { position:absolute; left:-10000px; top:0; width:192mm; height:0; overflow:hidden; visibility:hidden; pointer-events:none; }
+@media print {
+  .teacher-print-host { position:static !important; left:auto !important; width:auto !important; height:auto !important; overflow:visible !important; visibility:visible !important; pointer-events:auto; }
+}
+/* Lärarens utskrift: skriv bara ut elevutskriften, inte lärarens topbar, meny eller planeringsvy. */
+@media print {
+  body:has(.teacher-print-host) .planning-layout > :not(#lararvy) { display:none !important; }
+  body:has(.teacher-print-host) #lararvy > :not(.teacher-print-host) { display:none !important; }
+}
+/* Kontoinformation på skärmen ska inte skrivas ut på varje utskriftssida. */
+@media print { .account-validity-notice { display:none !important; } }
+
+/* Kompakt A4-layout för elevutskriften. Lektionsmallen är oförändrad: samma rubriker, moment, sidor och uppgifter,
+   i samma tre kolumner på samma rad. Ändringarna gäller bara mellanrum och utfyllnad i utskriften:
+   - inget reserverat utrymme för knappar som döljs i utskrift (34 px under momentnamnet)
+   - ingen sträckning av celler, så att korta celler inte blir lika höga som långa
+   - tätare marginaler mellan moment och lektioner */
+@media print {
+  .student-print-page .topic { padding: 2mm 0 !important; margin: 2mm 0 0 !important; }
+  .student-print-page .topic-grid { align-items: start !important; align-content: start !important; gap: 1.5mm !important; }
+  .student-print-page .topic-name { padding: 1.5mm 2mm 1mm !important; }
+  .student-print-page .topic-column { align-self: start !important; padding: 1.5mm !important; }
+  .student-print-page .topic-cell { flex: 0 0 auto !important; height: auto !important; min-height: 0 !important; max-height: none !important; }
+  .student-print-page .lesson { padding: 1.5mm !important; }
+  .student-print-page .lessons { gap: 1.5mm !important; margin: 1.5mm 0 !important; }
+}
+
+/* Stark specificitet så att komprimeringen vinner över äldre utskriftsregler. */
+@media print {
+  .student-print-page .topic-grid .topic-name { padding: 1.5mm 2mm 1mm !important; }
+  .student-print-page .topic-grid .topic-name .topic-name-display { font-size: 11pt !important; line-height: 1.35 !important; }
+  .student-print-page .topic-grid .topic-links.moment-inner-links { padding: 0 0 0 0 !important; margin: 0.5mm 0 0 !important; }
+}
+
+/* Samma selektorer som lärarens planeringsvy (#lararvy), så att utskriften vinner över reserverad knappyta.
+   Knapparna syns inte i utskrift, så det reserverade utrymmet (34 px) tas bort. */
+@media print {
+  #lararvy .student-print-page .lesson .topic-grid > .topic-name { padding: 1.5mm 2mm 1mm !important; }
+  #lararvy .student-print-page .lesson .topic-grid > .topic-name > .moment-inner-links { padding-right: 0 !important; margin-top: 0.5mm !important; }
+  #lararvy .student-print-page .lesson .topic-grid > .topic-name .topic-name-display { font-size: 11pt !important; line-height: 1.35 !important; }
+}
+
+/* Cellinnehåll (sida och uppgift) i utskrift: samma typografi som momentnamn, mindre padding och ingen minsta höjd. */
+@media print {
+  #lararvy .student-print-page .lesson .topic-cell span { font-size: 11pt !important; line-height: 1.35 !important; padding: 1.2mm 1.5mm !important; min-height: 0 !important; }
+  #lararvy .student-print-page .lesson .topic-grid > .topic-name { padding-bottom: 1mm !important; }
+}

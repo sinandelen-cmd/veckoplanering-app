@@ -12,7 +12,8 @@
     "test": "for f in tests/*-check.mjs tests/static-check.mjs tests/workflow-guard-check.mjs; do node \"$f\" >/dev/null || exit 1; done && echo 'Alla kontroller: OK'",
     "test:print": "node tests/print/a4-fit-check.mjs",
     "test:ui": "node tests/ui/ui-check.mjs",
-    "test:ui:deep": "node tests/ui/ui-deep.mjs"
+    "test:ui:deep": "node tests/ui/ui-deep.mjs",
+    "test:ui:weeks": "node tests/ui/ui-weeks.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
