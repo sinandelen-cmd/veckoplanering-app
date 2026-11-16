@@ -152,7 +152,10 @@ await check('lärarens utskriftsknapp skriver ut elevvyns A4-sidor (en vecka per
   await page.locator('button:visible', { hasText: '🖨' }).first().click()
   await page.waitForFunction(() => window.__printCalls > 0, null, { timeout: 15000 })
   const pages = await page.evaluate(() => document.querySelectorAll('.teacher-print-host .student-print-page').length)
-  assert.ok(pages >= 21, 'utskriftssidor saknas: ' + pages)
+  // Utskriften följer elevvyns synlighet (passerade och dolda veckor skrivs inte ut),
+  // så antalet sidor ska vara minst en per synlig vecka i Grundplanering.
+  const visibleWeeks = await page.evaluate(() => new Set([...document.querySelectorAll('.teacher-print-host [data-print-week]')].map(e => e.getAttribute('data-print-week'))).size)
+  assert.ok(pages >= 1 && pages >= visibleWeeks, 'utskriftssidor: ' + pages + ', veckor: ' + visibleWeeks)
   const banners = await page.evaluate(() => document.querySelectorAll('.teacher-print-host .account-validity-notice').length)
   assert.equal(banners, 0, 'kontobanner ska inte finnas i utskriften')
 })
