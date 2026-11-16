@@ -1,0 +1,84 @@
+/* Grundplanering: varje vecka visas som ett stående A4-papper (210 × 297 mm).
+   Laddas sist, efter övriga stilmallar, så att den gäller oavsett äldre regler.
+   - Vanligt läge: två papper bredvid varandra.
+   - Visa alla veckor: ett papper per rad.
+   - Papperet växer i höjd om innehållet inte ryms. Ingen text klipps. */
+
+#lararvy .teacher-months .teacher-month-weeks {
+  background: #dfe5eb !important;
+  border-radius: 10px !important;
+  padding: 18px !important;
+}
+
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) .teacher-month-weeks {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 22px !important;
+  align-items: start !important;
+}
+
+#lararvy .teacher-months.teacher-months-all-weeks .teacher-month-weeks {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  justify-items: center !important;
+  gap: 22px !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+#lararvy .teacher-months .teacher-month-weeks > .chapter-week-group {
+  width: 100% !important;
+  max-width: 210mm !important;
+  min-width: 0 !important;
+}
+
+#lararvy .teacher-months .teacher-collapsible-week.week-card {
+  background: #ffffff !important;
+  border: 1px solid #8a98a6 !important;
+  border-radius: 3px !important;
+  box-shadow: 0 1px 2px rgba(15, 30, 45, 0.14), 0 8px 22px rgba(15, 30, 45, 0.16) !important;
+  padding: 28px 32px !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: 210mm !important;
+  box-sizing: border-box !important;
+  aspect-ratio: 210 / 297;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+@media (max-width: 699px) {
+  #lararvy .teacher-months:not(.teacher-months-focused) .teacher-month-weeks {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  #lararvy .teacher-months .teacher-collapsible-week.week-card {
+    aspect-ratio: auto;
+    padding: 18px 16px !important;
+  }
+}
+
+/* Knappen för lektionszoom syns bara på skärmen. */
+#lararvy .lesson-zoom-open {
+  margin-left: auto;
+  min-height: 34px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid #b9c7d4;
+  background: #f4f8fb;
+  color: #2d4a63;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#lararvy .lesson-zoom-open:hover { background: #e4edf5; }
+
+@media print {
+  #lararvy .teacher-collapsible-week.week-card { box-shadow: none !important; border: 0 !important; }
+  #lararvy .lesson-zoom-open { display: none !important; }
+}
+
+/* Den yttre griden för månader/kapitel ska bara ha en kolumn. Annars hamnar veckorna i halva bredden. */
+#lararvy .teacher-months:not(.teacher-months-focused):not(.teacher-months-all-weeks) {
+  grid-template-columns: minmax(0, 1fr) !important;
+}

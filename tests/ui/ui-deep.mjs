@@ -67,6 +67,9 @@ await check('öppna/stäng-val i ihopfällbar detalj består efter omrendering',
 })
 
 await check('detalj som startar öppen (vecka med sidor) kan stängas och stängningen består', async () => {
+  // Detaljer som startar öppna finns i Visa alla veckor, så den vyn öppnas först.
+  await page.locator('button:visible', { hasText: 'Visa alla veckor' }).first().click({ timeout: 2000 }).catch(() => {})
+  await page.waitForTimeout(400)
   const all = page.locator('details.legacy-week-details')
   const n = await all.count()
   let target = null
@@ -79,7 +82,7 @@ await check('detalj som startar öppen (vecka med sidor) kan stängas och stäng
   assert.equal(await target.evaluate(d => d.open), false, 'stängningen ska bestå efter omrendering')
 })
 
-await check('Visa alla veckor: två kolumner och alla 21 veckor visar sitt innehåll', async () => {
+await check('Visa alla veckor: en vecka per rad och alla 21 veckor visar sitt innehåll', async () => {
   await page.locator('button:visible', { hasText: 'Dölj alla veckor' }).first().click().catch(() => {})
   await page.waitForTimeout(300)
   await page.locator('button:visible', { hasText: 'Visa alla veckor' }).first().click()
@@ -89,7 +92,7 @@ await check('Visa alla veckor: två kolumner och alla 21 veckor visar sitt inneh
     return { cards: cards.length, columns: new Set(cards.map(c => c.x)).size, empty: cards.filter(c => c.lessons === 0).length, placeholders: document.querySelectorAll('.teacher-week-lazy-placeholder').length }
   })
   assert.equal(m.cards, 21, 'alla 21 veckor ska finnas')
-  assert.equal(m.columns, 2, 'exakt två kolumner')
+  assert.equal(m.columns, 1, 'exakt en vecka per rad')
   assert.equal(m.empty, 0, 'inga tomma veckor')
   assert.equal(m.placeholders, 0, 'inga kvarvarande placeholders')
   // Vanlig sidscrollning: sidan ska gå att scrolla och den inre rutan får inte ha egen scroll.
@@ -99,6 +102,40 @@ await check('Visa alla veckor: två kolumner och alla 21 veckor visar sitt inneh
   for (let i = 0; i < 6; i++) { await page.mouse.wheel(0, 900); await page.waitForTimeout(100) }
   const y1 = await page.evaluate(() => window.scrollY)
   assert.ok(y1 > y0 + 800, 'sidan ska scrolla: ' + (y1 - y0) + ' px')
+})
+
+await check('Grundplanering: två papper, pilar i steg om två veckor, A4-proportion och lektionszoom', async () => {
+  await page.locator('button:visible', { hasText: 'Dölj alla veckor' }).first().click({ timeout: 2000 }).catch(() => {})
+  await page.waitForTimeout(400)
+  const geometry = () => page.$$eval('.week-card.teacher-collapsible-week', els => els.filter(e => e.getBoundingClientRect().width > 0).map(e => { const r = e.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height, wk: e.closest('[data-week]')?.getAttribute('data-week') } }))
+  const visibleWeeks = async () => (await geometry()).map(g => g.wk)
+  const startGeo = await geometry()
+  assert.equal(startGeo.length, 2, 'två veckor i startläget')
+  assert.ok(Math.abs(startGeo[0].y - startGeo[1].y) < 5 && startGeo[1].x > startGeo[0].x + startGeo[0].w, 'två papper bredvid varandra')
+  assert.ok(startGeo.every(g => g.w <= 800), 'papperet är högst 210 mm (ca 794 px)')
+  assert.ok(startGeo.every(g => g.h >= g.w * 297 / 210 - 2), 'papperet är minst A4-proportion (297/210)')
+  // Hela veckoordningen från "Visa alla veckor", sedan pilarna i steg om två.
+  await page.locator('button:visible', { hasText: 'Visa alla veckor' }).first().click({ timeout: 2000 }).catch(() => {})
+  await page.waitForTimeout(600)
+  const order = (await geometry()).map(g => g.wk)
+  await page.locator('button:visible', { hasText: 'Dölj alla veckor' }).first().click({ timeout: 2000 }).catch(() => {})
+  await page.waitForTimeout(400)
+  const first = await visibleWeeks()
+  const idx = order.indexOf(first[0])
+  assert.ok(idx >= 0, 'startveckan finns i ordningen')
+  await page.locator('button[aria-label="Nästa vecka"]').first().click(); await page.waitForTimeout(300)
+  const next = await visibleWeeks()
+  assert.equal(order.indexOf(next[0]), idx + 2, 'nästa pil flyttar två veckor: ' + first + ' → ' + next)
+  await page.locator('button[aria-label="Föregående vecka"]').first().click(); await page.waitForTimeout(300)
+  assert.deepEqual(await visibleWeeks(), first, 'föregående pil går tillbaka till samma två veckor')
+  // Lektionszoom: öppna, stäng, samma scrollposition och samma veckor.
+  const scroll0 = await page.evaluate(() => window.scrollY)
+  await page.locator('.lesson-zoom-open').first().click()
+  await page.waitForSelector('.smart-lesson-dialog', { timeout: 3000 })
+  await page.locator('.smart-lesson-dialog-header button').first().click(); await page.waitForTimeout(200)
+  assert.equal(await page.locator('.smart-lesson-dialog').count(), 0, 'lektionszoomen ska stängas')
+  assert.ok(Math.abs((await page.evaluate(() => window.scrollY)) - scroll0) < 2, 'scrollpositionen ska vara samma efter stängning')
+  assert.deepEqual(await visibleWeeks(), first, 'samma veckor efter stängning av lektionszoom')
 })
 
 await check('klassbyte fungerar upprepade gånger och Grundplanering går att återgå till', async () => {

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 import './compact-week-layout.css'
+import './paper-layout.css'
 import { startAutoUpdate } from './appVersion.js'
 
 startAutoUpdate()

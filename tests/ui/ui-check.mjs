@@ -52,7 +52,8 @@ await page.getByText('Fiktiv testplanering').first().click()
 await page.waitForSelector('.week-card', { timeout: 10000 })
 
 await check('Grundplanering (översikt): två veckor sida vid sida', async () => {
-  await page.locator('button', { hasText: 'Dölj alla veckor' }).first().click()
+  // Startläget är tvåveckorsvyn. Om en tidigare kontroll har öppnat alla veckor, gå tillbaka först.
+  await page.locator('button:visible', { hasText: 'Dölj alla veckor' }).first().click({ timeout: 1500 }).catch(() => {})
   await page.waitForTimeout(500)
   const cards = await page.$$eval('.week-card', els => els.map(e => { const r = e.getBoundingClientRect(); return { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width) } }).filter(c => c.w > 0))
   assert.equal(cards.length, 2, 'två veckokort förväntas')
