@@ -131,3 +131,12 @@
     pointer-events: auto !important;
   }
 }
+
+/* Visa alla veckor: vanlig sidscrollning i stället för en fast ruta med intern scroll.
+   Fokuserad vecka behåller den stabila scrollarkitekturen ovan. */
+#lararvy .expanded-weeks-inline>.teacher-year-review:has(>.teacher-active-chapter-bar):has(.teacher-months.teacher-months-all-weeks){
+  height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;
+}
+#lararvy .expanded-weeks-inline>.teacher-year-review:has(>.teacher-active-chapter-bar):has(.teacher-months.teacher-months-all-weeks)>.teacher-months{
+  flex:none!important;height:auto!important;max-height:none!important;overflow:visible!important;
+}

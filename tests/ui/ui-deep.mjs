@@ -92,6 +92,13 @@ await check('Visa alla veckor: två kolumner och alla 21 veckor visar sitt inneh
   assert.equal(m.columns, 2, 'exakt två kolumner')
   assert.equal(m.empty, 0, 'inga tomma veckor')
   assert.equal(m.placeholders, 0, 'inga kvarvarande placeholders')
+  // Vanlig sidscrollning: sidan ska gå att scrolla och den inre rutan får inte ha egen scroll.
+  const innerOverflow = await page.evaluate(() => getComputedStyle(document.querySelector('.teacher-months-all-weeks')).overflowY)
+  assert.notEqual(innerOverflow, 'auto', 'inre scrollruta i Visa alla veckor')
+  const y0 = await page.evaluate(() => window.scrollY)
+  for (let i = 0; i < 6; i++) { await page.mouse.wheel(0, 900); await page.waitForTimeout(100) }
+  const y1 = await page.evaluate(() => window.scrollY)
+  assert.ok(y1 > y0 + 800, 'sidan ska scrolla: ' + (y1 - y0) + ' px')
 })
 
 await check('klassbyte fungerar upprepade gånger och Grundplanering går att återgå till', async () => {
