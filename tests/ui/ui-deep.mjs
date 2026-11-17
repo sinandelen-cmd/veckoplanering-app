@@ -151,30 +151,17 @@ await check('Grundplanering: två veckor från olika kapitel ligger bredvid vara
   assert.ok(geo[1].x > geo[0].x + geo[0].w - 2, 'andra veckan ligger inte till höger om den första')
 })
 
-await check('kapitelrubriker och begrepp är inte fastklistrade vid scroll', async () => {
+await check('ingen fast kapitelbar vid scroll; kapitelrubriken är sticky bara inom sitt eget kapitel', async () => {
   await page.locator('button:visible', { hasText: 'Visa alla veckor' }).first().click({ timeout: 2000 }).catch(() => {})
   await page.waitForFunction(() => document.querySelectorAll('.week-card').length >= 21, null, { timeout: 8000 }).catch(() => {})
   await page.waitForTimeout(300)
-  // Ingen synlig kapitelyta får vara sticky eller fixed.
-  const stuckStyle = await page.evaluate(() => [...document.querySelectorAll('#lararvy .chapter-heading, #lararvy .teacher-chapter-sticky, #lararvy .teacher-chapter-sticky *, #lararvy .teacher-active-chapter-bar, #lararvy .teacher-pinned-chapter-shell, #lararvy .teacher-pinned-chapter-heading')].filter(e => e.getBoundingClientRect().height > 0).map(e => ({ cls: String(e.className).slice(0, 40), pos: getComputedStyle(e).position })).filter(p => p.pos === 'sticky' || p.pos === 'fixed'))
-  assert.deepEqual(stuckStyle, [], 'fastklistade kapitelelement: ' + JSON.stringify(stuckStyle.slice(0, 3)))
-  // Den fasta kapitelraden (som fylls med kapitelnamn och begrepp vid scroll) får inte synas.
+  await page.evaluate(() => window.scrollTo(0, 1200)); await page.waitForTimeout(200)
+  // Den gamla fasta kapitelbaren och den pinnade rutan får inte synas.
   const fixedChapterRow = await page.evaluate(() => [...document.querySelectorAll('#lararvy .teacher-active-chapter-bar, #lararvy .teacher-pinned-chapter-shell')].filter(e => e.getBoundingClientRect().height > 0).length)
   assert.equal(fixedChapterRow, 0, 'en fast kapitelrad syns fortfarande vid scroll: ' + fixedChapterRow)
-  // Behavioural: synliga kapitelelement måste flytta sig lika mycket som sidan när man scrollar.
-  // Scrolla in i listan först, så att en eventuell fastklistrad rubrik hinner uppdateras.
-  await page.evaluate(() => window.scrollTo(0, 1200)); await page.waitForTimeout(300)
-  await page.evaluate(() => { window.__chapterEls = [...document.querySelectorAll('#lararvy .chapter-heading, #lararvy .teacher-pinned-chapter-heading, #lararvy .teacher-pinned-chapter-shell, #lararvy .teacher-active-chapter-bar')].filter(e => e.getBoundingClientRect().height > 0) })
-  await page.waitForTimeout(150)
-  const before = await page.evaluate(() => window.__chapterEls.map(e => e.getBoundingClientRect().top))
-  assert.ok(before.length > 0, 'inga synliga kapitelelement att följa')
-  await page.evaluate(() => window.scrollBy(0, 400)); await page.waitForTimeout(150)
-  const moves = await page.evaluate(() => window.__chapterEls.map(e => { const r = e.getBoundingClientRect(); return { h: r.height, top: r.top } }))
-  moves.forEach((m, i) => {
-    if (m.h === 0) return
-    const moved = before[i] - m.top
-    assert.ok(Math.abs(moved - 400) < 3, 'kapitelelement ' + i + ' rör sig inte med sidan: flyttade ' + Math.round(moved) + ' px av 400')
-  })
+  // Sticky-rubriker får bara vara kapitelbehållare inne i sin egen kapitelsektion.
+  const outside = await page.evaluate(() => [...document.querySelectorAll('#lararvy .chapter-heading, #lararvy .teacher-chapter-sticky')].filter(e => e.getBoundingClientRect().height > 0 && getComputedStyle(e).position === 'sticky' && !e.closest('.teacher-chapter-section')).length)
+  assert.equal(outside, 0, 'sticky kapitelrubrik utanför sin sektion: ' + outside)
 })
 
 await check('A4-papper har tydlig ram och skugga och innehållet syns', async () => {
