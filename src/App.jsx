@@ -1600,9 +1600,13 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       }
       setRootVar('--teacher-pinned-top', (headerBottom + toolbarHeight) + 'px')
       setRootVar('--teacher-review-sticky-top', headerBottom + 'px')
-      // Kapitelrubriken fastnar precis under den övre bannern (som är högre än navigeringen).
+      // Staplade fasta rader: navigeringen överst (--planning-nav-h), verktygsraden direkt under den,
+      // och kapitelrubriken direkt under verktygsraden. Höjderna mäts så att inget överlappar.
       const topbar = document.querySelector('header.topbar')
-      setRootVar('--chapter-sticky-top', Math.ceil(Math.max(headerBottom, topbar ? Math.max(0, topbar.getBoundingClientRect().bottom) : 0)) + 'px')
+      const navBottom = Math.max(0, headerBottom)
+      const toolbarBlock = topbar ? topbar.offsetHeight : 0
+      setRootVar('--planning-nav-h', Math.ceil(navBottom) + 'px')
+      setRootVar('--chapter-sticky-top', Math.ceil(navBottom + toolbarBlock) + 'px')
     }
     // Scroll-uppdateringar samlas i en bildruta så att layoutläsningar inte körs flera gånger per frame.
     let frame = 0
