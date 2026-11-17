@@ -155,12 +155,9 @@
 #lararvy .teacher-collapsible-week.week-card .lesson > .lesson-heading-history,
 #lararvy .teacher-collapsible-week.week-card .lesson > button.remove-small { flex: 0 0 auto; }
 
-/* Kapitelrubrik och begrepp följer sitt eget kapitel när man scrollar. Ingen sticky eller fixed kapitelrad. */
+/* Kapitelrubrikens text är aldrig sticky i sig. Sticky sitter på kapitelbehållaren nedan. */
 #lararvy .teacher-chapter-section > .chapter-heading,
-#lararvy .teacher-chapter-section .teacher-chapter-sticky,
-#lararvy .teacher-chapter-sticky,
-#lararvy .teacher-chapter-sticky .chapter-heading,
-#lararvy .teacher-months .teacher-chapter-sticky {
+#lararvy .teacher-chapter-sticky .chapter-heading {
   position: static !important;
   top: auto !important;
   z-index: auto !important;
@@ -172,17 +169,39 @@
 /* Samma sak med högre specificitet, eftersom äldre regler i kaskaden visar baren. */
 #lararvy section.teacher-year-review .teacher-active-chapter-bar,
 #lararvy .teacher-year-review .teacher-active-chapter-bar.teacher-active-chapter-bar { display: none !important; }
-/* Kapitelrubriken visas i sitt eget kapitel i Visa alla veckor. Den rullar med veckorna och är inte fastklistrad. */
+/* Visa alla veckor: kapitelrubriken och begreppen fastnar överst i sitt kapitel medan man scrollar inom kapitlet.
+   När nästa kapitel kommer skjuts den bort av kapitelsektionen och ersätts av nästa kapitels rubrik.
+   Ren CSS-sticky, ingen JavaScript vid scroll. Ligger direkt under den övre bannern (--chapter-sticky-top). */
 #lararvy .teacher-year-review .teacher-months.teacher-months-all-weeks .teacher-chapter-sticky {
   display: block !important;
   height: auto !important;
   min-height: 0 !important;
   overflow: visible !important;
-  position: static !important;
-  padding: 0 !important;
+  position: sticky !important;
+  top: var(--chapter-sticky-top, 0px) !important;
+  z-index: 6 !important;
+  background: #ffffff !important;
+  padding: 6px 0 4px !important;
   margin: 0 0 8px !important;
   border: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
+
+/* Kapitelhuvudet på varje A4-vecka: samma rubrik och begreppsetiketter som kapitelrubriken. */
+#lararvy .paper-chapter-head { margin: 0 0 10px; }
+#lararvy .paper-chapter-head .chapter-heading {
+  display: block !important;
+  margin: 0 0 6px !important;
+  padding: 8px 12px !important;
+  font-size: 1.1rem !important;
+  line-height: 1.25 !important;
+  border-radius: 8px !important;
+}
+#lararvy .paper-chapter-head .chapter-vocabulary { margin: 0 !important; padding: 6px 8px !important; }
+#lararvy .paper-chapter-head .chapter-vocabulary-list { gap: 5px !important; }
+#lararvy .paper-chapter-head .chapter-vocabulary-term { font-size: 0.85rem !important; padding: 4px 8px !important; }
+
 /* Sista regeln för den fasta kapitelbaren, med samma specificitet som den regel som visar den. */
 #lararvy .expanded-weeks-inline > .teacher-year-review:has(> .teacher-active-chapter-bar) > .teacher-active-chapter-bar { display: none !important; }
 
@@ -207,3 +226,15 @@
 #lararvy .teacher-months .paper-missing-week strong { font-size: 1.15rem; }
 #lararvy .teacher-months .paper-missing-week span { color: #5b6f82; }
 @media print { #lararvy .paper-missing-week { display: none !important; } }
+
+/* Veckorubriken i A4-kortet fastnar inte. Då kan den inte täcka kapitelhuvudet eller veckans innehåll. */
+#lararvy .expanded-weeks-inline .teacher-months .teacher-week-collapsible-content > .week-top {
+  position: static !important;
+  top: auto !important;
+  z-index: auto !important;
+}
+
+/* Visa alla veckor: kapitelrubriken och begreppen visas en gång, som sticky i sitt kapitel.
+   Kapitelhuvudet på korten döljs där, så att samma rubrik inte syns två gånger vid scroll.
+   I tvåveckorsvyn visar varje kort sitt eget kapitel. Utskriften påverkas inte, den använder elevvyns rubriker. */
+#lararvy .teacher-months.teacher-months-all-weeks .paper-chapter-head { display: none !important; }

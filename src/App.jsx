@@ -697,9 +697,12 @@ function isGeneratedLessonSummary(content, chapter) {
   const prefix = String(chapter || '').trim()
   return Boolean(prefix && lines.length > 1 && lines.every(line => line.toLocaleLowerCase('sv-SE').startsWith(prefix.toLocaleLowerCase('sv-SE') + ' – ')))
 }
-function ChapterVocabulary({ chapter, weeks }) {
-  const words = chapterVocabulary(chapter, weeks)
+function ChapterWordList({ chapter, words }) {
   return words.length ? <div className="chapter-vocabulary" aria-label={`Viktiga begrepp i ${chapter}`}><div className="chapter-vocabulary-list">{words.map((word, index) => <span className={`chapter-vocabulary-term vocabulary-color-${index % 7}`} key={word}>{word}</span>)}</div></div> : null
+}
+
+function ChapterVocabulary({ chapter, weeks }) {
+  return <ChapterWordList chapter={chapter} words={chapterVocabulary(chapter, weeks)} />
 }
 
 function chapterTone(chapter) {
@@ -1391,7 +1394,7 @@ function PublishedStudentPreview({ slug, initialClass = "" }) {
 
 // Ett veckokort. Memoiseras så att bara kortet som ändras ritas om, inte hela lärarvyn.
 const A4_SCREEN_PX = Math.round((297 / 210) * 794) // Höjden för ett A4-papper på skärmen (210 mm = 794 px).
-const TeacherWeekCard = memo(function TeacherWeekCard({ week, index, open, eager, entryType, hasLaterWeek, atMaxWeeks, soleWeek, canUndo, canRedo, actions }) {
+const TeacherWeekCard = memo(function TeacherWeekCard({ week, index, open, eager, entryType, hasLaterWeek, atMaxWeeks, soleWeek, canUndo, canRedo, actions, chapterName, chapterWords }) {
   const cardRef = useRef(null)
   const [pageCount, setPageCount] = useState(1)
   // Hur många A4-sidor veckan blir vid utskrift, mätt från kortets verkliga höjd. Utskriften delar på lektionsgränser.
@@ -1406,6 +1409,10 @@ const TeacherWeekCard = memo(function TeacherWeekCard({ week, index, open, eager
   }, [])
   return (
           <article ref={cardRef} className={`week-card teacher-collapsible-week ${((open)) ? "teacher-week-open" : "teacher-week-closed"}`} id={`calendar-week-${week.weekNumber}`} style={{ scrollMarginTop: 95 }}>
+          {chapterName !== 'Utan kapitel' && <div className="paper-chapter-head">
+            <h3 className={`chapter-heading chapter-tone-${chapterTone(chapterName)}`}>{chapterName}</h3>
+            <ChapterWordList chapter={chapterName} words={chapterWords} />
+          </div>}
           <div className="paper-page-count" aria-live="polite">{pageCount > 1 ? `Vid utskrift: ${pageCount} A4-sidor` : "Vid utskrift: 1 A4-sida"}</div>
           <div className="teacher-week-controls">
           <button type="button" className="teacher-week-collapse-toggle" aria-expanded={open} onClick={()=>{actions.toggleWeekContent(week.weekStart || `${index}`)}} title={(open) ? "Dölj innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber) : "Visa innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber)} aria-label={(open) ? "Dölj innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber) : "Visa innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber)}><span aria-hidden="true">{(open) ? "▾" : "▸"}</span></button>
@@ -1576,6 +1583,9 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       }
       setRootVar('--teacher-pinned-top', (headerBottom + toolbarHeight) + 'px')
       setRootVar('--teacher-review-sticky-top', headerBottom + 'px')
+      // Kapitelrubriken fastnar precis under den övre bannern (som är högre än navigeringen).
+      const topbar = document.querySelector('header.topbar')
+      setRootVar('--chapter-sticky-top', Math.ceil(Math.max(headerBottom, topbar ? Math.max(0, topbar.getBoundingClientRect().bottom) : 0)) + 'px')
     }
     // Scroll-uppdateringar samlas i en bildruta så att layoutläsningar inte körs flera gånger per frame.
     let frame = 0
@@ -1725,6 +1735,17 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const classSchedulePlan = useMemo(() => ({ ...plan, weeksData: weeks }), [plan, weeks])
   const teacherDisplayWeeks = useMemo(() => weeks.map((week, index) => ({week, index})), [weeks])
   // Veckorna i kalenderordning. Tvåveckorsfönstret och pilarna ska följa datum, inte den ordning planen är sparad i.
+  // Begreppen per kapitel räknas ut en gång per planändring. Korten får bara sina egna ord.
+  const chapterWordsByName = useMemo(() => {
+    const groups = {}
+    for (const week of weeks) {
+      const name = week.chapter?.trim() || 'Utan kapitel'
+      ;(groups[name] ||= []).push(week)
+    }
+    const words = {}
+    for (const name of Object.keys(groups)) words[name] = name === 'Utan kapitel' ? [] : chapterVocabulary(name, groups[name])
+    return words
+  }, [weeks])
   const chronologicalTeacherWeeks = useMemo(() => teacherDisplayWeeks.slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')), [teacherDisplayWeeks]) // Alla veckor finns kvar; passerade veckor kan fällas ut kapitelvis
   // Ny planering börjar med få veckor. Sedan fördubblas antalet veckor som ritas, tills alla visar sitt innehåll.
   // Nyckeln byts när planering eller "Visa alla veckor" ändras, så att alla veckor inte ritas i ett jobb igen.
@@ -2571,7 +2592,7 @@ const addNewTeacherWeek = () => setPlan(p => {
           <div className="teacher-chapter-sticky"><h3 className={`chapter-heading chapter-tone-${chapterTone(group.name)}`}>{group.name}</h3>{group.name !== "Utan kapitel" && <ChapterVocabulary chapter={group.name} weeks={group.items.map(item => item.week)} />}</div>
           <div className="teacher-month-weeks">
           {group.items.map(({ week, index }) => <div className="chapter-week-group" data-week={calendarWeekNumber(week.weekStart) ?? week.weekNumber} key={`${week.weekStart || week.weekNumber}-${index}`}>
-          <TeacherWeekCard week={week} index={index} open={Boolean(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen)} eager={Boolean(focusedTeacherWeek) || !showPastTeacherWeeks || !allWeekContentsOpen || index < weekRenderBudget} entryType={plan.entryType || 'lektion'} hasLaterWeek={weeks.some(other=>other.weekStart>week.weekStart)} atMaxWeeks={weeks.length>=52} soleWeek={weeks.length<=1} canUndo={historyRef.current.past.length > 0} canRedo={historyRef.current.future.length > 0} actions={weekActions} />
+          <TeacherWeekCard week={week} index={index} open={Boolean(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen)} eager={Boolean(focusedTeacherWeek) || !showPastTeacherWeeks || !allWeekContentsOpen || index < weekRenderBudget} entryType={plan.entryType || 'lektion'} hasLaterWeek={weeks.some(other=>other.weekStart>week.weekStart)} atMaxWeeks={weeks.length>=52} soleWeek={weeks.length<=1} canUndo={historyRef.current.past.length > 0} canRedo={historyRef.current.future.length > 0} actions={weekActions} chapterName={week.chapter?.trim() || 'Utan kapitel'} chapterWords={chapterWordsByName[week.chapter?.trim() || 'Utan kapitel'] || []} />
         </div>)}
           {missingNextWeek && lastShownWeek && <div className="paper-missing-week" role="status">
             <strong>Vecka {(calendarWeekNumber(addWeeks(lastShownWeek.week.weekStart, 1)) ?? (lastShownWeek.week.weekNumber + 1))} finns inte i planeringen</strong>

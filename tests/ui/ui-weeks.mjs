@@ -106,6 +106,67 @@ await check('platshållaren skapar ingen vecka förrän användaren klickar på 
   const after = await planB.page.$$eval('.week-card', els => els.length)
   assert.ok(after >= 1, 'veckor försvann')
 })
+// Kapitelrubrik och begrepp: varje A4-vecka visar sitt eget kapitel, och rubriken fastnar när man scrollar.
+const planD = await openPlan('Veckotest omvand', [reversedRow])
+await check('två kort i tvåveckorsläget visar var sitt kapitel ovanför veckonumret', async () => {
+  const heads = await planD.page.evaluate(() => [...document.querySelectorAll('.week-card.teacher-collapsible-week')].filter(e => e.getBoundingClientRect().width > 0).map(e => ({ wk: e.closest('[data-week]')?.getAttribute('data-week'), chapter: e.querySelector('.paper-chapter-head h3')?.textContent || null, headAbove: (() => { const h = e.querySelector('.paper-chapter-head'); const w = e.querySelector('.week-top'); return h && w ? h.getBoundingClientRect().top < w.getBoundingClientRect().top : false })() })))
+  assert.equal(heads.length, 2, 'två kort krävs')
+  assert.equal(heads[0].chapter, 'Tal', 'vecka 47 ska visa Tal, fick ' + heads[0].chapter)
+  assert.equal(heads[1].chapter, 'Geometri', 'vecka 48 ska visa Geometri, fick ' + heads[1].chapter)
+  assert.ok(heads.every(h => h.headAbove), 'kapitelhuvudet ska ligga ovanför veckonumret')
+})
+await planD.page.locator('button:visible', { hasText: 'Visa alla veckor' }).first().click({ timeout: 2000 }).catch(() => {})
+await planD.page.waitForFunction(() => document.querySelectorAll('.week-card').length >= 21, null, { timeout: 8000 }).catch(() => {})
+await planD.page.waitForTimeout(400)
+const stickyState = () => planD.page.evaluate(() => {
+  const line = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--chapter-sticky-top')) || 0
+  const sticky = [...document.querySelectorAll('#lararvy .teacher-chapter-section > .teacher-chapter-sticky')].filter(e => e.getBoundingClientRect().height > 0).map(e => ({ name: e.closest('[data-chapter]')?.getAttribute('data-chapter'), top: Math.round(e.getBoundingClientRect().top), position: getComputedStyle(e).position }))
+  return { line, sticky }
+})
+await check('kapitelrubriken är sticky i Visa alla veckor', async () => {
+  const st = await stickyState()
+  assert.ok(st.sticky.length > 0, 'inga kapitelrubriker i Visa alla veckor')
+  assert.ok(st.sticky.every(x => x.position === 'sticky'), 'rubriken är inte sticky: ' + JSON.stringify(st.sticky.slice(0, 2)))
+})
+await check('under scroll nedåt fastnar rätt kapitel under bannern och byts när nästa kapitel kommer', async () => {
+  const seen = []
+  const maxY = await planD.page.evaluate(() => document.documentElement.scrollHeight - innerHeight)
+  for (let y = 0; y <= maxY; y += 150) {
+    await planD.page.evaluate(v => window.scrollTo(0, v), y); await planD.page.waitForTimeout(40)
+    const st = await stickyState()
+    const atLine = st.sticky.filter(x => Math.abs(x.top - st.line) <= 3).map(x => x.name)
+    assert.ok(atLine.length <= 1, 'fler än en rubrik på linjen vid y=' + y + ': ' + atLine.join(','))
+    if (atLine.length && seen[seen.length - 1] !== atLine[0]) seen.push(atLine[0])
+  }
+  assert.ok(seen.includes('Tal') && seen.includes('Geometri'), 'båda kapitlen ska fastna under scroll, fick ' + seen.join(' → '))
+})
+await check('under scroll uppåt visas tidigare kapitel igen', async () => {
+  const maxY2 = await planD.page.evaluate(() => document.documentElement.scrollHeight - innerHeight)
+  await planD.page.evaluate(v => window.scrollTo(0, v), maxY2); await planD.page.waitForTimeout(100)
+  const st0 = await stickyState()
+  const after = []
+  for (let y = maxY2; y >= 0; y -= 150) {
+    await planD.page.evaluate(v => window.scrollTo(0, v), y); await planD.page.waitForTimeout(40)
+    const st = await stickyState()
+    const atLine = st.sticky.filter(x => Math.abs(x.top - st.line) <= 3).map(x => x.name)
+    if (atLine.length && after[after.length - 1] !== atLine[0]) after.push(atLine[0])
+  }
+  assert.ok(after.includes('Tal'), 'Tal ska visas igen när man scrollar upp, fick ' + after.join(' → ') + ' (start: ' + st0.sticky.map(x => x.name).join(',') + ')')
+})
+await check('samma kapitelrubrik visas inte två gånger i Visa alla veckor', async () => {
+  for (const y of [0, 900, 2400, 5200]) {
+    await planD.page.evaluate(v => window.scrollTo(0, v), y); await planD.page.waitForTimeout(60)
+    const dup = await planD.page.evaluate(() => [...document.querySelectorAll('#lararvy .paper-chapter-head')].filter(e => { const r = e.getBoundingClientRect(); return r.height > 0 && r.top < innerHeight && r.bottom > 0 }).length)
+    assert.equal(dup, 0, 'kapitelhuvud på korten syns i Visa alla veckor vid y=' + y + ': ' + dup)
+  }
+})
+await check('kapitelrubriken döljs inte av den övre bannern', async () => {
+  await planD.page.evaluate(() => window.scrollTo(0, 800)); await planD.page.waitForTimeout(100)
+  const bad = await planD.page.evaluate(() => { const banner = document.querySelector('header.topbar'); const bottom = banner ? banner.getBoundingClientRect().bottom : 0; const h = [...document.querySelectorAll('#lararvy .teacher-chapter-section > .teacher-chapter-sticky')].filter(e => { const r = e.getBoundingClientRect(); return r.height > 0 && r.top < bottom - 2 && r.bottom > bottom }); return h.map(e => Math.round(e.getBoundingClientRect().top) + '<' + Math.round(bottom)) })
+  assert.deepEqual(bad, [], 'rubrik ligger under bannern: ' + bad.join(','))
+})
+await planD.page.close()
+
 await check('inga sidfel under veckotesterna', async () => {
   assert.deepEqual([...planA.errors, ...planB.errors], [], 'sidfel: ' + [...planA.errors, ...planB.errors].slice(0, 2).join(' / '))
 })
