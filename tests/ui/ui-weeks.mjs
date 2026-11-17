@@ -227,6 +227,59 @@ await check('utskrift: varje sida visar sitt kapitel och sina begrepp', async ()
 })
 await planE.page.close()
 
+// Inget kapitelfält alls: rubriken ska komma från veckans moment, och begreppen från samma moment.
+const MOMENT_OF = i => (i <= 10 ? 'Ekvation och variabel' : i <= 14 ? 'Area och omkrets' : 'Medelvärde och median')
+const noChapterWeeks = allWeeks.map((w, i) => ({ ...w, keepVisibleExtra: true, chapter: '', lessons: w.lessons?.map(l => ({ ...l, topics: [{ name: MOMENT_OF(i), pages: [], assignments: [], links: [] }] })) }))
+const planF = await openPlan('Veckotest utankapitel', [planRow('utankapitel', noChapterWeeks)])
+await check('utan kapitelfält: rubrik och begrepp kommer från veckans moment (två kort, olika moment)', async () => {
+  const heads = await planF.page.evaluate(() => [...document.querySelectorAll('.week-card.teacher-collapsible-week')].filter(e => e.getBoundingClientRect().width > 0).map(e => ({ head: e.querySelector('.paper-chapter-head h3')?.textContent || null, first: e.querySelector('.paper-chapter-head .chapter-vocabulary-term')?.textContent || null })))
+  assert.equal(heads.length, 2, 'två kort krävs')
+  assert.equal(heads[0].head, MOMENT_OF(10), 'vecka 47 rubrik: ' + heads[0].head)
+  assert.equal(heads[1].head, MOMENT_OF(11), 'vecka 48 rubrik: ' + heads[1].head)
+  assert.equal(heads[0].first, 'Variabel', 'vecka 47 begrepp: ' + heads[0].first)
+  assert.equal(heads[1].first, 'Radie', 'vecka 48 begrepp: ' + heads[1].first)
+})
+await planF.page.locator('button:visible', { hasText: 'Visa alla veckor' }).first().click({ timeout: 2000 }).catch(() => {})
+await planF.page.waitForFunction(() => document.querySelectorAll('.week-card').length >= 21, null, { timeout: 8000 }).catch(() => {})
+await planF.page.waitForTimeout(400)
+await check('utan kapitelfält: Visa alla veckor grupperar efter moment och rubriken byts vid nästa moment', async () => {
+  const secs = await planF.page.evaluate(() => [...document.querySelectorAll('.teacher-chapter-section')].map(sec => ({ name: sec.getAttribute('data-chapter'), weeks: [...sec.querySelectorAll('[data-week]')].length, first: sec.querySelector(':scope > .teacher-chapter-sticky .chapter-vocabulary-term')?.textContent || null })))
+  assert.deepEqual(secs.map(x => x.name), [MOMENT_OF(0), MOMENT_OF(11), MOMENT_OF(15)], 'sektioner: ' + secs.map(x => x.name).join(' | '))
+  assert.deepEqual(secs.map(x => x.first), ['Variabel', 'Radie', 'Medelvärde'], 'begrepp per sektion: ' + secs.map(x => x.first).join(' | '))
+})
+await check('utan kapitelfält: utskriften visar veckans moment som rubrik på varje sida', async () => {
+  await planF.page.evaluate(() => { window.__printCalls = 0; window.print = () => { window.__printCalls++ } })
+  await planF.page.locator('button:visible', { hasText: '🖨' }).first().click().catch(() => {})
+  await planF.page.waitForFunction(() => window.__printCalls > 0, null, { timeout: 15000 }).catch(() => {})
+  const pages = await planF.page.evaluate(() => [...document.querySelectorAll('.teacher-print-host .student-print-page')].map(p => ({ head: p.querySelector('.chapter-heading')?.textContent?.trim() || null, first: p.querySelector('.chapter-vocabulary-term')?.textContent || null, wk: [...p.querySelectorAll('h2, h3, strong')].map(h => h.textContent.trim()).find(t => /^Vecka \d+$/.test(t)) || null })))
+  assert.ok(pages.length >= 15, 'för få utskriftssidor: ' + pages.length)
+  const expectedMoment = Object.fromEntries(noChapterWeeks.map(w => [String(isoWeekOf(w.weekStart)), w.lessons[0].topics[0].name]))
+  const expectedFirst = { 'Ekvation och variabel': 'Variabel', 'Area och omkrets': 'Radie', 'Medelvärde och median': 'Medelvärde' }
+  let checked = 0
+  for (const p of pages) {
+    if (!p.wk) continue
+    const wk = p.wk.replace('Vecka ', '')
+    if (!expectedMoment[wk]) continue
+    checked++
+    assert.equal(p.head, expectedMoment[wk], 'utskriftssida vecka ' + wk + ' har fel rubrik: ' + p.head)
+    assert.equal(p.first, expectedFirst[p.head], 'utskriftssida vecka ' + wk + ' har fel begrepp: ' + p.first)
+  }
+  assert.ok(checked >= 15, 'för få sidor kontrollerades: ' + checked)
+})
+await planF.page.close()
+
+// Blandat: vissa veckor har kapitelfält, andra saknar det. Den egna veckan vinner, och begreppen blandas inte.
+const mixedWeeks = allWeeks.map((w, i) => ({ ...w, keepVisibleExtra: true, chapter: i <= 10 ? 'Algebra och ekvationer' : '', lessons: w.lessons?.map(l => ({ ...l, topics: [{ name: MOMENT_OF(i), pages: [], assignments: [], links: [] }] })) }))
+const planG = await openPlan('Veckotest blandad', [planRow('blandad', mixedWeeks)])
+await check('blandat: vecka med kapitelfält visar det, vecka utan visar sitt moment och eget begrepp', async () => {
+  const heads = await planG.page.evaluate(() => [...document.querySelectorAll('.week-card.teacher-collapsible-week')].filter(e => e.getBoundingClientRect().width > 0).map(e => ({ wk: e.closest('[data-week]')?.getAttribute('data-week'), head: e.querySelector('.paper-chapter-head h3')?.textContent || null, first: e.querySelector('.paper-chapter-head .chapter-vocabulary-term')?.textContent || null })))
+  assert.equal(heads[0].head, 'Algebra och ekvationer', 'vecka 47 ska visa sitt kapitelfält: ' + heads[0].head)
+  assert.equal(heads[0].first, 'Variabel', 'vecka 47 begrepp: ' + heads[0].first)
+  assert.equal(heads[1].head, MOMENT_OF(11), 'vecka 48 ska visa sitt moment, inte Algebra: ' + heads[1].head)
+  assert.equal(heads[1].first, 'Radie', 'vecka 48 begrepp: ' + heads[1].first)
+})
+await planG.page.close()
+
 await check('inga sidfel under veckotesterna', async () => {
   assert.deepEqual([...planA.errors, ...planB.errors], [], 'sidfel: ' + [...planA.errors, ...planB.errors].slice(0, 2).join(' / '))
 })
