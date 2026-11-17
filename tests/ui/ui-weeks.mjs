@@ -280,6 +280,27 @@ await check('blandat: vecka med kapitelfält visar det, vecka utan visar sitt mo
 })
 await planG.page.close()
 
+const planH = await openPlan('Veckotest omvand', [reversedRow])
+await planH.page.locator('button:visible', { hasText: 'Visa alla veckor' }).first().click({ timeout: 2000 }).catch(() => {})
+await planH.page.waitForFunction(() => document.querySelectorAll('.week-card').length >= 21, null, { timeout: 8000 }).catch(() => {})
+await planH.page.waitForTimeout(300)
+await check('staplade fasta rader: navigering, verktygsrad och kapitelrubrik överlappar inte och flikarna går att klicka', async () => {
+  await planH.page.evaluate(() => window.scrollTo(0, 3000)); await planH.page.waitForTimeout(250)
+  const st = await planH.page.evaluate(() => {
+    const n = document.querySelector('nav.planning-unified-navigation')?.getBoundingClientRect()
+    const t = document.querySelector('header.topbar')?.getBoundingClientRect()
+    const c = document.querySelector('#lararvy .teacher-chapter-section .teacher-chapter-sticky')?.getBoundingClientRect()
+    const tab = [...document.querySelectorAll('.planning-header-toolbar button')].find(b => /Grundplanering/.test(b.textContent))
+    const tr = tab?.getBoundingClientRect()
+    const hit = tab ? document.elementFromPoint(tr.left + tr.width / 2, tr.top + tr.height / 2) : null
+    return { navBottom: n?.bottom ?? null, topbarTop: t?.top ?? null, topbarBottom: t?.bottom ?? null, chapterTop: c?.top ?? null, tabFound: !!tab, tabClickable: !!(tab && hit && (hit === tab || tab.contains(hit))) }
+  })
+  assert.ok(st.navBottom !== null && st.topbarTop !== null, 'navigering eller verktygsrad saknas')
+  assert.ok(st.topbarTop >= st.navBottom - 1, 'verktygsraden ligger bakom navigeringen: ' + st.topbarTop + ' < ' + st.navBottom)
+  if (st.chapterTop !== null) assert.ok(st.chapterTop >= st.topbarBottom - 1, 'kapitelrubriken ligger bakom verktygsraden: ' + st.chapterTop + ' < ' + st.topbarBottom)
+  assert.ok(st.tabFound && st.tabClickable, 'fliken Grundplanering går inte att klicka (något ligger över den)')
+})
+await planH.page.close()
 await check('inga sidfel under veckotesterna', async () => {
   assert.deepEqual([...planA.errors, ...planB.errors], [], 'sidfel: ' + [...planA.errors, ...planB.errors].slice(0, 2).join(' / '))
 })
