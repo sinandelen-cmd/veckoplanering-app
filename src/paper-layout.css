@@ -238,3 +238,8 @@
    Kapitelhuvudet på korten döljs där, så att samma rubrik inte syns två gånger vid scroll.
    I tvåveckorsvyn visar varje kort sitt eget kapitel. Utskriften påverkas inte, den använder elevvyns rubriker. */
 #lararvy .teacher-months.teacher-months-all-weeks .paper-chapter-head { display: none !important; }
+
+/* Kapitelfältet på varje A4-vecka: ändrar bara den veckans kapitel. Syns inte i utskrift. */
+#lararvy .paper-chapter-edit { display: block; margin: 0 0 10px; font-size: 0.8rem; color: #5b6f82; }
+#lararvy .paper-chapter-edit input { display: block; width: 100%; box-sizing: border-box; margin-top: 3px; padding: 5px 8px; font-weight: 600; }
+@media print { #lararvy .paper-chapter-edit { display: none !important; } }

@@ -679,7 +679,7 @@ const CHAPTER_VOCABULARY = [
   [/algebra|uttryck|ekvation|variabel/, ['Variabel','Uttryck','Ekvation','Likhetstecken','Term','Förenkla','Lösning']],
   [/bråk|bråktal/, ['Täljare','Nämnare','Bråkform','Blandad form','Förkorta','Förlänga','Likvärdiga bråk']],
   [/procent/, ['Procent','Andel','Helhet','Procenttal','Förändring','Förändringsfaktor']],
-  [/statistik|sannolikhet/, ['Medelvärde','Median','Typvärde','Frekvens','Diagram','Sannolikhet']],
+  [/statistik|sannolikhet|medelvärde|median|typvärde|frekvens|diagram/, ['Medelvärde','Median','Typvärde','Frekvens','Diagram','Sannolikhet']],
   [/funktion|graf|koordinat/, ['Koordinat','Koordinatsystem','X-axel','Y-axel','Graf','Funktion','Lutning']],
   [/taluppfattning|heltal|decimaltal/, ['Positionssystem','Ental','Tiotal','Decimal','Avrundning','Negativa tal']],
   [/ekonomi|ränta/, ['Budget','Inkomst','Utgift','Ränta','Kapital','Rabatt']],
@@ -703,6 +703,20 @@ function ChapterWordList({ chapter, words }) {
 
 function ChapterVocabulary({ chapter, weeks }) {
   return <ChapterWordList chapter={chapter} words={chapterVocabulary(chapter, weeks)} />
+}
+
+// Kapitlet för en vecka: veckans eget kapitelvärde först. Saknas det används veckans första moment som rubrik.
+// Veckan grupperas och begreppen räknas ut bara utifrån den egna veckan, aldrig från andra veckors kapitel.
+function weekChapterName(week) {
+  const explicit = String(week?.chapter || '').trim()
+  if (explicit) return explicit
+  for (const lesson of week?.lessons || []) {
+    for (const topic of lesson?.topics || []) {
+      const name = String(topic?.name || '').trim()
+      if (name && !topic?.classMomentPlaceholder) return name
+    }
+  }
+  return 'Utan kapitel'
 }
 
 function chapterTone(chapter) {
@@ -912,7 +926,7 @@ export function StudentView({ plan, error, preview = false, printPage = null, pr
     </section>}
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
       {visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
-        {week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <h2 className={`chapter-heading chapter-tone-${chapterTone(week.chapter)}`}>{week.chapter}</h2>}{week.chapter?.trim() && (gridMode || index === 0 || week.chapter !== visibleWeeks[index - 1]?.chapter) && <ChapterVocabulary chapter={week.chapter} weeks={visibleWeeks.filter(w => w.chapter === week.chapter)} />}
+        {weekChapterName(week) !== 'Utan kapitel' && (gridMode || index === 0 || weekChapterName(week) !== weekChapterName(visibleWeeks[index - 1])) && <h2 className={`chapter-heading chapter-tone-${chapterTone(weekChapterName(week))}`}>{weekChapterName(week)}</h2>}{weekChapterName(week) !== 'Utan kapitel' && (gridMode || index === 0 || weekChapterName(week) !== weekChapterName(visibleWeeks[index - 1])) && <ChapterVocabulary chapter={weekChapterName(week)} weeks={visibleWeeks.filter(w => weekChapterName(w) === weekChapterName(week))} />}
         <article id={"student-week-" + week.weekStart} className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
 
         <div className="week-top student-week-top">
@@ -1413,6 +1427,9 @@ const TeacherWeekCard = memo(function TeacherWeekCard({ week, index, open, eager
             <h3 className={`chapter-heading chapter-tone-${chapterTone(chapterName)}`}>{chapterName}</h3>
             <ChapterWordList chapter={chapterName} words={chapterWords} />
           </div>}
+          <label className="paper-chapter-edit">Kapitel / tema (för just den här veckan)
+            <input value={week.chapter || ''} placeholder="Ex. Kapitel 5 – Taluppfattning" onChange={e => actions.updateWeek(index, { chapter: e.target.value })} />
+          </label>
           <div className="paper-page-count" aria-live="polite">{pageCount > 1 ? `Vid utskrift: ${pageCount} A4-sidor` : "Vid utskrift: 1 A4-sida"}</div>
           <div className="teacher-week-controls">
           <button type="button" className="teacher-week-collapse-toggle" aria-expanded={open} onClick={()=>{actions.toggleWeekContent(week.weekStart || `${index}`)}} title={(open) ? "Dölj innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber) : "Visa innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber)} aria-label={(open) ? "Dölj innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber) : "Visa innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber)}><span aria-hidden="true">{(open) ? "▾" : "▸"}</span></button>
@@ -1739,7 +1756,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const chapterWordsByName = useMemo(() => {
     const groups = {}
     for (const week of weeks) {
-      const name = week.chapter?.trim() || 'Utan kapitel'
+      const name = weekChapterName(week)
       ;(groups[name] ||= []).push(week)
     }
     const words = {}
@@ -2582,7 +2599,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? teacherDisplayWeeks : defaultTeacherWindow)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           // I tvåveckorsvyn ligger de två veckorna i en och samma grid, även om de tillhör olika kapitel.
           // Annars hamnar den andra veckan under den första i stället för bredvid den.
-          const chapterName = item.week.chapter?.trim() || 'Utan kapitel'
+          const chapterName = weekChapterName(item.week)
           const flatWindow = !showPastTeacherWeeks && !focusedTeacherWeek
           const groupKey = flatWindow ? '__tvåveckorsfönster__' : chapterName
           if (!chapters[groupKey]) chapters[groupKey] = { name: chapterName, items: [] }
@@ -2592,7 +2609,7 @@ const addNewTeacherWeek = () => setPlan(p => {
           <div className="teacher-chapter-sticky"><h3 className={`chapter-heading chapter-tone-${chapterTone(group.name)}`}>{group.name}</h3>{group.name !== "Utan kapitel" && <ChapterVocabulary chapter={group.name} weeks={group.items.map(item => item.week)} />}</div>
           <div className="teacher-month-weeks">
           {group.items.map(({ week, index }) => <div className="chapter-week-group" data-week={calendarWeekNumber(week.weekStart) ?? week.weekNumber} key={`${week.weekStart || week.weekNumber}-${index}`}>
-          <TeacherWeekCard week={week} index={index} open={Boolean(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen)} eager={Boolean(focusedTeacherWeek) || !showPastTeacherWeeks || !allWeekContentsOpen || index < weekRenderBudget} entryType={plan.entryType || 'lektion'} hasLaterWeek={weeks.some(other=>other.weekStart>week.weekStart)} atMaxWeeks={weeks.length>=52} soleWeek={weeks.length<=1} canUndo={historyRef.current.past.length > 0} canRedo={historyRef.current.future.length > 0} actions={weekActions} chapterName={week.chapter?.trim() || 'Utan kapitel'} chapterWords={chapterWordsByName[week.chapter?.trim() || 'Utan kapitel'] || []} />
+          <TeacherWeekCard week={week} index={index} open={Boolean(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen)} eager={Boolean(focusedTeacherWeek) || !showPastTeacherWeeks || !allWeekContentsOpen || index < weekRenderBudget} entryType={plan.entryType || 'lektion'} hasLaterWeek={weeks.some(other=>other.weekStart>week.weekStart)} atMaxWeeks={weeks.length>=52} soleWeek={weeks.length<=1} canUndo={historyRef.current.past.length > 0} canRedo={historyRef.current.future.length > 0} actions={weekActions} chapterName={weekChapterName(week)} chapterWords={chapterWordsByName[weekChapterName(week)] || []} />
         </div>)}
           {missingNextWeek && lastShownWeek && <div className="paper-missing-week" role="status">
             <strong>Vecka {(calendarWeekNumber(addWeeks(lastShownWeek.week.weekStart, 1)) ?? (lastShownWeek.week.weekNumber + 1))} finns inte i planeringen</strong>
