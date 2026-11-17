@@ -1413,6 +1413,9 @@ const TeacherWeekCard = memo(function TeacherWeekCard({ week, index, open, eager
             <h3 className={`chapter-heading chapter-tone-${chapterTone(chapterName)}`}>{chapterName}</h3>
             <ChapterWordList chapter={chapterName} words={chapterWords} />
           </div>}
+          <label className="paper-chapter-edit">Kapitel / tema (för just den här veckan)
+            <input value={week.chapter || ''} placeholder="Ex. Kapitel 5 – Taluppfattning" onChange={e => actions.updateWeek(index, { chapter: e.target.value })} />
+          </label>
           <div className="paper-page-count" aria-live="polite">{pageCount > 1 ? `Vid utskrift: ${pageCount} A4-sidor` : "Vid utskrift: 1 A4-sida"}</div>
           <div className="teacher-week-controls">
           <button type="button" className="teacher-week-collapse-toggle" aria-expanded={open} onClick={()=>{actions.toggleWeekContent(week.weekStart || `${index}`)}} title={(open) ? "Dölj innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber) : "Visa innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber)} aria-label={(open) ? "Dölj innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber) : "Visa innehåll för vecka " + (calendarWeekNumber(week.weekStart) ?? week.weekNumber)}><span aria-hidden="true">{(open) ? "▾" : "▸"}</span></button>
