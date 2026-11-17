@@ -1,3 +1,4 @@
+import { scrollThroughPlan } from './scroll-through.mjs'
 // Veckotest med FIKTIV Supabase-klient. Körning: npm run test:ui:weeks
 // Täcker det som användaren ser på riktiga planeringar:
 //  - veckorna i tvåveckorsläget ligger alltid i kalenderordning, även om planen är sparad i annan ordning
@@ -130,8 +131,8 @@ await check('kapitelrubriken är sticky i Visa alla veckor', async () => {
 })
 await check('under scroll nedåt fastnar rätt kapitel under bannern och byts när nästa kapitel kommer', async () => {
   const seen = []
-  const maxY = await planD.page.evaluate(() => document.documentElement.scrollHeight - innerHeight)
-  for (let y = 0; y <= maxY; y += 150) {
+  // Sidhöjden räknas om under scrollen: webbläsaren uppskattar höjden på veckor som ännu inte ritats.
+  for (let y = 0; y <= await planD.page.evaluate(() => document.documentElement.scrollHeight - innerHeight); y += 150) {
     await planD.page.evaluate(v => window.scrollTo(0, v), y); await planD.page.waitForTimeout(40)
     const st = await stickyState()
     const atLine = st.sticky.filter(x => Math.abs(x.top - st.line) <= 3).map(x => x.name)
@@ -301,6 +302,50 @@ await check('staplade fasta rader: navigering, verktygsrad och kapitelrubrik öv
   assert.ok(st.tabFound && st.tabClickable, 'fliken Grundplanering går inte att klicka (något ligger över den)')
 })
 await planH.page.close()
+// Klara veckor: knappen visar passerade veckor med sitt sparade innehåll och kan döljas igen.
+const planI = await openPlan('Veckotest realistisk', [planRow('realistisk', realisticWeeks.map(w => ({ ...w, keepVisibleExtra: false })))])
+const pastCount = await planI.page.evaluate(() => { const t = document.querySelector('.teacher-past-weeks-toggle')?.textContent || ''; return t })
+await check('klara veckor: knappen visar rätt antal passerade veckor', async () => {
+  const label = await planI.page.locator('.teacher-past-weeks-toggle').first().innerText()
+  assert.match(label, /^Visa \d+ klara veckor$/, 'etikett: ' + label + ' (' + pastCount + ')')
+})
+const lessonCount = () => planI.page.evaluate(() => [...document.querySelectorAll('#lararvy .teacher-months .week-card.teacher-collapsible-week')].filter(e => e.getBoundingClientRect().width > 0).length ? [...document.querySelectorAll('#lararvy .teacher-months .week-card.teacher-collapsible-week .lesson')].length : 0)
+const lessonsBefore = await lessonCount()
+await check('klara veckor: visar alla gamla veckor med sitt innehåll, och knappen byter till Dölj', async () => {
+  await planI.page.locator('.teacher-past-weeks-toggle').first().click()
+  await planI.page.waitForFunction(() => document.querySelectorAll('.week-card').length >= 21, null, { timeout: 8000 }).catch(() => {})
+  await planI.page.waitForTimeout(300)
+  await scrollThroughPlan(planI.page)
+  const label = await planI.page.locator('.teacher-past-weeks-toggle').first().innerText()
+  assert.equal(label, 'Dölj klara veckor', 'etikett efter visa: ' + label)
+  const weeks = await planI.page.evaluate(() => [...document.querySelectorAll('.week-card.teacher-collapsible-week')].map(e => ({ wk: e.closest('[data-week]')?.getAttribute('data-week'), lessons: e.querySelectorAll('.lesson').length })))
+  assert.equal(weeks.length, 21, 'alla 21 veckor ska visas, fick ' + weeks.length)
+  assert.ok(weeks.every(w => w.lessons > 0), 'en vecka saknar lektioner')
+})
+await check('klara veckor: gamla veckor går att redigera (veckotitel)', async () => {
+  const titles = planI.page.locator('input.week-title')
+  const n = await titles.count()
+  assert.ok(n >= 21, 'redigeringsfält saknas: ' + n)
+  await titles.first().fill('Gammal vecka redigerad'); await planI.page.waitForTimeout(200)
+  assert.equal(await titles.first().inputValue(), 'Gammal vecka redigerad', 'redigering sparades inte i fältet')
+})
+await check('klara veckor: utskriften innehåller de gamla veckorna', async () => {
+  await planI.page.evaluate(() => { window.__printCalls = 0; window.print = () => { window.__printCalls++ } })
+  await planI.page.locator('button:visible', { hasText: '🖨' }).first().click().catch(() => {})
+  await planI.page.waitForFunction(() => window.__printCalls > 0, null, { timeout: 15000 }).catch(() => {})
+  const weeks = await planI.page.evaluate(() => [...document.querySelectorAll('.teacher-print-host .student-print-page')].map(p => [...p.querySelectorAll('h2, h3, strong')].map(h => h.textContent.trim()).find(t => /^Vecka \d+$/.test(t)) || null))
+  assert.ok(weeks.filter(Boolean).includes('Vecka ' + isoWeekOf(realisticWeeks[0].weekStart)), 'äldsta veckan saknas i utskriften: ' + [...new Set(weeks)].join(','))
+})
+await check('klara veckor: Dölj återgår till tvåveckorsvyn utan att lektioner försvinner', async () => {
+  await planI.page.locator('.teacher-past-weeks-toggle').first().click(); await planI.page.waitForTimeout(400)
+  const label = await planI.page.locator('.teacher-past-weeks-toggle').first().innerText()
+  assert.match(label, /^Visa \d+ klara veckor$/, 'etikett efter dölj: ' + label)
+  const cards = await planI.page.$$eval('.week-card.teacher-collapsible-week', els => els.filter(e => e.getBoundingClientRect().width > 0).length)
+  assert.equal(cards, 2, 'två kort efter dölj, fick ' + cards)
+  assert.equal(await lessonCount(), lessonsBefore, 'antalet lektioner ändrades: ' + lessonsBefore + ' → ' + (await lessonCount()))
+})
+await planI.page.close()
+
 await check('inga sidfel under veckotesterna', async () => {
   assert.deepEqual([...planA.errors, ...planB.errors], [], 'sidfel: ' + [...planA.errors, ...planB.errors].slice(0, 2).join(' / '))
 })
