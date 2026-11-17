@@ -1,3 +1,4 @@
+import { scrollThroughPlan } from './scroll-through.mjs'
 // Veckotest med FIKTIV Supabase-klient. Körning: npm run test:ui:weeks
 // Täcker det som användaren ser på riktiga planeringar:
 //  - veckorna i tvåveckorsläget ligger alltid i kalenderordning, även om planen är sparad i annan ordning
@@ -314,6 +315,7 @@ await check('klara veckor: visar alla gamla veckor med sitt innehåll, och knapp
   await planI.page.locator('.teacher-past-weeks-toggle').first().click()
   await planI.page.waitForFunction(() => document.querySelectorAll('.week-card').length >= 21, null, { timeout: 8000 }).catch(() => {})
   await planI.page.waitForTimeout(300)
+  await scrollThroughPlan(planI.page)
   const label = await planI.page.locator('.teacher-past-weeks-toggle').first().innerText()
   assert.equal(label, 'Dölj klara veckor', 'etikett efter visa: ' + label)
   const weeks = await planI.page.evaluate(() => [...document.querySelectorAll('.week-card.teacher-collapsible-week')].map(e => ({ wk: e.closest('[data-week]')?.getAttribute('data-week'), lessons: e.querySelectorAll('.lesson').length })))

@@ -1,3 +1,4 @@
+import { scrollThroughPlan } from './scroll-through.mjs'
 // Fördjupat UI-test med FIKTIV Supabase-klient. Körning: npm run test:ui:deep
 // Täcker: öppna/stäng-val i ihopfällbara detaljer, upprepade klassbyten, 21 tunga veckor,
 // scrollning, klickbarhet och svarstider. Inga externa anrop, inga riktiga konton eller data.
@@ -72,11 +73,15 @@ await check('detalj som startar öppen (vecka med sidor) kan stängas och stäng
   // Detaljer som startar öppna finns i Visa alla veckor, så den vyn öppnas först.
   await page.locator('button:visible', { hasText: 'Visa alla veckor' }).first().click({ timeout: 2000 }).catch(() => {})
   await page.waitForTimeout(400)
+  await scrollThroughPlan(page)
   const all = page.locator('details.legacy-week-details')
   const n = await all.count()
-  let target = null
-  for (let i = 0; i < n; i++) { if (await all.nth(i).evaluate(d => d.open)) { target = all.nth(i); break } }
-  if (!target) throw new Error('ingen detalj startar öppen i fixturen')
+  // Detaljen för veckan med sidor är den med flest delar. Den startar öppen vid första visningen, men ett tidigare
+  // steg kan ha ändrat läget. Därför öppnas den vid behov, så att stängningen testas i båda fallen.
+  let best = 0, bestSize = -1
+  for (let i = 0; i < n; i++) { const size = await all.nth(i).evaluate(d => d.querySelectorAll('*').length); if (size > bestSize) { bestSize = size; best = i } }
+  const target = all.nth(best)
+  if (!(await target.evaluate(d => d.open))) { await target.locator('summary').first().click(); assert.equal(await target.evaluate(d => d.open), true, 'klick ska öppna') }
   await target.locator('summary').first().click()
   assert.equal(await target.evaluate(d => d.open), false, 'klick ska stänga')
   await page.locator('input.week-title').first().fill('Omrendering två')
@@ -88,7 +93,8 @@ await check('Visa alla veckor: en vecka per rad och alla 21 veckor visar sitt in
   await page.locator('button:visible', { hasText: 'Dölj alla veckor' }).first().click().catch(() => {})
   await page.waitForTimeout(300)
   await page.locator('button:visible', { hasText: 'Visa alla veckor' }).first().click()
-  // Veckorna ritas stegvis, så testet väntar på villkoret (max 8 s) i stället för en fast tid.
+  const placeholdersSeen = await scrollThroughPlan(page)
+  // När planen är genomgången ska alla veckor vara ritade, så villkoret kan väntas på efteråt.
   await page.waitForFunction(() => document.querySelectorAll('.week-card').length >= 21 && [...document.querySelectorAll('.week-card')].every(e => e.querySelectorAll('.lesson').length > 0 || e.getBoundingClientRect().height === 0), null, { timeout: 8000 }).catch(() => {})
   await page.waitForTimeout(100)
   const m = await page.evaluate(() => {
@@ -99,6 +105,7 @@ await check('Visa alla veckor: en vecka per rad och alla 21 veckor visar sitt in
   assert.equal(m.columns, 1, 'exakt en vecka per rad')
   assert.equal(m.empty, 0, 'inga tomma veckor')
   assert.equal(m.placeholders, 0, 'inga kvarvarande placeholders')
+  assert.equal(placeholdersSeen, 0, 'platshållare syntes i rutan under scrollning')
   // Vanlig sidscrollning: sidan ska gå att scrolla och den inre rutan får inte ha egen scroll.
   const innerOverflow = await page.evaluate(() => getComputedStyle(document.querySelector('.teacher-months-all-weeks')).overflowY)
   assert.notEqual(innerOverflow, 'auto', 'inre scrollruta i Visa alla veckor')

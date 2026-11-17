@@ -1020,11 +1020,22 @@ function CalendarWeekThumbnail({ week, entryType, onOpen, onOpenLesson, classWee
 
 // Veckans innehåll byggs först när veckan är nära skärmen (eller när planen skrivs ut).
 // Annars skapas tusentals fält för alla veckor direkt när planen öppnas.
+// Veckor som redan ligger nära skärmen ritas i samma layoutsteg (useLayoutEffect), så att ingen tom platshållare
+// hinner målas. Veckor längre bort ritas i förväg när man scrollar, innan de kommer in på skärmen.
+const LAZY_INITIAL_PX = 1200
+const LAZY_PRERENDER_PX = 2500
 function LazyWeekContent({ render, eager = false }) {
   const ref = useRef(null)
-  // `eager` styrs av föräldern och kan bli sann senare (stegvis ritning), därför läses den varje render.
+  // `eager` styrs av föräldern och kan bli sann senare, därför läses den varje render.
   const [revealed, setRevealed] = useState(false)
   const shown = eager || revealed
+  useLayoutEffect(() => {
+    if (shown || !ref.current) return
+    const rect = ref.current.getBoundingClientRect()
+    // Dolda veckor (display: none) har storleken 0 och ritas först när de visas, via IntersectionObserver.
+    if (rect.width === 0 && rect.height === 0) return
+    if (rect.bottom >= -LAZY_INITIAL_PX && rect.top <= window.innerHeight + LAZY_INITIAL_PX) setRevealed(true)
+  }, [shown])
   useEffect(() => {
     if (shown) return undefined
     const show = () => setRevealed(true)
@@ -1034,7 +1045,7 @@ function LazyWeekContent({ render, eager = false }) {
     const el = ref.current
     let observer = null
     if (el && typeof IntersectionObserver !== "undefined") {
-      observer = new IntersectionObserver(entries => { if (entries.some(entry => entry.isIntersecting)) show() }, { rootMargin: "3000px 0px" })
+      observer = new IntersectionObserver(entries => { if (entries.some(entry => entry.isIntersecting)) show() }, { rootMargin: `${LAZY_PRERENDER_PX}px 0px` })
       observer.observe(el)
     } else show()
     return () => { observer?.disconnect(); window.removeEventListener("beforeprint", showForPrint) }
@@ -1538,9 +1549,6 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   // Startläget är tvåveckorsvyn (två papper bredvid varandra). "Visa alla veckor" väljs av användaren.
   const [showPastTeacherWeeks, setShowPastTeacherWeeks] = useState(false)
   const [allWeekContentsOpen, setAllWeekContentsOpen] = useState(true)
-  // Hur många veckors innehåll som ritas. Resten ritas i små steg i stället för allt på en gång när planen öppnas.
-  // Knuten till vilken planering budgeten gäller, så att en annan planering börjar om från få veckor utan setState i effekt.
-  const [weekRenderState, setWeekRenderState] = useState({ key: null, count: 3 })
   const [weekContentOverrides, setWeekContentOverrides] = useState({})
 
   // Fast rubrik i själva planeringen: samma stora kapitelruta, uppdaterad
@@ -1769,22 +1777,6 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     return words
   }, [weeks])
   const chronologicalTeacherWeeks = useMemo(() => teacherDisplayWeeks.slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')), [teacherDisplayWeeks]) // Alla veckor finns kvar; passerade veckor kan fällas ut kapitelvis
-  // Ny planering börjar med få veckor. Sedan fördubblas antalet veckor som ritas, tills alla visar sitt innehåll.
-  // Nyckeln byts när planering eller "Visa alla veckor" ändras, så att alla veckor inte ritas i ett jobb igen.
-  const weekRenderKey = `${selectedId}|${showPastTeacherWeeks}|${Boolean(focusedTeacherWeek)}|${allWeekContentsOpen}`
-  const weekRenderBudget = weekRenderState.key === weekRenderKey ? weekRenderState.count : 3
-  const stagedWeeks = showPastTeacherWeeks && !focusedTeacherWeek && allWeekContentsOpen
-  useEffect(() => {
-    // Utanför stegvis ritning glöms den sparade budgeten, så att nästa "Visa alla veckor" börjar om från få veckor.
-    if (!stagedWeeks) {
-      if (weekRenderState.key === null) return undefined
-      const reset = setTimeout(() => setWeekRenderState({ key: null, count: 3 }), 0)
-      return () => clearTimeout(reset)
-    }
-    if (weekRenderBudget >= weeks.length) return undefined
-    const timer = setTimeout(() => setWeekRenderState({ key: weekRenderKey, count: Math.min(weeks.length, weekRenderBudget * 2) }), 16)
-    return () => clearTimeout(timer)
-  }, [stagedWeeks, weekRenderBudget, weekRenderKey, weekRenderState.key, weeks.length])
   // Stabila åtgärder för veckokorten. Korten memoiseras, och de anropar alltid de senaste funktionerna via ref.
   const actionsRef = useRef(null)
   useLayoutEffect(() => {
@@ -2611,10 +2603,10 @@ const addNewTeacherWeek = () => setPlan(p => {
           chapters[groupKey].items.push(item)
           return chapters
         }, {})).map(group => <section className="teacher-month-section teacher-chapter-section" data-chapter={group.name} key={group.name}>
-          <div className="teacher-chapter-sticky"><h3 className={`chapter-heading chapter-tone-${chapterTone(group.name)}`}>{group.name}</h3>{group.name !== "Utan kapitel" && <ChapterVocabulary chapter={group.name} weeks={group.items.map(item => item.week)} />}</div>
+          <div className="teacher-chapter-sticky"><h3 className={`chapter-heading chapter-tone-${chapterTone(group.name)}`}>{group.name}</h3>{group.name !== "Utan kapitel" && <ChapterWordList chapter={group.name} words={chapterWordsByName[group.name] || NO_WORDS} />}</div>
           <div className="teacher-month-weeks">
           {group.items.map(({ week, index }) => <div className="chapter-week-group" data-week={calendarWeekNumber(week.weekStart) ?? week.weekNumber} key={`${week.weekStart || week.weekNumber}-${index}`}>
-          <TeacherWeekCard week={week} index={index} open={Boolean(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen)} eager={Boolean(focusedTeacherWeek) || !showPastTeacherWeeks || !allWeekContentsOpen || index < weekRenderBudget} entryType={plan.entryType || 'lektion'} hasLaterWeek={weeks.some(other=>other.weekStart>week.weekStart)} atMaxWeeks={weeks.length>=52} soleWeek={weeks.length<=1} canUndo={historyRef.current.past.length > 0} canRedo={historyRef.current.future.length > 0} actions={weekActions} chapterName={weekChapterName(week)} chapterWords={chapterWordsByName[weekChapterName(week)] || []} />
+          <TeacherWeekCard week={week} index={index} open={Boolean(weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen)} eager={Boolean(focusedTeacherWeek)} entryType={plan.entryType || 'lektion'} hasLaterWeek={weeks.some(other=>other.weekStart>week.weekStart)} atMaxWeeks={weeks.length>=52} soleWeek={weeks.length<=1} canUndo={historyRef.current.past.length > 0} canRedo={historyRef.current.future.length > 0} actions={weekActions} chapterName={weekChapterName(week)} chapterWords={chapterWordsByName[weekChapterName(week)] || []} />
         </div>)}
           {missingNextWeek && lastShownWeek && <div className="paper-missing-week" role="status">
             <strong>Vecka {(calendarWeekNumber(addWeeks(lastShownWeek.week.weekStart, 1)) ?? (lastShownWeek.week.weekNumber + 1))} finns inte i planeringen</strong>
