@@ -153,6 +153,13 @@ await check('under scroll uppåt visas tidigare kapitel igen', async () => {
   }
   assert.ok(after.includes('Tal'), 'Tal ska visas igen när man scrollar upp, fick ' + after.join(' → ') + ' (start: ' + st0.sticky.map(x => x.name).join(',') + ')')
 })
+await check('samma kapitelrubrik visas inte två gånger i Visa alla veckor', async () => {
+  for (const y of [0, 900, 2400, 5200]) {
+    await planD.page.evaluate(v => window.scrollTo(0, v), y); await planD.page.waitForTimeout(60)
+    const dup = await planD.page.evaluate(() => [...document.querySelectorAll('#lararvy .paper-chapter-head')].filter(e => { const r = e.getBoundingClientRect(); return r.height > 0 && r.top < innerHeight && r.bottom > 0 }).length)
+    assert.equal(dup, 0, 'kapitelhuvud på korten syns i Visa alla veckor vid y=' + y + ': ' + dup)
+  }
+})
 await check('kapitelrubriken döljs inte av den övre bannern', async () => {
   await planD.page.evaluate(() => window.scrollTo(0, 800)); await planD.page.waitForTimeout(100)
   const bad = await planD.page.evaluate(() => { const banner = document.querySelector('header.topbar'); const bottom = banner ? banner.getBoundingClientRect().bottom : 0; const h = [...document.querySelectorAll('#lararvy .teacher-chapter-section > .teacher-chapter-sticky')].filter(e => { const r = e.getBoundingClientRect(); return r.height > 0 && r.top < bottom - 2 && r.bottom > bottom }); return h.map(e => Math.round(e.getBoundingClientRect().top) + '<' + Math.round(bottom)) })

@@ -238,6 +238,9 @@ await check('lärarens utskriftsknapp skriver ut elevvyns A4-sidor (en vecka per
   assert.ok(pages >= 1 && pages >= visibleWeeks, 'utskriftssidor: ' + pages + ', veckor: ' + visibleWeeks)
   const banners = await page.evaluate(() => document.querySelectorAll('.teacher-print-host .account-validity-notice').length)
   assert.equal(banners, 0, 'kontobanner ska inte finnas i utskriften')
+  // Varje utskriftssida ska ha sin kapitelrubrik (fixturen har kapitel på alla veckor).
+  const printedChapters = await page.evaluate(() => [...document.querySelectorAll('.teacher-print-host .student-print-page')].map(p => p.querySelector('.chapter-heading')?.textContent?.trim() || null))
+  assert.ok(printedChapters.length > 0 && printedChapters.every(Boolean), 'utskriftssidor utan kapitelrubrik: ' + printedChapters.filter(c => !c).length + ' av ' + printedChapters.length)
 })
 
 await check('inga sidfel, inga React-varningar och inga externa anrop', async () => {

@@ -233,3 +233,8 @@
   top: auto !important;
   z-index: auto !important;
 }
+
+/* Visa alla veckor: kapitelrubriken och begreppen visas en gång, som sticky i sitt kapitel.
+   Kapitelhuvudet på korten döljs där, så att samma rubrik inte syns två gånger vid scroll.
+   I tvåveckorsvyn visar varje kort sitt eget kapitel. Utskriften påverkas inte, den använder elevvyns rubriker. */
+#lararvy .teacher-months.teacher-months-all-weeks .paper-chapter-head { display: none !important; }
