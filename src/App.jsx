@@ -707,6 +707,8 @@ function ChapterVocabulary({ chapter, weeks }) {
 
 // Kapitlet för en vecka: veckans eget kapitelvärde först. Saknas det används veckans första moment som rubrik.
 // Veckan grupperas och begreppen räknas ut bara utifrån den egna veckan, aldrig från andra veckors kapitel.
+// Stabil tom lista, så att memoiserade veckokort inte renderas om i onödan.
+const NO_WORDS = []
 function weekChapterName(week) {
   const explicit = String(week?.chapter || '').trim()
   if (explicit) return explicit
@@ -806,7 +808,7 @@ function PrintScaleBox({ scale, height, children }) {
   return <div className="print-scale-box" style={{ zoom: scale }}>{children}</div>
 }
 
-export function StudentView({ plan, error, preview = false, printPage = null, printWeekStart = null, initialClass = "", hideSelector = false, _publishedOnly = false, printLayout = null }) {
+export function StudentView({ plan, error, preview = false, printPage = null, printWeekStart = null, initialClass = "", hideSelector = false, _publishedOnly = false, printLayout = null, includePast = false }) {
   useState(0)
   const [singlePrintWeek, setSinglePrintWeek] = useState(null)
   const [fit, setFit] = useState(null)
@@ -865,7 +867,7 @@ export function StudentView({ plan, error, preview = false, printPage = null, pr
         + (topic.pages?.length || 0) * 8 + (topic.assignments?.length || 0) * 10
         + (topic.links?.length || 0) * 10, 0), 0))
   const studentWeeks = Array.isArray(selectedClass ? classWeeks : plan?.weeksData) ? [...(selectedClass ? classWeeks : plan.weeksData)]
-    .filter(week => week && !week.hidden && (week.keepVisibleExtra === true || ((week.weekStart || '') >= addWeeks(mondayOf(new Date()), -1) && (week.weekStart || '') <= mondayOf(new Date()))) && (!week.publishDate || week.publishDate <= toIsoDate(new Date())) && (!week.hideDate || week.hideDate > toIsoDate(new Date())))
+    .filter(week => week && !week.hidden && (week.keepVisibleExtra === true || includePast || ((week.weekStart || '') >= addWeeks(mondayOf(new Date()), -1) && (week.weekStart || '') <= mondayOf(new Date()))) && (!week.publishDate || week.publishDate <= toIsoDate(new Date())) && (!week.hideDate || week.hideDate > toIsoDate(new Date())))
     .sort((a, b) => weekContentScore(b) - weekContentScore(a))
     .filter((week, index, weeks) => weeks.findIndex(other => (other.weekStart || `number-${other.weekNumber}`) === (week.weekStart || `number-${week.weekNumber}`)) === index)
     .sort((a, b) => {
@@ -943,10 +945,10 @@ export function StudentView({ plan, error, preview = false, printPage = null, pr
     </PrintScaleBox>
   </main>
   {UTSKRIFT_AKTIV && printPage === null && studentWeeks.length > 0 && <div className="a4-measure" ref={measureRef} aria-hidden="true">
-    {studentWeeks.map((week, index) => <StudentView key={`measure-${previewClass}-${index}-${week.weekStart}`} plan={plan} preview={preview} initialClass={previewClass} hideSelector printPage={0} printWeekStart={week.weekStart} />)}
+    {studentWeeks.map((week, index) => <StudentView key={`measure-${previewClass}-${index}-${week.weekStart}`} plan={plan} preview={preview} initialClass={previewClass} hideSelector printPage={0} printWeekStart={week.weekStart} includePast={includePast} />)}
   </div>}
   {UTSKRIFT_AKTIV && printPage === null && studentWeeks.length > 0 && <div className="student-print-pages">
-    {Array.from({ length: printGroups.length }, (_, index) => <StudentView key={`print-${previewClass}-${index}`} plan={plan} preview={preview} initialClass={previewClass} hideSelector printPage={index} printWeekStart={singlePrintWeek} printLayout={fit} />)}
+    {Array.from({ length: printGroups.length }, (_, index) => <StudentView key={`print-${previewClass}-${index}`} plan={plan} preview={preview} initialClass={previewClass} hideSelector printPage={index} printWeekStart={singlePrintWeek} printLayout={fit} includePast={includePast} />)}
   </div>}
 </>
 }
@@ -1535,7 +1537,6 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [teacherTab, setTeacherTab] = useState("bibliotek")
   // Startläget är tvåveckorsvyn (två papper bredvid varandra). "Visa alla veckor" väljs av användaren.
   const [showPastTeacherWeeks, setShowPastTeacherWeeks] = useState(false)
-  const [pastWeeksExpanded, setPastWeeksExpanded] = useState(false)
   const [allWeekContentsOpen, setAllWeekContentsOpen] = useState(true)
   // Hur många veckors innehåll som ritas. Resten ritas i små steg i stället för allt på en gång när planen öppnas.
   // Knuten till vilken planering budgeten gäller, så att en annan planering börjar om från få veckor utan setState i effekt.
@@ -1582,7 +1583,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       window.removeEventListener('resize', schedule)
       if (frame) cancelAnimationFrame(frame)
     }
-  }, [teacherTab, showPastTeacherWeeks, focusedTeacherWeek, pastWeeksExpanded])
+  }, [teacherTab, showPastTeacherWeeks, focusedTeacherWeek])
 
   useEffect(() => {
     if (teacherTab !== "arsplan") return undefined
@@ -1764,7 +1765,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
       ;(groups[name] ||= []).push(week)
     }
     const words = {}
-    for (const name of Object.keys(groups)) words[name] = name === 'Utan kapitel' ? [] : chapterVocabulary(name, groups[name])
+    for (const name of Object.keys(groups)) words[name] = name === 'Utan kapitel' ? NO_WORDS : (chapterVocabulary(name, groups[name]).length ? chapterVocabulary(name, groups[name]) : NO_WORDS)
     return words
   }, [weeks])
   const chronologicalTeacherWeeks = useMemo(() => teacherDisplayWeeks.slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')), [teacherDisplayWeeks]) // Alla veckor finns kvar; passerade veckor kan fällas ut kapitelvis
@@ -2491,7 +2492,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     window.scrollTo({top:0,behavior:'smooth'})
   }
   return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "mina" ? "view-home" : teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}${teacherTab === "arsplan" && editingClassView ? " view-class" : ""}`}>{teacherTab !== "mina" && <Navigation planTitle={teacherTab === "bibliotek" ? "Mina planeringar" : (teacherTab === "arsplan" || teacherTab === "elevvy") && selectedId ? (plan.title || plan.subject || "Min planering") : ""} previousLabel={previousStepLabel} onPrevious={goToPreviousStep} onAllWeeks={() => { setFocusedTeacherWeek(null); setFocusedTeacherLesson(null); setShowPastTeacherWeeks(value => !value); setTeacherWeekOverview(true); setTeacherTab("arsplan"); setCalendarOpen(false) }} allWeeksOpen={showPastTeacherWeeks} active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={(id, planningHome = false) => { if (!confirmNavigation()) return false; if (planningHome) window.dispatchEvent(new Event('planning-home')); if (id === 'bibliotek') { setLibrarySchool(''); setLibrarySubject(''); setLibraryBoardPage(0); setShowArchive(false) } setTeacherTab(id); setCalendarOpen(false); if (id === 'elevvy') { setPreviewStudents(true); setCalendarOpen(false) } else { setPreviewStudents(false) } }} onOpenExample={() => { if (!confirmNavigation()) return false; return openExample() }} onOpenArchive={() => { if (!confirmNavigation()) return false; setShowArchive(true); setTeacherTab('bibliotek') }} onToggleCalendar={() => { if (!confirmNavigation()) return false; setTeacherTab('arsplan'); setCalendarOpen(true) }} calendarOpen={calendarOpen} hasOpenPlan={Boolean(selectedId && teacherTab === 'arsplan')} isAdmin={isAdmin} adminOpen={adminOpen} onOpenAdmin={() => { if (!confirmNavigation()) return false; onToggleAdmin?.(); return true }} onCloseAdmin={() => { if (adminOpen) onToggleAdmin?.() }} onSignOut={() => { if (!confirmNavigation()) return false; return supabase.auth.signOut() }} pendingCount={pendingCount} planSearch={planSearch} onPlanSearchChange={setPlanSearch} showArchive={showArchive} planContext={selectedId && teacherTab === 'arsplan' ? {subject:plan.subject || plan.title, textbook:plan.textbook, grade:plan.grade || plan.course} : null} onPrintPlan={selectedId && teacherTab === 'arsplan' ? () => setPrintingPlan(true) : null} /> }<main className={`shell${adminOpen ? " admin-workspace" : ""}`} id="lararvy">
-  {printingPlan && <section className="preview-panel teacher-print-host" aria-hidden="true"><StudentView plan={sanitizeForStudents(plan)} preview hideSelector initialClass={editingClassView || ""} /></section>}
+  {printingPlan && <section className="preview-panel teacher-print-host" aria-hidden="true"><StudentView plan={sanitizeForStudents(plan)} preview hideSelector initialClass={editingClassView || ""} includePast={showPastTeacherWeeks} /></section>}
   {adminOpen ? adminContent : <>
     {teacherTab !== "elevvy" && teacherTab !== "mina" && <header className="topbar">
       
@@ -2559,8 +2560,8 @@ const addNewTeacherWeek = () => setPlan(p => {
       </div>
       {/* Aktuellt kapitel visas inte längre som fastklistrad rubrik. Kapitelrubriken ligger kvar i sitt kapitel. */}
       {!focusedTeacherWeek && pastTeacherWeeks.length > 0 && <div className="teacher-past-weeks-banner">
-        <div className="teacher-past-weeks-banner-copy"><strong>✓ Klara veckor</strong><span>{pastTeacherWeeks.length} passerade veckor är dolda</span></div>
-        <button type="button" className="teacher-past-weeks-toggle" aria-expanded={pastWeeksExpanded} onClick={() => {setPastWeeksExpanded(value => !value); if (!showPastTeacherWeeks) setShowPastTeacherWeeks(true)}}>{pastWeeksExpanded ? 'Dölj passerade veckor' : 'Visa passerade veckor'}</button>
+        <div className="teacher-past-weeks-banner-copy"><strong>✓ Klara veckor</strong><span>{showPastTeacherWeeks ? `${pastTeacherWeeks.length} klara veckor visas med sitt sparade innehåll` : `${pastTeacherWeeks.length} passerade veckor är dolda`}</span></div>
+        <button type="button" className="teacher-past-weeks-toggle" aria-expanded={showPastTeacherWeeks} onClick={() => setShowPastTeacherWeeks(value => !value)}>{showPastTeacherWeeks ? 'Dölj klara veckor' : `Visa ${pastTeacherWeeks.length} klara veckor`}</button>
       </div>}
       <nav className="teacher-week-navigation" aria-label="Navigera mellan veckor">
 
@@ -2573,7 +2574,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         
         <div className="teacher-week-global-actions" role="group" aria-label="Visa och dölj veckor och deras innehåll">
         {(showPastTeacherWeeks || focusedTeacherWeek) && <button type="button" className="teacher-all-content-toggle" aria-expanded={teacherDisplayWeeks.every(({week,index}) => weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen)} title="Visa eller dölj innehållet i alla veckor utan att dölja veckorna" onClick={() => { const allOpen = teacherDisplayWeeks.every(({week,index}) => weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen); setAllWeekContentsOpen(!allOpen); setWeekContentOverrides({}) }}><span aria-hidden="true">{teacherDisplayWeeks.every(({week,index}) => weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) ? "▴" : "▾"}</span> {teacherDisplayWeeks.every(({week,index}) => weekContentOverrides[week.weekStart || `${index}`] ?? allWeekContentsOpen) ? "Dölj allt innehåll" : "Visa allt innehåll"}</button>}
-        <button type="button" className="teacher-all-weeks-inline-toggle" aria-expanded={showPastTeacherWeeks} title={showPastTeacherWeeks ? "Dölj alla veckor och återgå till veckoväljaren" : "Visa alla veckor i en sammanhängande vy"} onClick={() => { setFocusedTeacherWeek(null); setFocusedTeacherLesson(null); setTeacherWeekOverview(false); setWeekContentOverrides({}); setShowPastTeacherWeeks(current => !current); setPastWeeksExpanded(false) }}><span aria-hidden="true">{showPastTeacherWeeks ? "✕" : "▦"}</span> {showPastTeacherWeeks ? "Dölj alla veckor" : "Visa alla veckor"}</button>
+        <button type="button" className="teacher-all-weeks-inline-toggle" aria-expanded={showPastTeacherWeeks} title={showPastTeacherWeeks ? "Dölj alla veckor och återgå till veckoväljaren" : "Visa alla veckor i en sammanhängande vy"} onClick={() => { setFocusedTeacherWeek(null); setFocusedTeacherLesson(null); setTeacherWeekOverview(false); setWeekContentOverrides({}); setShowPastTeacherWeeks(current => !current) }}><span aria-hidden="true">{showPastTeacherWeeks ? "✕" : "▦"}</span> {showPastTeacherWeeks ? "Dölj alla veckor" : "Visa alla veckor"}</button>
         </div>
       </nav>
       {focusedTeacherWeek && createPortal(<div className="class-full-week-backdrop" role="presentation" style={{position:'fixed',inset:0,zIndex:10000,background:'rgba(22,35,45,.45)',display:'flex',alignItems:'center',justifyContent:'center',padding:8}}>

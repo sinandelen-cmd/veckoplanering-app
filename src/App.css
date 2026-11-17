@@ -5984,8 +5984,7 @@ body:has(.teacher-tab-panel:not([hidden]) #mina-arsplaneringar){overflow-y:auto!
   .planning-unified-navigation .planning-nav-context { display:none!important; }
 }
 
-/* Tydligare orientering i Grundplanering: ingen knapp för tidigare veckor (veckonavigeringen räcker), och kompakt rubrikrad utan tomt utrymme. */
-#lararvy .teacher-past-weeks-toggle { display:none!important; }
+/* Kompakt rubrikrad utan tomt utrymme. Knappen för klara veckor visas igen (se Klara veckor-bannern). */
 #lararvy .teacher-year-review .teacher-pinned-chapter-shell { padding:0!important; margin:0 0 6px!important; }
 #lararvy .teacher-year-review .teacher-week-navigation { margin-block:6px!important; }
 #lararvy .teacher-year-review .teacher-month-section { padding-top:4px!important; }

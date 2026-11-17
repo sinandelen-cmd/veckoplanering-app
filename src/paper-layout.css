@@ -252,3 +252,10 @@
   top: var(--planning-nav-h, 44px) !important;
   z-index: 4990 !important;
 }
+
+/* Visa alla veckor: webbläsaren ritar och räknar layout bara för veckor nära skärmen.
+   DOM, innehåll och knappar är oförändrade. Minskar arbetet vid varje knapptryck. */
+#lararvy .teacher-months.teacher-months-all-weeks .chapter-week-group {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
