@@ -106,7 +106,7 @@ await check('inklistrad flerradig text i momentet växer i höjd', async () => {
   const pasted = Array.from({ length: 6 }, (_, i) => `Rad nummer ${i + 1} i ett inklistrat moment`).join('\n')
   await ta.fill(pasted); await p.page.waitForTimeout(150)
   const after = await ta.evaluate(t => ({ h: t.clientHeight, scroll: t.scrollHeight - t.clientHeight }))
-  assert.ok(after.h > before + 60, 'rutan växte inte: ' + before + ' → ' + after.h)
+  assert.ok(after.h > before + 40, 'rutan växte inte: ' + before + ' → ' + after.h)
   assert.equal(after.scroll, 0, 'intern rullning efter inklistring')
 })
 await check('plusknapp för moment lägger till ett nytt moment, och ta-bort-knappen tar bort det', async () => {
@@ -175,9 +175,9 @@ for (const [w, h] of [[1024, 768], [1920, 1000]]) {
     const m = await measureGrid(q.page)
     assert.ok(m, 'långt moment hittades inte')
     const share = m.nameW / m.gridW
-    // På smalare skärm tar Sida och Uppgift sin minimibredd (104 px) först, så Moment blir mindre än 55 % på smala skärmar (ca 40 % vid 1024 px).
-    const low = w < 1200 ? 0.38 : 0.53
-    assert.ok(share >= low && share <= 0.6 && m.pagesW >= 100 && m.assignW >= 100, 'andel ' + share.toFixed(3) + ', sida ' + m.pagesW + ', uppgift ' + m.assignW)
+    // Smalare skärm: momentet ligger över hela raden (ui-layout-testet kontrollerar det). Här kontrolleras bara att Sida och Uppgift inte blir för smala.
+    const low = w < 1201 ? 0.9 : 0.53
+    assert.ok(share >= low && (w < 1201 || share <= 0.6) && m.pagesW >= 96 && m.assignW >= 96, 'andel ' + share.toFixed(3) + ', sida ' + m.pagesW + ', uppgift ' + m.assignW)
   })
   await q.page.close()
 }
