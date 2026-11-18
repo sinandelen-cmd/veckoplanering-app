@@ -16,7 +16,8 @@
     "test:ui:weeks": "node tests/ui/ui-weeks.mjs",
     "test:ui:lessonfields": "node tests/ui/ui-lessonfields.mjs",
     "test:ui:layout": "node tests/ui/ui-layout.mjs",
-    "test:ui:subject-archive": "node tests/ui/ui-subject-archive.mjs"
+    "test:ui:subject-archive": "node tests/ui/ui-subject-archive.mjs",
+    "test:ui:library": "node tests/ui/ui-library.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
