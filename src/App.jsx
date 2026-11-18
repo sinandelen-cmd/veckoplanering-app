@@ -2247,6 +2247,90 @@ const addNewTeacherWeek = () => setPlan(p => {
     }
   }
 
+  // Arkiverar eller återställer alla kurser i ett ämne. Varje kurs uppdateras på samma sätt som vid enskild arkivering.
+  async function setSubjectArchived(subjectRows, subjectName, archived) {
+    if (busy) return
+    const targets = subjectRows.filter(row => Boolean(parseContent(row.content)?.archived) !== archived)
+    if (!targets.length) return setStatus(archived ? 'Det finns inga aktiva kurser att arkivera i ämnet.' : 'Det finns inga arkiverade kurser att återställa i ämnet.')
+    if (targets.some(row => row.id === selectedId) && isDirty) {
+      setStatus('Spara eller lämna dina osparade ändringar innan du arkiverar eller återställer ämnet.')
+      return
+    }
+    const count = targets.length
+    const message = archived
+      ? `Arkivera ${count} ${count === 1 ? 'kurs' : 'kurser'} i "${subjectName}"? De sparas och kan återställas när som helst.`
+      : `Återställ ${count} ${count === 1 ? 'kurs' : 'kurser'} i "${subjectName}" till den aktiva listan?`
+    if (!window.confirm(message)) return
+    setBusy(true)
+    try {
+      for (const row of targets) {
+        const stored = parseContent(row.content)
+        if (!stored || typeof stored !== 'object') throw new Error('En kursplanering kunde inte läsas.')
+        const updated = { ...stored, archived }
+        const { data, error } = await supabase.from('veckoplanering').update({ content: JSON.stringify(updated), updated_at: new Date().toISOString() })
+          .eq('id', row.id).eq('user_id', session.user.id).select('id').single()
+        if (error || !data) throw error || new Error('En planering uppdaterades inte.')
+        if (selectedId === row.id) {
+          const next = { ...plan, archived }
+          setPlan(next)
+          savedPlanRef.current = JSON.stringify(next)
+          setSavedRevision(revision => revision + 1)
+        }
+      }
+      const refreshed = await loadPlans()
+      setStatus(refreshed
+        ? `${count} ${count === 1 ? 'kurs' : 'kurser'} i ${subjectName} ${archived ? 'är arkiverade' : 'är återställda'}.`
+        : 'Ändringarna sparades men listan kunde inte uppdateras.')
+    } catch (error) {
+      await loadPlans()
+      setStatus(`Kunde inte ändra arkivstatus för ämnet: ${error.message || 'Okänt fel'}`)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // Raderar alla arkiverade kurser i ett ämne permanent och tar bort ämnesmappen. Kan inte ångras.
+  async function deleteArchivedSubject(subjectRows, subjectName, grade) {
+    if (busy) return
+    const targets = subjectRows.filter(row => Boolean(parseContent(row.content)?.archived))
+    if (!targets.length) return setStatus('Det finns inga arkiverade kurser att radera i ämnet.')
+    const count = targets.length
+    if (targets.some(row => row.id === selectedId) && JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar i en planering som ska raderas. Radering tar även bort dem. Vill du fortsätta?')) return
+    if (!window.confirm(`Radera ${count} ${count === 1 ? 'kurs' : 'kurser'} i "${subjectName}" permanent? Detta kan inte ångras.`)) return
+    setBusy(true)
+    try {
+      for (const row of targets) {
+        const { error } = await supabase.from('veckoplanering').delete().eq('id', row.id).eq('user_id', session.user.id).select('id').single()
+        if (error) throw error
+        if (selectedId === row.id) {
+          const fresh = { ...emptyPlan(), themeId: PLAN_THEMES[plans.length % PLAN_THEMES.length].id }
+          setSelectedId(null)
+          setPlan(fresh)
+          savedPlanRef.current = JSON.stringify(fresh)
+          setSavedRevision(revision => revision + 1)
+        }
+        try {
+          if (window.sessionStorage.getItem(`arsplanering-last-open-${session.user.id}`) === String(row.id)) window.sessionStorage.removeItem(`arsplanering-last-open-${session.user.id}`)
+        } catch { /* Lagring kan vara blockerad */ }
+      }
+      const uid = session.user.id
+      setSubjectFolders(current => {
+        const folders = current[uid] || {}
+        const next = { ...current, [uid]: { ...folders, [grade]: (folders[grade] || []).filter(value => value !== subjectName) } }
+        localStorage.setItem('arsplanering-subject-folders', JSON.stringify(next))
+        return next
+      })
+      setLibrarySubject('')
+      const refreshed = await loadPlans()
+      setStatus(refreshed ? `${count} ${count === 1 ? 'kurs' : 'kurser'} i ${subjectName} är raderade.` : 'Kurserna raderades men listan kunde inte uppdateras.')
+    } catch (error) {
+      await loadPlans()
+      setStatus(`Kunde inte radera ämnet: ${error.message || 'Okänt fel'}`)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function renamePlan(row) {
     if (busy) return
     if (selectedId === row.id && isDirty) {
@@ -2946,7 +3030,7 @@ const addNewTeacherWeek = () => setPlan(p => {
   }catch(error){await loadPlans();setStatus('Namnbytet kunde inte slutföras: '+(error.message||'Okänt fel'))}
   finally{setBusy(false)}
 
-}} />}<button type="button" className="secondary subject-folder-add" onClick={() => { setCoursePicker({school:grade,subject,course:'',year:grade === 'Grundskola' ? 'Årskurs 7' : ''}) }}>＋ Ny kurs</button><button type="button" className="subject-folder-remove" disabled={busy} title="Ta bort ämnesmappen" onClick={() => { if(rows.length){window.alert("Ämnet innehåller kurser. Arkivera eller radera kursplaneringarna först.");return} if(!window.confirm("Ta bort ämnet "+subject+"?"))return;const uid=session?.user?.id;if(!uid)return;setSubjectFolders(current=>{const folders=current[uid]||{};const next={...current,[uid]:{...folders,[grade]:(folders[grade]||[]).filter(value=>value!==subject)}};localStorage.setItem("arsplanering-subject-folders",JSON.stringify(next));return next});setLibrarySubject("") }}>Ta bort ämne</button></div>{librarySubject === grade + '|' + subject && <>{grade === 'Gymnasiet' && rows.map(row => <div key={row.id} className="course-folder-with-delete"><button type="button" className="course-folder-link" style={{ "--folder-hue": [275, 145, 30, 340, 175][Array.from(row.title || "").reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 5] }} disabled={busy} onDoubleClick={event => {event.preventDefault();renamePlan(row)}} onClick={() => loadPlan(row)}>📁 {((parseContent(row.content) || {}).course || row.course || row.title)} <small style={{marginLeft:"auto",fontWeight:400,fontSize:11,opacity:.7}}>{(parseContent(row.content) || {}).textbook || ""}</small></button><button type="button" className="course-folder-archive" disabled={busy} onClick={() => setArchived(row,true)} title="Arkivera kursplaneringen" aria-label={"Arkivera " + row.title}><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v12h14V8M10 12h4"/></svg></button><button type="button" className="course-folder-delete" disabled={busy} title="Radera denna planering" aria-label={"Radera " + row.title} onClick={() => deletePlan(row)}><span aria-hidden="true">×</span></button></div>)}{grade !== 'Gymnasiet' && <div className="visual-tree-grade-folders">{Object.entries(rows.reduce((byGrade, row) => { const data = parseContent(row.content) || {}; const value = [data.grade, row.grade, data.className, row.class_name, row.title].map(item => String(item || '')).join(' '); const match = value.match(/(?:årskurs|åk)\s*(\d+)/i) || value.match(/(?:^|\s)([7-9])(?:[a-z])?(?:\s|$)/i); const label = match ? 'Årskurs ' + match[1] : (data.course || row.course || 'Övriga kurser'); (byGrade[label] ||= []).push(row); return byGrade }, {})).sort(([a],[b]) => a.localeCompare(b, 'sv', {numeric:true})).map(([label, gradeRows]) => <div key={label} className="visual-tree-grade-folder textbook-only-grade"><div className="textbook-plan-list">{gradeRows.map(row => { const data=parseContent(row.content)||{}; const gradeNumber=label.replace(/[^0-9]/g,''); const book=String(data.textbook||'').trim(); const displayName=book ? (gradeNumber && !book.endsWith(' '+gradeNumber) ? book+' '+gradeNumber : book) : (row.title||'Öppna planering'); return <div className="textbook-plan-row" key={row.id}><button type="button" disabled={busy} title={row.title||displayName} onDoubleClick={event=>{event.preventDefault();renamePlan(row)}} onClick={()=>loadPlan(row)}>📘 {displayName}</button><button type="button" className="course-folder-archive" disabled={busy} onClick={()=>setArchived(row,true)} title="Arkivera planeringen" aria-label={"Arkivera "+displayName}><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v12h14V8M10 12h4"/></svg></button><button type="button" className="course-folder-delete" disabled={busy} title="Radera planeringen" aria-label={"Radera "+displayName} onClick={()=>deletePlan(row)}><span aria-hidden="true">×</span></button></div>})}</div></div>)}</div>}</>}</div>)}</div></>}</section>)}
+}} />}{!showArchive && <button type="button" className="secondary subject-folder-add" onClick={() => { setCoursePicker({school:grade,subject,course:'',year:grade === 'Grundskola' ? 'Årskurs 7' : ''}) }}>＋ Ny kurs</button>}<button type="button" className="secondary course-folder-archive subject-folder-archive" disabled={busy || rows.length === 0} title={showArchive ? "Återställ alla kurser i ämnet till den aktiva listan" : "Arkivera alla kurser i ämnet. De kan återställas senare."} onClick={() => setSubjectArchived(rows, subject, !showArchive)}>{showArchive ? "Återställ ämne" : "Arkivera ämne"}</button>{showArchive && <button type="button" className="danger subject-folder-delete" disabled={busy || rows.length === 0} title="Radera alla arkiverade kurser i ämnet permanent. Kan inte ångras." onClick={() => deleteArchivedSubject(rows, subject, grade)}>Radera ämne</button>}{!showArchive && <button type="button" className="subject-folder-remove" disabled={busy} title="Ta bort ämnesmappen" onClick={() => { if(rows.length){window.alert("Ämnet innehåller kurser. Arkivera eller radera kursplaneringarna först.");return} if(!window.confirm("Ta bort ämnet "+subject+"?"))return;const uid=session?.user?.id;if(!uid)return;setSubjectFolders(current=>{const folders=current[uid]||{};const next={...current,[uid]:{...folders,[grade]:(folders[grade]||[]).filter(value=>value!==subject)}};localStorage.setItem("arsplanering-subject-folders",JSON.stringify(next));return next});setLibrarySubject("") }}>Ta bort ämne</button>}</div>{librarySubject === grade + '|' + subject && <>{grade === 'Gymnasiet' && rows.map(row => <div key={row.id} className="course-folder-with-delete"><button type="button" className="course-folder-link" style={{ "--folder-hue": [275, 145, 30, 340, 175][Array.from(row.title || "").reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 5] }} disabled={busy} onDoubleClick={event => {event.preventDefault();renamePlan(row)}} onClick={() => loadPlan(row)}>📁 {((parseContent(row.content) || {}).course || row.course || row.title)} <small style={{marginLeft:"auto",fontWeight:400,fontSize:11,opacity:.7}}>{(parseContent(row.content) || {}).textbook || ""}</small></button><button type="button" className="course-folder-archive" disabled={busy} onClick={() => setArchived(row,true)} title="Arkivera kursplaneringen" aria-label={"Arkivera " + row.title}><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v12h14V8M10 12h4"/></svg></button><button type="button" className="course-folder-delete" disabled={busy} title="Radera denna planering" aria-label={"Radera " + row.title} onClick={() => deletePlan(row)}><span aria-hidden="true">×</span></button></div>)}{grade !== 'Gymnasiet' && <div className="visual-tree-grade-folders">{Object.entries(rows.reduce((byGrade, row) => { const data = parseContent(row.content) || {}; const value = [data.grade, row.grade, data.className, row.class_name, row.title].map(item => String(item || '')).join(' '); const match = value.match(/(?:årskurs|åk)\s*(\d+)/i) || value.match(/(?:^|\s)([7-9])(?:[a-z])?(?:\s|$)/i); const label = match ? 'Årskurs ' + match[1] : (data.course || row.course || 'Övriga kurser'); (byGrade[label] ||= []).push(row); return byGrade }, {})).sort(([a],[b]) => a.localeCompare(b, 'sv', {numeric:true})).map(([label, gradeRows]) => <div key={label} className="visual-tree-grade-folder textbook-only-grade"><div className="textbook-plan-list">{gradeRows.map(row => { const data=parseContent(row.content)||{}; const gradeNumber=label.replace(/[^0-9]/g,''); const book=String(data.textbook||'').trim(); const displayName=book ? (gradeNumber && !book.endsWith(' '+gradeNumber) ? book+' '+gradeNumber : book) : (row.title||'Öppna planering'); return <div className="textbook-plan-row" key={row.id}><button type="button" disabled={busy} title={row.title||displayName} onDoubleClick={event=>{event.preventDefault();renamePlan(row)}} onClick={()=>loadPlan(row)}>📘 {displayName}</button><button type="button" className="course-folder-archive" disabled={busy} onClick={()=>setArchived(row,true)} title="Arkivera planeringen" aria-label={"Arkivera "+displayName}><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v12h14V8M10 12h4"/></svg></button><button type="button" className="course-folder-delete" disabled={busy} title="Radera planeringen" aria-label={"Radera "+displayName} onClick={()=>deletePlan(row)}><span aria-hidden="true">×</span></button></div>})}</div></div>)}</div>}</>}</div>)}</div></>}</section>)}
       </div></div>
       <p className="muted">Arkivering döljer bara planeringen från den aktiva listan. Publicerade elevlänkar påverkas inte.</p>
     </section>
