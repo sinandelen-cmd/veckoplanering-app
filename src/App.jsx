@@ -3337,6 +3337,8 @@ function MomentLinkItem({ link, index, editable, onChange, onDelete }) {
 // Storleken på en textarea följer innehållet. Stabil funktion, så React inte kör om den vid varje render.
 function fitTextarea(node) {
   if (!node) return
+  // Där webbläsaren stöder field-sizing växer textrutan själv, även när kortets bredd ändras.
+  if (typeof CSS !== 'undefined' && CSS.supports?.('field-sizing', 'content')) return
   node.style.height = 'auto'
   node.style.height = `${node.scrollHeight}px`
 }
