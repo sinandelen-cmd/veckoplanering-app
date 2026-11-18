@@ -929,7 +929,7 @@ export function StudentView({ plan, error, preview = false, printPage = null, pr
       </div>
     </header>
     {studentWeeks.length === 0 && <p className="card empty" role="status">{plan.autoReleaseWeeks ? "Ingen vecka är publicerad för elever ännu. Nästa vecka visas automatiskt när dess måndag börjar." : "Det finns inga synliga veckor i den här planeringen ännu."}</p>}
-    {printPage === null && UTSKRIFT_AKTIV && fit?.notices?.length > 0 && <section className="print-fit-notice" role="status" aria-label="Utskriftsvarning">
+    {printPage === null && !_publishedOnly && UTSKRIFT_AKTIV && fit?.notices?.length > 0 && <section className="print-fit-notice" role="status" aria-label="Utskriftsvarning">
       {fit.notices.map(notice => {
         const week = studentWeeks.find(item => item.weekStart === notice.weekStart)
         const number = week ? (calendarWeekNumber(week.weekStart) ?? week.weekNumber) : ''
@@ -943,7 +943,7 @@ export function StudentView({ plan, error, preview = false, printPage = null, pr
     <section className={gridMode ? 'year-grid student-matrix' : 'year-grid student-list'} style={gridMode ? { '--student-columns': columns, '--student-rows': rows } : undefined}>
       {visibleWeeks.map((week, index) => <div className="chapter-week-group" key={`${week.weekNumber}-${week.weekStart}`}>
         {weekChapterName(week) !== 'Utan kapitel' && (gridMode || index === 0 || weekChapterName(week) !== weekChapterName(visibleWeeks[index - 1])) && <h2 className={`chapter-heading chapter-tone-${chapterTone(weekChapterName(week))}`}>{weekChapterName(week)}</h2>}{weekChapterName(week) !== 'Utan kapitel' && (gridMode || index === 0 || weekChapterName(week) !== weekChapterName(visibleWeeks[index - 1])) && <ChapterVocabulary chapter={weekChapterName(week)} weeks={visibleWeeks.filter(w => weekChapterName(w) === weekChapterName(week))} />}
-        <article id={"student-week-" + week.weekStart} className="week-card student-week-card" style={studentWeekStyle(week.weekStart)}>
+        <article id={"student-week-" + week.weekStart} className={`week-card student-week-card${printPage === null ? ' student-screen-card' : ''}`} style={studentWeekStyle(week.weekStart)}>
 
         <div className="week-top student-week-top">
           <div className="student-week-identity"><strong>Vecka {calendarWeekNumber(week.weekStart) ?? week.weekNumber}</strong>{week.chunkLabel && <span className="student-chunk-label">{week.chunkLabel}</span>}<span className="calendar-month-corner calendar-tile-month">{weekMonthLabel(week.weekStart)}</span><span>{studentWeekDateRange(week.weekStart)}</span></div>
@@ -952,7 +952,7 @@ export function StudentView({ plan, error, preview = false, printPage = null, pr
         {!/^Vecka\s+\d+$/i.test(week.title || '') && week.title?.trim() && <h3>{week.title}</h3>}
         <div className="week-content">{week.content || (!week.pages?.length && !week.assignments?.length && !week.links?.length && !week.lessons?.some(lesson => lesson.topics?.some(topic => topic.name?.trim() || topic.pages?.length || topic.assignments?.length || topic.links?.length)) ? 'Ingen planering angiven ännu.' : '')}</div>
         <ImportantDatesForWeek week={week} plan={plan} />
-        <LessonDetails week={week} entryType={plan.entryType || 'lektion'} lessonDisplay="dag-och-lektion" />
+        <LessonDetails week={week} entryType={plan.entryType || 'lektion'} lessonDisplay="dag-och-lektion" hideEmptyDay={printPage === null} />
         <WeekDetails week={week} />
       </article></div>)}
     </section>
@@ -3358,10 +3358,16 @@ function fitTextarea(node) {
   if (!node) return
   // Där webbläsaren stöder field-sizing växer textrutan själv, även när kortets bredd ändras.
   if (typeof CSS !== 'undefined' && CSS.supports?.('field-sizing', 'content')) return
-  node.style.height = 'auto'
-  node.style.height = `${node.scrollHeight}px`
+  const fit = () => { node.style.height = 'auto'; node.style.height = `${node.scrollHeight}px` }
+  fit()
+  // Utan field-sizing måste höjden räknas om när rutans bredd ändras, annars klipps texten.
+  if (!node.dataset.fitWatch && typeof ResizeObserver !== 'undefined') {
+    node.dataset.fitWatch = '1'
+    let width = node.clientWidth
+    new ResizeObserver(() => { if (node.clientWidth !== width) { width = node.clientWidth; fit() } }).observe(node)
+  }
 }
-function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 'bara-lektion', onlyLessonIndex = null, onPreviousLesson = null, onNextLesson = null, lessonCount = null, onUndo = null, onRedo = null, canUndo = false, canRedo = false, onOpenLesson = null }) {
+function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 'bara-lektion', hideEmptyDay = false, onlyLessonIndex = null, onPreviousLesson = null, onNextLesson = null, lessonCount = null, onUndo = null, onRedo = null, canUndo = false, canRedo = false, onOpenLesson = null }) {
   const lessons = Array.isArray(week?.lessons) ? week.lessons : []
   const editable = typeof onChange === 'function'
   const assessmentTypes = ['Prov','Test','Examination','Nationellt prov (NP)','Diagnos','Läxförhör','Egen benämning']
@@ -3393,7 +3399,9 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
             const showDay = lessonDisplay !== 'bara-lektion'
             const showLesson = lessonDisplay !== 'bara-dag'
             const dayLabel = day || 'Dag ej vald'
-            return <>{showDay && <span>{dayLabel}</span>}{showDay && showLesson && ' · '}{showLesson && <span>{name}</span>}{lesson.assessment && <> · <span className="lesson-heading-assessment">{lesson.assessment.type === 'Egen benämning' ? (lesson.assessment.customType || 'Prov') : (lesson.assessment.type || 'Prov')}</span></>}{lessonDayDate(week.weekStart, day) && <span className="lesson-day-date"> · {lessonDayDate(week.weekStart, day)}</span>}</>
+            // I elevvyn på skärmen visas ingen platshållare för dag som inte är vald.
+            const showDayLabel = showDay && !(hideEmptyDay && !day)
+            return <>{showDayLabel && <span>{dayLabel}</span>}{showDayLabel && showLesson && ' · '}{showLesson && <span>{name}</span>}{lesson.assessment && <> · <span className="lesson-heading-assessment">{lesson.assessment.type === 'Egen benämning' ? (lesson.assessment.customType || 'Prov') : (lesson.assessment.type || 'Prov')}</span></>}{lessonDayDate(week.weekStart, day) && <span className="lesson-day-date"> · {lessonDayDate(week.weekStart, day)}</span>}</>
           })()}
         </h4>}
         {editable && entryType !== 'dag' && <div className="lesson-reorder-controls"><button type="button" disabled={i === 0} aria-label={`Flytta lektion ${i + 1} uppåt`} onClick={() => moveLesson(i, -1)} title="Flytta upp"><PlanningActionIcon name="arrow-up" /></button><button type="button" disabled={i === lessons.length - 1} aria-label={`Flytta lektion ${i + 1} nedåt`} onClick={() => moveLesson(i, 1)} title="Flytta ned"><PlanningActionIcon name="arrow-down" /></button></div>}
@@ -3419,7 +3427,7 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
         const lastFilledRow = values => values.reduce((last, value, index) => String(value ?? '').trim() ? index + 1 : last, 0)
         const rows = editable ? Math.max(1, pages.length, assignments.length) : Math.max(lastFilledRow(pages), lastFilledRow(assignments))
         return <div className="topic" key={j}>
-          <div className={`topic-grid ${topic.hidePages ? "without-pages" : ""} ${topic.hideAssignments ? "without-assignments" : ""}`}>
+          <div className={`topic-grid ${topic.hidePages || (!editable && !pages.some(v => String(v ?? '').trim())) ? "without-pages" : ""} ${topic.hideAssignments || (!editable && !assignments.some(v => String(v ?? '').trim())) ? "without-assignments" : ""}`}>
             <div className="topic-name">{editable ? <textarea aria-label="Momentets namn" placeholder="Skriv moment" rows={1} ref={fitTextarea} value={topic.name || ''} onChange={e => updateTopic({ ...topic, name: e.target.value })} /> : <strong className="topic-name-display">{topic.name || 'Moment'}</strong>}
             <div className="topic-links moment-inner-links">
             {links.map((link, k) => <MomentLinkItem
@@ -3441,9 +3449,9 @@ function LessonDetails({ week, onChange, entryType = 'lektion', lessonDisplay = 
               {topic.hidePages && <button type="button" className="secondary" onClick={() => updateTopic({ ...topic, hidePages: false })}>+ Sida</button>}
               {topic.hideAssignments && <button type="button" className="secondary" onClick={() => updateTopic({ ...topic, hideAssignments: false })}>+ Uppgift</button>}
             </div>}
-            {['pages', 'assignments'].filter(field => !topic[field === 'pages' ? 'hidePages' : 'hideAssignments']).map(field => <div className={`topic-column ${field}`} key={field}>
+            {['pages', 'assignments'].filter(field => !topic[field === 'pages' ? 'hidePages' : 'hideAssignments']).filter(field => editable || (field === 'pages' ? pages : assignments).some(v => String(v ?? '').trim())).map(field => <div className={`topic-column ${field}`} key={field}>
               <div className="topic-fixed-heading">{!editable && <h5>{field === 'pages' ? 'Sida' : 'Uppgift'}</h5>}{editable && <button type="button" className="remove-small remove-topic-column" title={`Ta bort hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan`} aria-label={`Ta bort hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan`} onClick={() => { if ((field === 'pages' ? pages : assignments).some(value => String(value).trim()) && !window.confirm(`Dölj hela ${field === 'pages' ? 'Sida' : 'Uppgift'}-rutan? Innehållet sparas och kan visas igen.`)) return; updateTopic({ ...topic, [field === 'pages' ? 'hidePages' : 'hideAssignments']: true }) }}><PlanningActionIcon name="trash" /></button>}</div>
-              {Array.from({ length: rows }, (_, row) => <div className="topic-cell" key={row}>
+              {(editable ? Array.from({ length: rows }, (_, row) => row) : (field === 'pages' ? pages : assignments).map((value, row) => (String(value ?? '').trim() ? row : -1)).filter(row => row >= 0)).map(row => <div className="topic-cell" key={row}>
                 {editable ? <><textarea rows={1} className="topic-value-input" ref={fitTextarea} aria-label={`${(field === 'pages' ? topic.pagesLabel : topic.assignmentsLabel)?.trim() || (field === 'pages' ? 'Sida' : 'Uppgift')} rad ${row + 1}`} placeholder={field === 'pages' ? 'Skriv sida' : 'Skriv uppgift'} value={(field === 'pages' ? pages : assignments)[row] || ''} onChange={e => {
                   const next = [...(field === 'pages' ? pages : assignments)]
                   while (next.length <= row) next.push('')

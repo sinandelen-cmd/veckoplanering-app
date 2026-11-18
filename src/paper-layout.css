@@ -260,14 +260,6 @@
   contain-intrinsic-size: auto 900px;
 }
 
-/* Lektionens fält: Moment är det bredaste fältet (ca 55 % av raden). Sida och Uppgift delar resten.
-   Alla tre ligger bredvid varandra från 651 px och uppåt. Under det staplas de som förut. */
-@media (min-width: 651px) {
-  #lararvy .teacher-collapsible-week .lesson .topic-grid { grid-template-columns: minmax(0, 2.6fr) minmax(104px, 1fr) minmax(104px, 1fr) !important; }
-  #lararvy .teacher-collapsible-week .lesson .topic-grid.without-pages:not(.without-assignments),
-  #lararvy .teacher-collapsible-week .lesson .topic-grid.without-assignments:not(.without-pages) { grid-template-columns: minmax(0, 2.6fr) minmax(104px, 1fr) !important; }
-  #lararvy .teacher-collapsible-week .lesson .topic-grid.without-pages.without-assignments { grid-template-columns: minmax(0, 1fr) !important; }
-}
 /* Textrutorna i momentet och i Sida/Uppgift växer i höjd med sitt innehåll, utan intern rullningslist. */
 #lararvy .teacher-collapsible-week .lesson .topic-grid textarea { field-sizing: content; overflow: hidden; }
 
@@ -320,11 +312,46 @@
 .import-split ol { margin: 6px 0 8px 20px; padding: 0; }
 .import-split .button-row { display: flex; flex-wrap: wrap; gap: 8px; }
 
-/* Smalare datorskärm (upp till 1200 px): mindre sidomarginal i A4-kortet, så att Moment får mer bredd.
-   Sida och Uppgift behåller minst 96 px. Över 1200 px gäller samma regler som ovan. */
-@media (max-width: 1200px) {
-  #lararvy .teacher-months .teacher-collapsible-week.week-card { padding-left: 18px !important; padding-right: 18px !important; }
-  #lararvy .teacher-collapsible-week .topic-grid { grid-template-columns: minmax(0, 2.6fr) minmax(96px, 1fr) minmax(96px, 1fr) !important; }
-  #lararvy .teacher-collapsible-week .topic-grid.without-pages:not(.without-assignments),
-  #lararvy .teacher-collapsible-week .topic-grid.without-assignments:not(.without-pages) { grid-template-columns: minmax(0, 2.6fr) minmax(96px, 1fr) !important; }
+
+/* ===== Lektionskort: Moment får mest plats, Sida och Uppgift delar resten =====
+   Gäller lärarens veckokort och elevens skärmkort. Utskriften har egna regler och påverkas inte. */
+@media (min-width: 1201px) {
+  #lararvy .lesson .topic-grid:not(.teacher-print-host .topic-grid),
+  .student-screen-card .topic-grid { grid-template-columns: minmax(0, 3fr) minmax(104px, 1fr) minmax(104px, 1fr) !important; }
+  #lararvy .lesson .topic-grid:not(.teacher-print-host .topic-grid).without-pages:not(.without-assignments),
+  #lararvy .lesson .topic-grid:not(.teacher-print-host .topic-grid).without-assignments:not(.without-pages),
+  .student-screen-card .topic-grid.without-pages:not(.without-assignments),
+  .student-screen-card .topic-grid.without-assignments:not(.without-pages) { grid-template-columns: minmax(0, 3fr) minmax(104px, 1fr) !important; }
+  #lararvy .lesson .topic-grid:not(.teacher-print-host .topic-grid).without-pages.without-assignments,
+  .student-screen-card .topic-grid.without-pages.without-assignments { grid-template-columns: minmax(0, 1fr) !important; }
 }
+/* Smalare datorskärm: Moment får hela raden, Sida och Uppgift ligger under varandra i två kolumner. */
+@media (min-width: 651px) and (max-width: 1200px) {
+  #lararvy .lesson .topic-grid:not(.teacher-print-host .topic-grid),
+  .student-screen-card .topic-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
+  #lararvy .lesson .topic-grid:not(.teacher-print-host .topic-grid) > .topic-name,
+  .student-screen-card .topic-grid > .topic-name { grid-column: 1 / -1 !important; }
+  #lararvy .lesson .topic-grid:not(.teacher-print-host .topic-grid).without-pages,
+  #lararvy .lesson .topic-grid:not(.teacher-print-host .topic-grid).without-assignments,
+  .student-screen-card .topic-grid.without-pages,
+  .student-screen-card .topic-grid.without-assignments { grid-template-columns: minmax(0, 1fr) !important; }
+}
+/* Momentet växer med sin text. Ingen tom minimihöjd. */
+#lararvy .lesson .topic-grid:not(.teacher-print-host .topic-grid) > .topic-name { min-height: 72px !important; }
+/* Tomma Sida- och Uppgift-rutor ska vara små. Ifyllda rutor växer med texten. */
+#lararvy .lesson .topic-grid:not(.teacher-print-host .topic-grid) .topic-cell textarea:placeholder-shown { min-height: 34px !important; }
+/* Elevvyn: text bryts och kapas aldrig. Inga fasta höjder på rutorna. */
+.student-screen-card .topic-cell,
+.student-screen-card .topic-cell span,
+.student-screen-card .topic-name-display {
+  height: auto !important;
+  max-height: none !important;
+  min-height: 34px;
+  overflow: visible !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+}
+.student-screen-card .topic-cell { min-height: 0 !important; flex: 0 0 auto !important; align-items: flex-start !important; }
+/* Momentrutor och Sida/Uppgift-rutor i alla lektionskort (veckokort, klassvy och lektionsvy) växer med sin text. */
+#lararvy .lesson .topic-grid:not(.teacher-print-host .topic-grid) textarea { field-sizing: content; height: auto !important; overflow: hidden !important; }
+#lararvy .lesson .topic-grid:not(.teacher-print-host .topic-grid) .topic-name textarea { min-height: 44px !important; }
