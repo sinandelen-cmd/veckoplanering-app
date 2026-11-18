@@ -6,7 +6,7 @@ export default function Navigation({ active = 'mina', onNavigate, onAllWeeks, on
   const choose = action => { setPlanningMenuOpen(false); action() }
   return <nav className="planning-unified-navigation planning-original-top" aria-label="Huvudnavigation">
     <div className="planning-unified-left">
-      <button type="button" onClick={() => choose(() => { onCloseAdmin?.(); if (onPrevious) onPrevious(); else onNavigate('mina') })}>← {previousLabel}</button>
+      {onPrevious && <button type="button" onClick={() => choose(() => { onCloseAdmin?.(); onPrevious() })}>← {previousLabel}</button>}
     </div>
     <div className="planning-unified-center">
       {planTitle ? <strong className="planning-active-plan-title" title={planTitle}>{planTitle}</strong> : <div className="planning-nav-dropdown">

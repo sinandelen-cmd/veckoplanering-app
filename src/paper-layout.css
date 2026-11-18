@@ -358,3 +358,8 @@
 
 /* Knapparna i ämnesraden bryter till nästa rad när de inte får plats, i stället för att överlappa varandra. */
 #mina-arsplaneringar .subject-folder-heading { flex-wrap: wrap !important; row-gap: 8px; }
+
+/* Ämnesraden: namnet och knapparna (Ny kurs, Arkivera ämne, Återställ/Radera) får egen plats och bryter i stället för att överlappa. */
+#mina-arsplaneringar .subject-folder-heading { display: flex !important; flex-wrap: wrap !important; align-items: center; gap: 8px 10px; }
+#mina-arsplaneringar .subject-folder-heading > .visual-tree-node { flex: 1 1 200px; min-width: 0; }
+#mina-arsplaneringar .subject-folder-heading > button { flex: 0 0 auto; white-space: nowrap; min-height: 36px; padding: 7px 12px; font-size: 14px; }

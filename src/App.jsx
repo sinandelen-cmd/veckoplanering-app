@@ -1515,6 +1515,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [planSearch, setPlanSearch] = useState("")
   const [libraryYear, setLibraryYear] = useState('alla')
   const [subjectFolders, setSubjectFolders] = useState(() => { try { return JSON.parse(localStorage.getItem('arsplanering-subject-folders') || '{}') } catch { return {} } })
+  const [archivedSubjectFolders, setArchivedSubjectFolders] = useState(() => { try { return JSON.parse(localStorage.getItem('arsplanering-archived-subject-folders') || '{}') } catch { return {} } })
   const [personalSchool, setPersonalSchool] = useState(() => { try { return localStorage.getItem('arsplanering-personal-school') || 'Grundskola' } catch { return 'Grundskola' } })
   const [personalSubjects, setPersonalSubjects] = useState(() => { try { return JSON.parse(localStorage.getItem('arsplanering-personal-subjects') || '[]') } catch { return [] } })
   const [personalCustomize, setPersonalCustomize] = useState(false)
@@ -1685,7 +1686,7 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
     return () => { cancelled = true; window.removeEventListener('afterprint', finish); window.clearTimeout(fallback) }
   }, [printingPlan])
   const [selectedId, setSelectedId] = useState(null)
-  const [navigationHistory, setNavigationHistory] = useState([{ tab: 'mina', planId: null, calendar: false }])
+  const [navigationHistory, setNavigationHistory] = useState([{ tab: 'bibliotek', planId: null, calendar: false }])
   const [navigationIndex, setNavigationIndex] = useState(0)
   const restoringNavigation = useRef(false)
 
@@ -2247,19 +2248,51 @@ const addNewTeacherWeek = () => setPlan(p => {
     }
   }
 
-  // Arkiverar eller återställer alla kurser i ett ämne. Varje kurs uppdateras på samma sätt som vid enskild arkivering.
-  async function setSubjectArchived(subjectRows, subjectName, archived) {
+  // Ämnesmappar i aktuell vy. Tomma ämnen finns bara som mappar i den lokala inställningen, inte i databasen.
+  function subjectFolderNames(grade, archivedView) {
+    const uid = session?.user?.id
+    const folders = subjectFolders[uid]?.[grade] || []
+    const archived = archivedSubjectFolders[uid]?.[grade] || []
+    return folders.filter(name => archived.includes(name) === archivedView)
+  }
+  // Markerar ämnesmappen som arkiverad eller aktiv. Ändrar bara den lokala inställningen, inga planeringar.
+  function setArchivedSubjectFolder(grade, subjectName, archived) {
+    const uid = session?.user?.id
+    if (!uid) return
+    setArchivedSubjectFolders(current => {
+      const folders = current[uid] || {}
+      const list = (folders[grade] || []).filter(value => value !== subjectName)
+      const next = { ...current, [uid]: { ...folders, [grade]: archived ? [...list, subjectName] : list } }
+      localStorage.setItem('arsplanering-archived-subject-folders', JSON.stringify(next))
+      return next
+    })
+  }
+  // Tar bort själva ämnesmappen. Används bara när ämnet raderas permanent från arkivet.
+  function removeSubjectFolder(grade, subjectName) {
+    const uid = session?.user?.id
+    if (!uid) return
+    setSubjectFolders(current => {
+      const folders = current[uid] || {}
+      const next = { ...current, [uid]: { ...folders, [grade]: (folders[grade] || []).filter(value => value !== subjectName) } }
+      localStorage.setItem('arsplanering-subject-folders', JSON.stringify(next))
+      return next
+    })
+  }
+
+  // Arkiverar eller återställer ett helt ämne: alla kurser i ämnet och ämnesmappen. Ingen information raderas.
+  // Ett tomt ämne (inga kurser) kan också arkiveras, då flyttas bara mappen.
+  async function setSubjectArchived(subjectRows, subjectName, archived, grade) {
     if (busy) return
     const targets = subjectRows.filter(row => Boolean(parseContent(row.content)?.archived) !== archived)
-    if (!targets.length) return setStatus(archived ? 'Det finns inga aktiva kurser att arkivera i ämnet.' : 'Det finns inga arkiverade kurser att återställa i ämnet.')
     if (targets.some(row => row.id === selectedId) && isDirty) {
       setStatus('Spara eller lämna dina osparade ändringar innan du arkiverar eller återställer ämnet.')
       return
     }
     const count = targets.length
+    const courses = count === 1 ? '1 kurs' : `${count} kurser`
     const message = archived
-      ? `Arkivera ${count} ${count === 1 ? 'kurs' : 'kurser'} i "${subjectName}"? De sparas och kan återställas när som helst.`
-      : `Återställ ${count} ${count === 1 ? 'kurs' : 'kurser'} i "${subjectName}" till den aktiva listan?`
+      ? (count ? `Arkivera ämnet "${subjectName}" med ${courses}? Allt innehåll sparas och kan återställas när som helst.` : `Arkivera ämnet "${subjectName}"? Ämnet har inga kurser. Mappen flyttas till arkivet och kan återställas när som helst.`)
+      : (count ? `Återställ ämnet "${subjectName}" med ${courses} till den aktiva listan?` : `Återställ ämnet "${subjectName}" till den aktiva listan?`)
     if (!window.confirm(message)) return
     setBusy(true)
     try {
@@ -2277,9 +2310,10 @@ const addNewTeacherWeek = () => setPlan(p => {
           setSavedRevision(revision => revision + 1)
         }
       }
+      setArchivedSubjectFolder(grade, subjectName, archived)
       const refreshed = await loadPlans()
       setStatus(refreshed
-        ? `${count} ${count === 1 ? 'kurs' : 'kurser'} i ${subjectName} ${archived ? 'är arkiverade' : 'är återställda'}.`
+        ? `Ämnet ${subjectName} ${archived ? 'är arkiverat' : 'är återställt'}${count ? ` med ${courses}` : ''}.`
         : 'Ändringarna sparades men listan kunde inte uppdateras.')
     } catch (error) {
       await loadPlans()
@@ -2289,14 +2323,37 @@ const addNewTeacherWeek = () => setPlan(p => {
     }
   }
 
-  // Raderar alla arkiverade kurser i ett ämne permanent och tar bort ämnesmappen. Kan inte ångras.
+  // Texten i bekräftelsen för permanent radering: vad som försvinner, och vad som lämnas orört.
+  function subjectDeleteSummary(targets, subjectName) {
+    const lines = targets.map(row => {
+      const data = parseContent(row.content) || {}
+      const weeks = Array.isArray(data.weeksData) ? data.weeksData.length : 0
+      const lessons = (Array.isArray(data.weeksData) ? data.weeksData : []).reduce((sum, week) => sum + (Array.isArray(week?.lessons) ? week.lessons.length : 0), 0)
+      const classes = Array.isArray(data.classGroups) ? data.classGroups.map(group => group.name).filter(Boolean) : []
+      return `• ${row.title || 'Namnlös kurs'}: ${weeks} veckor, ${lessons} lektioner${classes.length ? ', klasser: ' + classes.join(', ') : ''}`
+    })
+    const count = targets.length
+    return [
+      `Radera ämnet "${subjectName}" permanent?`,
+      '',
+      count
+        ? `Följande ${count === 1 ? 'arkiverad kurs' : count + ' arkiverade kurser'} raderas med allt innehåll:`
+        : 'Ämnet har inga kurser. Endast ämnesmappen tas bort.',
+      ...lines,
+      '',
+      'Ämnesmappen tas bort.',
+      'Aktiva kurser i ämnet, om det finns några, påverkas inte.',
+      '',
+      'Detta kan inte ångras.',
+    ].join('\n')
+  }
+
+  // Raderar alla arkiverade kurser i ett ämne permanent samt ämnesmappen. Tomma ämnen kan raderas direkt från arkivet.
   async function deleteArchivedSubject(subjectRows, subjectName, grade) {
     if (busy) return
     const targets = subjectRows.filter(row => Boolean(parseContent(row.content)?.archived))
-    if (!targets.length) return setStatus('Det finns inga arkiverade kurser att radera i ämnet.')
-    const count = targets.length
     if (targets.some(row => row.id === selectedId) && JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar i en planering som ska raderas. Radering tar även bort dem. Vill du fortsätta?')) return
-    if (!window.confirm(`Radera ${count} ${count === 1 ? 'kurs' : 'kurser'} i "${subjectName}" permanent? Detta kan inte ångras.`)) return
+    if (!window.confirm(subjectDeleteSummary(targets, subjectName))) return
     setBusy(true)
     try {
       for (const row of targets) {
@@ -2313,16 +2370,14 @@ const addNewTeacherWeek = () => setPlan(p => {
           if (window.sessionStorage.getItem(`arsplanering-last-open-${session.user.id}`) === String(row.id)) window.sessionStorage.removeItem(`arsplanering-last-open-${session.user.id}`)
         } catch { /* Lagring kan vara blockerad */ }
       }
-      const uid = session.user.id
-      setSubjectFolders(current => {
-        const folders = current[uid] || {}
-        const next = { ...current, [uid]: { ...folders, [grade]: (folders[grade] || []).filter(value => value !== subjectName) } }
-        localStorage.setItem('arsplanering-subject-folders', JSON.stringify(next))
-        return next
-      })
+      removeSubjectFolder(grade, subjectName)
+      setArchivedSubjectFolder(grade, subjectName, false)
       setLibrarySubject('')
       const refreshed = await loadPlans()
-      setStatus(refreshed ? `${count} ${count === 1 ? 'kurs' : 'kurser'} i ${subjectName} är raderade.` : 'Kurserna raderades men listan kunde inte uppdateras.')
+      const count = targets.length
+      setStatus(refreshed
+        ? (count ? `${count === 1 ? '1 kurs' : `${count} kurser`} i ${subjectName} är raderade. Ämnesmappen är borttagen.` : `Ämnet ${subjectName} är raderat.`)
+        : 'Ämnet raderades men listan kunde inte uppdateras.')
     } catch (error) {
       await loadPlans()
       setStatus(`Kunde inte radera ämnet: ${error.message || 'Okänt fel'}`)
@@ -2569,7 +2624,9 @@ const addNewTeacherWeek = () => setPlan(p => {
       setStatus('Kunde inte skapa grundplaneringen: '+(error.message||'Okänt fel'))
     } finally {setBusy(false)}
   }
-  const previousStepLabel = teacherTab === 'arsplan' || teacherTab === 'elevvy' ? (librarySubject ? librarySubject.split('|')[1] : 'Mina planeringar') : teacherTab === 'bibliotek' ? (librarySubject ? librarySchool || 'Mina planeringar' : librarySchool ? 'Mina planeringar' : 'Startsida') : 'Startsida'
+  const previousStepLabel = teacherTab === 'arsplan' || teacherTab === 'elevvy' ? (librarySubject ? librarySubject.split('|')[1] : 'Mina planeringar') : teacherTab === 'bibliotek' ? (librarySubject ? librarySchool || 'Mina planeringar' : 'Mina planeringar') : 'Mina planeringar'
+  // Biblioteket är startsidan. Där finns inget steg tillbaka, så knappen visas inte.
+  const atLibraryRoot = teacherTab === 'bibliotek' && !librarySubject && !librarySchool
   const goToPreviousStep = () => {
     if (!confirmNavigation()) return
     if (adminOpen) onToggleAdmin?.()
@@ -2581,11 +2638,11 @@ const addNewTeacherWeek = () => setPlan(p => {
     } else if (teacherTab === 'bibliotek' && librarySchool) {
       setLibrarySchool('')
     } else {
-      setTeacherTab('mina'); setCalendarOpen(false)
+      setTeacherTab('bibliotek'); setCalendarOpen(false)
     }
     window.scrollTo({top:0,behavior:'smooth'})
   }
-  return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "mina" ? "view-home" : teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}${teacherTab === "arsplan" && editingClassView ? " view-class" : ""}`}>{teacherTab !== "mina" && <Navigation planTitle={teacherTab === "bibliotek" ? "Mina planeringar" : (teacherTab === "arsplan" || teacherTab === "elevvy") && selectedId ? (plan.title || plan.subject || "Min planering") : ""} previousLabel={previousStepLabel} onPrevious={goToPreviousStep} onAllWeeks={() => { setFocusedTeacherWeek(null); setFocusedTeacherLesson(null); setShowPastTeacherWeeks(value => !value); setTeacherWeekOverview(true); setTeacherTab("arsplan"); setCalendarOpen(false) }} allWeeksOpen={showPastTeacherWeeks} active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={(id, planningHome = false) => { if (!confirmNavigation()) return false; if (planningHome) window.dispatchEvent(new Event('planning-home')); if (id === 'bibliotek') { setLibrarySchool(''); setLibrarySubject(''); setLibraryBoardPage(0); setShowArchive(false) } setTeacherTab(id); setCalendarOpen(false); if (id === 'elevvy') { setPreviewStudents(true); setCalendarOpen(false) } else { setPreviewStudents(false) } }} onOpenExample={() => { if (!confirmNavigation()) return false; return openExample() }} onOpenArchive={() => { if (!confirmNavigation()) return false; setShowArchive(true); setTeacherTab('bibliotek') }} onToggleCalendar={() => { if (!confirmNavigation()) return false; setTeacherTab('arsplan'); setCalendarOpen(true) }} calendarOpen={calendarOpen} hasOpenPlan={Boolean(selectedId && teacherTab === 'arsplan')} isAdmin={isAdmin} adminOpen={adminOpen} onOpenAdmin={() => { if (!confirmNavigation()) return false; onToggleAdmin?.(); return true }} onCloseAdmin={() => { if (adminOpen) onToggleAdmin?.() }} onSignOut={() => { if (!confirmNavigation()) return false; return supabase.auth.signOut() }} pendingCount={pendingCount} planSearch={planSearch} onPlanSearchChange={setPlanSearch} showArchive={showArchive} planContext={selectedId && teacherTab === 'arsplan' ? {subject:plan.subject || plan.title, textbook:plan.textbook, grade:plan.grade || plan.course} : null} onPrintPlan={selectedId && teacherTab === 'arsplan' ? () => setPrintingPlan(true) : null} /> }<main className={`shell${adminOpen ? " admin-workspace" : ""}`} id="lararvy">
+  return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "mina" ? "view-home" : teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}${teacherTab === "arsplan" && editingClassView ? " view-class" : ""}`}>{teacherTab !== "mina" && <Navigation planTitle={teacherTab === "bibliotek" ? "Mina planeringar" : (teacherTab === "arsplan" || teacherTab === "elevvy") && selectedId ? (plan.title || plan.subject || "Min planering") : ""} previousLabel={previousStepLabel} onPrevious={atLibraryRoot ? undefined : goToPreviousStep} onAllWeeks={() => { setFocusedTeacherWeek(null); setFocusedTeacherLesson(null); setShowPastTeacherWeeks(value => !value); setTeacherWeekOverview(true); setTeacherTab("arsplan"); setCalendarOpen(false) }} allWeeksOpen={showPastTeacherWeeks} active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={(id, planningHome = false) => { if (!confirmNavigation()) return false; if (planningHome) window.dispatchEvent(new Event('planning-home')); if (id === 'bibliotek') { setLibrarySchool(''); setLibrarySubject(''); setLibraryBoardPage(0); setShowArchive(false) } setTeacherTab(id); setCalendarOpen(false); if (id === 'elevvy') { setPreviewStudents(true); setCalendarOpen(false) } else { setPreviewStudents(false) } }} onOpenExample={() => { if (!confirmNavigation()) return false; return openExample() }} onOpenArchive={() => { if (!confirmNavigation()) return false; setShowArchive(true); setTeacherTab('bibliotek') }} onToggleCalendar={() => { if (!confirmNavigation()) return false; setTeacherTab('arsplan'); setCalendarOpen(true) }} calendarOpen={calendarOpen} hasOpenPlan={Boolean(selectedId && teacherTab === 'arsplan')} isAdmin={isAdmin} adminOpen={adminOpen} onOpenAdmin={() => { if (!confirmNavigation()) return false; onToggleAdmin?.(); return true }} onCloseAdmin={() => { if (adminOpen) onToggleAdmin?.() }} onSignOut={() => { if (!confirmNavigation()) return false; return supabase.auth.signOut() }} pendingCount={pendingCount} planSearch={planSearch} onPlanSearchChange={setPlanSearch} showArchive={showArchive} planContext={selectedId && teacherTab === 'arsplan' ? {subject:plan.subject || plan.title, textbook:plan.textbook, grade:plan.grade || plan.course} : null} onPrintPlan={selectedId && teacherTab === 'arsplan' ? () => setPrintingPlan(true) : null} /> }<main className={`shell${adminOpen ? " admin-workspace" : ""}`} id="lararvy">
   {printingPlan && <section className="preview-panel teacher-print-host" aria-hidden="true"><StudentView plan={sanitizeForStudents(plan)} preview hideSelector initialClass={editingClassView || ""} includePast={showPastTeacherWeeks} /></section>}
   {adminOpen ? adminContent : <>
     {teacherTab !== "elevvy" && teacherTab !== "mina" && <header className="topbar">
@@ -2594,7 +2651,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         
         <nav className="teacher-breadcrumb" aria-label="Du är här">
         </nav>
-        {teacherTab !== "bibliotek" && teacherTab !== "arsplan" && <h1>{teacherTab === "new" ? "Skapa ny planering" : teacherTab === "mina" ? "Startsida" : (plan.title?.trim() || "Ny planering")}</h1>}
+        {teacherTab !== "bibliotek" && teacherTab !== "arsplan" && <h1>{teacherTab === "new" ? "Skapa ny planering" : (plan.title?.trim() || "Ny planering")}</h1>}
         {teacherTab !== 'bibliotek' && teacherTab !== 'arsplan' && <p className="muted">{session.user.email}</p>}
         {AVSTANGD_GRANSSNITT && selectedId && teacherTab === 'arsplan' && <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:16,flexWrap:'wrap',marginTop:10}}>
           <div><p style={{margin:'0 0 4px',color:'#526a81'}}>Grundplanering</p><strong style={{fontSize:'clamp(1.3rem,3vw,2rem)'}}>{plan.subject || plan.title}</strong>{(plan.textbook || plan.schoolYear) && <p style={{margin:'5px 0 0',color:'#526a81'}}>{[plan.textbook,plan.schoolYear].filter(Boolean).join(' · ')}</p>}</div>
@@ -2976,14 +3033,6 @@ const addNewTeacherWeek = () => setPlan(p => {
 
     </div>
     
-    <div className="teacher-tab-panel" hidden={teacherTab !== "mina"}>
-      <section className="card planning-start-card">
-        <div className="section-heading"><div><h1>Vad vill du göra?</h1></div></div>
-        <div className="home-tiles">
-          <button type="button" className="home-tile" onClick={() => { setShowArchive(false); setLibrarySchool(''); setLibrarySubject(''); setLibraryBoardPage(0); setTeacherTab('bibliotek') }}><span className="home-tile-icon">📂</span><strong>Mina planeringar</strong><span>Öppna ämnen och kurser</span></button>
-        </div>
-      </section>
-    </div>
     {teacherTab === "bibliotek" && <div className="teacher-tab-panel">
     <section className="card" id="mina-arsplaneringar">
 
@@ -3006,7 +3055,7 @@ const addNewTeacherWeek = () => setPlan(p => {
           ;(groups[gradeLabel] ||= {})[subject] ||= []
           groups[gradeLabel][subject].push(row)
           return groups
-        }, { Grundskola: Object.fromEntries((subjectFolders[session?.user?.id]?.Grundskola || []).map(name => [name, []])), Gymnasiet: Object.fromEntries((subjectFolders[session?.user?.id]?.Gymnasiet || []).map(name => [name, []])) })) .filter(([grade, subjects]) => visibleSchoolForms.includes(grade) || (grade === "Övriga planeringar" && Object.values(subjects).some(rows => rows.length > 0))).map(([grade, subjects]) => <section key={grade} className={"visual-tree-school " + (grade === "Gymnasiet" ? "school-gymnasiet" : "school-grundskola")} ><div className="school-folder-heading"><button type="button" className="visual-tree-node" aria-expanded={librarySchool === grade} onClick={() => { setLibrarySchool(current => current === grade ? '' : grade); setLibrarySubject(''); setLibraryBoardPage(0) }}>📁 {grade} ({Object.values(subjects).reduce((count, rows) => count + rows.length, 0)})</button></div>{librarySchool === grade && <><div className="visual-tree-courses">{!Object.keys(subjects).length && <p className="muted">Inga planeringar i denna kategori ännu.</p>}{Object.entries(subjects).sort(([a],[b]) => a.localeCompare(b, 'sv', { numeric: true })).map(([subject, rows]) => <div key={subject} className="visual-tree-course"><div className="subject-folder-heading"><button type="button" className="visual-tree-node" aria-expanded={librarySubject === grade + '|' + subject} onClick={() => { const expanding = librarySubject !== grade + '|' + subject; if (expanding && rows.length === 1) { setLibraryBoardPage(0); loadPlan(rows[0]); return } setLibrarySubject(current => current === grade + '|' + subject ? '' : grade + '|' + subject); setLibraryBoardPage(0) }} onDoubleClick={()=>{setEditingSubject(grade+'|'+subject);setEditingSubjectValue(subject)}} title="Visa kurser under ämnet"><span className="folder-chevron">{librarySubject === grade + '|' + subject ? '⌄' : '›'}</span> 📚 {editingSubject===grade+'|'+subject ? "" : subject}</button>{editingSubject===grade+'|'+subject && <input autoFocus className="subject-inline-rename" aria-label="Redigera ämnesnamn" value={editingSubjectValue} onChange={event=>setEditingSubjectValue(event.target.value)} onKeyDown={event=>{if(event.key==='Escape'){setEditingSubject('');event.currentTarget.blur()}if(event.key==='Enter')event.currentTarget.blur()}} onBlur={async()=>{setEditingSubject('');
+        }, { Grundskola: Object.fromEntries(subjectFolderNames('Grundskola', showArchive).map(name => [name, []])), Gymnasiet: Object.fromEntries(subjectFolderNames('Gymnasiet', showArchive).map(name => [name, []])) })) .filter(([grade, subjects]) => visibleSchoolForms.includes(grade) || (grade === "Övriga planeringar" && Object.values(subjects).some(rows => rows.length > 0))).map(([grade, subjects]) => <section key={grade} className={"visual-tree-school " + (grade === "Gymnasiet" ? "school-gymnasiet" : "school-grundskola")} ><div className="school-folder-heading"><button type="button" className="visual-tree-node" aria-expanded={librarySchool === grade} onClick={() => { setLibrarySchool(current => current === grade ? '' : grade); setLibrarySubject(''); setLibraryBoardPage(0) }}>📁 {grade} ({Object.values(subjects).reduce((count, rows) => count + rows.length, 0)})</button></div>{librarySchool === grade && <><div className="visual-tree-courses">{!Object.keys(subjects).length && <p className="muted">Inga planeringar i denna kategori ännu.</p>}{Object.entries(subjects).sort(([a],[b]) => a.localeCompare(b, 'sv', { numeric: true })).map(([subject, rows]) => <div key={subject} className="visual-tree-course"><div className="subject-folder-heading"><button type="button" className="visual-tree-node" aria-expanded={librarySubject === grade + '|' + subject} onClick={() => { const expanding = librarySubject !== grade + '|' + subject; if (expanding && rows.length === 1) { setLibraryBoardPage(0); loadPlan(rows[0]); return } setLibrarySubject(current => current === grade + '|' + subject ? '' : grade + '|' + subject); setLibraryBoardPage(0) }} onDoubleClick={()=>{setEditingSubject(grade+'|'+subject);setEditingSubjectValue(subject)}} title="Visa kurser under ämnet"><span className="folder-chevron">{librarySubject === grade + '|' + subject ? '⌄' : '›'}</span> 📚 {editingSubject===grade+'|'+subject ? "" : subject}</button>{editingSubject===grade+'|'+subject && <input autoFocus className="subject-inline-rename" aria-label="Redigera ämnesnamn" value={editingSubjectValue} onChange={event=>setEditingSubjectValue(event.target.value)} onKeyDown={event=>{if(event.key==='Escape'){setEditingSubject('');event.currentTarget.blur()}if(event.key==='Enter')event.currentTarget.blur()}} onBlur={async()=>{setEditingSubject('');
   if(busy)return;
   if(rows.some(row=>row.id===selectedId)&&isDirty){setStatus('Spara ändringarna i den öppna planeringen innan du byter ämnesnamn.');return}
   const name=capitalizeFirstSwedish(editingSubjectValue.trim());
@@ -3030,7 +3079,7 @@ const addNewTeacherWeek = () => setPlan(p => {
   }catch(error){await loadPlans();setStatus('Namnbytet kunde inte slutföras: '+(error.message||'Okänt fel'))}
   finally{setBusy(false)}
 
-}} />}{!showArchive && <button type="button" className="secondary subject-folder-add" onClick={() => { setCoursePicker({school:grade,subject,course:'',year:grade === 'Grundskola' ? 'Årskurs 7' : ''}) }}>＋ Ny kurs</button>}<button type="button" className="secondary course-folder-archive subject-folder-archive" disabled={busy || rows.length === 0} title={showArchive ? "Återställ alla kurser i ämnet till den aktiva listan" : "Arkivera alla kurser i ämnet. De kan återställas senare."} onClick={() => setSubjectArchived(rows, subject, !showArchive)}>{showArchive ? "Återställ ämne" : "Arkivera ämne"}</button>{showArchive && <button type="button" className="danger subject-folder-delete" disabled={busy || rows.length === 0} title="Radera alla arkiverade kurser i ämnet permanent. Kan inte ångras." onClick={() => deleteArchivedSubject(rows, subject, grade)}>Radera ämne</button>}{!showArchive && <button type="button" className="subject-folder-remove" disabled={busy} title="Ta bort ämnesmappen" onClick={() => { if(rows.length){window.alert("Ämnet innehåller kurser. Arkivera eller radera kursplaneringarna först.");return} if(!window.confirm("Ta bort ämnet "+subject+"?"))return;const uid=session?.user?.id;if(!uid)return;setSubjectFolders(current=>{const folders=current[uid]||{};const next={...current,[uid]:{...folders,[grade]:(folders[grade]||[]).filter(value=>value!==subject)}};localStorage.setItem("arsplanering-subject-folders",JSON.stringify(next));return next});setLibrarySubject("") }}>Ta bort ämne</button>}</div>{librarySubject === grade + '|' + subject && <>{grade === 'Gymnasiet' && rows.map(row => <div key={row.id} className="course-folder-with-delete"><button type="button" className="course-folder-link" style={{ "--folder-hue": [275, 145, 30, 340, 175][Array.from(row.title || "").reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 5] }} disabled={busy} onDoubleClick={event => {event.preventDefault();renamePlan(row)}} onClick={() => loadPlan(row)}>📁 {((parseContent(row.content) || {}).course || row.course || row.title)} <small style={{marginLeft:"auto",fontWeight:400,fontSize:11,opacity:.7}}>{(parseContent(row.content) || {}).textbook || ""}</small></button><button type="button" className="course-folder-archive" disabled={busy} onClick={() => setArchived(row,true)} title="Arkivera kursplaneringen" aria-label={"Arkivera " + row.title}><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v12h14V8M10 12h4"/></svg></button><button type="button" className="course-folder-delete" disabled={busy} title="Radera denna planering" aria-label={"Radera " + row.title} onClick={() => deletePlan(row)}><span aria-hidden="true">×</span></button></div>)}{grade !== 'Gymnasiet' && <div className="visual-tree-grade-folders">{Object.entries(rows.reduce((byGrade, row) => { const data = parseContent(row.content) || {}; const value = [data.grade, row.grade, data.className, row.class_name, row.title].map(item => String(item || '')).join(' '); const match = value.match(/(?:årskurs|åk)\s*(\d+)/i) || value.match(/(?:^|\s)([7-9])(?:[a-z])?(?:\s|$)/i); const label = match ? 'Årskurs ' + match[1] : (data.course || row.course || 'Övriga kurser'); (byGrade[label] ||= []).push(row); return byGrade }, {})).sort(([a],[b]) => a.localeCompare(b, 'sv', {numeric:true})).map(([label, gradeRows]) => <div key={label} className="visual-tree-grade-folder textbook-only-grade"><div className="textbook-plan-list">{gradeRows.map(row => { const data=parseContent(row.content)||{}; const gradeNumber=label.replace(/[^0-9]/g,''); const book=String(data.textbook||'').trim(); const displayName=book ? (gradeNumber && !book.endsWith(' '+gradeNumber) ? book+' '+gradeNumber : book) : (row.title||'Öppna planering'); return <div className="textbook-plan-row" key={row.id}><button type="button" disabled={busy} title={row.title||displayName} onDoubleClick={event=>{event.preventDefault();renamePlan(row)}} onClick={()=>loadPlan(row)}>📘 {displayName}</button><button type="button" className="course-folder-archive" disabled={busy} onClick={()=>setArchived(row,true)} title="Arkivera planeringen" aria-label={"Arkivera "+displayName}><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v12h14V8M10 12h4"/></svg></button><button type="button" className="course-folder-delete" disabled={busy} title="Radera planeringen" aria-label={"Radera "+displayName} onClick={()=>deletePlan(row)}><span aria-hidden="true">×</span></button></div>})}</div></div>)}</div>}</>}</div>)}</div></>}</section>)}
+}} />}{!showArchive && <button type="button" className="secondary subject-folder-add" onClick={() => { setCoursePicker({school:grade,subject,course:'',year:grade === 'Grundskola' ? 'Årskurs 7' : ''}) }}>＋ Ny kurs</button>}<button type="button" className="secondary subject-folder-archive" disabled={busy} title={showArchive ? "Återställ ämnet med alla kurser till den aktiva listan" : "Arkivera ämnet med alla kurser. Allt kan återställas senare."} onClick={() => setSubjectArchived(rows, subject, !showArchive, grade)}>{showArchive ? "Återställ ämne" : "Arkivera ämne"}</button>{showArchive && <button type="button" className="danger subject-folder-delete" disabled={busy} title="Radera ämnet och alla arkiverade kurser i det permanent. Kan inte ångras." onClick={() => deleteArchivedSubject(rows, subject, grade)}>Radera ämne</button>}</div>{librarySubject === grade + '|' + subject && <>{grade === 'Gymnasiet' && rows.map(row => <div key={row.id} className="course-folder-with-delete"><button type="button" className="course-folder-link" style={{ "--folder-hue": [275, 145, 30, 340, 175][Array.from(row.title || "").reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 5] }} disabled={busy} onDoubleClick={event => {event.preventDefault();renamePlan(row)}} onClick={() => loadPlan(row)}>📁 {((parseContent(row.content) || {}).course || row.course || row.title)} <small style={{marginLeft:"auto",fontWeight:400,fontSize:11,opacity:.7}}>{(parseContent(row.content) || {}).textbook || ""}</small></button><button type="button" className="course-folder-archive" disabled={busy} onClick={() => setArchived(row,true)} title="Arkivera kursplaneringen" aria-label={"Arkivera " + row.title}><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v12h14V8M10 12h4"/></svg></button><button type="button" className="course-folder-delete" disabled={busy} title="Radera denna planering" aria-label={"Radera " + row.title} onClick={() => deletePlan(row)}><span aria-hidden="true">×</span></button></div>)}{grade !== 'Gymnasiet' && <div className="visual-tree-grade-folders">{Object.entries(rows.reduce((byGrade, row) => { const data = parseContent(row.content) || {}; const value = [data.grade, row.grade, data.className, row.class_name, row.title].map(item => String(item || '')).join(' '); const match = value.match(/(?:årskurs|åk)\s*(\d+)/i) || value.match(/(?:^|\s)([7-9])(?:[a-z])?(?:\s|$)/i); const label = match ? 'Årskurs ' + match[1] : (data.course || row.course || 'Övriga kurser'); (byGrade[label] ||= []).push(row); return byGrade }, {})).sort(([a],[b]) => a.localeCompare(b, 'sv', {numeric:true})).map(([label, gradeRows]) => <div key={label} className="visual-tree-grade-folder textbook-only-grade"><div className="textbook-plan-list">{gradeRows.map(row => { const data=parseContent(row.content)||{}; const gradeNumber=label.replace(/[^0-9]/g,''); const book=String(data.textbook||'').trim(); const displayName=book ? (gradeNumber && !book.endsWith(' '+gradeNumber) ? book+' '+gradeNumber : book) : (row.title||'Öppna planering'); return <div className="textbook-plan-row" key={row.id}><button type="button" disabled={busy} title={row.title||displayName} onDoubleClick={event=>{event.preventDefault();renamePlan(row)}} onClick={()=>loadPlan(row)}>📘 {displayName}</button><button type="button" className="course-folder-archive" disabled={busy} onClick={()=>setArchived(row,true)} title="Arkivera planeringen" aria-label={"Arkivera "+displayName}><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v12h14V8M10 12h4"/></svg></button><button type="button" className="course-folder-delete" disabled={busy} title="Radera planeringen" aria-label={"Radera "+displayName} onClick={()=>deletePlan(row)}><span aria-hidden="true">×</span></button></div>})}</div></div>)}</div>}</>}</div>)}</div></>}</section>)}
       </div></div>
       <p className="muted">Arkivering döljer bara planeringen från den aktiva listan. Publicerade elevlänkar påverkas inte.</p>
     </section>
