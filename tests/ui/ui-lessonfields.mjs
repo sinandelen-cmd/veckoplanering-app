@@ -142,6 +142,21 @@ await check('momentlänk-knappen lägger till en länkrad', async () => {
   const after = await scope().locator('input').count()
   assert.ok(after > before, 'länkrad lades inte till')
 })
+await check('inga knappar eller textrutor i momentkorten överlappar varandra', async () => {
+  const overlaps = await p.page.evaluate(() => {
+    const els = [...document.querySelectorAll('#lararvy .teacher-collapsible-week .topic-grid button, #lararvy .teacher-collapsible-week .topic-grid textarea, #lararvy .teacher-collapsible-week .topic-grid input')].filter(e => e.getBoundingClientRect().width > 0)
+    const rects = els.map(e => e.getBoundingClientRect())
+    let n = 0
+    for (let i = 0; i < rects.length; i++) for (let j = i + 1; j < rects.length; j++) {
+      const a = rects[i], b = rects[j]
+      const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left), oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top)
+      if (ox > 2 && oy > 2) n++
+    }
+    return { n, count: els.length }
+  })
+  assert.ok(overlaps.count > 50, 'för få element mättes: ' + overlaps.count)
+  assert.equal(overlaps.n, 0, 'överlappande element: ' + overlaps.n)
+})
 await check('två A4-kort ligger kvar bredvid varandra i tvåveckorsläget', async () => {
   await p.page.locator('button:visible', { hasText: 'Dölj alla veckor' }).first().click({ timeout: 1500 }).catch(() => {})
   await p.page.waitForTimeout(400)
@@ -178,6 +193,77 @@ await check('mobil: ingen sidled-scroll och momentet ligger ovanför Sida/Uppgif
   assert.ok(r.overflow <= 1, 'sidled-scroll: ' + r.overflow + 'px')
 })
 await mobile.page.close()
+// Inklistrad planering: förslag om uppdelning i moment, med förhandsgranskning. Inget delas upp utan val.
+const REAL_TEXT = [
+  'Vecka 47',
+  'Kapitel 3: Ekvationer',
+  'Lektion 1 – Ekvationer med en obekant',
+  'Repetera begreppen variabel och term med hjälp av exemplen på tavlan. Eleverna arbetar två och två i tio minuter.',
+  '1. Ekvationens lika-tecken: Förklara att båda led måste behandlas lika, och visa med en våg eller balans.',
+  'Gör exemplen på sidan och förklara varför vi gör samma sak på båda sidor.',
+  '2. Lösa enkla ekvationer: Addition och subtraktion av tal, till exempel x + 7 = 12.',
+  'Kontrollera svaret genom att sätta in det i ursprungsekvationen.',
+  '3. Ekvationer med multiplikation och division: 4x = 20 och x/3 = 5.',
+  'Avslutning: Sammanfatta med tre frågor på tavlan och låt eleverna svara i mindre grupper.',
+  'Läxa: sida 42–44, uppgift 1–10. Material: räknedosa och balansmodell.',
+].join('\n')
+const imp = await openPlan()
+imp.page.on('dialog', d => d.accept())
+await imp.page.locator('summary', { hasText: 'Material till planeringen' }).first().evaluate(e => e.click())
+await imp.page.locator('.material-paste textarea').first().fill(REAL_TEXT)
+await imp.page.getByRole('button', { name: 'Skapa veckor av inklistrad text' }).evaluate(e => e.click())
+await imp.page.waitForSelector('.import-preview', { timeout: 10000 })
+const previewText = async () => (await imp.page.locator('.import-preview pre').allInnerTexts()).join('\n')
+await check('importen föreslår uppdelning, men delar inte upp något av sig själv', async () => {
+  await imp.page.waitForSelector('.import-split', { timeout: 5000 })
+  const note = await imp.page.locator('.import-split p').first().innerText()
+  assert.match(note, /Texten innehåller 3 tydliga moment/, 'förslaget saknas: ' + note)
+  assert.equal(await imp.page.locator('.import-split button', { hasText: 'Behåll som ett moment' }).first().getAttribute('aria-pressed'), 'true', 'standardvalet ska vara att behålla')
+  assert.ok(!(await previewText()).includes('Lösa enkla ekvationer'), 'delarna visas redan innan något valts')
+})
+await check('Dela upp visar varje moment i förhandsgranskningen', async () => {
+  await imp.page.locator('.import-split button', { hasText: 'Dela upp i 3 moment' }).first().evaluate(e => e.click())
+  await imp.page.waitForTimeout(150)
+  const t = await previewText()
+  for (const title of ['Ekvationens lika-tecken', 'Lösa enkla ekvationer', 'Ekvationer med multiplikation']) assert.ok(t.includes(title), 'saknas i förhandsgranskningen: ' + title)
+})
+await check('Behåll som ett moment ångrar uppdelningen och originaltexten finns kvar', async () => {
+  await imp.page.locator('.import-split button', { hasText: 'Behåll som ett moment' }).first().evaluate(e => e.click())
+  await imp.page.waitForTimeout(150)
+  assert.ok(!(await previewText()).includes('Lösa enkla ekvationer'), 'uppdelningen togs inte tillbaka')
+  assert.ok((await imp.page.locator('.material-paste textarea').first().inputValue()) === REAL_TEXT, 'inklistrad text ändrades')
+})
+await check('efter godkänd uppdelning och "Använd import" får momenten egna fält, och texten kapas inte', async () => {
+  await imp.page.locator('.import-split button', { hasText: 'Dela upp i 3 moment' }).first().evaluate(e => e.click())
+  await imp.page.locator('.import-preview button', { hasText: 'Använd import' }).first().evaluate(e => e.click())
+  await imp.page.waitForSelector('#lararvy .lesson', { timeout: 10000 })
+  const names = await imp.page.evaluate(() => [...document.querySelectorAll('#lararvy textarea[aria-label="Momentets namn"]')].map(t => t.value))
+  for (const title of ['Ekvationens lika-tecken', 'Lösa enkla ekvationer', 'Ekvationer med multiplikation']) assert.ok(names.some(n => n.startsWith(title)), 'moment saknas i redigeraren: ' + title)
+  const scrolled = await imp.page.evaluate(() => [...document.querySelectorAll('#lararvy .topic-grid textarea')].filter(t => t.scrollHeight - t.clientHeight > 2).length)
+  assert.equal(scrolled, 0, 'textrutor med klippt text: ' + scrolled)
+})
+await imp.page.close()
+
+// Längre riktig planering: tre lektioner med tre moment vardera. Alla moment ska finnas kvar efter uppdelning.
+const LESSON = (n, topic, moments) => [`Lektion ${n} – ${topic}`, 'Genomgång och eget arbete i ca 30 minuter, med exempel från kapitlet och en kort frågestund.', ...moments.map((m, i) => `${i + 1}. ${m}: Eleverna övar på sidan och förklarar med egna ord hur de tänkte.`), `Läxa: sida ${40 + n * 3}–${42 + n * 3}, uppgift 1–${6 + n}.`].join('\n')
+const LONG_TEXT = ['Vecka 47', 'Kapitel 3: Ekvationer och samband', LESSON(1, 'Ekvationer med en obekant', ['Lika-tecknet', 'Addition och subtraktion', 'Multiplikation och division']), LESSON(2, 'Parenteser i ekvationer', ['Utveckla parenteser', 'Samla termer', 'Kontrollera svaret']), LESSON(3, 'Ekvationer i verkliga situationer', ['Ställa upp en ekvation', 'Lösa problemet', 'Tolka svaret'])].join('\n')
+const ALL_MOMENT_TITLES = ['Lika-tecknet', 'Addition och subtraktion', 'Multiplikation och division', 'Utveckla parenteser', 'Samla termer', 'Kontrollera svaret', 'Ställa upp en ekvation', 'Lösa problemet', 'Tolka svaret']
+const long = await openPlan()
+long.page.on('dialog', d => d.accept())
+await long.page.locator('summary', { hasText: 'Material till planeringen' }).first().evaluate(e => e.click())
+await long.page.locator('.material-paste textarea').first().fill(LONG_TEXT)
+await long.page.getByRole('button', { name: 'Skapa veckor av inklistrad text' }).evaluate(e => e.click())
+await long.page.waitForSelector('.import-split', { timeout: 10000 })
+await check('lång riktig planering: tre förslag, och alla nio moment finns kvar efter uppdelning', async () => {
+  assert.equal(await long.page.locator('.import-split').count(), 3, 'tre lektioner med moment väntades')
+  const buttons = long.page.locator('.import-split button', { hasText: 'Dela upp i 3 moment' })
+  for (let i = 0; i < 3; i++) await buttons.nth(i).evaluate(e => e.click())
+  await long.page.waitForTimeout(150)
+  const text = (await long.page.locator('.import-preview pre').allInnerTexts()).join('\n')
+  for (const m of ALL_MOMENT_TITLES) assert.ok(text.includes(m), 'moment saknas efter uppdelning: ' + m)
+})
+await long.page.close()
+
 await browser.close()
 await server.close()
 const failed = results.filter(r => !r).length

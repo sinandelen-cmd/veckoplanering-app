@@ -15,6 +15,20 @@ import ClassSchedules from './ClassSchedules.jsx'
 import { buildClassSchedule } from './classScheduleUtils.js'
 import { MUNICIPALITIES_BY_COUNTY } from './swedishMunicipalities.js'
 import { NATIONAL_EXAMS_2026_27 } from './nationalExams.js'
+import { withMomentSuggestions, expandUnits } from './momentSplit.js'
+
+// Förslag om uppdelning i moment, per inklistrad enhet. Standardvalet är att behålla texten som den är.
+function ImportSplitSuggestions({ pendingImport, onDecide }) {
+  return (pendingImport.units || []).map((unit, k) => unit.momentParts && <div className="import-split" key={k}>
+    <strong>{unit.topic}</strong>
+    <p className="muted">Texten innehåller {unit.momentParts.length} tydliga moment. Ingen uppdelning sker utan ditt val.</p>
+    <ol>{unit.momentParts.map((part, n) => <li key={n}>{part.title}</li>)}</ol>
+    <div className="button-row">
+      <button type="button" className={pendingImport.decisions?.[k] === 'split' ? 'primary' : 'secondary'} aria-pressed={pendingImport.decisions?.[k] === 'split'} onClick={() => onDecide(k, 'split')}>Dela upp i {unit.momentParts.length} moment</button>
+      <button type="button" className={pendingImport.decisions?.[k] === 'split' ? 'secondary' : 'primary'} aria-pressed={pendingImport.decisions?.[k] !== 'split'} onClick={() => onDecide(k, 'keep')}>Behåll som ett moment (originaltext)</button>
+    </div>
+  </div>)
+}
 
 const APP_TITLE = 'Årsplanering'
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker
@@ -272,7 +286,7 @@ function distributeUnits(plan, units) {
       const unit=group.units[i]
       const previous=template.lessons?.[i]||{}
       return {...previous,name:previous.name||'Lektion '+(i+1),day:previous.day||plan.lessonDays?.[i]||'',
-        topics:unit?[{name:unit.topic,description:[unit.chapter&&'Kapitel: '+unit.chapter,unit.details].filter(Boolean).join('\n'),pages:[],assignments:[],links:[]}]:[]}
+        topics:unit?[{name:unit.topic,description:[unit.chapter&&'Kapitel: '+unit.chapter,unit.details].filter(Boolean).join('\n'),pages:[],assignments:[],links:[],...(unit.originalText?{originalText:unit.originalText}:{})}]:[]}
     })
     const chapters=[...new Set(group.units.map(u=>u.chapter).filter(Boolean))]
     return {...template,chapter:chapters.join(' / '),content:group.units.map(u=>[u.chapter,u.topic].filter(Boolean).join(' – ')).join('\n'),
@@ -1679,6 +1693,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const pasteText = plan.pastedMaterial || ''
   const setPasteText = value => setPlan(p => ({ ...p, pastedMaterial: typeof value === 'function' ? value(p.pastedMaterial || '') : value }))
   const [pendingImport, setPendingImport] = useState(null)
+  // Användarens val om uppdelning av moment i importen. Ingenting delas upp utan att man väljer det här.
+  const decideImportSplit = (k, value) => setPendingImport(p => { const decisions = { ...p.decisions, [k]: value }; return { ...p, decisions, weeksData: distributeUnits(plan, expandUnits(p.units, decisions)) } })
   const [fileImportState, setFileImportState] = useState({phase:'idle',message:''})
   const [previewStudents, setPreviewStudents] = useState(() => window.location.hash === '#elevvy')
   const [, setA4Demo] = useState(false)
@@ -2075,7 +2091,8 @@ const addNewTeacherWeek = () => setPlan(p => {
 
   function distributePastedText() {
     if (!pasteText.trim()) return setStatus('Klistra in text innan du fördelar den över veckorna.')
-    setPendingImport({ source: 'Inklistrad text', weeksData: distributeText(plan, pasteText) })
+    const units = withMomentSuggestions(unitsFromText(pasteText))
+    setPendingImport({ source: 'Inklistrad text', units, decisions: {}, weeksData: distributeUnits(plan, units) })
     setStatus('Texten är klar för förhandsgranskning. Inget har ersatts ännu.')
   }
 
@@ -2130,7 +2147,8 @@ const addNewTeacherWeek = () => setPlan(p => {
       } catch (error) { return setStatus(error.message) }
     }
     if (!material.text.trim()) return setStatus('Det finns ingen läsbar text i filen. Klistra in texten i rutan nedan.')
-    setPendingImport({ source: material.name, weeksData: distributeText(plan, material.text) })
+    const units = withMomentSuggestions(unitsFromText(material.text))
+    setPendingImport({ source: material.name, units, decisions: {}, weeksData: distributeUnits(plan, units) })
     setStatus('Underlaget är klart för förhandsgranskning. Inget har ersatts ännu.')
   }
 
@@ -2591,7 +2609,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       </div>})()}
       
       {(showPastTeacherWeeks || focusedTeacherWeek) && <div className="teacher-active-chapter-bar" aria-label="Aktuellt kapitel och vecka"><div className="teacher-active-chapter-content" /></div>}
-      {!simpleSetup && <details className="material-disclosure"><summary>Material till planeringen ({(plan.materials || []).length} filer{pasteText.trim() ? ' + inklistrad text' : ''})</summary>{materialPanel()}{pendingImport && <div className="import-preview"><h3>Förhandsgranska: {pendingImport.source}</h3><p>Granska innan du använder importen.</p>{pendingImport.weeksData.slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'auto' }}>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length })); setPendingImport(null); setStatus('Underlaget har lagts in i grundplaneringen. Klicka Spara för att behålla ändringarna.') }}>Använd import</button><button type="button" className="secondary" onClick={() => setPendingImport(null)}>Avbryt</button></div></div>}</details>}
+      {!simpleSetup && <details className="material-disclosure"><summary>Material till planeringen ({(plan.materials || []).length} filer{pasteText.trim() ? ' + inklistrad text' : ''})</summary>{materialPanel()}{pendingImport && <div className="import-preview"><h3>Förhandsgranska: {pendingImport.source}</h3><p>Granska innan du använder importen.</p><ImportSplitSuggestions pendingImport={pendingImport} onDecide={decideImportSplit} />{pendingImport.weeksData.slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'auto' }}>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length })); setPendingImport(null); setStatus('Underlaget har lagts in i grundplaneringen. Klicka Spara för att behålla ändringarna.') }}>Använd import</button><button type="button" className="secondary" onClick={() => setPendingImport(null)}>Avbryt</button></div></div>}</details>}
       <div className={`teacher-months ${focusedTeacherWeek ? "teacher-months-focused" : ""} ${focusedTeacherWeek && teacherWeekOverview ? "teacher-months-overview-hidden" : ""} ${showPastTeacherWeeks && !focusedTeacherWeek ? "teacher-months-all-weeks" : ""} `}>
         {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? teacherDisplayWeeks : defaultTeacherWindow)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           // I tvåveckorsvyn ligger de två veckorna i en och samma grid, även om de tillhör olika kapitel.
@@ -2657,7 +2675,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         </div>}
         <div className="simple-import-section" aria-label="Material och underlag" style={{marginTop:14}}>
           {materialPanel()}
-          {pendingImport && <div className="import-preview"><h3>Förhandsgranska: {pendingImport.source}</h3><p>Granska innan du använder importen.</p>{pendingImport.weeksData.slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length })); setPendingImport(null); setStatus('Importen är inlagd. Granska och skapa planeringen.') }}>Använd import</button><button type="button" className="secondary" onClick={() => setPendingImport(null)}>Avbryt</button></div></div>}
+          {pendingImport && <div className="import-preview"><h3>Förhandsgranska: {pendingImport.source}</h3><p>Granska innan du använder importen.</p><ImportSplitSuggestions pendingImport={pendingImport} onDecide={decideImportSplit} />{pendingImport.weeksData.slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length })); setPendingImport(null); setStatus('Importen är inlagd. Granska och skapa planeringen.') }}>Använd import</button><button type="button" className="secondary" onClick={() => setPendingImport(null)}>Avbryt</button></div></div>}
         </div>
         <div className="button-row"><button type="submit" className="primary" disabled={busy}>{busy ? 'Skapar…' : 'Skapa planering'}</button><button type="button" className="secondary" onClick={() => setSimpleMore(v => !v)}>{simpleMore ? "Dölj fler inställningar" : "Fler inställningar"}</button></div>
       </form>
@@ -2805,6 +2823,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       {pendingImport && <div className="import-preview">
         <h3>Förhandsgranska import: {pendingImport.source}</h3>
         <p className="muted">Inget har ersatts. De första fem veckorna visas nedan.</p>
+        <ImportSplitSuggestions pendingImport={pendingImport} onDecide={decideImportSplit} />
         {pendingImport.weeksData.slice(0, 5).map((week, i) => <div className="import-preview-week" key={i}><strong>Vecka {week.weekNumber}</strong><pre>{week.content || '(Tom vecka)'}</pre></div>)}
         <div className="button-row">
           <button type="button" className="primary" onClick={() => {
