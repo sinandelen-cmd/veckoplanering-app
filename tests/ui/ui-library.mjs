@@ -11,6 +11,7 @@ import { createServer } from 'vite'
 import assert from 'node:assert/strict'
 import config from './vite.ui.config.mjs'
 import { SCENARIOS } from '../print/fixtures.js'
+import { scrollThroughPlan } from './scroll-through.mjs'
 
 const require = createRequire(import.meta.url)
 const { chromium } = require('playwright')
@@ -21,7 +22,7 @@ const base = 'http://localhost:5220'
 const monday = new Date(); monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
 const iso = d => d.toISOString().slice(0, 10)
 const weeksData = SCENARIOS['alla-21']().map((w, i) => { const d = new Date(monday); d.setDate(d.getDate() + 7 * (i - 10)); return { ...w, weekStart: iso(d), keepVisibleExtra: true } })
-const row = (id, title, archived = false) => ({ id, user_id: '00000000-0000-4000-8000-000000000001', title, subject: 'Matematik', school_year: 'Testår', content: JSON.stringify({ kind: 'arsplanering-v2', title, subject: 'Matematik', schoolForm: 'Gymnasiet', schoolYear: 'Testår', entryType: 'lektion', studentColumns: 1, studentRows: 1, weeksData, archived }), weeks: weeksData.length, published: false, public_slug: null, created_at: '2026-08-20T08:00:00Z', updated_at: '2026-08-20T08:00:00Z' })
+const row = (id, title, archived = false) => ({ id, user_id: '00000000-0000-4000-8000-000000000001', title, subject: 'Matematik', school_year: 'Testår', content: JSON.stringify({ kind: 'arsplanering-v2', title, subject: 'Matematik', schoolForm: 'Gymnasiet', schoolYear: 'Testår', entryType: 'lektion', studentColumns: 1, studentRows: 1, weeksData, archived, classGroups: [{ name: '8A', days: ['Måndag', 'Onsdag'], startDate: '2026-01-01' }] }), weeks: weeksData.length, published: false, public_slug: null, created_at: '2026-08-20T08:00:00Z', updated_at: '2026-08-20T08:00:00Z' })
 
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] })
 const results = []
@@ -144,20 +145,25 @@ await check('avbruten radering ändrar ingenting: kurserna finns kvar i arkivet'
 })
 // 4. Arkivera och återställ bevarar allt innehåll: samma veckor och lektioner före och efter.
 const keep = await open(1366, [row('m1', 'Matematik 1b'), row('m2', 'Matematik 2c')])
+// Räknar veckor och lektioner i alla-veckor-vyn. Planen scrollas igenom först, eftersom lektioner ritas när de närmar sig skärmen.
 const countWeeks = async page => {
   await btn(page, 'Visa alla veckor').evaluate(e => e.click()).catch(() => {})
   await page.waitForSelector('.week-card', { timeout: 20000 }).catch(() => {})
   await page.waitForTimeout(500)
+  await scrollThroughPlan(page)
   const n = await page.evaluate(() => document.querySelectorAll('#lararvy .week-card').length)
+  const lessons = await page.evaluate(() => document.querySelectorAll('#lararvy .lesson').length)
   await btn(page, 'Dölj alla veckor').evaluate(e => e.click()).catch(() => {})
-  return n
+  return { weeks: n, lessons }
 }
-await check('arkivering och återställning behåller alla 21 veckor i kursen', async () => {
+await check('arkivering och återställning behåller alla 21 veckor, lektioner och klasser i kursen', async () => {
   await ensureSubject(keep.page)
   await btn(keep.page, 'Matematik 1b').evaluate(e => e.click())
   await keep.page.waitForSelector('.week-card', { timeout: 20000 })
   const before = await countWeeks(keep.page)
-  assert.equal(before, 21, 'före arkivering: ' + before + ' veckor')
+  assert.equal(before.weeks, 21, 'före arkivering: ' + before.weeks + ' veckor')
+  assert.ok(before.lessons > 0, 'inga lektioner före arkivering')
+  assert.ok(await btn(keep.page, '8A').count() > 0, 'klassen 8A saknas före arkivering')
   // Tillbaka till ämneslistan: kursen är öppen och ämnesraden syns inte förrän vi går tillbaka.
   await btn(keep.page, '← Matematik').evaluate(e => e.click())
   await keep.page.waitForTimeout(400)
@@ -175,9 +181,88 @@ await check('arkivering och återställning behåller alla 21 veckor i kursen', 
   await btn(keep.page, 'Matematik 1b').evaluate(e => e.click())
   await keep.page.waitForSelector('.week-card', { timeout: 20000 })
   const after = await countWeeks(keep.page)
-  assert.equal(after, before, 'efter arkivering och återställning: ' + after + ' veckor, före: ' + before)
+  assert.equal(after.weeks, before.weeks, 'veckor efter återställning: ' + after.weeks + ', före: ' + before.weeks)
+  assert.equal(after.lessons, before.lessons, 'lektioner efter återställning: ' + after.lessons + ', före: ' + before.lessons)
+  assert.ok(await btn(keep.page, '8A').count() > 0, 'klassen 8A saknas efter återställning')
 })
 await keep.page.close()
+
+// 5. Tomma ämnen: en mapp utan kurser kan arkiveras, återställas och raderas permanent, men bara från arkivet.
+const uid = '00000000-0000-4000-8000-000000000001'
+const emptyPage = await browser.newPage({ viewport: { width: 1366, height: 900 } })
+const emptyErrors = []
+emptyPage.on('pageerror', e => emptyErrors.push(e.message))
+emptyPage.__lastDialog = ''
+emptyPage.__accept = true
+emptyPage.on('dialog', d => { emptyPage.__lastDialog = d.message(); if (emptyPage.__accept) d.accept(); else d.dismiss() })
+await emptyPage.route(/^https?:\/\/(?!localhost)/, r => r.abort())
+await emptyPage.addInitScript(([seed, folders]) => { localStorage.setItem('fake-session', 'on'); localStorage.setItem('fake-seed', seed); localStorage.setItem('arsplanering-subject-folders', folders) }, [JSON.stringify({ veckoplanering: [row('m1', 'Matematik 1b')] }), JSON.stringify({ [uid]: { Gymnasiet: ['Matematik', 'Biologi'] } })])
+await emptyPage.goto(base + '/', { waitUntil: 'networkidle' })
+await emptyPage.waitForTimeout(400)
+await check('ett tomt ämne (Biologi) visas med "Arkivera ämne", men utan "Ta bort ämne" eller "Radera ämne"', async () => {
+  await btn(emptyPage, 'Gymnasiet').evaluate(e => e.click())
+  await emptyPage.waitForTimeout(300)
+  assert.ok(await btn(emptyPage, 'Biologi').count() > 0, 'tomma ämnet Biologi saknas i den aktiva listan')
+  await btn(emptyPage, 'Biologi').evaluate(e => e.click())
+  await emptyPage.waitForTimeout(300)
+  assert.ok(await btn(emptyPage, 'Arkivera ämne').count() > 0, '"Arkivera ämne" saknas för tomt ämne')
+  assert.equal(await emptyPage.locator('button', { hasText: 'Ta bort ämne' }).count(), 0, '"Ta bort ämne" finns')
+  assert.equal(await emptyPage.locator('button', { hasText: 'Radera ämne' }).count(), 0, '"Radera ämne" finns i den aktiva listan')
+})
+await check('tomt ämne arkiveras och syns bara i arkivet', async () => {
+  await btn(emptyPage, 'Arkivera ämne').evaluate(e => e.click())
+  await emptyPage.waitForTimeout(500)
+  assert.match(emptyPage.__lastDialog, /Arkivera ämnet "Biologi"\?/, 'bekräftelsen saknas: ' + emptyPage.__lastDialog)
+  assert.equal(await emptyPage.locator('button:visible', { hasText: 'Biologi' }).count(), 0, 'Biologi syns kvar i den aktiva listan')
+  await btn(emptyPage, '🗃 Arkiv').evaluate(e => e.click())
+  await emptyPage.waitForTimeout(300)
+  await btn(emptyPage, 'Gymnasiet').evaluate(e => e.click()).catch(() => {})
+  await emptyPage.waitForTimeout(300)
+  assert.ok(await btn(emptyPage, 'Biologi').count() > 0, 'Biologi syns inte i arkivet')
+})
+await check('tomt ämne i arkivet: "Återställ ämne" och "Radera ämne" är aktiva', async () => {
+  await btn(emptyPage, 'Biologi').evaluate(e => e.click())
+  await emptyPage.waitForTimeout(300)
+  assert.ok(await btn(emptyPage, 'Återställ ämne').count() > 0, '"Återställ ämne" saknas')
+  const del = btn(emptyPage, 'Radera ämne')
+  assert.ok(await del.count() > 0, '"Radera ämne" saknas i arkivet')
+  assert.equal(await del.isDisabled(), false, '"Radera ämne" är inaktiv för tomt ämne')
+  assert.equal(await emptyPage.locator('button', { hasText: 'Ny kurs' }).count(), 0, '"Ny kurs" syns i arkivet')
+})
+await check('återställ tomt ämne: det flyttas tillbaka till den aktiva listan', async () => {
+  await btn(emptyPage, 'Återställ ämne').evaluate(e => e.click())
+  await emptyPage.waitForTimeout(500)
+  assert.match(emptyPage.__lastDialog, /Återställ ämnet "Biologi" till den aktiva listan/, 'bekräftelsen saknas: ' + emptyPage.__lastDialog)
+  await btn(emptyPage, '📂 Visa aktiva').evaluate(e => e.click()).catch(() => {})
+  await emptyPage.waitForTimeout(300)
+  await btn(emptyPage, 'Gymnasiet').evaluate(e => e.click()).catch(() => {})
+  await emptyPage.waitForTimeout(300)
+  assert.ok(await btn(emptyPage, 'Biologi').count() > 0, 'Biologi är inte tillbaka i den aktiva listan')
+})
+await check('permanent radering av tomt ämne: bekräftelsen säger att inga kurser finns, och mappen tas bort', async () => {
+  await btn(emptyPage, 'Arkivera ämne').evaluate(e => e.click())
+  await emptyPage.waitForTimeout(500)
+  await btn(emptyPage, '🗃 Arkiv').evaluate(e => e.click())
+  await emptyPage.waitForTimeout(300)
+  await btn(emptyPage, 'Gymnasiet').evaluate(e => e.click()).catch(() => {})
+  await emptyPage.waitForTimeout(300)
+  await btn(emptyPage, 'Biologi').evaluate(e => e.click())
+  await emptyPage.waitForTimeout(300)
+  emptyPage.__lastDialog = ''
+  emptyPage.__accept = true
+  await btn(emptyPage, 'Radera ämne').evaluate(e => e.click())
+  await emptyPage.waitForTimeout(500)
+  assert.match(emptyPage.__lastDialog, /Radera ämnet "Biologi" permanent/, 'rubriken saknas: ' + emptyPage.__lastDialog)
+  assert.match(emptyPage.__lastDialog, /Ämnet har inga kurser/, 'texten om tomt ämne saknas')
+  assert.match(emptyPage.__lastDialog, /Detta kan inte ångras/, 'texten om att det inte kan ångras saknas')
+  const folders = await emptyPage.evaluate(() => localStorage.getItem('arsplanering-subject-folders'))
+  assert.ok(!String(folders).includes('Biologi'), 'mappen Biologi finns kvar i lagringen')
+  await btn(emptyPage, '📂 Visa aktiva').evaluate(e => e.click()).catch(() => {})
+  await emptyPage.waitForTimeout(300)
+  assert.equal(await emptyPage.locator('button:visible', { hasText: 'Biologi' }).count(), 0, 'Biologi syns i den aktiva listan efter radering')
+})
+await check('inga sidfel med tomma ämnen', async () => assert.deepEqual(emptyErrors, [], 'fel: ' + emptyErrors.join(' | ')))
+await emptyPage.close()
 
 await check('inga sidfel i biblioteket', async () => assert.deepEqual(arch.errors, [], 'fel: ' + arch.errors.join(' | ')))
 await arch.page.close()

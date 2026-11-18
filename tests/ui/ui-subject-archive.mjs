@@ -56,7 +56,7 @@ await check('i aktiva vyn finns ingen "Radera ämne" och ingen "Ta bort ämne", 
 await check('Arkivera ämne flyttar båda kurserna till arkivet', async () => {
   await archiveBtn().click()
   await page.waitForTimeout(800)
-  assert.match(dialogMessage, /Arkivera 2 kurser i "Testämne"/, 'bekräftelsen saknas: ' + dialogMessage)
+  assert.match(dialogMessage, /Arkivera ämnet "Testämne" med 2 kurser/, 'bekräftelsen saknas: ' + dialogMessage)
   const active = await page.locator('button:visible', { hasText: 'Veckotest Ämne' }).count()
   assert.equal(active, 0, 'kurserna syns fortfarande i den aktiva listan')
 })
@@ -86,7 +86,7 @@ await check('i arkivet visas kurserna och knappen byter till "Återställ ämne"
 await check('Återställ ämne flyttar tillbaka båda kurserna till den aktiva listan', async () => {
   await archiveBtn().click()
   await page.waitForTimeout(800)
-  assert.match(dialogMessage, /Återställ 2 kurser i "Testämne"/, 'bekräftelsen saknas: ' + dialogMessage)
+  assert.match(dialogMessage, /Återställ ämnet "Testämne" med 2 kurser/, 'bekräftelsen saknas: ' + dialogMessage)
   await page.locator('button:visible', { hasText: '📂 Visa aktiva' }).first().click().catch(() => {})
   await page.waitForTimeout(400)
   await page.getByText('Övriga planeringar').first().click().catch(() => {})
