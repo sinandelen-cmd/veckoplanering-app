@@ -48,6 +48,11 @@ const archiveBtn = () => page.locator('button:visible', { hasText: /^(Arkivera|�
 await check('ämnesmappen visar knappen "Arkivera ämne"', async () => {
   assert.equal((await archiveBtn().innerText()).trim(), 'Arkivera ämne')
 })
+await check('i aktiva vyn finns ingen "Radera ämne", men "Ny kurs" och "Ta bort ämne" finns', async () => {
+  assert.equal(await page.locator('button:visible', { hasText: 'Radera ämne' }).count(), 0, '"Radera ämne" syns i den aktiva vyn')
+  assert.ok(await page.locator('button:visible', { hasText: 'Ny kurs' }).count() > 0, '"Ny kurs" saknas')
+  assert.ok(await page.locator('button:visible', { hasText: 'Ta bort ämne' }).count() > 0, '"Ta bort ämne" saknas')
+})
 await check('Arkivera ämne flyttar båda kurserna till arkivet', async () => {
   await archiveBtn().click()
   await page.waitForTimeout(800)
@@ -55,8 +60,24 @@ await check('Arkivera ämne flyttar båda kurserna till arkivet', async () => {
   const active = await page.locator('button:visible', { hasText: 'Veckotest Ämne' }).count()
   assert.equal(active, 0, 'kurserna syns fortfarande i den aktiva listan')
 })
-await check('i arkivet visas kurserna och knappen byter till "Återställ ämne"', async () => {
+await check('i arkivvyn visas bara "Återställ ämne" och "Radera ämne", utan överlapp', async () => {
   await page.locator('button:visible', { hasText: '🗃 Arkiv' }).first().click()
+  await page.waitForTimeout(300)
+  await openSubject()
+  await page.waitForTimeout(300)
+  assert.equal(await page.locator('button:visible', { hasText: 'Ny kurs' }).count(), 0, '"Ny kurs" syns i arkivet')
+  assert.equal(await page.locator('button:visible', { hasText: 'Ta bort ämne' }).count(), 0, '"Ta bort ämne" syns i arkivet')
+  const boxes = await page.locator('button:visible', { hasText: /ämne$/ }).evaluateAll(els => els.map(e => e.getBoundingClientRect()).map(r => ({ l: r.left, r: r.right, t: r.top, b: r.bottom })))
+  for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+    const a = boxes[i], b = boxes[j]
+    const overlap = Math.min(a.r, b.r) - Math.max(a.l, b.l) > 2 && Math.min(a.b, b.b) - Math.max(a.t, b.t) > 2
+    assert.ok(!overlap, 'knapparna överlappar varandra')
+  }
+  // Gå tillbaka till arkivets första vy så att följande steg startar från samma läge.
+  await archiveBtn().waitFor()
+})
+await check('i arkivet visas kurserna och knappen byter till "Återställ ämne"', async () => {
+  await page.locator('button:visible', { hasText: '🗃 Arkiv' }).first().click({ timeout: 2000 }).catch(() => {})
   await page.waitForTimeout(400)
   await openSubject()
   await page.waitForTimeout(400)

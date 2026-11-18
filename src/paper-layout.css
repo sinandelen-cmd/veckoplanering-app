@@ -355,3 +355,6 @@
 /* Momentrutor och Sida/Uppgift-rutor i alla lektionskort (veckokort, klassvy och lektionsvy) växer med sin text. */
 #lararvy .lesson .topic-grid:not(.teacher-print-host .topic-grid) textarea { field-sizing: content; height: auto !important; overflow: hidden !important; }
 #lararvy .lesson .topic-grid:not(.teacher-print-host .topic-grid) .topic-name textarea { min-height: 44px !important; }
+
+/* Knapparna i ämnesraden bryter till nästa rad när de inte får plats, i stället för att överlappa varandra. */
+#mina-arsplaneringar .subject-folder-heading { flex-wrap: wrap !important; row-gap: 8px; }
