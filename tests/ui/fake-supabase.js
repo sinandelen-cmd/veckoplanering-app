@@ -8,6 +8,11 @@ const session = () => (globalThis.localStorage && localStorage.getItem('fake-ses
 const listeners = []
 // Fiktiva rader kan läggas in via localStorage 'fake-seed' (endast i testläget).
 try { const seed = globalThis.localStorage && localStorage.getItem('fake-seed'); if (seed) Object.assign(store, JSON.parse(seed)) } catch { /* ogiltig seed ignoreras */ }
+// Persistens för testerna: med 'fake-persist' = 'on' sparas skrivningar i webbläsarens lagring, så att de finns kvar efter omladdning.
+// Det är fortfarande fiktiva data i testläget. Ingen nätverksanslutning och inga produktionsnycklar.
+const persistOn = () => Boolean(globalThis.localStorage && localStorage.getItem('fake-persist') === 'on')
+try { const saved = persistOn() && localStorage.getItem('fake-db'); if (saved) Object.assign(store, JSON.parse(saved)) } catch { /* ogiltig sparad databas ignoreras */ }
+const persist = () => { if (persistOn()) try { localStorage.setItem('fake-db', JSON.stringify(store)) } catch { /* lagringen är full eller blockerad */ } }
 
 class Query {
   constructor(table) { this.table = table; this.filters = []; this.op = 'select'; this.payload = null; this.orders = []; this.wantSingle = null; this.limitN = null }
@@ -30,10 +35,11 @@ class Query {
     if (this.op === 'insert') {
       const created = this.payload.map(p => ({ id: crypto.randomUUID(), created_at: new Date().toISOString(), ...p }))
       rows.push(...created)
+      persist()
       return this.shape(created)
     }
-    if (this.op === 'update') { matched.forEach(r => Object.assign(r, this.payload, { updated_at: new Date().toISOString() })); return this.shape(matched) }
-    if (this.op === 'delete') { const ids = new Set(matched); store[this.table] = rows.filter(r => !ids.has(r)); return this.shape(matched) }
+    if (this.op === 'update') { matched.forEach(r => Object.assign(r, this.payload, { updated_at: new Date().toISOString() })); persist(); return this.shape(matched) }
+    if (this.op === 'delete') { const ids = new Set(matched); store[this.table] = rows.filter(r => !ids.has(r)); persist(); return this.shape(matched) }
     let out = [...matched]
     for (const [col, asc] of this.orders.reverse()) out.sort((a, b) => (a[col] > b[col] ? 1 : -1) * (asc ? 1 : -1))
     if (this.limitN) out = out.slice(0, this.limitN)

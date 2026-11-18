@@ -172,6 +172,13 @@ function defaultSchoolYear() {
   const start = new Date().getMonth() >= 7 ? new Date().getFullYear() : new Date().getFullYear() - 1
   return `${start}–${start + 1}`
 }
+// Startdatum för ett läsår: måndagen i ISO-vecka 33 för läsårets startår (mitten av augusti).
+// Ger en förvald start som följer läsåret. Startdatumet kan ändras i kursens Fler inställningar.
+function schoolStartDate(schoolYear, fallback) {
+  const year = Number(String(schoolYear || '').match(/\d{4}/)?.[0])
+  if (!Number.isFinite(year) || year < 1) return fallback
+  return addWeeks(mondayOf(`${year}-01-04T12:00:00`), 32)
+}
 function SchoolYearPicker({ value, onChange }) {
   const currentYear = new Date().getFullYear()
   const currentStart = new Date().getMonth() >= 7 ? currentYear : currentYear - 1
@@ -2536,8 +2543,10 @@ const addNewTeacherWeek = () => setPlan(p => {
     if (!String(item.subject || '').trim()) return setStatus('Kursen saknar ämne. Öppna ämnet i mappträdet och skapa kursen därifrån.')
     if (!String(item.course || '').trim()) return setStatus('Ange kursens namn.')
     if (!confirmNavigation()) return
+    const schoolYearValue = item.schoolYear || (libraryYear === 'alla' ? defaultSchoolYear() : libraryYear)
+    // Ny kurs får alltid 21 veckor, med datum som följer läsåret. Befintliga kurser ändras inte här.
     const fresh = {
-      ...emptyPlan(), schoolYear:item.schoolYear || (libraryYear === 'alla' ? defaultSchoolYear() : libraryYear),
+      ...emptyPlan(), schoolYear: schoolYearValue, startDate: schoolStartDate(schoolYearValue, emptyPlan().startDate), weeks: 21,
       schoolForm:item.school === 'Gymnasiet' ? 'Gymnasieskola' : 'Grundskola',
       subject:item.subject,grade:item.year || '',textbook:name,
       course:item.course || (item.school === 'Gymnasiet' ? item.subject : ''),

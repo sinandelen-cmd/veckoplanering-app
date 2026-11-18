@@ -105,13 +105,13 @@ await check('"Ny kurs" frågar bara efter kursens namn och läsår, ämne och sk
   assert.ok(await dialog.getByText('Matematik', { exact: false }).count() > 0, 'ämnet visas inte')
   assert.equal(await dialog.locator('button', { hasText: 'Skapa kurs' }).isDisabled(), true, '"Skapa kurs" är aktiv utan namn')
 })
-await check('kursen skapas och planeringsvyn öppnas direkt, med samma veckor och lektioner som tidigare', async () => {
+await check('kursen skapas med 21 veckor och planeringsvyn öppnas direkt', async () => {
   await page1.page.locator('[aria-label="Skapa ny kurs"] input').first().fill('Matematik 1b')
   await btn(page1.page, 'Skapa kurs').evaluate(e => e.click())
   await page1.page.waitForSelector('#lararvy .week-card', { timeout: 20000 })
-  // Nya kurser startar med två veckor, som tidigare. Fler veckor läggs till i planeringsvyn (upp till 21 och vidare).
+  // Nya kurser får 21 veckor direkt, med datum som följer läsåret (se ui-new-course-testet).
   const counts = await countWeeks(page1.page)
-  assert.equal(counts.weeks, 2, 'veckor i en ny kurs: ' + counts.weeks)
+  assert.equal(counts.weeks, 21, 'veckor i en ny kurs: ' + counts.weeks)
   assert.ok(await page1.page.locator('button:visible', { hasText: /Lägg till vecka/ }).count() > 0, 'knappen för att lägga till vecka saknas')
 })
 await check('"Fler inställningar" inne i kursen: läsår, lärobok, startdatum, startvecka och material', async () => {

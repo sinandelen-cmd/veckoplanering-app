@@ -18,7 +18,8 @@
     "test:ui:layout": "node tests/ui/ui-layout.mjs",
     "test:ui:subject-archive": "node tests/ui/ui-subject-archive.mjs",
     "test:ui:library": "node tests/ui/ui-library.mjs",
-    "test:ui:course-flow": "node tests/ui/ui-course-flow.mjs"
+    "test:ui:course-flow": "node tests/ui/ui-course-flow.mjs",
+    "test:ui:new-course": "node tests/ui/ui-new-course.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
