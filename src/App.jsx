@@ -2003,6 +2003,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     )) return
     setBusy(true)
     setStatus('Sparar...')
+    let createdPaths = []
     try {
       if (publish && plan.autoReleaseWeeks === true) {
         const { data: releaseSupported, error: releaseError } = await supabase.rpc('supports_automatic_week_release')
@@ -2028,7 +2029,11 @@ const addNewTeacherWeek = () => setPlan(p => {
       }
       const keepPublished = !publish && databasePublished
       const slug = publish ? (databaseSlug || buildSlug(plan)) : (databaseSlug || '')
-      const payload = { kind: 'arsplanering-v2', ...plan, themeId: plan.themeId || planTheme(plan, selectedId).id, weeksData: weeks, published: publish || keepPublished, publicSlug: slug }
+      // Filer som bifogats i formuläret laddas upp först nu, när planeringen sparas.
+      const removalsToApply = pendingRemovals
+      const uploadedMaterials = await uploadPendingMaterials(plan.materials)
+      createdPaths = uploadedMaterials.created
+      const payload = { kind: 'arsplanering-v2', ...plan, materials: uploadedMaterials.materials, themeId: plan.themeId || planTheme(plan, selectedId).id, weeksData: weeks, published: publish || keepPublished, publicSlug: slug }
       const publishedPayload = publish ? sanitizeForStudents(payload) : null
       const row = {
         user_id: session.user.id,
@@ -2047,8 +2052,9 @@ const addNewTeacherWeek = () => setPlan(p => {
         ? supabase.from('veckoplanering').update(row).eq('id', selectedId).eq('user_id', session.user.id).select('id').single()
         : supabase.from('veckoplanering').insert(row).select('id').single()
       const { data, error } = await query
-      if (error) { setStatus(`Kunde inte spara: ${error.message}`); return false }
+      if (error) { await deleteStoredFiles(createdPaths); createdPaths = []; setStatus(`Kunde inte spara: ${error.message}`); return false }
       else {
+        createdPaths = []
         if (simpleSetup) { setSimpleSetup(false); setTeacherTab('arsplan'); setCalendarOpen(false) }
         setSelectedId(data.id)
         try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(data.id)) } catch { /* Lagring kan vara blockerad */ }
@@ -2058,6 +2064,9 @@ const addNewTeacherWeek = () => setPlan(p => {
         setSavedRevision(revision => revision + 1)
         const newerEdits = latestPlanRef.current !== plan
         setPlan(current => current === plan ? payload : current)
+        // Borttagna filer raderas först nu, när borttagningen är sparad.
+        setPendingRemovals(list => list.filter(path => !removalsToApply.includes(path)))
+        await deleteStoredFiles(removalsToApply)
         const message = !refreshed ? 'Sparad, men listan kunde inte uppdateras. Ladda om för att kontrollera.' : publish
           ? `Publicerad: ${window.location.origin}/elev/${slug}`
           : keepPublished
@@ -2067,6 +2076,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         return !newerEdits
       }
     } catch (error) {
+      await deleteStoredFiles(createdPaths)
       setStatus(`Kunde inte spara: ${error.message || 'Okänt fel'}`)
       return false
     } finally {
@@ -2108,12 +2118,14 @@ const addNewTeacherWeek = () => setPlan(p => {
     setStatus('Texten är klar för förhandsgranskning. Inget har ersatts ännu.')
   }
 
-  // target.add tar emot de bifogade filerna och target.say visar status. Standard är den öppna planeringen.
+  // Bifogade filer ligger bara i formuläret tills planeringen sparas. Då laddas de upp, så att inget blir kvar i lagringen
+  // om man lämnar utan att spara. Samma fil (namn och storlek) läggs inte till två gånger.
   async function attachMaterialFiles(fileList, target = {}) {
     const addMaterials = target.add || (list => setPlan(p => ({ ...p, materials: [...(p.materials || []), ...list] })))
     const say = target.say || setStatus
+    const current = target.list || plan.materials || []
     const files = Array.from(fileList || [])
-    if (!files.length || !session?.user?.id) return
+    if (!files.length) return
     setBusy(true)
     const added = []
     const problems = []
@@ -2121,33 +2133,60 @@ const addNewTeacherWeek = () => setPlan(p => {
       const ext = materialExtension(file.name)
       if (!MATERIAL_TYPES.includes(ext)) { problems.push(`${file.name} har en filtyp som inte stöds.`); continue }
       if (file.size > MATERIAL_MAX_BYTES) { problems.push(`${file.name} är större än 20 MB.`); continue }
-      try {
-        say(`Bifogar ${file.name}…`)
-        const path = await uploadMaterialFile(session.user.id, file)
-        let text = ''
-        let note = ''
-        try { text = String((await readMaterialText(file)) || '').trim() } catch (error) { note = error.message }
-        if (!text && !note) note = MATERIAL_READABLE.includes(ext) ? 'Ingen text kunde läsas. Klistra in innehållet nedan.' : 'Filen sparas, men texten läses inte automatiskt. Klistra in innehållet nedan om du vill använda det.'
-        added.push({ id: `${Date.now()}-${added.length}-${Math.random().toString(36).slice(2, 6)}`, name: file.name, ext, size: file.size, path, text: text.slice(0, MATERIAL_TEXT_LIMIT), note, addedAt: new Date().toISOString() })
-      } catch (error) { problems.push(error.message) }
+      if ([...current, ...added].some(item => item.name === file.name && item.size === file.size)) { problems.push(`${file.name} är redan bifogad.`); continue }
+      say(`Läser ${file.name}…`)
+      let text = ''
+      let note = ''
+      try { text = String((await readMaterialText(file)) || '').trim() } catch (error) { note = error.message }
+      if (!text && !note) note = MATERIAL_READABLE.includes(ext) ? 'Ingen text kunde läsas. Klistra in innehållet nedan.' : 'Filen sparas, men texten läses inte automatiskt. Klistra in innehållet nedan om du vill använda det.'
+      added.push({ id: `${Date.now()}-${added.length}-${Math.random().toString(36).slice(2, 6)}`, name: file.name, ext, size: file.size, file, path: '', pending: true, text: text.slice(0, MATERIAL_TEXT_LIMIT), note, addedAt: new Date().toISOString() })
     }
     if (added.length) addMaterials(added)
     setBusy(false)
     say([added.length ? `${added.length} fil(er) bifogade. ${target.saveHint || 'Klicka Spara för att behålla dem.'}` : '', ...problems].filter(Boolean).join(' '))
   }
 
-  async function removeMaterial(material) {
-    if (!window.confirm(`Ta bort ${material.name} från planeringen? Filen raderas permanent.`)) return
-    setPlan(p => ({ ...p, materials: (p.materials || []).filter(item => item.id !== material.id) }))
-    try { await removeMaterialFile(material.path) } catch (error) { setStatus(`Filen togs bort från planeringen, men lagringen svarade: ${error.message}`) }
+  // Laddar upp material som bara finns i formuläret. Körs när planeringen sparas, och varje fil laddas upp en gång.
+  // Redan sparat material hoppas över. Om något misslyckas tas de filer som laddats upp i det här försöket bort igen.
+  async function uploadPendingMaterials(list) {
+    const materials = []
+    const created = []
+    try {
+      for (const material of list || []) {
+        if (!material.pending) { materials.push(material); continue }
+        const path = await uploadMaterialFile(session.user.id, material.file)
+        created.push(path)
+        materials.push({ id: material.id, name: material.name, ext: material.ext, size: material.size, path, text: material.text, note: material.note, addedAt: material.addedAt })
+      }
+      return { materials, created }
+    } catch (error) {
+      await deleteStoredFiles(created)
+      throw error
+    }
+  }
+  // Tar bort filer från lagringen. Används när en sparning misslyckas, eller efter att en borttagning sparats.
+  async function deleteStoredFiles(paths) {
+    for (const path of paths || []) { try { await removeMaterialFile(path) } catch { /* Filen ligger kvar i lagringen men hör inte till någon planering */ } }
+  }
+  // Tar bort ett material ur listan. Ett sparat material raderas från lagringen först när planeringen sparas.
+  function dropMaterial(material, setList) {
+    if (!window.confirm(`Ta bort ${material.name} från listan?` + (material.path ? ' Filen raderas när planeringen sparas.' : ''))) return
+    setList(list => list.filter(item => item.id !== material.id))
+    if (material.path) setPendingRemovals(list => [...list, material.path])
+  }
+  function removeMaterial(material) {
+    dropMaterial(material, updater => setPlan(p => ({ ...p, materials: updater(p.materials || []) })))
   }
 
   async function openMaterial(material) {
-    const win = window.open('', '_blank', 'noopener')
+    // Fönstret öppnas direkt i klicket, så att webbläsaren inte blockerar det. Den aktuella sidan lämnas aldrig,
+    // så att osparade ändringar inte försvinner.
+    const win = window.open('', '_blank')
     try {
-      const url = await materialSignedUrl(material.path)
-      if (win) win.location.href = url
-      else window.location.href = url
+      const url = material.path ? await materialSignedUrl(material.path) : URL.createObjectURL(material.file)
+      if (!win) return setStatus('Webbläsaren blockerade fönstret. Tillåt popup-fönster för sidan och försök igen.')
+      win.opener = null
+      win.location.href = url
     } catch (error) { if (win) win.close(); setStatus(error.message) }
   }
 
@@ -2155,8 +2194,8 @@ const addNewTeacherWeek = () => setPlan(p => {
     // Excel-filer med kapitel och delmoment fördelas på samma sätt som tidigare importer.
     if (/^xlsx?$/.test(material.ext)) {
       try {
-        const response = await fetch(await materialSignedUrl(material.path))
-        const workbook = XLSX.read(await response.arrayBuffer(), { type: 'array' })
+        const buffer = material.file ? await material.file.arrayBuffer() : await (await fetch(await materialSignedUrl(material.path))).arrayBuffer()
+        const workbook = XLSX.read(buffer, { type: 'array' })
         setPendingImport({ source: material.name, weeksData: distributeChapterWorkbook(plan, workbook), structured: true })
         return setStatus('Kapitel och delmoment är fördelade på planeringens lektioner. Granska före import.')
       } catch (error) { return setStatus(error.message) }
@@ -2167,33 +2206,17 @@ const addNewTeacherWeek = () => setPlan(p => {
     setStatus('Underlaget är klart för förhandsgranskning. Inget har ersatts ännu.')
   }
 
-  // Filer som bifogats i ett formulär som avbryts, eller i en kurs som inte skapas, tas bort så att de inte blir kvar i lagringen.
-  async function discardMaterialFiles(list) {
-    for (const material of list || []) { try { await removeMaterialFile(material.path) } catch { /* Filen syns inte i någon planering */ } }
-  }
-  // Ta bort ett bifogat material före det sparats. setList uppdaterar listan i formuläret.
-  async function removeDraftMaterial(material, setList) {
-    if (!window.confirm(`Ta bort ${material.name}? Filen raderas permanent.`)) return
-    setList(list => list.filter(item => item.id !== material.id))
-    try { await removeMaterialFile(material.path) } catch (error) { setIntakeMessage(`Filen togs bort från listan, men lagringen svarade: ${error.message}`) }
-  }
-  // Avbryt i ett nytt formulär. Bifogade filer som inte sparats tas bort efter bekräftelse.
-  async function cancelDraft(materials, close) {
-    if (materials.length && !window.confirm(`Avbryt? De ${materials.length} bifogade filerna raderas permanent.`)) return
-    close()
-    await discardMaterialFiles(materials)
-  }
-  // Frivillig materialdel för "Skapa planering" och "Ny kurs". Materialet sparas med kursen när den skapas.
-  // Veckor skapas från materialet först inne i kursen, där förhandsgranskning finns.
+  // Frivillig materialdel för "Skapa planering" och "Ny kurs". Filerna laddas upp först när planeringen sparas.
   function materialIntake({ materials, pasted, onPaste, onAdd, onRemove, message, setMessage }) {
     return <section className="material-panel material-intake" aria-label="Material till planeringen (valfritt)">
       <h3>Material till planeringen <span className="muted">(valfritt)</span></h3>
-      <p className="muted">Du kan bifoga filer eller klistra in text redan nu. Materialet sparas med kursen och finns kvar i kursens materialsektion. Veckor skapas från materialet när kursen är öppen.</p>
-      <label className="secondary material-attach">Bifoga filer<input type="file" multiple accept={MATERIAL_ACCEPT} disabled={busy} onChange={e => { const files = e.target.files; void attachMaterialFiles(files, { add: onAdd, say: setMessage, saveHint: 'Den sparas när kursen skapas.' }); e.target.value = '' }} /></label>
+      <p className="muted">Du kan bifoga filer eller klistra in text redan nu. Materialet sparas med planeringen när du sparar, och finns sedan i kursens materialsektion. Veckor skapas från materialet när kursen är öppen.</p>
+      <label className="secondary material-attach">Bifoga filer<input type="file" multiple accept={MATERIAL_ACCEPT} disabled={busy} onChange={e => { const files = e.target.files; void attachMaterialFiles(files, { add: onAdd, say: setMessage, list: materials, saveHint: 'Den sparas när kursen skapas.' }); e.target.value = '' }} /></label>
       <p className="muted material-hint">PDF, Word (.doc, .docx), Excel (.xls, .xlsx), PowerPoint (.ppt, .pptx), bilder (.jpg, .jpeg, .png) och textfiler (.txt). Max 20 MB per fil.</p>
       {materials.length > 0 && <ul className="material-list">{materials.map(material => <li key={material.id}>
         <strong>{material.name}</strong> <span className="muted">({Math.max(1, Math.round(material.size / 1024))} kB)</span>
         {material.note && <p className="muted material-note">{material.note}</p>}
+        {material.pending && <p className="muted material-note">Sparas först när planeringen sparas.</p>}
         <div className="button-row"><button type="button" className="secondary" disabled={busy} onClick={() => onRemove(material)}>Ta bort</button></div>
       </li>)}</ul>}
       <label className="material-paste">Klistra in text<textarea value={pasted} placeholder="Klistra in text från PDF, Word, Excel eller andra dokument. Rubriker, stycken och listor bevaras så långt det går." onChange={e => onPaste(e.target.value)} /></label>
@@ -2210,6 +2233,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       {materials.length > 0 && <ul className="material-list">{materials.map(material => <li key={material.id}>
         <strong>{material.name}</strong> <span className="muted">({Math.max(1, Math.round(material.size / 1024))} kB)</span>
         {material.note && <p className="muted material-note">{material.note}</p>}
+        {material.pending && <p className="muted material-note">Sparas först när planeringen sparas.</p>}
         <div className="button-row">
           <button type="button" className="secondary" onClick={() => openMaterial(material)}>Öppna</button>
           <button type="button" className="secondary" disabled={busy || !material.text} onClick={() => materialToWeeks(material)}>Skapa veckor av texten</button>
@@ -2227,7 +2251,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(row.id)) } catch { /* Lagring kan vara blockerad */ }
     setOpenedFromLibrary(teacherTab === 'bibliotek')
     const openedPlan = planFromRow(row)
-    setSimpleSetup(false); setSelectedId(row.id); savedPlanRef.current = JSON.stringify(openedPlan); setSavedRevision(revision => revision + 1); setPlan(openedPlan); setTeacherTab('arsplan'); setCalendarOpen(false); setEditingClassView(className || ""); setPreviewStudents(false); setA4Demo(false); setStatus(className ? `Klassen ${className} tillhör grundplaneringen. Öppna klassernas schema nedan.` : ''); requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+    setPendingRemovals([]); setSimpleSetup(false); setSelectedId(row.id); savedPlanRef.current = JSON.stringify(openedPlan); setSavedRevision(revision => revision + 1); setPlan(openedPlan); setTeacherTab('arsplan'); setCalendarOpen(false); setEditingClassView(className || ""); setPreviewStudents(false); setA4Demo(false); setStatus(className ? `Klassen ${className} tillhör grundplaneringen. Öppna klassernas schema nedan.` : ''); requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }))
   }
 
   async function shareWithColleague(event) {
@@ -2565,6 +2589,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     const fresh = {...emptyPlan(), lessonsPerWeek:5, lessonDays:['Måndag','Tisdag','Onsdag','Torsdag','Fredag'], schoolForm: openStage, subject: openSubject}
     try { window.sessionStorage.removeItem(`arsplanering-last-open-${session.user.id}`) } catch { /* Lagring kan vara blockerad */ }
     setSimpleSetup(true)
+    setPendingRemovals([])
     setPlan(fresh); setSelectedId(null); savedPlanRef.current = JSON.stringify(fresh)
     setSavedRevision(revision => revision + 1)
     setTeacherTab('new'); setCalendarOpen(false); setPreviewStudents(false); setA4Demo(false)
@@ -2573,6 +2598,8 @@ const addNewTeacherWeek = () => setPlan(p => {
   const returnToPlanningTree = () => { setTeacherTab('bibliotek'); setCalendarOpen(false); setOpenedFromLibrary(false); window.scrollTo({ top: 0, behavior: 'smooth' }) }
   const [coursePicker, setCoursePicker] = useState(null)
   const [intakeMessage, setIntakeMessage] = useState('')
+  // Sparade filer som tagits bort ur listan. De raderas från lagringen först när planeringen sparas.
+  const [pendingRemovals, setPendingRemovals] = useState([])
   // Skapar en kurs direkt från kursdialogen. Ämne och skolform följer med från ämnesmappen och valideras här.
   const confirmBook = async (name, item) => {
     if (!item || busy) return
@@ -2592,6 +2619,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       materials:Array.isArray(item.materials)?item.materials:[], pastedMaterial:String(item.pastedMaterial||'')
     }
     fresh.weeksData = makeWeeks(fresh)
+    let created = []
     setBusy(true)
     setStatus('Kontrollerar om grundplaneringen redan finns…')
     try {
@@ -2610,8 +2638,6 @@ const addNewTeacherWeek = () => setPlan(p => {
           && (!normalize(fresh.textbook) || normalize(old.textbook) === normalize(fresh.textbook))
       })
       if (existing) {
-        // Filerna som bifogats i dialogen följer inte med, eftersom kursen inte skapas.
-        await discardMaterialFiles(item.materials || [])
         const archived = Boolean(parseContent(existing.content)?.archived)
         setStatus(archived
           ? 'Den här grundplaneringen finns redan i ditt arkiv. Återanvänd den och lägg till klass i stället för att skapa en dubblett.'
@@ -2622,7 +2648,9 @@ const addNewTeacherWeek = () => setPlan(p => {
         return
       }
       setStatus('Skapar grundplanering och veckor…')
-      const payload = {kind:'arsplanering-v2',...fresh,published:false,publicSlug:''}
+      const uploaded = await uploadPendingMaterials(fresh.materials)
+      created = uploaded.created
+      const payload = {kind:'arsplanering-v2',...fresh,materials:uploaded.materials,published:false,publicSlug:''}
       const {data,error} = await supabase.from('veckoplanering').insert({
         user_id:session.user.id,title:fresh.title,week_start:fresh.startDate,
         content:JSON.stringify(payload),subject:fresh.subject,school_year:fresh.schoolYear,
@@ -2630,6 +2658,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         ...publicationFields(false,false,'',null),updated_at:new Date().toISOString()
       }).select('id').single()
       if(error) throw error
+      created = []
       setPlan(payload)
       savedPlanRef.current = JSON.stringify(payload)
       setSavedRevision(v=>v+1)
@@ -2644,6 +2673,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       try {window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`,String(data.id))} catch {}
       void loadPlans()
     } catch(error) {
+      await deleteStoredFiles(created)
       setStatus('Kunde inte skapa grundplaneringen: '+(error.message||'Okänt fel'))
     } finally {setBusy(false)}
   }
@@ -2860,13 +2890,14 @@ const addNewTeacherWeek = () => setPlan(p => {
             <datalist id="planning-subject-choices">{[...new Set(plans.filter(row => (parseContent(row.content)?.schoolForm || '') === plan.schoolForm).map(row => String(parseContent(row.content)?.subject || row.subject || '').trim()).filter(Boolean))].map(name => <option key={name} value={name} />)}</datalist>
           </div>
         </div>
+        {status && <p className="status" role="status">{status}</p>}
         {materialIntake({
           materials: plan.materials || [], pasted: pasteText, onPaste: setPasteText,
           onAdd: list => setPlan(p => ({ ...p, materials: [...(p.materials || []), ...list] })),
-          onRemove: material => removeDraftMaterial(material, updater => setPlan(p => ({ ...p, materials: updater(p.materials || []) }))),
+          onRemove: material => dropMaterial(material, updater => setPlan(p => ({ ...p, materials: updater(p.materials || []) }))),
           message: intakeMessage, setMessage: setIntakeMessage,
         })}
-        <div className="button-row"><button type="submit" className="primary" disabled={busy}>{busy ? 'Skapar…' : 'Skapa planering'}</button><button type="button" className="secondary" onClick={() => void cancelDraft(plan.materials || [], () => { setSimpleSetup(false); setTeacherTab('bibliotek') })}>Avbryt</button></div>
+        <div className="button-row"><button type="submit" className="primary" disabled={busy}>{busy ? 'Skapar…' : 'Skapa planering'}</button><button type="button" className="secondary" onClick={() => { setSimpleSetup(false); setTeacherTab('bibliotek') }}>Avbryt</button></div>
       </form>
     </section>}
     {AVSTANGD_GRANSSNITT && !simpleSetup && <div className="unified-planning-form" aria-label="Inställningar och publicering"><h2 className="settings-publication-title">Inställningar och publicering</h2>
@@ -3139,10 +3170,10 @@ const addNewTeacherWeek = () => setPlan(p => {
     materials: coursePicker.materials || [], pasted: coursePicker.pastedMaterial || '',
     onPaste: value => setCoursePicker(p => p && ({ ...p, pastedMaterial: value })),
     onAdd: list => setCoursePicker(p => p && ({ ...p, materials: [...(p.materials || []), ...list] })),
-    onRemove: material => removeDraftMaterial(material, updater => setCoursePicker(p => p && ({ ...p, materials: updater(p.materials || []) }))),
+    onRemove: material => dropMaterial(material, updater => setCoursePicker(p => p && ({ ...p, materials: updater(p.materials || []) }))),
     message: intakeMessage, setMessage: setIntakeMessage,
   })}
-  <div className="textbook-picker-actions"><button type="button" onClick={() => void cancelDraft(coursePicker.materials || [], () => setCoursePicker(null))}>← Tillbaka</button><button type="submit" disabled={!coursePicker.course.trim() || busy}>Skapa kurs</button></div>
+  <div className="textbook-picker-actions"><button type="button" onClick={() => setCoursePicker(null)}>← Tillbaka</button><button type="submit" disabled={!coursePicker.course.trim() || busy}>Skapa kurs</button></div>
 </form></div>}</div>
 }
 

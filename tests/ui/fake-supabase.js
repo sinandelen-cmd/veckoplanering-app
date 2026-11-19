@@ -20,13 +20,24 @@ const files = {}
 try { const saved = persistOn() && localStorage.getItem('fake-files'); if (saved) Object.assign(files, JSON.parse(saved)) } catch { /* ogiltig sparad fil ignoreras */ }
 const persistFiles = () => { if (persistOn()) try { localStorage.setItem('fake-files', JSON.stringify(files)) } catch { /* lagringen är full eller blockerad */ } }
 const readAsDataUrl = file => new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(reader.error); reader.readAsDataURL(file) })
+// Loggar över uppladdningar och borttagningar, så att testerna kan kontrollera att inget laddas upp i onödan.
+const fakeLog = { uploads: [], removals: [] }
+// Filer vars namn innehåller [fel] misslyckas vid uppladdning. Används för att testa avbruten uppladdning.
 const fakeBucket = {
   upload: async (path, file) => {
-    try { files[path] = { name: file.name, type: file.type, dataUrl: await readAsDataUrl(file) }; persistFiles(); return { data: { path }, error: null } }
+    if (file.name.includes('[fel]')) return { data: null, error: { message: 'Fiktiv klient: uppladdningen misslyckades' } }
+    try { files[path] = { name: file.name, type: file.type, dataUrl: await readAsDataUrl(file) }; fakeLog.uploads.push(file.name); persistFiles(); return { data: { path }, error: null } }
     catch (error) { return { data: null, error: { message: error.message } } }
   },
-  createSignedUrl: async path => files[path] ? { data: { signedUrl: files[path].dataUrl }, error: null } : { data: null, error: { message: 'Filen finns inte i testlagringen' } },
-  remove: async paths => { paths.forEach(path => { delete files[path] }); persistFiles(); return { data: paths.map(path => ({ name: path })), error: null } },
+  // Länken är en blob-adress från samma webbläsare, så att den går att öppna i ett nytt fönster.
+  createSignedUrl: async path => {
+    if (!files[path]) return { data: null, error: { message: 'Filen finns inte i testlagringen' } }
+    const bytes = await (await fetch(files[path].dataUrl)).arrayBuffer()
+    const type = (files[path].type || '').startsWith('text/') ? files[path].type + ';charset=utf-8' : (files[path].type || '')
+    const blob = new Blob([bytes], { type })
+    return { data: { signedUrl: URL.createObjectURL(blob) }, error: null }
+  },
+  remove: async paths => { paths.forEach(path => { delete files[path]; fakeLog.removals.push(path) }); persistFiles(); return { data: paths.map(path => ({ name: path })), error: null } },
 }
 
 class Query {
@@ -82,5 +93,5 @@ export const supabase = {
   },
 }
 // Testhjälp: lägg in fiktiva rader före start.
-export const __fake = { store, files, FAKE_TEACHER_ID }
+export const __fake = { store, files, fakeLog, FAKE_TEACHER_ID }
 if (typeof window !== 'undefined') window.__fake = __fake
