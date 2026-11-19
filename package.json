@@ -21,7 +21,9 @@
     "test:ui:new-course": "node tests/ui/ui-new-course.mjs",
     "test:ui:course-material": "node tests/ui/ui-course-material.mjs",
     "test:ui:subjects": "node tests/ui/ui-subjects.mjs",
-    "test:ui:subject-safety": "node tests/ui/ui-subject-safety.mjs"
+    "test:ui:subject-safety": "node tests/ui/ui-subject-safety.mjs",
+    "test:real": "node tests/real/real-supabase.mjs",
+    "test:real-ui": "node tests/real/real-ui.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",

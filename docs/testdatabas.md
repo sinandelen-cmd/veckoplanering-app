@@ -87,3 +87,20 @@ Admin är hårdkodad på två ställen: klienten (`src/App.jsx`, `isAdmin`) och 
 - Storage-bucketens inställningar (till exempel `file_size_limit`), som bara finns i Supabase Storage.
 - En riktig Supabase-instans eller Supabase-kompatibel stack för auth och PostgREST. Docker-avbilder blockeras i sessionen.
 - Fiktiva konton med testlösenord, skapade i testmiljöns Auth. Inga riktiga lärarkonton används.
+
+## Lokal riktig Supabase-stack (kostnadsfri, ingen produktion)
+
+Sedan dess körs en lokal stack på den egna datorn med samma avbilder som Supabase: PostgreSQL, Auth, PostgREST, Storage och en nginx-gateway. Den beskrivs i `tests/real/stack/README.md`.
+
+- `npm run test:real`: integrationstest mot databas, RLS, Storage och åtkomst mellan konton (22 kontroller).
+- `npm run test:real-ui`: browsertest med riktig inloggning, skapande, import, omladdning, annan dator, arkiv och radering, samt migrering med fyra samtidiga flikar (12 kontroller).
+
+Testerna vägrar köra mot något annat än localhost. Det finns inget produktionsnyckel i testmiljön.
+
+### Lokala justeringar som kräver verifiering mot produktion
+- `teacher_access` saknar `timer_period`, `expires_at` och `extension_requested` i repots migrationer, men appen läser dem. De läggs till lokalt. Verifiera mot produktion med skrivskyddad export innan något ändras i repot.
+- Adminens UUID i migrationen byts mot en fiktiv admin i den lokala kopian.
+- Storage-rollerna får standardrättigheter, som Supabase-plattformen sätter i produktion.
+
+### Förslag, ännu inte applicerat
+- `supabase/proposals/2026-11-amnen-unikt-index.sql` hindrar dubbla ämnesrader vid samtidiga skrivningar. Den gäller bara `amne-v1`-rader. Den är verifierad lokalt, men ska inte köras mot produktion utan godkännande och en kontroll efter dubbletter.

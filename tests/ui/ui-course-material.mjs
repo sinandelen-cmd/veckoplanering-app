@@ -15,6 +15,7 @@ import { createRequire } from 'node:module'
 import { createServer } from 'vite'
 import assert from 'node:assert/strict'
 import config from './vite.ui.config.mjs'
+import { scrollThroughPlan } from './scroll-through.mjs'
 
 const require = createRequire(import.meta.url)
 const { chromium } = require('playwright')
@@ -178,6 +179,11 @@ await check('inklistrad text ger en förhandsgranskning, och originaltexten finn
   await btn('Använd import', page.locator('.import-preview')).evaluate(e => e.click())
   await page.waitForTimeout(500)
   assert.equal(await pastedValue(), PASTED_A, 'originaltexten försvann när veckor skapades')
+  // Kursen har 21 veckor och importen fyller den första. Veckorna renderas lazt, så vi går igenom hela planeringen först.
+  // Klara veckor visas dolda bakom en knapp. Vi öppnar dem så att importerade moment syns.
+  for (const b of await page.locator('button:visible', { hasText: 'klara veckor' }).all()) await b.evaluate(e => e.click()).catch(() => {})
+  await page.waitForTimeout(300)
+  await scrollThroughPlan(page)
   assert.match(await page.locator('#lararvy').innerText(), /ekvationer/, 'importen skapade inga veckor med texten')
 })
 

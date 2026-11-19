@@ -2261,7 +2261,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       <ImportSplitSuggestions pendingImport={pendingImport} onDecide={decideImportSplit} />
       {(pendingImport.weeksData || []).slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'auto' }}>{week.content || '(Tom vecka)'}</pre></div>)}
       <div className="button-row">
-        <button type="button" className="primary" onClick={() => { if (pendingImport.planId !== selectedId) return setStatus('Förhandsgranskningen hör till en annan planering och används inte här.'); if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length })); setPendingImport(null); setStatus('Importen är inlagd i planeringen. Ändringarna sparas automatiskt.') }}>Använd import</button>
+        <button type="button" className="primary" onClick={() => { if (pendingImport.planId !== selectedId) return setStatus('Förhandsgranskningen hör till en annan planering och används inte här.'); if (!confirmReplacingWeeks(plan)) return; const imported = pendingImport.weeksData || []; const existing = plan.weeksData || []; const merged = [...imported, ...existing.slice(imported.length)]; setPlan(p => ({ ...p, weeksData: merged, weeks: merged.length })); setPendingImport(null); setStatus('Importen är inlagd i planeringen. Veckor som importen inte berörde finns kvar. Ändringarna sparas automatiskt.') }}>Använd import</button>
         <button type="button" className="secondary" onClick={() => { setPendingImport(null); setStatus('Importen avbröts. Veckorna är oförändrade.') }}>Avbryt</button>
       </div>
     </section>
@@ -2513,7 +2513,8 @@ const addNewTeacherWeek = () => setPlan(p => {
       school_year: null, class_name: null, start_date: null, weeks: 0, ...publicationFields(false, false, '', null),
       updated_at: new Date().toISOString(),
     })
-    if (error) throw error
+    // 23505 betyder att ämnet redan finns, till exempel från en annan flik. Det är inget fel för användaren.
+    if (error && error.code !== '23505') throw error
   }
   async function updateRowContent(row, changes, extra = {}) {
     const stored = parseContent(row.content)
@@ -2746,8 +2747,11 @@ const addNewTeacherWeek = () => setPlan(p => {
     setBusy(true)
     try {
       for (const item of entry.courses) {
+        const materialPaths = (parseContent(item.row.content)?.materials || []).map(m => m.path).filter(Boolean)
         const { error } = await supabase.from('veckoplanering').delete().eq('id', item.row.id).eq('user_id', session.user.id).select('id').single()
         if (error) throw error
+        // Filerna i kursen raderas först när kursraden är borta, så att de aldrig blir föräldralösa.
+        await deleteStoredFiles(materialPaths)
         if (selectedId === item.row.id) {
           const fresh = { ...emptyPlan(), themeId: PLAN_THEMES[plans.length % PLAN_THEMES.length].id }
           setSelectedId(null)
@@ -2817,8 +2821,10 @@ const addNewTeacherWeek = () => setPlan(p => {
     if (!window.confirm(`Radera "${row.title}"? Detta kan inte ångras.`)) return
     setBusy(true)
     try {
+      const materialPaths = (parseContent(row.content)?.materials || []).map(m => m.path).filter(Boolean)
       const { error } = await supabase.from('veckoplanering').delete().eq('id', row.id).eq('user_id', session.user.id).select('id').single()
       if (error) throw error
+      await deleteStoredFiles(materialPaths)
       if (selectedId === row.id) {
         const fresh = { ...emptyPlan(), themeId: PLAN_THEMES[plans.length % PLAN_THEMES.length].id }
         setSelectedId(null)

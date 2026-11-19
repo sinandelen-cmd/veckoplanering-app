@@ -237,6 +237,11 @@ await check('efter godkänd uppdelning och "Använd import" får momenten egna f
   await imp.page.locator('.import-split button', { hasText: 'Dela upp i 3 moment' }).first().evaluate(e => e.click())
   await imp.page.locator('.import-preview button', { hasText: 'Använd import' }).first().evaluate(e => e.click())
   await imp.page.waitForSelector('#lararvy .lesson', { timeout: 10000 })
+  // Kursen har 21 veckor och importen fyller bara de första. Veckorna renderas lazt, så vi går igenom hela planeringen först.
+  // Klara veckor visas dolda bakom en knapp. Vi öppnar dem så att importerade moment syns.
+  for (const b of await imp.page.locator('button:visible', { hasText: 'klara veckor' }).all()) await b.evaluate(e => e.click()).catch(() => {})
+  await imp.page.waitForTimeout(300)
+  await scrollThroughPlan(imp.page)
   const names = await imp.page.evaluate(() => [...document.querySelectorAll('#lararvy textarea[aria-label="Momentets namn"]')].map(t => t.value))
   for (const title of ['Ekvationens lika-tecken', 'Lösa enkla ekvationer', 'Ekvationer med multiplikation']) assert.ok(names.some(n => n.startsWith(title)), 'moment saknas i redigeraren: ' + title)
   const scrolled = await imp.page.evaluate(() => [...document.querySelectorAll('#lararvy .topic-grid textarea')].filter(t => t.scrollHeight - t.clientHeight > 2).length)
