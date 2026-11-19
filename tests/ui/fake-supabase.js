@@ -14,6 +14,32 @@ const persistOn = () => Boolean(globalThis.localStorage && localStorage.getItem(
 try { const saved = persistOn() && localStorage.getItem('fake-db'); if (saved) Object.assign(store, JSON.parse(saved)) } catch { /* ogiltig sparad databas ignoreras */ }
 const persist = () => { if (persistOn()) try { localStorage.setItem('fake-db', JSON.stringify(store)) } catch { /* lagringen är full eller blockerad */ } }
 
+// Fiktiv fillagring för bifogat material. Filerna finns i testlagringen ('fake-files' när persistens är på),
+// så att de finns kvar efter omladdning. Inga filer lämnar webbläsaren.
+const files = {}
+try { const saved = persistOn() && localStorage.getItem('fake-files'); if (saved) Object.assign(files, JSON.parse(saved)) } catch { /* ogiltig sparad fil ignoreras */ }
+const persistFiles = () => { if (persistOn()) try { localStorage.setItem('fake-files', JSON.stringify(files)) } catch { /* lagringen är full eller blockerad */ } }
+const readAsDataUrl = file => new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(reader.error); reader.readAsDataURL(file) })
+// Loggar över uppladdningar och borttagningar, så att testerna kan kontrollera att inget laddas upp i onödan.
+const fakeLog = { uploads: [], removals: [] }
+// Filer vars namn innehåller [fel] misslyckas vid uppladdning. Används för att testa avbruten uppladdning.
+const fakeBucket = {
+  upload: async (path, file) => {
+    if (file.name.includes('[fel]')) return { data: null, error: { message: 'Fiktiv klient: uppladdningen misslyckades' } }
+    try { files[path] = { name: file.name, type: file.type, dataUrl: await readAsDataUrl(file) }; fakeLog.uploads.push(file.name); persistFiles(); return { data: { path }, error: null } }
+    catch (error) { return { data: null, error: { message: error.message } } }
+  },
+  // Länken är en blob-adress från samma webbläsare, så att den går att öppna i ett nytt fönster.
+  createSignedUrl: async path => {
+    if (!files[path]) return { data: null, error: { message: 'Filen finns inte i testlagringen' } }
+    const bytes = await (await fetch(files[path].dataUrl)).arrayBuffer()
+    const type = (files[path].type || '').startsWith('text/') ? files[path].type + ';charset=utf-8' : (files[path].type || '')
+    const blob = new Blob([bytes], { type })
+    return { data: { signedUrl: URL.createObjectURL(blob) }, error: null }
+  },
+  remove: async paths => { paths.forEach(path => { delete files[path]; fakeLog.removals.push(path) }); persistFiles(); return { data: paths.map(path => ({ name: path })), error: null } },
+}
+
 class Query {
   constructor(table) { this.table = table; this.filters = []; this.op = 'select'; this.payload = null; this.orders = []; this.wantSingle = null; this.limitN = null }
   select() { if (this.op === 'select') this.op = 'select'; return this }
@@ -57,11 +83,7 @@ export const supabase = {
   from: table => new Query(table),
   rpc: name => Promise.resolve({ data: null, error: { message: 'Fiktiv klient: RPC ' + name + ' finns inte lokalt' } }),
   functions: { invoke: name => Promise.resolve({ data: null, error: { message: 'Fiktiv klient: funktion ' + name + ' finns inte lokalt' } }) },
-  storage: { from: () => ({
-    upload: () => Promise.resolve({ data: null, error: { message: 'Fiktiv klient: lagring är inte tillgänglig' } }),
-    createSignedUrl: () => Promise.resolve({ data: null, error: { message: 'Fiktiv klient: lagring är inte tillgänglig' } }),
-    remove: () => Promise.resolve({ data: null, error: { message: 'Fiktiv klient: lagring är inte tillgänglig' } }),
-  }) },
+  storage: { from: () => fakeBucket },
   auth: {
     getSession: () => Promise.resolve({ data: { session: session() }, error: null }),
     onAuthStateChange: cb => { listeners.push(cb); return { data: { subscription: { unsubscribe() {} } } } },
@@ -71,5 +93,5 @@ export const supabase = {
   },
 }
 // Testhjälp: lägg in fiktiva rader före start.
-export const __fake = { store, FAKE_TEACHER_ID }
+export const __fake = { store, files, fakeLog, FAKE_TEACHER_ID }
 if (typeof window !== 'undefined') window.__fake = __fake

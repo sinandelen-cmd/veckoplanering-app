@@ -19,6 +19,9 @@ async function scenario({ editDuringSave }) {
   let completeInsert
   let selectedId = null
   let status = ''
+  // Bifogat material laddas upp först när planeringen sparas. Här finns inget material att ladda upp.
+  let uploadCalls = 0
+  const uploadPendingMaterials = async list => { uploadCalls += 1; return { materials: list || [], created: [] } }
   const supabase = {
     from: () => ({ insert: () => ({ select: () => ({ single: () => new Promise(resolve => { completeInsert = resolve }) }) }) }),
   }
@@ -26,6 +29,7 @@ async function scenario({ editDuringSave }) {
     Date, Intl, DEFAULT_WEEKS: 1, WEEKDAYS: ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'],
     plan: originalPlan, weeks: originalPlan.weeksData, latestPlanRef,
     session: { user: { id: 'test-user' } }, supabase,
+    uploadPendingMaterials, deleteStoredFiles: async () => {}, pendingRemovals: [], setPendingRemovals: () => {},
     busy: false, simpleSetup: false, isDirty: false, teacherTab: 'arsplan',
     get selectedId() { return selectedId }, set selectedId(value) { selectedId = value },
     setSelectedId: value => { selectedId = value },
@@ -39,6 +43,8 @@ async function scenario({ editDuringSave }) {
   vm.runInContext(helpers, context)
   const save = vm.runInContext(`${saveSource}\nsave`, context)
   const saving = save(false)
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(uploadCalls, 1, 'Bifogat material ska hanteras innan planeringen skrivs till databasen')
   assert.equal(typeof completeInsert, 'function', 'Sparningen ska vänta på databasen')
   if (editDuringSave) {
     currentPlan = { ...currentPlan, title: 'Ändrad medan databasen svarar' }
