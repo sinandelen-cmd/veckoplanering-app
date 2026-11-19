@@ -167,6 +167,18 @@ function planThemeStyle(plan, fallback = '') {
   const theme = planTheme(plan, fallback)
   return { '--plan-light': theme.light, '--plan-soft': theme.soft, '--plan-accent': theme.accent, '--plan-ink': theme.ink }
 }
+// Aktuellt läsår som text, t.ex. "2026–2027". Används när ett läsår inte är valt än.
+function defaultSchoolYear() {
+  const start = new Date().getMonth() >= 7 ? new Date().getFullYear() : new Date().getFullYear() - 1
+  return `${start}–${start + 1}`
+}
+// Startdatum för ett läsår: måndagen i ISO-vecka 33 för läsårets startår (mitten av augusti).
+// Ger en förvald start som följer läsåret. Startdatumet kan ändras i kursens Fler inställningar.
+function schoolStartDate(schoolYear, fallback) {
+  const year = Number(String(schoolYear || '').match(/\d{4}/)?.[0])
+  if (!Number.isFinite(year) || year < 1) return fallback
+  return addWeeks(mondayOf(`${year}-01-04T12:00:00`), 32)
+}
 function SchoolYearPicker({ value, onChange }) {
   const currentYear = new Date().getFullYear()
   const currentStart = new Date().getMonth() >= 7 ? currentYear : currentYear - 1
@@ -1559,7 +1571,6 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   useEffect(() => { const onResize = () => setViewport({ width: window.innerWidth, height: window.innerHeight }); window.addEventListener('resize', onResize); window.addEventListener('orientationchange', onResize); return () => { window.removeEventListener('resize', onResize); window.removeEventListener('orientationchange', onResize) } }, [])
   const [teacherWeekOverview, setTeacherWeekOverview] = useState(true)
   const [simpleSetup, setSimpleSetup] = useState(true)
-  const [simpleMore, setSimpleMore] = useState(false)
   const [teacherTab, setTeacherTab] = useState("bibliotek")
   // Startläget är tvåveckorsvyn (två papper bredvid varandra). "Visa alla veckor" väljs av användaren.
   const [showPastTeacherWeeks, setShowPastTeacherWeeks] = useState(false)
@@ -2518,7 +2529,6 @@ const addNewTeacherWeek = () => setPlan(p => {
     const fresh = {...emptyPlan(), lessonsPerWeek:5, lessonDays:['Måndag','Tisdag','Onsdag','Torsdag','Fredag'], schoolForm: openStage, subject: openSubject}
     try { window.sessionStorage.removeItem(`arsplanering-last-open-${session.user.id}`) } catch { /* Lagring kan vara blockerad */ }
     setSimpleSetup(true)
-    setSimpleMore(false)
     setPlan(fresh); setSelectedId(null); savedPlanRef.current = JSON.stringify(fresh)
     setSavedRevision(revision => revision + 1)
     setTeacherTab('new'); setCalendarOpen(false); setPreviewStudents(false); setA4Demo(false)
@@ -2526,44 +2536,17 @@ const addNewTeacherWeek = () => setPlan(p => {
   }
   const returnToPlanningTree = () => { setTeacherTab('bibliotek'); setCalendarOpen(false); setOpenedFromLibrary(false); window.scrollTo({ top: 0, behavior: 'smooth' }) }
   const [coursePicker, setCoursePicker] = useState(null)
-  const [bookPicker, setBookPicker] = useState(null)
-  useState('')
-  const [bookQuery, setBookQuery] = useState('')
-  const bookChoices = bookPicker ? booksForSubject(bookPicker.school, bookPicker.subject).filter(book => [book.title,book.publisher,book.subject,book.levels].some(value => value.toLocaleLowerCase('sv').includes(bookQuery.toLocaleLowerCase('sv')))) : []
-  const matchingBookPlan = name => {
-    if (!bookPicker || !String(name || '').trim()) return null
-    const norm = value => String(value || '').trim().toLocaleLowerCase('sv-SE').replace(/\s+/g, ' ')
-    const schoolForm = bookPicker.school === 'Gymnasiet' ? 'Gymnasieskola' : 'Grundskola'
-    return [...plans].sort((a,b)=>Number(Boolean(parseContent(a.content)?.archived))-Number(Boolean(parseContent(b.content)?.archived))).find(row => {
-      const old = parseContent(row.content)
-      return old && (old.kind === 'arsplanering-v2' || old.kind === 'arsplanering-v1')
-        && norm(old.schoolForm) === norm(schoolForm)
-        && norm(old.subject) === norm(bookPicker.subject)
-        && norm(old.grade) === norm(bookPicker.year || '')
-        && norm(old.course) === norm(bookPicker.course || (bookPicker.school === 'Gymnasiet' ? bookPicker.subject : ''))
-        && norm(old.textbook) === norm(name)
-    }) || null
-  }
-  const chooseBook = name => {
-    const existing = matchingBookPlan(name)
-    if (!existing) { void confirmBook(name); return }
-    const archived = Boolean(parseContent(existing.content)?.archived)
-    setBookPicker(null)
-    setShowArchive(archived)
-    if (!archived) {
-      loadPlan(existing)
-      setStatus('Planeringen finns redan! Den befintliga grundplaneringen har öppnats. Lägg till klass där.')
-    } else {
-      setTeacherTab('bibliotek')
-      setStatus('Den här planeringen finns redan i ditt arkiv! Återanvänd den istället. Ingen ny dubblett skapades.')
-    }
-  }
-  const confirmBook = async name => {
-    const item = bookPicker
+  // Skapar en kurs direkt från kursdialogen. Ämne och skolform följer med från ämnesmappen och valideras här.
+  const confirmBook = async (name, item) => {
     if (!item || busy) return
+    if (!['Grundskola', 'Gymnasiet'].includes(item.school)) return setStatus('Välj skolstadium, Grundskola eller Gymnasiet, innan du skapar kursen.')
+    if (!String(item.subject || '').trim()) return setStatus('Kursen saknar ämne. Öppna ämnet i mappträdet och skapa kursen därifrån.')
+    if (!String(item.course || '').trim()) return setStatus('Ange kursens namn.')
     if (!confirmNavigation()) return
+    const schoolYearValue = item.schoolYear || (libraryYear === 'alla' ? defaultSchoolYear() : libraryYear)
+    // Ny kurs får alltid 21 veckor, med datum som följer läsåret. Befintliga kurser ändras inte här.
     const fresh = {
-      ...emptyPlan(), schoolYear:libraryYear === 'alla' ? '' : libraryYear,
+      ...emptyPlan(), schoolYear: schoolYearValue, startDate: schoolStartDate(schoolYearValue, emptyPlan().startDate), weeks: 21,
       schoolForm:item.school === 'Gymnasiet' ? 'Gymnasieskola' : 'Grundskola',
       subject:item.subject,grade:item.year || '',textbook:name,
       course:item.course || (item.school === 'Gymnasiet' ? item.subject : ''),
@@ -2586,14 +2569,14 @@ const addNewTeacherWeek = () => setPlan(p => {
           && normalize(old.subject) === normalize(fresh.subject)
           && normalize(old.grade) === normalize(fresh.grade)
           && normalize(old.course) === normalize(fresh.course)
-          && normalize(old.textbook) === normalize(fresh.textbook)
+          && (!normalize(fresh.textbook) || normalize(old.textbook) === normalize(fresh.textbook))
       })
       if (existing) {
         const archived = Boolean(parseContent(existing.content)?.archived)
         setStatus(archived
           ? 'Den här grundplaneringen finns redan i ditt arkiv. Återanvänd den och lägg till klass i stället för att skapa en dubblett.'
           : 'Den här grundplaneringen finns redan. Öppna den befintliga planeringen och lägg till klass i stället.')
-        setBookPicker(null)
+        setCoursePicker(null)
         setShowArchive(archived)
         setTeacherTab('bibliotek')
         return
@@ -2616,7 +2599,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       setTeacherTab('arsplan')
       setCalendarOpen(false)
       setPreviewStudents(false)
-      setBookPicker(null)
+      setCoursePicker(null)
       setStatus('Grundplaneringen är skapad. Veckorna visas nedan.')
       try {window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`,String(data.id))} catch {}
       void loadPlans()
@@ -2641,6 +2624,25 @@ const addNewTeacherWeek = () => setPlan(p => {
       setTeacherTab('bibliotek'); setCalendarOpen(false)
     }
     window.scrollTo({top:0,behavior:'smooth'})
+  }
+  // Flyttar kursens startdatum. Veckorna flyttas med, men deras innehåll (lektioner, kapitel, begrepp, material) ändras inte.
+  function moveCourseStart(value) {
+    const newStart = mondayOf(`${value}T12:00:00`)
+    const oldStart = plan.startDate
+    if (!oldStart || newStart === oldStart) { setPlan(p => ({ ...p, startDate: newStart })); return }
+    const diffWeeks = Math.round((new Date(`${newStart}T12:00:00`) - new Date(`${oldStart}T12:00:00`)) / (7 * 86400000))
+    if ((plan.weeksData || []).length && !window.confirm('Veckorna flyttas till det nya startdatumet. Innehållet i veckorna, lektionerna och kapitlen behålls.')) return
+    setPlan(p => ({
+      ...p,
+      startDate: newStart,
+      startWeek: calendarWeekNumber(newStart) ?? p.startWeek,
+      weeksData: (p.weeksData || []).map(week => {
+        if (!week.weekStart) return week
+        const weekStart = addWeeks(week.weekStart, diffWeeks)
+        const weekNumber = calendarWeekNumber(weekStart) ?? week.weekNumber
+        return { ...week, weekStart, weekNumber, title: /^Vecka\s+\d+$/i.test(week.title || '') ? `Vecka ${weekNumber}` : week.title }
+      }),
+    }))
   }
   return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "mina" ? "view-home" : teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}${teacherTab === "arsplan" && editingClassView ? " view-class" : ""}`}>{teacherTab !== "mina" && <Navigation planTitle={teacherTab === "bibliotek" ? "Mina planeringar" : (teacherTab === "arsplan" || teacherTab === "elevvy") && selectedId ? (plan.title || plan.subject || "Min planering") : ""} previousLabel={previousStepLabel} onPrevious={atLibraryRoot ? undefined : goToPreviousStep} onAllWeeks={() => { setFocusedTeacherWeek(null); setFocusedTeacherLesson(null); setShowPastTeacherWeeks(value => !value); setTeacherWeekOverview(true); setTeacherTab("arsplan"); setCalendarOpen(false) }} allWeeksOpen={showPastTeacherWeeks} active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={(id, planningHome = false) => { if (!confirmNavigation()) return false; if (planningHome) window.dispatchEvent(new Event('planning-home')); if (id === 'bibliotek') { setLibrarySchool(''); setLibrarySubject(''); setLibraryBoardPage(0); setShowArchive(false) } setTeacherTab(id); setCalendarOpen(false); if (id === 'elevvy') { setPreviewStudents(true); setCalendarOpen(false) } else { setPreviewStudents(false) } }} onOpenExample={() => { if (!confirmNavigation()) return false; return openExample() }} onOpenArchive={() => { if (!confirmNavigation()) return false; setShowArchive(true); setTeacherTab('bibliotek') }} onToggleCalendar={() => { if (!confirmNavigation()) return false; setTeacherTab('arsplan'); setCalendarOpen(true) }} calendarOpen={calendarOpen} hasOpenPlan={Boolean(selectedId && teacherTab === 'arsplan')} isAdmin={isAdmin} adminOpen={adminOpen} onOpenAdmin={() => { if (!confirmNavigation()) return false; onToggleAdmin?.(); return true }} onCloseAdmin={() => { if (adminOpen) onToggleAdmin?.() }} onSignOut={() => { if (!confirmNavigation()) return false; return supabase.auth.signOut() }} pendingCount={pendingCount} planSearch={planSearch} onPlanSearchChange={setPlanSearch} showArchive={showArchive} planContext={selectedId && teacherTab === 'arsplan' ? {subject:plan.subject || plan.title, textbook:plan.textbook, grade:plan.grade || plan.course} : null} onPrintPlan={selectedId && teacherTab === 'arsplan' ? () => setPrintingPlan(true) : null} /> }<main className={`shell${adminOpen ? " admin-workspace" : ""}`} id="lararvy">
   {printingPlan && <section className="preview-panel teacher-print-host" aria-hidden="true"><StudentView plan={sanitizeForStudents(plan)} preview hideSelector initialClass={editingClassView || ""} includePast={showPastTeacherWeeks} /></section>}
@@ -2750,7 +2752,19 @@ const addNewTeacherWeek = () => setPlan(p => {
       </div>})()}
       
       {(showPastTeacherWeeks || focusedTeacherWeek) && <div className="teacher-active-chapter-bar" aria-label="Aktuellt kapitel och vecka"><div className="teacher-active-chapter-content" /></div>}
-      {!simpleSetup && <details className="material-disclosure"><summary>Material till planeringen ({(plan.materials || []).length} filer{pasteText.trim() ? ' + inklistrad text' : ''})</summary>{materialPanel()}{pendingImport && <div className="import-preview"><h3>Förhandsgranska: {pendingImport.source}</h3><p>Granska innan du använder importen.</p><ImportSplitSuggestions pendingImport={pendingImport} onDecide={decideImportSplit} />{pendingImport.weeksData.slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'auto' }}>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length })); setPendingImport(null); setStatus('Underlaget har lagts in i grundplaneringen. Klicka Spara för att behålla ändringarna.') }}>Använd import</button><button type="button" className="secondary" onClick={() => setPendingImport(null)}>Avbryt</button></div></div>}</details>}
+      {!simpleSetup && <details className="material-disclosure"><summary>Material till planeringen ({(plan.materials || []).length} filer{pasteText.trim() ? ' + inklistrad text' : ''})</summary>{materialPanel()}
+        <details className="course-more-settings">
+        <summary>Fler inställningar</summary>
+        <div className="form-grid" style={{marginTop:10}}>
+          <label>Läsår<SchoolYearPicker value={plan.schoolYear || ''} onChange={schoolYear => setPlan(p => ({ ...p, schoolYear }))} /></label>
+          <label>Lärobok (valfritt)<input list="course-textbook-choices" value={plan.textbook || ''} onChange={event => setPlan(p => ({ ...p, textbook: event.target.value }))} placeholder="Skriv eller välj en lärobok" /></label>
+          <datalist id="course-textbook-choices">{booksForSubject(plan.schoolForm === 'Grundskola' ? 'Grundskola' : 'Gymnasiet', plan.subject || '').map(book => <option key={book.title} value={book.title} />)}</datalist>
+          {plan.schoolForm === 'Grundskola' && <label>Årskurs<select value={plan.grade || ''} onChange={event => setPlan(p => ({ ...p, grade: event.target.value }))}><option value="">Välj årskurs</option>{Array.from({ length: 9 }, (_, i) => <option key={i + 1} value={'Årskurs ' + (i + 1)}>Årskurs {i + 1}</option>)}</select></label>}
+          <label>Startdatum<input type="date" value={plan.startDate || ''} onChange={event => { if (event.target.value) moveCourseStart(event.target.value) }} /></label>
+          <p className="muted" style={{margin:0}}>Startvecka: vecka {calendarWeekNumber(plan.startDate) ?? '–'}. Ändrar du startdatumet flyttas veckorna, och innehållet behålls.</p>
+        </div>
+        </details>
+{pendingImport && <div className="import-preview"><h3>Förhandsgranska: {pendingImport.source}</h3><p>Granska innan du använder importen.</p><ImportSplitSuggestions pendingImport={pendingImport} onDecide={decideImportSplit} />{pendingImport.weeksData.slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'auto' }}>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length })); setPendingImport(null); setStatus('Underlaget har lagts in i grundplaneringen. Klicka Spara för att behålla ändringarna.') }}>Använd import</button><button type="button" className="secondary" onClick={() => setPendingImport(null)}>Avbryt</button></div></div>}</details>}
       <div className={`teacher-months ${focusedTeacherWeek ? "teacher-months-focused" : ""} ${focusedTeacherWeek && teacherWeekOverview ? "teacher-months-overview-hidden" : ""} ${showPastTeacherWeeks && !focusedTeacherWeek ? "teacher-months-all-weeks" : ""} `}>
         {Object.values((focusedTeacherWeek ? teacherDisplayWeeks.filter(item => String(item.week.weekStart || item.week.weekNumber) === focusedTeacherWeek) : (showPastTeacherWeeks ? teacherDisplayWeeks : defaultTeacherWindow)).slice().sort((a, b) => (a.week.weekStart || '').localeCompare(b.week.weekStart || '')).reduce((chapters, item) => {
           // I tvåveckorsvyn ligger de två veckorna i en och samma grid, även om de tillhör olika kapitel.
@@ -2791,39 +2805,24 @@ const addNewTeacherWeek = () => setPlan(p => {
     })} onUndo={undoPlan} canUndo={historyRef.current.past.length > 0} onDeleteWeek={weekStart => { if (busy || weeks.length <= 1) return; const week = weeks.find(item => item.weekStart === weekStart); if (!week) return; if (!window.confirm(`Vill du radera vecka ${calendarWeekNumber(weekStart) ?? week.weekNumber} och allt innehåll i den? Ändringen sparas först när du väljer Spara ändringar.`)) return; setPlan(p => { const remaining = displayWeeks(p).filter(item => item.weekStart !== weekStart); return remaining.length ? { ...p, weeks: remaining.length, weeksData: remaining } : p }) }} onSave={() => save(false)} isDirty={isDirty} busy={busy} saveStatus={status} entryType={plan.entryType} classGroups={plan.classGroups || []} onChangeClassGroups={groups=>setPlan(previous=>({...previous,classGroups:groups}))} classPlan={plan} publicSlug={plan.published ? plan.publicSlug || "" : ""} /></div>}
 
     <div className={`teacher-tab-panel ${simpleSetup ? "simple-setup-active" : ""}`} id="panel-lararvy" role="tabpanel" aria-labelledby="tab-lararvy" hidden={teacherTab !== "arsplan" && teacherTab !== "new"}>
-    {simpleSetup && <section className="card simple-setup-card" aria-label="Skapa ny planering">
+    {simpleSetup && <section className="card simple-setup-card" aria-label="Skapa ny kurs eller planering">
       <h2>Skapa planering</h2>
-      <p className="muted">Ämne, skolform, årskurs och lärobok följer med från din valda mapp. Du kan lägga till klasser, lektioner och material efteråt.</p>
+      <p className="muted">Ämne och skolform väljer du här. Material och fler inställningar finns i planeringen när den är skapad.</p>
       <form onSubmit={event => { event.preventDefault(); void save(false) }}>
         <div style={{marginBottom:14}}>
-          <label style={{display:"grid",gap:5}}><strong>Planeringens namn</strong><input required value={plan.title} onChange={event => setPlan(p => ({ ...p, title:event.target.value }))} placeholder="Exempel: Matematik 1b" /></label>
+          <label style={{display:"grid",gap:5}}><strong>Kursens namn</strong><input required value={plan.title} onChange={event => setPlan(p => ({ ...p, title:event.target.value }))} placeholder="Exempel: Matematik 1b" /></label>
+          <div className="form-grid" style={{marginTop:10}}>
+            <label>Läsår<SchoolYearPicker value={plan.schoolYear} onChange={schoolYear => setPlan(p => ({...p, schoolYear}))} /></label>
+          </div>
           <div className="form-grid" style={{marginTop:10}}>
             <label>Skolstadium<select required value={plan.schoolForm || ''} onChange={event => setPlan(p => ({ ...p, schoolForm: event.target.value }))}><option value="">Välj stadium</option><option value="Grundskola">Grundskola</option><option value="Gymnasiet">Gymnasiet</option></select></label>
             <label>Ämne<input required list="planning-subject-choices" value={plan.subject || ''} onChange={event => setPlan(p => ({ ...p, subject: event.target.value }))} placeholder="Välj ett befintligt ämne eller skriv ett nytt" /></label>
             <datalist id="planning-subject-choices">{[...new Set(plans.filter(row => (parseContent(row.content)?.schoolForm || '') === plan.schoolForm).map(row => String(parseContent(row.content)?.subject || row.subject || '').trim()).filter(Boolean))].map(name => <option key={name} value={name} />)}</datalist>
           </div>
-          <p className="muted" style={{margin:"6px 0 0"}}>Kursen placeras under ämnet i {plan.schoolForm || 'valt stadium'} i mappträdet. Klasser ligger inte i mappträdet.</p>
         </div>
-        {creatingFromBranch && <p className="muted">📚 {plan.subject} · {plan.grade || plan.course} {plan.textbook ? "· 📘 " + plan.textbook : ""} · {plan.lessonsPerWeek} lektioner/vecka</p>}
-        <details style={{margin:"10px 0 14px",padding:"10px 12px",border:"1px solid #e1d7c8",borderRadius:10}}>
-          <summary style={{cursor:"pointer",fontWeight:600}}>Läsår och startdatum</summary>
-          <div className="form-grid" style={{marginTop:12}}>
-            <label>Läsår<SchoolYearPicker value={plan.schoolYear} onChange={schoolYear => setPlan(p => ({...p, schoolYear}))} /></label>
-            <label>Startdatum<input type="date" required value={plan.startDate} onChange={event=>{if(event.target.value)setPlan(p=>({...p,startDate:mondayOf(`${event.target.value}T12:00:00`),weeksData:[]}))}} /></label>
-          </div>
-        </details>
-        {simpleMore && <div className="simple-extra-fields"><h3>Fler uppgifter</h3><label>Ämne – välj i listan eller skriv ett eget<input list="planning-subject-options" value={plan.subject || ""} onChange={e => setPlan(p => ({...p,subject:e.target.value}))} placeholder="Välj eller skriv ämne, t.ex. Modersmål" /><datalist id="planning-subject-options">{["Matematik","Svenska","Svenska som andraspråk","Engelska","Biologi","Fysik","Kemi","Teknik","Historia","Geografi","Religionskunskap","Samhällskunskap","Idrott och hälsa","Bild","Musik","Slöjd","Hem- och konsumentkunskap","Moderna språk","Modersmål","Entreprenörskap"].map(subject => <option key={subject} value={subject} />)}</datalist></label><div className="form-grid">{!creatingFromBranch && <label>Skolform<select value={plan.schoolForm || ""} onChange={e => setPlan(p => ({ ...p, schoolForm: e.target.value, grade: "", course: "" }))}><option value="">Välj skolform</option><option value="Grundskola">Grundskolan</option><option value="Gymnasieskola">Gymnasiet</option></select></label>}<label>Årskurs<input value={plan.grade || ""} onChange={e => setPlan(p => ({ ...p, grade: e.target.value }))} placeholder="6" /></label>{!creatingFromBranch && <label>Lektioner per vecka<input type="number" min="1" max="10" value={plan.lessonsPerWeek} onChange={e => setPlan(p => ({ ...p, lessonsPerWeek: Math.max(1, Math.min(10, Number(e.target.value) || 1)) }))} /></label>}<label>Kommun<input value={plan.municipality || ""} onChange={e => setPlan(p => ({ ...p, municipality: e.target.value }))} /></label></div>
-        </div>}
-        <div className="simple-import-section" aria-label="Material och underlag" style={{marginTop:14}}>
-          {materialPanel()}
-          {pendingImport && <div className="import-preview"><h3>Förhandsgranska: {pendingImport.source}</h3><p>Granska innan du använder importen.</p><ImportSplitSuggestions pendingImport={pendingImport} onDecide={decideImportSplit} />{pendingImport.weeksData.slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre>{week.content || '(Tom vecka)'}</pre></div>)}<div className="button-row"><button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length })); setPendingImport(null); setStatus('Importen är inlagd. Granska och skapa planeringen.') }}>Använd import</button><button type="button" className="secondary" onClick={() => setPendingImport(null)}>Avbryt</button></div></div>}
-        </div>
-        <div className="button-row"><button type="submit" className="primary" disabled={busy}>{busy ? 'Skapar…' : 'Skapa planering'}</button><button type="button" className="secondary" onClick={() => setSimpleMore(v => !v)}>{simpleMore ? "Dölj fler inställningar" : "Fler inställningar"}</button></div>
+        <div className="button-row"><button type="submit" className="primary" disabled={busy}>{busy ? 'Skapar…' : 'Skapa planering'}</button><button type="button" className="secondary" onClick={() => { setSimpleSetup(false); setTeacherTab('bibliotek') }}>Avbryt</button></div>
       </form>
-      {status && <p className="status" role="status">{status}</p>}
     </section>}
-    {status && <section className="card compact-status-card" aria-live="polite"><p className="status">{status}</p></section>}
-
     {AVSTANGD_GRANSSNITT && !simpleSetup && <div className="unified-planning-form" aria-label="Inställningar och publicering"><h2 className="settings-publication-title">Inställningar och publicering</h2>
     <section className="card teacher-settings-card">
       <details className="teacher-settings-details">
@@ -3079,13 +3078,19 @@ const addNewTeacherWeek = () => setPlan(p => {
   }catch(error){await loadPlans();setStatus('Namnbytet kunde inte slutföras: '+(error.message||'Okänt fel'))}
   finally{setBusy(false)}
 
-}} />}{!showArchive && <button type="button" className="secondary subject-folder-add" onClick={() => { setCoursePicker({school:grade,subject,course:'',year:grade === 'Grundskola' ? 'Årskurs 7' : ''}) }}>＋ Ny kurs</button>}<button type="button" className="secondary subject-folder-archive" disabled={busy} title={showArchive ? "Återställ ämnet med alla kurser till den aktiva listan" : "Arkivera ämnet med alla kurser. Allt kan återställas senare."} onClick={() => setSubjectArchived(rows, subject, !showArchive, grade)}>{showArchive ? "Återställ ämne" : "Arkivera ämne"}</button>{showArchive && <button type="button" className="danger subject-folder-delete" disabled={busy} title="Radera ämnet och alla arkiverade kurser i det permanent. Kan inte ångras." onClick={() => deleteArchivedSubject(rows, subject, grade)}>Radera ämne</button>}</div>{librarySubject === grade + '|' + subject && <>{grade === 'Gymnasiet' && rows.map(row => <div key={row.id} className="course-folder-with-delete"><button type="button" className="course-folder-link" style={{ "--folder-hue": [275, 145, 30, 340, 175][Array.from(row.title || "").reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 5] }} disabled={busy} onDoubleClick={event => {event.preventDefault();renamePlan(row)}} onClick={() => loadPlan(row)}>📁 {((parseContent(row.content) || {}).course || row.course || row.title)} <small style={{marginLeft:"auto",fontWeight:400,fontSize:11,opacity:.7}}>{(parseContent(row.content) || {}).textbook || ""}</small></button><button type="button" className="course-folder-archive" disabled={busy} onClick={() => setArchived(row,true)} title="Arkivera kursplaneringen" aria-label={"Arkivera " + row.title}><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v12h14V8M10 12h4"/></svg></button><button type="button" className="course-folder-delete" disabled={busy} title="Radera denna planering" aria-label={"Radera " + row.title} onClick={() => deletePlan(row)}><span aria-hidden="true">×</span></button></div>)}{grade !== 'Gymnasiet' && <div className="visual-tree-grade-folders">{Object.entries(rows.reduce((byGrade, row) => { const data = parseContent(row.content) || {}; const value = [data.grade, row.grade, data.className, row.class_name, row.title].map(item => String(item || '')).join(' '); const match = value.match(/(?:årskurs|åk)\s*(\d+)/i) || value.match(/(?:^|\s)([7-9])(?:[a-z])?(?:\s|$)/i); const label = match ? 'Årskurs ' + match[1] : (data.course || row.course || 'Övriga kurser'); (byGrade[label] ||= []).push(row); return byGrade }, {})).sort(([a],[b]) => a.localeCompare(b, 'sv', {numeric:true})).map(([label, gradeRows]) => <div key={label} className="visual-tree-grade-folder textbook-only-grade"><div className="textbook-plan-list">{gradeRows.map(row => { const data=parseContent(row.content)||{}; const gradeNumber=label.replace(/[^0-9]/g,''); const book=String(data.textbook||'').trim(); const displayName=book ? (gradeNumber && !book.endsWith(' '+gradeNumber) ? book+' '+gradeNumber : book) : (row.title||'Öppna planering'); return <div className="textbook-plan-row" key={row.id}><button type="button" disabled={busy} title={row.title||displayName} onDoubleClick={event=>{event.preventDefault();renamePlan(row)}} onClick={()=>loadPlan(row)}>📘 {displayName}</button><button type="button" className="course-folder-archive" disabled={busy} onClick={()=>setArchived(row,true)} title="Arkivera planeringen" aria-label={"Arkivera "+displayName}><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v12h14V8M10 12h4"/></svg></button><button type="button" className="course-folder-delete" disabled={busy} title="Radera planeringen" aria-label={"Radera "+displayName} onClick={()=>deletePlan(row)}><span aria-hidden="true">×</span></button></div>})}</div></div>)}</div>}</>}</div>)}</div></>}</section>)}
+}} />}{!showArchive && <button type="button" className="secondary subject-folder-add" onClick={() => { setCoursePicker({school:grade,subject,course:'',year:'',schoolYear:libraryYear === 'alla' ? defaultSchoolYear() : libraryYear}) }}>＋ Ny kurs</button>}<button type="button" className="secondary subject-folder-archive" disabled={busy} title={showArchive ? "Återställ ämnet med alla kurser till den aktiva listan" : "Arkivera ämnet med alla kurser. Allt kan återställas senare."} onClick={() => setSubjectArchived(rows, subject, !showArchive, grade)}>{showArchive ? "Återställ ämne" : "Arkivera ämne"}</button>{showArchive && <button type="button" className="danger subject-folder-delete" disabled={busy} title="Radera ämnet och alla arkiverade kurser i det permanent. Kan inte ångras." onClick={() => deleteArchivedSubject(rows, subject, grade)}>Radera ämne</button>}</div>{librarySubject === grade + '|' + subject && <>{grade === 'Gymnasiet' && rows.map(row => <div key={row.id} className="course-folder-with-delete"><button type="button" className="course-folder-link" style={{ "--folder-hue": [275, 145, 30, 340, 175][Array.from(row.title || "").reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 5] }} disabled={busy} onDoubleClick={event => {event.preventDefault();renamePlan(row)}} onClick={() => loadPlan(row)}>📁 {((parseContent(row.content) || {}).course || row.course || row.title)} <small style={{marginLeft:"auto",fontWeight:400,fontSize:11,opacity:.7}}>{(parseContent(row.content) || {}).textbook || ""}</small></button><button type="button" className="course-folder-archive" disabled={busy} onClick={() => setArchived(row,true)} title="Arkivera kursplaneringen" aria-label={"Arkivera " + row.title}><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v12h14V8M10 12h4"/></svg></button><button type="button" className="course-folder-delete" disabled={busy} title="Radera denna planering" aria-label={"Radera " + row.title} onClick={() => deletePlan(row)}><span aria-hidden="true">×</span></button></div>)}{grade !== 'Gymnasiet' && <div className="visual-tree-grade-folders">{Object.entries(rows.reduce((byGrade, row) => { const data = parseContent(row.content) || {}; const value = [data.grade, row.grade, data.className, row.class_name, row.title].map(item => String(item || '')).join(' '); const match = value.match(/(?:årskurs|åk)\s*(\d+)/i) || value.match(/(?:^|\s)([7-9])(?:[a-z])?(?:\s|$)/i); const label = match ? 'Årskurs ' + match[1] : (data.course || row.course || 'Övriga kurser'); (byGrade[label] ||= []).push(row); return byGrade }, {})).sort(([a],[b]) => a.localeCompare(b, 'sv', {numeric:true})).map(([label, gradeRows]) => <div key={label} className="visual-tree-grade-folder textbook-only-grade"><div className="textbook-plan-list">{gradeRows.map(row => { const data=parseContent(row.content)||{}; const gradeNumber=label.replace(/[^0-9]/g,''); const book=String(data.textbook||'').trim(); const displayName=book ? (gradeNumber && !book.endsWith(' '+gradeNumber) ? book+' '+gradeNumber : book) : (row.title||'Öppna planering'); return <div className="textbook-plan-row" key={row.id}><button type="button" disabled={busy} title={row.title||displayName} onDoubleClick={event=>{event.preventDefault();renamePlan(row)}} onClick={()=>loadPlan(row)}>📘 {displayName}</button><button type="button" className="course-folder-archive" disabled={busy} onClick={()=>setArchived(row,true)} title="Arkivera planeringen" aria-label={"Arkivera "+displayName}><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v12h14V8M10 12h4"/></svg></button><button type="button" className="course-folder-delete" disabled={busy} title="Radera planeringen" aria-label={"Radera "+displayName} onClick={()=>deletePlan(row)}><span aria-hidden="true">×</span></button></div>})}</div></div>)}</div>}</>}</div>)}</div></>}</section>)}
       </div></div>
       <p className="muted">Arkivering döljer bara planeringen från den aktiva listan. Publicerade elevlänkar påverkas inte.</p>
     </section>
     </div>}
   </>}
-  </main>{coursePicker && <div className="textbook-picker-backdrop" role="presentation"><form className="textbook-picker course-create-dialog" role="dialog" aria-modal="true" aria-label="Skapa ny kurs" onSubmit={event => {event.preventDefault();if(!coursePicker.course.trim())return;setBookQuery('');setBookPicker({...coursePicker,course:coursePicker.course.trim()});setCoursePicker(null)}}><h3>Skapa ny kurs</h3><p>Välj kursen som ska ligga under ämnet.</p><label>Ämne<input value={coursePicker.subject} readOnly aria-label="Ämne" /></label><label>Kursens namn<input autoFocus value={coursePicker.course} onChange={event=>setCoursePicker({...coursePicker,course:capitalizeFirstSwedish(event.target.value)})} placeholder={coursePicker.school === 'Gymnasiet' ? 'Exempel: Matematik 1b' : 'Exempel: Matematik åk 7'} required /></label>{coursePicker.school === 'Grundskola' && <label>Årskurs<select value={coursePicker.year} onChange={event=>setCoursePicker({...coursePicker,year:event.target.value})}>{Array.from({length:9},(_,i)=><option key={i+1} value={'Årskurs '+(i+1)}>Årskurs {i+1}</option>)}</select></label>}<div className="textbook-picker-actions"><button type="button" onClick={()=>setCoursePicker(null)}>← Tillbaka</button><button type="submit" disabled={!coursePicker.course.trim()}>Framåt →</button></div></form></div>}{bookPicker && <div className="textbook-picker-backdrop" role="presentation"><section className="textbook-picker" role="dialog" aria-modal="true" aria-label="Välj lärobok"><h3>Välj lärobok</h3><p><strong>Ämne:</strong> {bookPicker.subject} · <strong>Kurs:</strong> {bookPicker.course}</p><p>Sök bland svenska läromedelsserier. Förlag visas där uppgiften finns i katalogen. Du kan också skriva ett eget namn.</p><input autoFocus type="search" value={bookQuery} onChange={event => setBookQuery(event.target.value)} placeholder="Sök titel, förlag eller ämne…" /><div className="textbook-picker-results">{bookChoices.map(book => <button type="button" key={book.title} onClick={() => chooseBook(book.title)}><strong>📘 {book.title}</strong><small style={{display:"block",marginLeft:25,opacity:.75}}>{book.publisher} · {book.subject} · {book.levels}</small><small style={{display:"block",marginLeft:25,marginTop:4,fontWeight:700}}>{matchingBookPlan(book.title) ? (parseContent(matchingBookPlan(book.title).content)?.archived ? 'Finns i arkivet – återanvänd →' : 'Planeringen finns redan – öppna →') : 'Välj och skapa planering →'}</small></button>)}</div><div className="textbook-picker-actions"><button type="button" onClick={() => {setCoursePicker(bookPicker);setBookPicker(null)}}>← Tillbaka</button><button type="button" disabled={!bookQuery.trim()} onClick={() => chooseBook(bookQuery.trim())}>{matchingBookPlan(bookQuery.trim()) ? 'Öppna befintlig planering' : 'Skapa planering med eget boknamn'}</button></div></section></div>}</div>
+  </main>{coursePicker && <div className="textbook-picker-backdrop" role="presentation"><form className="textbook-picker course-create-dialog" role="dialog" aria-modal="true" aria-label="Skapa ny kurs" onSubmit={event => { event.preventDefault(); void confirmBook('', coursePicker) }}>
+  <h3>Skapa ny kurs</h3>
+  <p className="muted"><strong>{coursePicker.subject}</strong> · {coursePicker.school}. Ämnet och skolformen är redan valda.</p>
+  <label>Kursens namn<input autoFocus value={coursePicker.course} onChange={event => setCoursePicker({...coursePicker, course: capitalizeFirstSwedish(event.target.value)})} placeholder={coursePicker.school === 'Gymnasiet' ? 'Exempel: Matematik 1b' : 'Exempel: Matematik åk 7'} required /></label>
+  <label>Läsår<SchoolYearPicker value={coursePicker.schoolYear || ''} onChange={schoolYear => setCoursePicker({...coursePicker, schoolYear})} /></label>
+  <div className="textbook-picker-actions"><button type="button" onClick={() => setCoursePicker(null)}>← Tillbaka</button><button type="submit" disabled={!coursePicker.course.trim() || busy}>Skapa kurs</button></div>
+</form></div>}</div>
 }
 
 function publicDemoWeek42() {
