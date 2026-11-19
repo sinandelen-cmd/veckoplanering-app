@@ -2134,7 +2134,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       const chapterWeeks = /[.]xlsx?$/i.test(file.name) ? distributeChapterWorkbook(plan, XLSX.read(await file.arrayBuffer(),{type:'array'})) : null
       const text = chapterWeeks ? '' : await extractText(file)
       const weeksData = chapterWeeks || distributeText(plan,text)
-      setPendingImport({ source: file.name, weeksData, structured: true })
+      setPendingImport({ planId: selectedId, source: file.name, weeksData, structured: true })
       setStatus(chapterWeeks ? 'Kapitel och delmoment är fördelade på planeringens lektioner. Granska före import.' : 'Importen är klar för förhandsgranskning. Inget har ersatts ännu.'); setFileImportState({phase:'success',message:`${file.name} är inläst – granska nedan.`})
     } catch (error) { const message=error.message || 'Importen misslyckades.'; setStatus(message); setFileImportState({phase:'error',message}) }
     setBusy(false)
@@ -2143,7 +2143,7 @@ const addNewTeacherWeek = () => setPlan(p => {
   function distributePastedText() {
     if (!pasteText.trim()) return setStatus('Klistra in text innan du fördelar den över veckorna.')
     const units = withMomentSuggestions(unitsFromText(pasteText))
-    setPendingImport({ source: 'Inklistrad text', units, decisions: {}, weeksData: distributeUnits(plan, units) })
+    setPendingImport({ planId: selectedId, source: 'Inklistrad text', units, decisions: {}, weeksData: distributeUnits(plan, units) })
     setStatus('Texten är klar för förhandsgranskning. Inget har ersatts ännu.')
   }
 
@@ -2225,13 +2225,13 @@ const addNewTeacherWeek = () => setPlan(p => {
       try {
         const buffer = material.file ? await material.file.arrayBuffer() : await (await fetch(await materialSignedUrl(material.path))).arrayBuffer()
         const workbook = XLSX.read(buffer, { type: 'array' })
-        setPendingImport({ source: material.name, weeksData: distributeChapterWorkbook(plan, workbook), structured: true })
+        setPendingImport({ planId: selectedId, source: material.name, weeksData: distributeChapterWorkbook(plan, workbook), structured: true })
         return setStatus('Kapitel och delmoment är fördelade på planeringens lektioner. Granska före import.')
       } catch (error) { return setStatus(error.message) }
     }
     if (!material.text.trim()) return setStatus('Det finns ingen läsbar text i filen. Klistra in texten i rutan nedan.')
     const units = withMomentSuggestions(unitsFromText(material.text))
-    setPendingImport({ source: material.name, units, decisions: {}, weeksData: distributeUnits(plan, units) })
+    setPendingImport({ planId: selectedId, source: material.name, units, decisions: {}, weeksData: distributeUnits(plan, units) })
     setStatus('Underlaget är klart för förhandsgranskning. Inget har ersatts ännu.')
   }
 
@@ -2261,7 +2261,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       <ImportSplitSuggestions pendingImport={pendingImport} onDecide={decideImportSplit} />
       {(pendingImport.weeksData || []).slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'auto' }}>{week.content || '(Tom vecka)'}</pre></div>)}
       <div className="button-row">
-        <button type="button" className="primary" onClick={() => { if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length })); setPendingImport(null); setStatus('Importen är inlagd i planeringen. Ändringarna sparas automatiskt.') }}>Använd import</button>
+        <button type="button" className="primary" onClick={() => { if (pendingImport.planId !== selectedId) return setStatus('Förhandsgranskningen hör till en annan planering och används inte här.'); if (!confirmReplacingWeeks(plan)) return; setPlan(p => ({ ...p, weeksData: pendingImport.weeksData, weeks: pendingImport.weeksData.length })); setPendingImport(null); setStatus('Importen är inlagd i planeringen. Ändringarna sparas automatiskt.') }}>Använd import</button>
         <button type="button" className="secondary" onClick={() => { setPendingImport(null); setStatus('Importen avbröts. Veckorna är oförändrade.') }}>Avbryt</button>
       </div>
     </section>
@@ -2527,49 +2527,76 @@ const addNewTeacherWeek = () => setPlan(p => {
   async function migrateSubjectRows(data) {
     const uid = session?.user?.id
     if (!uid || subjectMigrationRef.current) return
-    const existing = new Set((data || []).filter(isSubjectRow).map(row => {
+    // Jämförelsen är skiftlägesoberoende, så "matematik" och "Matematik" blir samma ämne.
+    const norm = value => String(value || '').trim().toLocaleLowerCase('sv')
+    const keyOf = (school, subject) => norm(school) + '|' + norm(subject)
+    const existingFrom = rows => new Set(rows.filter(isSubjectRow).map(row => {
       const d = parseContent(row.content) || {}
-      return schoolFromForm(d.schoolForm) + '|' + String(d.subject || '').trim()
+      return keyOf(schoolFromForm(d.schoolForm), d.subject)
     }))
     const wanted = new Map()
+    const want = (school, subject, archived) => {
+      const name = String(subject || '').trim()
+      if (!name || name === 'Övriga ämnen') return
+      const key = keyOf(school, name)
+      const item = wanted.get(key) || { school, subject: name, archived: true }
+      item.archived = item.archived && archived
+      wanted.set(key, item)
+    }
     for (const row of (data || []).filter(isAnnualRow)) {
       const info = classifyPlanRow(row)
       if (info.school !== 'Grundskola' && info.school !== 'Gymnasiet') continue
-      const key = info.school + '|' + info.subject
-      const item = wanted.get(key) || { school: info.school, subject: info.subject, allArchived: true }
-      item.allArchived = item.allArchived && info.archived
-      wanted.set(key, item)
+      want(info.school, info.subject, info.archived)
     }
-    let localKeys = []
+    // Lokala mappar från tidigare versioner. De läses bara här, och tas bort lokalt när allt har skrivits till databasen.
+    let folders = {}
+    let archivedFolders = {}
     try {
-      const folders = JSON.parse(localStorage.getItem('arsplanering-subject-folders') || '{}')[uid] || {}
-      const archivedFolders = JSON.parse(localStorage.getItem('arsplanering-archived-subject-folders') || '{}')[uid] || {}
-      for (const school of ['Grundskola', 'Gymnasiet']) for (const name of folders[school] || []) {
-        const key = school + '|' + name
-        localKeys.push(key)
-        const archived = (archivedFolders[school] || []).includes(name)
-        const item = wanted.get(key) || { school, subject: name, allArchived: archived }
-        item.allArchived = archived
-        wanted.set(key, item)
-      }
-    } catch { localKeys = [] }
-    const missing = [...wanted.entries()].filter(([key]) => !existing.has(key) && key.split('|')[1])
-    if (!missing.length) return
+      folders = JSON.parse(localStorage.getItem('arsplanering-subject-folders') || '{}')[uid] || {}
+      archivedFolders = JSON.parse(localStorage.getItem('arsplanering-archived-subject-folders') || '{}')[uid] || {}
+    } catch { folders = {}; archivedFolders = {} }
+    for (const school of ['Grundskola', 'Gymnasiet']) for (const name of folders[school] || []) {
+      want(school, name, (archivedFolders[school] || []).includes(name))
+    }
+    if (![...wanted.values()].some(item => !existingFrom(data || []).has(keyOf(item.school, item.subject)))) {
+      // Inget att flytta, men de lokala mapparna får ändå inte finnas kvar som källa om alla ämnen redan är i databasen.
+      if (Object.keys(folders).length || Object.keys(archivedFolders).length) await clearLocalFolders(uid, folders, archivedFolders)
+      return
+    }
     subjectMigrationRef.current = true
     try {
-      for (const [, item] of missing) await insertSubjectRow(item.school, item.subject, item.allArchived)
-      // Kopia av de gamla lokala mapparna sparas, men de används inte längre.
-      try {
-        const backup = JSON.parse(localStorage.getItem('arsplanering-subject-folders-migrerade') || '{}')
-        backup[uid] = { folders: JSON.parse(localStorage.getItem('arsplanering-subject-folders') || '{}')[uid] || {}, archived: JSON.parse(localStorage.getItem('arsplanering-archived-subject-folders') || '{}')[uid] || {} }
-        localStorage.setItem('arsplanering-subject-folders-migrerade', JSON.stringify(backup))
-      } catch { /* Säkerhetskopian är en extra försiktighet */ }
+      // Hämtar aktuella ämnesrader precis före varje skrivning, så att en annan flik eller enhet inte kan ge dubbletter.
+      const { data: current, error: currentError } = await supabase.from('veckoplanering').select('content').eq('user_id', uid)
+      if (currentError) throw currentError
+      const present = existingFrom(current || [])
+      for (const item of wanted.values()) {
+        const key = keyOf(item.school, item.subject)
+        if (present.has(key)) continue
+        await insertSubjectRow(item.school, item.subject, item.archived)
+        present.add(key)
+      }
+      await clearLocalFolders(uid, folders, archivedFolders)
     } catch (error) {
       setStatus(`Ämnen kunde inte flyttas till kontot: ${error.message || 'Okänt fel'}. Inga planeringar har ändrats.`)
     } finally {
       subjectMigrationRef.current = false
     }
     await loadPlans()
+  }
+  // Tar bort kontots lokala mappar när de är säkerhetskopierade och flyttade. Övriga konton på enheten rörs inte.
+  async function clearLocalFolders(uid, folders, archivedFolders) {
+    try {
+      // Säkerhetskopia först. Den används inte av appen, men gör det möjligt att återställa om något gått fel.
+      const backup = JSON.parse(localStorage.getItem('arsplanering-subject-folders-migrerade') || '{}')
+      backup[uid] = { folders, archived: archivedFolders }
+      localStorage.setItem('arsplanering-subject-folders-migrerade', JSON.stringify(backup))
+      const active = JSON.parse(localStorage.getItem('arsplanering-subject-folders') || '{}')
+      delete active[uid]
+      localStorage.setItem('arsplanering-subject-folders', JSON.stringify(active))
+      const archived = JSON.parse(localStorage.getItem('arsplanering-archived-subject-folders') || '{}')
+      delete archived[uid]
+      localStorage.setItem('arsplanering-archived-subject-folders', JSON.stringify(archived))
+    } catch { /* Lokal lagring kan vara blockerad. Databasen är ändå korrekt. */ }
   }
   // Navigering i biblioteket. Osparade ändringar i en öppen planering bekräftas först.
   function navigateLibrary(school, subjectKey = '') {
@@ -2965,7 +2992,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       const pastedText = String(fresh.pastedMaterial || '').trim()
       if (pastedText) {
         const units = withMomentSuggestions(unitsFromText(pastedText))
-        setPendingImport({ source: 'Inklistrad text', units, decisions: {}, weeksData: distributeUnits(fresh, units) })
+        setPendingImport({ planId: data.id, source: 'Inklistrad text', units, decisions: {}, weeksData: distributeUnits(fresh, units) })
         setStatus('Kursen är skapad. Granska förhandsgranskningen av den inklistrade planeringen och välj Använd import för att skapa veckorna.')
       } else setStatus('Kursen är skapad med 21 veckor.')
       try {window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`,String(data.id))} catch {}
@@ -3121,7 +3148,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       </div>})()}
       
       {(showPastTeacherWeeks || focusedTeacherWeek) && <div className="teacher-active-chapter-bar" aria-label="Aktuellt kapitel och vecka"><div className="teacher-active-chapter-content" /></div>}
-      {!simpleSetup && pendingImport && importPreview()}
+      {!simpleSetup && pendingImport && pendingImport.planId === selectedId && importPreview()}
       {!simpleSetup && <details className="material-disclosure"><summary>Material till planeringen ({(plan.materials || []).length} filer{pasteText.trim() ? ' + inklistrad text' : ''})</summary>{materialPanel()}
         <details className="course-more-settings">
         <summary>Fler inställningar</summary>

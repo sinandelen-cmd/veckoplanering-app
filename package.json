@@ -20,7 +20,8 @@
     "test:ui:course-flow": "node tests/ui/ui-course-flow.mjs",
     "test:ui:new-course": "node tests/ui/ui-new-course.mjs",
     "test:ui:course-material": "node tests/ui/ui-course-material.mjs",
-    "test:ui:subjects": "node tests/ui/ui-subjects.mjs"
+    "test:ui:subjects": "node tests/ui/ui-subjects.mjs",
+    "test:ui:subject-safety": "node tests/ui/ui-subject-safety.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
