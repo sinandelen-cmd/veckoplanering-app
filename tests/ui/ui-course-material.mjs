@@ -1,12 +1,12 @@
-// Material vid skapande och redigering av planering med FIKTIV Supabase-klient och testlagring.
+// Material vid skapande av kurs och redigering av planering med FIKTIV Supabase-klient och testlagring.
 // Körning: npm run test:ui:course-material
 // Ingen produktionsdata, inga riktiga konton, inga externa anrop.
-// Bifogade filer laddas upp först när planeringen sparas. Testerna kontrollerar:
-//  - "Skapa planering" och "Ny kurs" sparar bifogad fil och inklistrad text med kursen
+// Bifogade filer laddas upp först när kursen sparas. Testerna kontrollerar:
+//  - "Ny kurs" i ett ämne sparar bifogad fil och inklistrad text med kursen
 //  - en kurs kan skapas utan bilagor
-//  - inklistrad text används för att skapa veckor, och originaltexten finns kvar
-//  - avbrutet formulär, navigering bort och siduppdatering laddar inte upp något
-//  - misslyckad uppladdning vid sparning sparar ingen planering och lämnar inga filer kvar
+//  - inklistrad text ger en förhandsgranskning, och veckor skrivs först när användaren väljer Använd import
+//  - avbruten dialog, navigering bort och siduppdatering laddar inte upp något
+//  - misslyckad uppladdning vid sparning skapar ingen kurs och lämnar inga filer kvar
 //  - samma fil laddas inte upp flera gånger, och sparat material laddas inte upp igen
 //  - borttagning av sparat material raderar filen först när planeringen sparas
 //  - befintliga planeringar och deras material påverkas inte
@@ -34,7 +34,6 @@ const FILE_B = 'kurs-2b.txt'
 const txt = (name, text = FILE_TEXT) => ({ name, mimeType: 'text/plain', buffer: Buffer.from(text) })
 const b64 = text => Buffer.from(text).toString('base64')
 
-// Konto A: ny, tom testdatabas. Körs i en följd som bygger på varandra.
 const ctxA = await browser.newContext({ viewport: { width: 1366, height: 900 } })
 const page = await ctxA.newPage()
 const errors = []
@@ -50,53 +49,43 @@ const fakeUploads = name => page.evaluate(n => window.__fake.fakeLog.uploads.fil
 const fakeRemovals = path => page.evaluate(p => window.__fake.fakeLog.removals.includes(p), path)
 const storedNames = () => page.evaluate(() => Object.values(window.__fake.files).map(f => f.name))
 const storedPathExists = path => page.evaluate(p => Boolean(window.__fake.files[p]), path)
-const rowsTitled = title => page.evaluate(t => window.__fake.store.veckoplanering.filter(r => r.title === t).length, title)
-const rowContent = title => page.evaluate(t => { const row = window.__fake.store.veckoplanering.find(r => r.title === t); return row ? JSON.parse(row.content) : null }, title)
+const rowsTitled = course => page.evaluate(c => window.__fake.store.veckoplanering.filter(r => JSON.parse(r.content || '{}').course === c).length, course)
+const rowContent = course => page.evaluate(c => { const row = window.__fake.store.veckoplanering.find(r => JSON.parse(r.content || '{}').course === c); return row ? JSON.parse(row.content) : null }, course)
 
-async function openLibrary() {
-  for (let i = 0; i < 4; i++) {
-    if (await page.locator('button:visible', { hasText: 'Ny kurs' }).count() || await page.locator('button:visible', { hasText: '📚 Matematik' }).count()) return
-    const back = page.locator('button:visible', { hasText: /^← / }).first()
-    if (!(await back.count())) return
-    await back.evaluate(e => e.click()); await page.waitForTimeout(400)
-  }
+// Navigering i biblioteket med de nya nivåerna: Mina planeringar > skolform > ämne > kurs.
+async function goRoot() {
+  const crumb = page.locator('.library-crumbs .crumb-link', { hasText: 'Mina planeringar' })
+  if (await crumb.count()) { await crumb.first().evaluate(e => e.click()); await page.waitForTimeout(300) }
 }
-async function goToSubject(subject = 'Matematik', expectCourses = true) {
-  await openLibrary()
-  const ready = async () => (await page.locator('button:visible', { hasText: new RegExp('^📁 ' + subject) }).count()) > 0
-    || (!expectCourses && (await page.locator('button:visible', { hasText: 'Ny kurs' }).count()) > 0)
-  if (await ready()) return
-  if (!(await page.locator('button:visible', { hasText: '📚 ' + subject }).count())) { await btn('Gymnasiet').evaluate(e => e.click()).catch(() => {}); await page.waitForTimeout(400) }
-  if (!(await ready())) { await page.locator('button:visible', { hasText: '📚 ' + subject }).first().evaluate(e => e.click()); await page.waitForTimeout(400) }
+async function goSubject(school = 'Gymnasiet', subject = 'Matematik') {
+  await goRoot()
+  await page.locator('button.library-folder:visible', { hasText: school }).first().evaluate(e => e.click()); await page.waitForTimeout(300)
+  await page.locator('button.library-folder:visible', { hasText: subject }).first().evaluate(e => e.click()); await page.waitForTimeout(300)
 }
-async function openCourse(course, subject = 'Matematik') {
-  await openLibrary()
-  await goToSubject(subject)
-  await btn(course).evaluate(e => e.click())
+async function createSubject(school, name) {
+  await goRoot()
+  await btn('Nytt ämne').evaluate(e => e.click())
+  await page.waitForSelector('.library-subject-form form', { timeout: 15000 })
+  await page.locator('.library-subject-form select').selectOption(school)
+  await page.locator('.library-subject-form input').fill(name)
+  await page.locator('.library-subject-form button[type="submit"]').evaluate(e => e.click())
+  await page.waitForTimeout(600)
+}
+async function openCourse(name) {
+  await goSubject()
+  await page.locator('.library-course-open:visible', { hasText: name }).first().evaluate(e => e.click())
   await page.waitForSelector('#lararvy .week-card', { timeout: 20000 })
   await page.waitForTimeout(300)
 }
-async function openNewForm() {
-  await openLibrary()
-  await btn('Ny planering').evaluate(e => e.click())
-  await page.waitForSelector('.simple-setup-card form', { timeout: 15000 })
-  return page.locator('.simple-setup-card')
+async function openCourseDialog() {
+  await goSubject()
+  await btn('Ny kurs').evaluate(e => e.click())
+  await page.waitForSelector('[aria-label="Skapa ny kurs"]', { timeout: 15000 })
+  return page.locator('[aria-label="Skapa ny kurs"]')
 }
-async function fillForm(card, title, school, subject) {
-  await card.locator('label', { hasText: 'Kursens namn' }).locator('input').fill(title)
-  await card.locator('select').selectOption(school)
-  await card.locator('input[list="planning-subject-choices"]').fill(subject)
-}
-// Lämnar formuläret utan att klicka Avbryt, via en navigeringsknapp i appen.
-async function leaveForm() {
-  for (const label of ['Mina planeringar', 'Bibliotek', '← ']) {
-    if (await page.locator('button:visible', { hasText: label }).count()) {
-      await page.locator('button:visible', { hasText: label }).first().evaluate(e => e.click())
-      await page.waitForTimeout(500)
-      return
-    }
-  }
-  throw new Error('ingen navigeringsknapp hittades')
+async function leaveByCrumb() {
+  await page.locator('.library-crumbs .crumb-link', { hasText: 'Mina planeringar' }).first().evaluate(e => e.click())
+  await page.waitForTimeout(400)
 }
 // Kursen sparas automatiskt en kort stund efter ändringen. Testet väntar tills inga osparade ändringar finns kvar.
 async function saveCourse() {
@@ -111,7 +100,6 @@ async function expandMaterial() {
 const courseMaterialNames = () => page.locator('details.material-disclosure .material-list li strong').allInnerTexts()
 const courseAttach = () => page.locator('details.material-disclosure .material-attach input[type="file"]')
 const pastedValue = () => page.locator('details.material-disclosure .material-paste textarea').inputValue()
-// Öppnar ett bifogat material i nytt fönster och läser dess innehåll.
 async function readMaterialFile(name) {
   await expandMaterial()
   const popupPromise = ctxA.waitForEvent('page')
@@ -120,48 +108,46 @@ async function readMaterialFile(name) {
   await popup.waitForURL(/^blob:/, { timeout: 15000 })
   await popup.waitForLoadState('load').catch(() => {})
   const text = await popup.evaluate(() => document.body.innerText)
-  if (!text.includes(FILE_TEXT)) console.log('  DEBUG popup', name, JSON.stringify(text.slice(0, 200)), popup.url().slice(0, 40))
   await popup.close()
   assert.equal(page.url().startsWith(base), true, 'appen navigerade bort från sidan')
   return text
 }
 async function reloginAndReload() {
-  await page.reload({ waitUntil: 'networkidle' })
-  await page.waitForTimeout(600)
+  await page.reload({ waitUntil: 'networkidle' }); await page.waitForTimeout(600)
   await page.evaluate(() => { localStorage.removeItem('fake-session'); localStorage.setItem('fake-session', 'on') })
-  await page.reload({ waitUntil: 'networkidle' })
-  await page.waitForTimeout(800)
+  await page.reload({ waitUntil: 'networkidle' }); await page.waitForTimeout(800)
 }
 
-// 1. Skapa planering: filen och texten sparas med kursen. Inget laddas upp innan sparningen.
-await check('Skapa planering: bifogad fil och inklistrad text sparas med den nya kursen', async () => {
-  const card = await openNewForm()
-  await fillForm(card, 'Matematik 1a', 'Gymnasiet', 'Matematik')
-  await card.locator('.material-attach input[type="file"]').setInputFiles(txt(FILE_NAME))
-  await page.waitForSelector('.simple-setup-card .material-list li', { timeout: 15000 })
-  assert.equal(await fakeUploads(FILE_NAME), 0, 'filen laddades upp redan innan planeringen sparades')
-  await card.locator('.material-paste textarea').fill(PASTED_A)
-  await card.locator('button[type="submit"]').evaluate(e => e.click())
+await check('ämnet Matematik skapas i Gymnasiet utan kurser eller material', async () => {
+  await createSubject('Gymnasiet', 'Matematik')
+  assert.equal(await rowsTitled('Matematik 1a'), 0)
+  // Efter att ämnet skapats visas ämnet direkt.
+  assert.match(await page.locator('.library-title').first().innerText(), /Matematik/, 'ämnesvyn visas inte efter att ämnet skapats')
+})
+
+// 1. Ny kurs i ämnet: bifogad fil och inklistrad text sparas med kursen. Inget laddas upp innan kursen sparas.
+await check('Ny kurs: bifogad fil och inklistrad text sparas med kursen', async () => {
+  const dialog = await openCourseDialog()
+  await dialog.locator('label', { hasText: 'Kursens namn' }).locator('input').fill('Matematik 1a')
+  await dialog.locator('input[type="file"]').setInputFiles(txt(FILE_NAME))
+  await page.waitForSelector('[aria-label="Skapa ny kurs"] .material-list li', { timeout: 15000 })
+  assert.equal(await fakeUploads(FILE_NAME), 0, 'filen laddades upp innan kursen sparades')
+  await dialog.locator('.material-paste textarea').fill(PASTED_A)
+  await dialog.locator('button', { hasText: 'Skapa kurs' }).evaluate(e => e.click())
   await page.waitForSelector('#lararvy .week-card', { timeout: 20000 })
   await expandMaterial()
   assert.deepEqual(await courseMaterialNames(), [FILE_NAME], 'filen finns inte i kursens materialsektion')
   assert.equal(await pastedValue(), PASTED_A, 'inklistrad text sparades inte med kursen')
   assert.equal(await fakeUploads(FILE_NAME), 1, 'filen laddades inte upp exakt en gång')
   assert.ok((await storedNames()).includes(FILE_NAME), 'filen finns inte i lagringen')
+  assert.equal((await rowContent('Matematik 1a')).weeksData.length, 21, 'kursen har inte 21 veckor')
 })
 
-// 2. Ny kurs i ämnet: samma möjlighet i dialogen.
-await check('Ny kurs i ämnet: bifogad fil och inklistrad text sparas med kursen', async () => {
-  await openLibrary()
-  await goToSubject('Matematik', false)
-  await btn('Ny kurs').evaluate(e => e.click())
-  await page.waitForTimeout(300)
-  const dialog = page.locator('[aria-label="Skapa ny kurs"]')
-  assert.equal(await dialog.locator('input[type="file"]').count(), 1, 'filuppladdningen saknas i kursdialogen')
+await check('Ny kurs: en andra kurs med bifogad fil och inklistrad text', async () => {
+  const dialog = await openCourseDialog()
   await dialog.locator('label', { hasText: 'Kursens namn' }).locator('input').fill('Matematik 2b')
   await dialog.locator('input[type="file"]').setInputFiles(txt(FILE_B))
   await page.waitForSelector('[aria-label="Skapa ny kurs"] .material-list li', { timeout: 15000 })
-  assert.equal(await fakeUploads(FILE_B), 0, 'filen i kursdialogen laddades upp före sparning')
   await dialog.locator('.material-paste textarea').fill(PASTED_B)
   await dialog.locator('button', { hasText: 'Skapa kurs' }).evaluate(e => e.click())
   await page.waitForSelector('#lararvy .week-card', { timeout: 20000 })
@@ -170,13 +156,8 @@ await check('Ny kurs i ämnet: bifogad fil och inklistrad text sparas med kursen
   assert.equal(await pastedValue(), PASTED_B, 'inklistrad text sparades inte med kursen')
 })
 
-// 3. Kurs utan bilagor.
 await check('en kurs kan skapas utan att något bifogas', async () => {
-  await openLibrary()
-  await goToSubject('Matematik', false)
-  await btn('Ny kurs').evaluate(e => e.click())
-  await page.waitForTimeout(300)
-  const dialog = page.locator('[aria-label="Skapa ny kurs"]')
+  const dialog = await openCourseDialog()
   await dialog.locator('label', { hasText: 'Kursens namn' }).locator('input').fill('Matematik 3c')
   await dialog.locator('button', { hasText: 'Skapa kurs' }).evaluate(e => e.click())
   await page.waitForSelector('#lararvy .week-card', { timeout: 20000 })
@@ -185,75 +166,72 @@ await check('en kurs kan skapas utan att något bifogas', async () => {
   assert.equal(await pastedValue(), '', 'en kurs utan text ska ha tomt textfält')
 })
 
-// 4. Inklistrad text: importen skapar veckor och originaltexten finns kvar.
-await check('inklistrad text används för att skapa veckor, och originaltexten finns kvar', async () => {
+// 4. Inklistrad text: förhandsgranskning visas, och veckor skrivs först när användaren väljer Använd import.
+await check('inklistrad text ger en förhandsgranskning, och originaltexten finns kvar efter import', async () => {
   await openCourse('Matematik 1a')
   await expandMaterial()
   await btn('Skapa veckor av inklistrad text', page.locator('details.material-disclosure')).evaluate(e => e.click())
-  await page.waitForTimeout(500)
+  await page.waitForSelector('.import-preview', { timeout: 10000 })
+  assert.equal(await page.locator('.import-preview').count(), 1, 'fler än en förhandsgranskning visas')
+  assert.match(await page.locator('.import-preview').innerText(), /Inget har ändrats ännu/, 'förhandsgranskningen säger inte att inget ändrats')
   assert.equal(await pastedValue(), PASTED_A, 'originaltexten försvann vid förhandsgranskningen')
-  await btn('Använd import').evaluate(e => e.click())
+  await btn('Använd import', page.locator('.import-preview')).evaluate(e => e.click())
   await page.waitForTimeout(500)
   assert.equal(await pastedValue(), PASTED_A, 'originaltexten försvann när veckor skapades')
   assert.match(await page.locator('#lararvy').innerText(), /ekvationer/, 'importen skapade inga veckor med texten')
 })
 
-// 5. Avbruten: Avbryt laddar inte upp något och lämnar inget kvar.
-await check('avbrutet formulär laddar inte upp något', async () => {
-  const card = await openNewForm()
-  await card.locator('.material-attach input[type="file"]').setInputFiles(txt('ej-sparad.txt'))
-  await page.waitForSelector('.simple-setup-card .material-list li', { timeout: 15000 })
-  await card.locator('button', { hasText: 'Avbryt' }).evaluate(e => e.click())
+// 5. Avbruten dialog: Tillbaka laddar inte upp något.
+await check('avbruten kursdialog laddar inte upp något', async () => {
+  const dialog = await openCourseDialog()
+  await dialog.locator('input[type="file"]').setInputFiles(txt('ej-sparad.txt'))
+  await page.waitForSelector('[aria-label="Skapa ny kurs"] .material-list li', { timeout: 15000 })
+  await dialog.locator('button', { hasText: 'Tillbaka' }).evaluate(e => e.click())
   await page.waitForTimeout(400)
   assert.equal(await fakeUploads('ej-sparad.txt'), 0, 'den avbrutna filen laddades upp')
   assert.ok(!(await storedNames()).includes('ej-sparad.txt'), 'den avbrutna filen ligger i lagringen')
-  const card2 = await openNewForm()
-  assert.equal(await card2.locator('.material-list li').count(), 0, 'avbrutna filer ligger kvar i ett nytt formulär')
-  await card2.locator('button', { hasText: 'Avbryt' }).evaluate(e => e.click())
+  const dialog2 = await openCourseDialog()
+  assert.equal(await dialog2.locator('.material-list li').count(), 0, 'avbrutna filer ligger kvar i en ny dialog')
+  await dialog2.locator('button', { hasText: 'Tillbaka' }).evaluate(e => e.click())
   await page.waitForTimeout(300)
 })
 
 // 6. Navigering bort utan att spara.
-await check('navigering bort från formuläret utan att spara laddar inte upp något', async () => {
-  const card = await openNewForm()
-  await card.locator('.material-attach input[type="file"]').setInputFiles(txt('lamnad.txt'))
-  await page.waitForSelector('.simple-setup-card .material-list li', { timeout: 15000 })
-  await leaveForm()
-  assert.equal(await page.locator('.simple-setup-card:visible').count(), 0, 'formuläret är kvar efter navigering')
-  assert.equal(await fakeUploads('lamnad.txt'), 0, 'filen laddades upp utan att planeringen sparades')
+await check('navigering bort från dialogen utan att spara laddar inte upp något', async () => {
+  const dialog = await openCourseDialog()
+  await dialog.locator('input[type="file"]').setInputFiles(txt('lamnad.txt'))
+  await page.waitForSelector('[aria-label="Skapa ny kurs"] .material-list li', { timeout: 15000 })
+  await leaveByCrumb()
+  assert.equal(await page.locator('[aria-label="Skapa ny kurs"]:visible').count(), 0, 'dialogen är kvar efter navigering')
+  assert.equal(await fakeUploads('lamnad.txt'), 0, 'filen laddades upp utan att kursen sparades')
   assert.ok(!(await storedNames()).includes('lamnad.txt'), 'filen ligger kvar i lagringen')
-  const card2 = await openNewForm()
-  assert.equal(await card2.locator('.material-list li').count(), 0, 'filen ligger kvar i ett nytt formulär')
-  await card2.locator('button', { hasText: 'Avbryt' }).evaluate(e => e.click())
-  await page.waitForTimeout(300)
 })
 
-// 7. Siduppdatering före sparning.
-await check('siduppdatering före sparning laddar inte upp något', async () => {
-  const card = await openNewForm()
-  await card.locator('.material-attach input[type="file"]').setInputFiles(txt('omladdad.txt'))
-  await page.waitForSelector('.simple-setup-card .material-list li', { timeout: 15000 })
+// 7. Siduppdatering med dialogen öppen.
+await check('siduppdatering med dialogen öppen laddar inte upp något', async () => {
+  const dialog = await openCourseDialog()
+  await dialog.locator('input[type="file"]').setInputFiles(txt('omladdad.txt'))
+  await page.waitForSelector('[aria-label="Skapa ny kurs"] .material-list li', { timeout: 15000 })
   await reloginAndReload()
   assert.equal(await fakeUploads('omladdad.txt'), 0, 'filen laddades upp före sparning')
   assert.ok(!(await storedNames()).includes('omladdad.txt'), 'filen ligger i lagringen efter siduppdatering')
 })
 
 // 8. Misslyckad uppladdning vid sparning.
-await check('misslyckad uppladdning vid sparning sparar ingen planering och lämnar inga filer kvar', async () => {
-  const card = await openNewForm()
-  await fillForm(card, 'Matematik 4d', 'Gymnasiet', 'Matematik')
-  await card.locator('.material-attach input[type="file"]').setInputFiles([txt('ok-fil.txt'), txt('[fel] rapport.txt')])
-  await page.waitForFunction(() => document.querySelectorAll('.simple-setup-card .material-list li').length === 2, null, { timeout: 15000 })
+await check('misslyckad uppladdning vid sparning skapar ingen kurs och lämnar inga filer kvar', async () => {
+  const dialog = await openCourseDialog()
+  await dialog.locator('label', { hasText: 'Kursens namn' }).locator('input').fill('Matematik 4d')
+  await dialog.locator('input[type="file"]').setInputFiles([txt('ok-fil.txt'), txt('[fel] rapport.txt')])
+  await page.waitForFunction(() => document.querySelectorAll('[aria-label="Skapa ny kurs"] .material-list li').length === 2, null, { timeout: 15000 })
   const rowsBefore = await rowsTitled('Matematik 4d')
-  await card.locator('button[type="submit"]').evaluate(e => e.click())
-  await page.waitForFunction(() => /Kunde inte spara/.test(document.body.innerText), null, { timeout: 15000 })
-  assert.equal(await rowsTitled('Matematik 4d'), rowsBefore, 'en planering sparades trots att uppladdningen misslyckades')
+  await dialog.locator('button', { hasText: 'Skapa kurs' }).evaluate(e => e.click())
+  await page.waitForFunction(() => /Kunde inte skapa/.test(document.querySelector('[aria-label="Skapa ny kurs"]')?.innerText || ''), null, { timeout: 15000 })
+  assert.equal(await rowsTitled('Matematik 4d'), rowsBefore, 'en kurs sparades trots att uppladdningen misslyckades')
   assert.ok(!(await storedNames()).includes('ok-fil.txt'), 'den lyckade filen från det misslyckade försöket ligger kvar')
-  // Ta bort den misslyckade filen och spara igen. Den lyckade filen laddas upp en gång till i det nya försöket.
-  await card.locator('.material-list li', { hasText: '[fel]' }).locator('button', { hasText: 'Ta bort' }).evaluate(e => e.click())
-  await card.locator('button[type="submit"]').evaluate(e => e.click())
+  await dialog.locator('.material-list li', { hasText: '[fel]' }).locator('button', { hasText: 'Ta bort' }).evaluate(e => e.click())
+  await dialog.locator('button', { hasText: 'Skapa kurs' }).evaluate(e => e.click())
   await page.waitForSelector('#lararvy .week-card', { timeout: 20000 })
-  assert.equal(await rowsTitled('Matematik 4d'), rowsBefore + 1, 'planeringen sparades inte vid nytt försök')
+  assert.equal(await rowsTitled('Matematik 4d'), rowsBefore + 1, 'kursen sparades inte vid nytt försök')
   assert.equal((await storedNames()).filter(n => n === 'ok-fil.txt').length, 1, 'filen finns inte exakt en gång i lagringen')
   await expandMaterial()
   assert.deepEqual(await courseMaterialNames(), ['ok-fil.txt'], 'fel material sparades')
@@ -298,14 +276,69 @@ await check('borttagning av sparat material raderar filen först när planeringe
 await check('uppladdade filer kan öppnas efter omladdning och ny inloggning', async () => {
   await reloginAndReload()
   await openCourse('Matematik 1a')
-  assert.equal(await readMaterialFile(FILE_NAME).then(t => t.includes(FILE_TEXT)), true, 'filen kunde inte öppnas efter ny inloggning')
+  assert.equal(await readMaterialFile(FILE_NAME).then(t => t.includes('bråk')), true, 'filen kunde inte öppnas efter ny inloggning')
   await openCourse('Matematik 4d')
-  assert.equal(await readMaterialFile('enda.txt').then(t => t.includes(FILE_TEXT)), true, 'enda.txt kunde inte öppnas efter ny inloggning')
+  assert.equal(await readMaterialFile('enda.txt').then(t => t.includes('bråk')), true, 'enda.txt kunde inte öppnas efter ny inloggning')
   await openCourse('Matematik 2b')
-  assert.equal(await readMaterialFile(FILE_B).then(t => t.includes(FILE_TEXT)), true, 'kurs-2b.txt kunde inte öppnas efter ny inloggning')
+  assert.equal(await readMaterialFile(FILE_B).then(t => t.includes('bråk')), true, 'kurs-2b.txt kunde inte öppnas efter ny inloggning')
   assert.equal(await pastedValue(), PASTED_B, 'inklistrad text försvann efter ny inloggning')
 })
-
+// 12. PDF, Word och Excel: texten läses ut, förhandsgranskning visas, och filerna öppnas efter ny inloggning.
+await check('PDF, Word och Excel läses, ger förhandsgranskning och går att öppna efter ny inloggning', async () => {
+  const fs = require('node:fs')
+  const XLSX = require('xlsx')
+  const pdf = fs.readFileSync(new URL('./fixtures/planering.pdf', import.meta.url))
+  const docx = fs.readFileSync(new URL('./fixtures/planering.docx', import.meta.url))
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Kapitel', 'Delmoment'], ['Algebra', 'Ekvationer'], ['Geometri', 'Vinklar']]), 'Kapitel')
+  const xlsx = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+  const dialog = await openCourseDialog()
+  await dialog.locator('label', { hasText: 'Kursens namn' }).locator('input').fill('Matematik 5f')
+  await dialog.locator('input[type="file"]').setInputFiles([
+    { name: 'planering.pdf', mimeType: 'application/pdf', buffer: pdf },
+    { name: 'planering.docx', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', buffer: docx },
+    { name: 'kapitel.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: xlsx },
+  ])
+  await page.waitForFunction(() => document.querySelectorAll('[aria-label="Skapa ny kurs"] .material-list li').length === 3, null, { timeout: 30000 })
+  await dialog.locator('button', { hasText: 'Skapa kurs' }).evaluate(e => e.click())
+  await page.waitForSelector('#lararvy .week-card', { timeout: 20000 })
+  await page.waitForTimeout(500)
+  const stored = await rowContent('Matematik 5f')
+  assert.ok(stored, 'kursen sparades inte')
+  const byName = Object.fromEntries(stored.materials.map(m => [m.name, m]))
+  assert.match(byName['planering.pdf']?.text || '', /brak/i, 'texten i PDF:en lästes inte: ' + (byName['planering.pdf']?.note || ''))
+  assert.match(byName['planering.docx']?.text || '', /procent/i, 'texten i Word-filen lästes inte: ' + (byName['planering.docx']?.note || ''))
+  assert.match(byName['kapitel.xlsx']?.text || '', /Ekvationer/, 'texten i Excel-filen lästes inte: ' + (byName['kapitel.xlsx']?.note || ''))
+  assert.equal(await fakeUploads('planering.pdf'), 1, 'PDF laddades inte upp exakt en gång')
+  // Förhandsgranskning av PDF:en: veckor skrivs först efter att användaren väljer Använd import.
+  await expandMaterial()
+  const weeksBefore = JSON.stringify((await rowContent('Matematik 5f')).weeksData)
+  await page.locator('details.material-disclosure .material-list li', { hasText: 'planering.pdf' }).locator('button', { hasText: 'Skapa veckor av texten' }).evaluate(e => e.click())
+  await page.waitForSelector('.import-preview', { timeout: 10000 })
+  assert.match(await page.locator('.import-preview').innerText(), /planering\.pdf|Förhandsgranska/, 'ingen förhandsgranskning för PDF')
+  await btn('Avbryt', page.locator('.import-preview')).evaluate(e => e.click())
+  await page.waitForTimeout(300)
+  await saveCourse()
+  assert.equal(JSON.stringify((await rowContent('Matematik 5f')).weeksData), weeksBefore, 'veckorna ändrades trots att importen avbröts')
+  // Efter ny inloggning går alla tre filer att öppna.
+  await reloginAndReload()
+  await openCourse('Matematik 5f')
+  for (const name of ['planering.pdf', 'planering.docx', 'kapitel.xlsx']) {
+    await expandMaterial()
+    const popupPromise = ctxA.waitForEvent('page')
+    await page.locator('details.material-disclosure .material-list li', { hasText: name }).locator('button', { hasText: 'Öppna' }).evaluate(e => e.click())
+    const popup = await popupPromise
+    // PDF visas i webbläsaren. Word och Excel visas inte, utan laddas ner, så där kontrollerar vi lagrad storlek i stället.
+    await page.waitForTimeout(800)
+    if (name.endsWith('.pdf')) assert.match(popup.url(), /^blob:/, name + ' öppnades inte från lagringen: ' + popup.url())
+    await popup.close().catch(() => {})
+    const stored = await rowContent('Matematik 5f')
+    const material = stored.materials.find(m => m.name === name)
+    const storedBytes = await page.evaluate(path => { const f = window.__fake.files[path]; return f ? Math.floor((f.dataUrl.split(',')[1] || '').length * 3 / 4) : 0 }, material.path)
+    const original = { 'planering.pdf': pdf.length, 'planering.docx': docx.length, 'kapitel.xlsx': xlsx.length }[name]
+    assert.ok(Math.abs(storedBytes - original) <= 4, name + ' har fel storlek i lagringen: ' + storedBytes + ' ≠ ' + original)
+  }
+})
 await check('inga sidfel i konto A', async () => assert.deepEqual(errors, [], 'fel: ' + errors.join(' | ')))
 await ctxA.close()
 
@@ -332,25 +365,16 @@ await ctxB.addInitScript(([seed, files]) => {
 }, [JSON.stringify(seedB), JSON.stringify(seededFiles)])
 await pageB.goto(base + '/', { waitUntil: 'networkidle' })
 await pageB.waitForTimeout(400)
-const pageBRows = title => pageB.evaluate(t => window.__fake.store.veckoplanering.find(r => r.title === t), title)
-const pageBContent = async title => JSON.parse((await pageBRows(title)).content)
+const pageBContent = async title => JSON.parse((await pageB.evaluate(t => window.__fake.store.veckoplanering.find(r => r.title === t), title)).content)
 const pageBFileExists = path => pageB.evaluate(p => Boolean(window.__fake.files[p]), path)
 const pageBRemoved = path => pageB.evaluate(p => window.__fake.fakeLog.removals.includes(p), path)
 const pageBBtn = (text, scope = pageB) => scope.locator('button:visible', { hasText: text }).first()
-
-async function openCourseB(course, subject) {
-  for (let i = 0; i < 4; i++) {
-    if (await pageB.locator('button:visible', { hasText: '📚 ' + subject }).count() || await pageB.locator('button:visible', { hasText: course }).count()) break
-    const back = pageB.locator('button:visible', { hasText: /^← / }).first()
-    if (!(await back.count())) break
-    await back.evaluate(e => e.click()); await pageB.waitForTimeout(400)
-  }
-  if (!(await pageB.locator('button:visible', { hasText: course }).count())) {
-    if (!(await pageB.locator('button:visible', { hasText: '📚 ' + subject }).count())) { await pageBBtn('Gymnasiet').evaluate(e => e.click()).catch(() => {}); await pageB.waitForTimeout(400) }
-    await pageB.locator('button:visible', { hasText: '📚 ' + subject }).first().evaluate(e => e.click()); await pageB.waitForTimeout(400)
-  }
-  // Ett ämne med bara en kurs öppnas direkt, utan att kursknappen visas först.
-  if (await pageBBtn(course).count()) await pageBBtn(course).evaluate(e => e.click())
+async function openCourseB(course, subject, school = 'Gymnasiet') {
+  const crumb = pageB.locator('.library-crumbs .crumb-link', { hasText: 'Mina planeringar' })
+  if (await crumb.count()) { await crumb.first().evaluate(e => e.click()); await pageB.waitForTimeout(300) }
+  await pageB.locator('button.library-folder:visible', { hasText: school }).first().evaluate(e => e.click()); await pageB.waitForTimeout(300)
+  await pageB.locator('button.library-folder:visible', { hasText: subject }).first().evaluate(e => e.click()); await pageB.waitForTimeout(300)
+  await pageB.locator('.library-course-open:visible', { hasText: course }).first().evaluate(e => e.click())
   await pageB.waitForSelector('#lararvy .week-card', { timeout: 20000 })
   await pageB.waitForTimeout(300)
 }
@@ -363,10 +387,10 @@ await check('befintliga planeringar: ändring i en påverkar inte material i en 
   assert.deepEqual(await materialListB(), ['gammal.txt'], 'det befintliga materialet visas inte')
   await pageB.locator('details.material-disclosure .material-paste textarea').fill('Befintlig text ändrad.')
   await pageB.waitForTimeout(2200)
+  await pageB.waitForFunction(() => !/Osparade ändringar/.test(document.body.innerText), null, { timeout: 15000 })
   assert.deepEqual(await materialListB(), ['gammal.txt'], 'materialet försvann vid vanlig sparning')
   assert.equal(await pageBFileExists(`${UID}/gammal.txt`), true, 'filen raderades vid vanlig sparning')
   assert.equal((await pageBContent('Matematik 5e')).pastedMaterial, 'Befintlig text ändrad.', 'texten sparades inte')
-  // Svenska 5e ska vara orörd.
   assert.equal(await pageBFileExists(`${UID}/svenska.txt`), true, 'filen i den andra planeringen påverkades')
   assert.equal((await pageBContent('Svenska 5e')).materials.length, 1, 'materialet i den andra planeringen påverkades')
 })
@@ -376,6 +400,7 @@ await check('borttagning i en planering raderar bara den filen, och bara efter s
   await pageB.waitForTimeout(200)
   assert.equal(await pageBRemoved(`${UID}/gammal.txt`), false, 'filen raderades innan planeringen sparades')
   await pageB.waitForTimeout(2200)
+  await pageB.waitForFunction(() => !/Osparade ändringar/.test(document.body.innerText), null, { timeout: 15000 })
   assert.equal(await pageBRemoved(`${UID}/gammal.txt`), true, 'filen raderades inte efter sparning')
   assert.equal((await pageBContent('Matematik 5e')).materials.length, 0, 'materialet finns kvar i planeringen')
   assert.equal(await pageBFileExists(`${UID}/svenska.txt`), true, 'den andra planeringens fil raderades')
@@ -394,6 +419,7 @@ await check('befintligt material i en annan planering kan öppnas efter omladdni
   await pageB.locator('details.material-disclosure .material-list li', { hasText: 'svenska.txt' }).locator('button', { hasText: 'Öppna' }).evaluate(e => e.click())
   const popup = await popupPromise
   await popup.waitForURL(/^blob:/, { timeout: 15000 })
+  await popup.waitForLoadState('load').catch(() => {})
   assert.equal(await popup.evaluate(() => document.body.innerText), 'Svensk text', 'filen har fel innehåll efter ny inloggning')
   await popup.close()
 })

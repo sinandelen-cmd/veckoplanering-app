@@ -1,0 +1,45 @@
+/* Mappstruktur i Mina planeringar: Mina planeringar > skolform > ämne > kurs.
+   Regler för att knappar, mappar och texter inte ska överlappa, från 1024 px och uppåt. */
+.library-card { display: grid; gap: 14px; min-width: 0; }
+.library-title { margin: 0; font-size: 22px; overflow-wrap: anywhere; }
+.library-subtitle { margin: -6px 0 0; }
+.library-note { margin: 0; }
+
+.library-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 0 0 12px; font-size: 14px; min-width: 0; }
+.library-crumb { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; }
+.library-crumbs .crumb-link { background: none; border: 0; padding: 4px 2px; color: #2b5a7a; text-decoration: underline; cursor: pointer; font: inherit; text-align: left; overflow-wrap: anywhere; }
+.library-crumbs .crumb-current { font-weight: 650; overflow-wrap: anywhere; padding: 4px 2px; }
+.library-crumbs .crumb-sep { color: #7a8b97; }
+
+.library-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px; min-width: 0; }
+.library-toolbar > button { flex: 0 0 auto; max-width: 100%; white-space: normal; }
+.library-toolbar label { display: grid; gap: 4px; font-size: 13px; font-weight: 600; min-width: 0; flex: 0 1 200px; }
+.library-toolbar input, .library-toolbar select { min-width: 0; width: 100%; max-width: 100%; }
+
+.library-list { display: grid; gap: 8px; min-width: 0; }
+.library-folder { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; width: 100%; min-width: 0; padding: 12px 14px; text-align: left; border: 1px solid #d6dfe6; border-radius: 10px; background: #fff; color: #24384a; font: inherit; cursor: pointer; }
+.library-folder > span { min-width: 0; flex: 1 1 180px; overflow-wrap: anywhere; font-weight: 650; }
+.library-folder > small { flex: 0 0 auto; color: #5d6f7d; }
+.library-folder:hover { border-color: #8fb3cc; background: #f6fbff; }
+
+.library-actions { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.library-actions > button { flex: 0 0 auto; max-width: 100%; white-space: normal; }
+.library-rename { display: grid; gap: 8px; padding: 12px; border: 1px solid #d6dfe6; border-radius: 10px; background: #fbfdfe; min-width: 0; }
+.library-rename label { display: grid; gap: 4px; font-weight: 600; }
+.library-rename input { min-width: 0; width: 100%; max-width: 420px; }
+
+.library-course-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 12px; border: 1px solid #e3e9ee; border-radius: 10px; background: #fff; min-width: 0; }
+.library-course-open { flex: 1 1 220px; min-width: 0; display: grid; gap: 2px; text-align: left; padding: 6px 8px; border: 0; background: none; color: #24384a; font: inherit; font-weight: 650; cursor: pointer; }
+.library-course-open > span, .library-course-open > small { overflow-wrap: anywhere; }
+.library-course-open > small { font-weight: 400; color: #5d6f7d; }
+.library-course-actions { display: flex; flex-wrap: wrap; gap: 6px; flex: 0 0 auto; max-width: 100%; }
+.library-course-actions > button { white-space: normal; }
+
+.library-subject-form form { display: grid; gap: 12px; max-width: 520px; }
+.library-subject-form label { display: grid; gap: 6px; font-weight: 600; min-width: 0; }
+.library-subject-form input, .library-subject-form select { min-width: 0; width: 100%; }
+
+@media (max-width: 700px) {
+  .library-toolbar label { flex: 1 1 100%; }
+  .library-folder > small { flex: 1 1 100%; }
+}

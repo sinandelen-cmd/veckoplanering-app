@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.jsx'
 import './compact-week-layout.css'
 import './paper-layout.css'
+import './subject-library.css'
 import { startAutoUpdate } from './appVersion.js'
 
 startAutoUpdate()

@@ -63,6 +63,6 @@ async function scenario({ editDuringSave }) {
 }
 await scenario({ editDuringSave: true })
 await scenario({ editDuringSave: false })
-assert.match(source, /<button type="button" disabled=\{busy\} title=\{row\.title\|\|displayName\}[\s\S]{0,300}?onClick=\{\(\)=>loadPlan\(row\)\}/,
+assert.match(source, /className="library-course-open" disabled=\{busy\} onClick=\{\(\) => loadPlan\(item\.row\)\}/,
   'Man ska inte kunna byta planering under sparning')
 console.log('Annual async save preserves new edits and normal save behavior: OK')

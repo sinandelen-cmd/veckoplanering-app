@@ -39,24 +39,19 @@ async function open(seedRows) {
   return { page, errors }
 }
 const btn = (page, text) => page.locator('button:visible', { hasText: text }).first()
+// Navigering i den nya mappstrukturen: Mina planeringar > skolform > ämne > kurs.
 async function openLibrary(page) {
-  for (let i = 0; i < 4; i++) {
-    if (await page.locator('button:visible', { hasText: 'Ny kurs' }).count() || await page.locator('button:visible', { hasText: '📚 Matematik' }).count()) return
-    const back = page.locator('button:visible', { hasText: /^← / }).first()
-    if (!(await back.count())) return
-    await back.evaluate(e => e.click())
-    await page.waitForTimeout(400)
-  }
+  const root = page.locator('.library-crumbs .crumb-link', { hasText: 'Mina planeringar' })
+  if (await root.count()) { await root.first().evaluate(e => e.click()); await page.waitForTimeout(300) }
 }
-// Ser till att ämnet Matematik är öppet. Med expectCourses = true krävs att kurserna syns. Annars räcker "Ny kurs".
-// Ämnesraden fälls ihop av ett klick till, så vi klickar bara när det behövs.
+// Öppnar ämnet Matematik under Gymnasiet. Med expectCourses = false räcker att "Ny kurs" syns.
 async function goToSubject(page, expectCourses = true) {
   await openLibrary(page)
-  const ready = async () => (await page.locator('button:visible', { hasText: /^📁 Matematik/ }).count()) > 0
-    || (!expectCourses && (await page.locator('button:visible', { hasText: 'Ny kurs' }).count()) > 0)
-  if (await ready()) return
-  if (!(await page.locator('button:visible', { hasText: '📚 Matematik' }).count())) { await btn(page, 'Gymnasiet').evaluate(e => e.click()).catch(() => {}); await page.waitForTimeout(400) }
-  if (!(await ready())) { await page.locator('button:visible', { hasText: '📚 Matematik' }).first().evaluate(e => e.click()); await page.waitForTimeout(400) }
+  const atSubject = async () => (await page.locator('button:visible', { hasText: 'Ny kurs' }).count()) > 0
+  if (await atSubject()) return
+  await page.locator('button.library-folder:visible', { hasText: 'Gymnasiet' }).first().evaluate(e => e.click()); await page.waitForTimeout(300)
+  await page.locator('button.library-folder:visible', { hasText: 'Matematik' }).first().evaluate(e => e.click()); await page.waitForTimeout(300)
+  if (expectCourses) await page.waitForSelector('.library-course-open', { timeout: 10000 }).catch(() => {})
 }
 // Skapar en kurs via "Ny kurs". Läsåret kan sättas i dialogen (startår).
 async function createCourse(page, name, startYear = null) {
@@ -180,13 +175,9 @@ await check('ett ändrat startdatum behåller lektioner, kapitel, begrepp och ma
 await check('kursen finns kvar efter siduppdatering och ny inloggning, med alla veckor och innehåll', async () => {
   await page.reload({ waitUntil: 'networkidle' })
   await page.waitForTimeout(800)
-  for (let i = 0; i < 3; i++) {
-    if (/Gymnasiet \(\d\)/.test(await page.locator('body').innerText())) break
-    const back = page.locator('button:visible', { hasText: /^← / }).first()
-    if (!(await back.count())) break
-    await back.evaluate(e => e.click()); await page.waitForTimeout(400)
-  }
-  assert.match(await page.locator('body').innerText(), /Gymnasiet \(3\)/, 'de tre kurserna syns inte efter siduppdatering')
+  await goToSubject(page)
+  const names = await page.locator('.library-course-open').allInnerTexts()
+  assert.ok(['Matematik 1b', 'Matematik 3c', 'Matematik 2c'].every(n => names.some(t => t.includes(n))), 'de tre kurserna syns inte efter siduppdatering: ' + names.join(' | '))
   await page.evaluate(() => { localStorage.removeItem('fake-session'); localStorage.setItem('fake-session', 'on') })
   await page.reload({ waitUntil: 'networkidle' })
   await page.waitForTimeout(800)
