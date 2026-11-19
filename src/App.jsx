@@ -2108,7 +2108,10 @@ const addNewTeacherWeek = () => setPlan(p => {
     setStatus('Texten är klar för förhandsgranskning. Inget har ersatts ännu.')
   }
 
-  async function attachMaterialFiles(fileList) {
+  // target.add tar emot de bifogade filerna och target.say visar status. Standard är den öppna planeringen.
+  async function attachMaterialFiles(fileList, target = {}) {
+    const addMaterials = target.add || (list => setPlan(p => ({ ...p, materials: [...(p.materials || []), ...list] })))
+    const say = target.say || setStatus
     const files = Array.from(fileList || [])
     if (!files.length || !session?.user?.id) return
     setBusy(true)
@@ -2119,7 +2122,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       if (!MATERIAL_TYPES.includes(ext)) { problems.push(`${file.name} har en filtyp som inte stöds.`); continue }
       if (file.size > MATERIAL_MAX_BYTES) { problems.push(`${file.name} är större än 20 MB.`); continue }
       try {
-        setStatus(`Bifogar ${file.name}…`)
+        say(`Bifogar ${file.name}…`)
         const path = await uploadMaterialFile(session.user.id, file)
         let text = ''
         let note = ''
@@ -2128,9 +2131,9 @@ const addNewTeacherWeek = () => setPlan(p => {
         added.push({ id: `${Date.now()}-${added.length}-${Math.random().toString(36).slice(2, 6)}`, name: file.name, ext, size: file.size, path, text: text.slice(0, MATERIAL_TEXT_LIMIT), note, addedAt: new Date().toISOString() })
       } catch (error) { problems.push(error.message) }
     }
-    if (added.length) setPlan(p => ({ ...p, materials: [...(p.materials || []), ...added] }))
+    if (added.length) addMaterials(added)
     setBusy(false)
-    setStatus([added.length ? `${added.length} fil(er) bifogade. Klicka Spara för att behålla dem.` : '', ...problems].filter(Boolean).join(' '))
+    say([added.length ? `${added.length} fil(er) bifogade. ${target.saveHint || 'Klicka Spara för att behålla dem.'}` : '', ...problems].filter(Boolean).join(' '))
   }
 
   async function removeMaterial(material) {
@@ -2164,6 +2167,39 @@ const addNewTeacherWeek = () => setPlan(p => {
     setStatus('Underlaget är klart för förhandsgranskning. Inget har ersatts ännu.')
   }
 
+  // Filer som bifogats i ett formulär som avbryts, eller i en kurs som inte skapas, tas bort så att de inte blir kvar i lagringen.
+  async function discardMaterialFiles(list) {
+    for (const material of list || []) { try { await removeMaterialFile(material.path) } catch { /* Filen syns inte i någon planering */ } }
+  }
+  // Ta bort ett bifogat material före det sparats. setList uppdaterar listan i formuläret.
+  async function removeDraftMaterial(material, setList) {
+    if (!window.confirm(`Ta bort ${material.name}? Filen raderas permanent.`)) return
+    setList(list => list.filter(item => item.id !== material.id))
+    try { await removeMaterialFile(material.path) } catch (error) { setIntakeMessage(`Filen togs bort från listan, men lagringen svarade: ${error.message}`) }
+  }
+  // Avbryt i ett nytt formulär. Bifogade filer som inte sparats tas bort efter bekräftelse.
+  async function cancelDraft(materials, close) {
+    if (materials.length && !window.confirm(`Avbryt? De ${materials.length} bifogade filerna raderas permanent.`)) return
+    close()
+    await discardMaterialFiles(materials)
+  }
+  // Frivillig materialdel för "Skapa planering" och "Ny kurs". Materialet sparas med kursen när den skapas.
+  // Veckor skapas från materialet först inne i kursen, där förhandsgranskning finns.
+  function materialIntake({ materials, pasted, onPaste, onAdd, onRemove, message, setMessage }) {
+    return <section className="material-panel material-intake" aria-label="Material till planeringen (valfritt)">
+      <h3>Material till planeringen <span className="muted">(valfritt)</span></h3>
+      <p className="muted">Du kan bifoga filer eller klistra in text redan nu. Materialet sparas med kursen och finns kvar i kursens materialsektion. Veckor skapas från materialet när kursen är öppen.</p>
+      <label className="secondary material-attach">Bifoga filer<input type="file" multiple accept={MATERIAL_ACCEPT} disabled={busy} onChange={e => { const files = e.target.files; void attachMaterialFiles(files, { add: onAdd, say: setMessage, saveHint: 'Den sparas när kursen skapas.' }); e.target.value = '' }} /></label>
+      <p className="muted material-hint">PDF, Word (.doc, .docx), Excel (.xls, .xlsx), PowerPoint (.ppt, .pptx), bilder (.jpg, .jpeg, .png) och textfiler (.txt). Max 20 MB per fil.</p>
+      {materials.length > 0 && <ul className="material-list">{materials.map(material => <li key={material.id}>
+        <strong>{material.name}</strong> <span className="muted">({Math.max(1, Math.round(material.size / 1024))} kB)</span>
+        {material.note && <p className="muted material-note">{material.note}</p>}
+        <div className="button-row"><button type="button" className="secondary" disabled={busy} onClick={() => onRemove(material)}>Ta bort</button></div>
+      </li>)}</ul>}
+      <label className="material-paste">Klistra in text<textarea value={pasted} placeholder="Klistra in text från PDF, Word, Excel eller andra dokument. Rubriker, stycken och listor bevaras så långt det går." onChange={e => onPaste(e.target.value)} /></label>
+      {message && <p className="muted material-note" role="status">{message}</p>}
+    </section>
+  }
   function materialPanel() {
     const materials = plan.materials || []
     return <section className="material-panel" aria-label="Material till planeringen">
@@ -2532,10 +2568,11 @@ const addNewTeacherWeek = () => setPlan(p => {
     setPlan(fresh); setSelectedId(null); savedPlanRef.current = JSON.stringify(fresh)
     setSavedRevision(revision => revision + 1)
     setTeacherTab('new'); setCalendarOpen(false); setPreviewStudents(false); setA4Demo(false)
-    setStatus('Fyll i uppgifterna och välj Skapa planering.')
+    setIntakeMessage(''); setStatus('Fyll i uppgifterna och välj Skapa planering.')
   }
   const returnToPlanningTree = () => { setTeacherTab('bibliotek'); setCalendarOpen(false); setOpenedFromLibrary(false); window.scrollTo({ top: 0, behavior: 'smooth' }) }
   const [coursePicker, setCoursePicker] = useState(null)
+  const [intakeMessage, setIntakeMessage] = useState('')
   // Skapar en kurs direkt från kursdialogen. Ämne och skolform följer med från ämnesmappen och valideras här.
   const confirmBook = async (name, item) => {
     if (!item || busy) return
@@ -2551,7 +2588,8 @@ const addNewTeacherWeek = () => setPlan(p => {
       subject:item.subject,grade:item.year || '',textbook:name,
       course:item.course || (item.school === 'Gymnasiet' ? item.subject : ''),
       title:item.course ? item.subject+' – '+item.course : item.year ? item.subject+' – '+item.year : item.subject,
-      lessonsPerWeek:5,lessonDays:['Måndag','Tisdag','Onsdag','Torsdag','Fredag']
+      lessonsPerWeek:5,lessonDays:['Måndag','Tisdag','Onsdag','Torsdag','Fredag'],
+      materials:Array.isArray(item.materials)?item.materials:[], pastedMaterial:String(item.pastedMaterial||'')
     }
     fresh.weeksData = makeWeeks(fresh)
     setBusy(true)
@@ -2572,6 +2610,8 @@ const addNewTeacherWeek = () => setPlan(p => {
           && (!normalize(fresh.textbook) || normalize(old.textbook) === normalize(fresh.textbook))
       })
       if (existing) {
+        // Filerna som bifogats i dialogen följer inte med, eftersom kursen inte skapas.
+        await discardMaterialFiles(item.materials || [])
         const archived = Boolean(parseContent(existing.content)?.archived)
         setStatus(archived
           ? 'Den här grundplaneringen finns redan i ditt arkiv. Återanvänd den och lägg till klass i stället för att skapa en dubblett.'
@@ -2807,7 +2847,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     <div className={`teacher-tab-panel ${simpleSetup ? "simple-setup-active" : ""}`} id="panel-lararvy" role="tabpanel" aria-labelledby="tab-lararvy" hidden={teacherTab !== "arsplan" && teacherTab !== "new"}>
     {simpleSetup && <section className="card simple-setup-card" aria-label="Skapa ny kurs eller planering">
       <h2>Skapa planering</h2>
-      <p className="muted">Ämne och skolform väljer du här. Material och fler inställningar finns i planeringen när den är skapad.</p>
+      <p className="muted">Ämne och skolform väljer du här. Material kan bifogas nu eller senare i kursen. Fler inställningar finns i planeringen när den är skapad.</p>
       <form onSubmit={event => { event.preventDefault(); void save(false) }}>
         <div style={{marginBottom:14}}>
           <label style={{display:"grid",gap:5}}><strong>Kursens namn</strong><input required value={plan.title} onChange={event => setPlan(p => ({ ...p, title:event.target.value }))} placeholder="Exempel: Matematik 1b" /></label>
@@ -2820,7 +2860,13 @@ const addNewTeacherWeek = () => setPlan(p => {
             <datalist id="planning-subject-choices">{[...new Set(plans.filter(row => (parseContent(row.content)?.schoolForm || '') === plan.schoolForm).map(row => String(parseContent(row.content)?.subject || row.subject || '').trim()).filter(Boolean))].map(name => <option key={name} value={name} />)}</datalist>
           </div>
         </div>
-        <div className="button-row"><button type="submit" className="primary" disabled={busy}>{busy ? 'Skapar…' : 'Skapa planering'}</button><button type="button" className="secondary" onClick={() => { setSimpleSetup(false); setTeacherTab('bibliotek') }}>Avbryt</button></div>
+        {materialIntake({
+          materials: plan.materials || [], pasted: pasteText, onPaste: setPasteText,
+          onAdd: list => setPlan(p => ({ ...p, materials: [...(p.materials || []), ...list] })),
+          onRemove: material => removeDraftMaterial(material, updater => setPlan(p => ({ ...p, materials: updater(p.materials || []) }))),
+          message: intakeMessage, setMessage: setIntakeMessage,
+        })}
+        <div className="button-row"><button type="submit" className="primary" disabled={busy}>{busy ? 'Skapar…' : 'Skapa planering'}</button><button type="button" className="secondary" onClick={() => void cancelDraft(plan.materials || [], () => { setSimpleSetup(false); setTeacherTab('bibliotek') })}>Avbryt</button></div>
       </form>
     </section>}
     {AVSTANGD_GRANSSNITT && !simpleSetup && <div className="unified-planning-form" aria-label="Inställningar och publicering"><h2 className="settings-publication-title">Inställningar och publicering</h2>
@@ -3078,7 +3124,7 @@ const addNewTeacherWeek = () => setPlan(p => {
   }catch(error){await loadPlans();setStatus('Namnbytet kunde inte slutföras: '+(error.message||'Okänt fel'))}
   finally{setBusy(false)}
 
-}} />}{!showArchive && <button type="button" className="secondary subject-folder-add" onClick={() => { setCoursePicker({school:grade,subject,course:'',year:'',schoolYear:libraryYear === 'alla' ? defaultSchoolYear() : libraryYear}) }}>＋ Ny kurs</button>}<button type="button" className="secondary subject-folder-archive" disabled={busy} title={showArchive ? "Återställ ämnet med alla kurser till den aktiva listan" : "Arkivera ämnet med alla kurser. Allt kan återställas senare."} onClick={() => setSubjectArchived(rows, subject, !showArchive, grade)}>{showArchive ? "Återställ ämne" : "Arkivera ämne"}</button>{showArchive && <button type="button" className="danger subject-folder-delete" disabled={busy} title="Radera ämnet och alla arkiverade kurser i det permanent. Kan inte ångras." onClick={() => deleteArchivedSubject(rows, subject, grade)}>Radera ämne</button>}</div>{librarySubject === grade + '|' + subject && <>{grade === 'Gymnasiet' && rows.map(row => <div key={row.id} className="course-folder-with-delete"><button type="button" className="course-folder-link" style={{ "--folder-hue": [275, 145, 30, 340, 175][Array.from(row.title || "").reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 5] }} disabled={busy} onDoubleClick={event => {event.preventDefault();renamePlan(row)}} onClick={() => loadPlan(row)}>📁 {((parseContent(row.content) || {}).course || row.course || row.title)} <small style={{marginLeft:"auto",fontWeight:400,fontSize:11,opacity:.7}}>{(parseContent(row.content) || {}).textbook || ""}</small></button><button type="button" className="course-folder-archive" disabled={busy} onClick={() => setArchived(row,true)} title="Arkivera kursplaneringen" aria-label={"Arkivera " + row.title}><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v12h14V8M10 12h4"/></svg></button><button type="button" className="course-folder-delete" disabled={busy} title="Radera denna planering" aria-label={"Radera " + row.title} onClick={() => deletePlan(row)}><span aria-hidden="true">×</span></button></div>)}{grade !== 'Gymnasiet' && <div className="visual-tree-grade-folders">{Object.entries(rows.reduce((byGrade, row) => { const data = parseContent(row.content) || {}; const value = [data.grade, row.grade, data.className, row.class_name, row.title].map(item => String(item || '')).join(' '); const match = value.match(/(?:årskurs|åk)\s*(\d+)/i) || value.match(/(?:^|\s)([7-9])(?:[a-z])?(?:\s|$)/i); const label = match ? 'Årskurs ' + match[1] : (data.course || row.course || 'Övriga kurser'); (byGrade[label] ||= []).push(row); return byGrade }, {})).sort(([a],[b]) => a.localeCompare(b, 'sv', {numeric:true})).map(([label, gradeRows]) => <div key={label} className="visual-tree-grade-folder textbook-only-grade"><div className="textbook-plan-list">{gradeRows.map(row => { const data=parseContent(row.content)||{}; const gradeNumber=label.replace(/[^0-9]/g,''); const book=String(data.textbook||'').trim(); const displayName=book ? (gradeNumber && !book.endsWith(' '+gradeNumber) ? book+' '+gradeNumber : book) : (row.title||'Öppna planering'); return <div className="textbook-plan-row" key={row.id}><button type="button" disabled={busy} title={row.title||displayName} onDoubleClick={event=>{event.preventDefault();renamePlan(row)}} onClick={()=>loadPlan(row)}>📘 {displayName}</button><button type="button" className="course-folder-archive" disabled={busy} onClick={()=>setArchived(row,true)} title="Arkivera planeringen" aria-label={"Arkivera "+displayName}><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v12h14V8M10 12h4"/></svg></button><button type="button" className="course-folder-delete" disabled={busy} title="Radera planeringen" aria-label={"Radera "+displayName} onClick={()=>deletePlan(row)}><span aria-hidden="true">×</span></button></div>})}</div></div>)}</div>}</>}</div>)}</div></>}</section>)}
+}} />}{!showArchive && <button type="button" className="secondary subject-folder-add" onClick={() => { setIntakeMessage(''); setCoursePicker({school:grade,subject,course:'',year:'',schoolYear:libraryYear === 'alla' ? defaultSchoolYear() : libraryYear,materials:[],pastedMaterial:''}) }}>＋ Ny kurs</button>}<button type="button" className="secondary subject-folder-archive" disabled={busy} title={showArchive ? "Återställ ämnet med alla kurser till den aktiva listan" : "Arkivera ämnet med alla kurser. Allt kan återställas senare."} onClick={() => setSubjectArchived(rows, subject, !showArchive, grade)}>{showArchive ? "Återställ ämne" : "Arkivera ämne"}</button>{showArchive && <button type="button" className="danger subject-folder-delete" disabled={busy} title="Radera ämnet och alla arkiverade kurser i det permanent. Kan inte ångras." onClick={() => deleteArchivedSubject(rows, subject, grade)}>Radera ämne</button>}</div>{librarySubject === grade + '|' + subject && <>{grade === 'Gymnasiet' && rows.map(row => <div key={row.id} className="course-folder-with-delete"><button type="button" className="course-folder-link" style={{ "--folder-hue": [275, 145, 30, 340, 175][Array.from(row.title || "").reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 5] }} disabled={busy} onDoubleClick={event => {event.preventDefault();renamePlan(row)}} onClick={() => loadPlan(row)}>📁 {((parseContent(row.content) || {}).course || row.course || row.title)} <small style={{marginLeft:"auto",fontWeight:400,fontSize:11,opacity:.7}}>{(parseContent(row.content) || {}).textbook || ""}</small></button><button type="button" className="course-folder-archive" disabled={busy} onClick={() => setArchived(row,true)} title="Arkivera kursplaneringen" aria-label={"Arkivera " + row.title}><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v12h14V8M10 12h4"/></svg></button><button type="button" className="course-folder-delete" disabled={busy} title="Radera denna planering" aria-label={"Radera " + row.title} onClick={() => deletePlan(row)}><span aria-hidden="true">×</span></button></div>)}{grade !== 'Gymnasiet' && <div className="visual-tree-grade-folders">{Object.entries(rows.reduce((byGrade, row) => { const data = parseContent(row.content) || {}; const value = [data.grade, row.grade, data.className, row.class_name, row.title].map(item => String(item || '')).join(' '); const match = value.match(/(?:årskurs|åk)\s*(\d+)/i) || value.match(/(?:^|\s)([7-9])(?:[a-z])?(?:\s|$)/i); const label = match ? 'Årskurs ' + match[1] : (data.course || row.course || 'Övriga kurser'); (byGrade[label] ||= []).push(row); return byGrade }, {})).sort(([a],[b]) => a.localeCompare(b, 'sv', {numeric:true})).map(([label, gradeRows]) => <div key={label} className="visual-tree-grade-folder textbook-only-grade"><div className="textbook-plan-list">{gradeRows.map(row => { const data=parseContent(row.content)||{}; const gradeNumber=label.replace(/[^0-9]/g,''); const book=String(data.textbook||'').trim(); const displayName=book ? (gradeNumber && !book.endsWith(' '+gradeNumber) ? book+' '+gradeNumber : book) : (row.title||'Öppna planering'); return <div className="textbook-plan-row" key={row.id}><button type="button" disabled={busy} title={row.title||displayName} onDoubleClick={event=>{event.preventDefault();renamePlan(row)}} onClick={()=>loadPlan(row)}>📘 {displayName}</button><button type="button" className="course-folder-archive" disabled={busy} onClick={()=>setArchived(row,true)} title="Arkivera planeringen" aria-label={"Arkivera "+displayName}><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v12h14V8M10 12h4"/></svg></button><button type="button" className="course-folder-delete" disabled={busy} title="Radera planeringen" aria-label={"Radera "+displayName} onClick={()=>deletePlan(row)}><span aria-hidden="true">×</span></button></div>})}</div></div>)}</div>}</>}</div>)}</div></>}</section>)}
       </div></div>
       <p className="muted">Arkivering döljer bara planeringen från den aktiva listan. Publicerade elevlänkar påverkas inte.</p>
     </section>
@@ -3089,7 +3135,14 @@ const addNewTeacherWeek = () => setPlan(p => {
   <p className="muted"><strong>{coursePicker.subject}</strong> · {coursePicker.school}. Ämnet och skolformen är redan valda.</p>
   <label>Kursens namn<input autoFocus value={coursePicker.course} onChange={event => setCoursePicker({...coursePicker, course: capitalizeFirstSwedish(event.target.value)})} placeholder={coursePicker.school === 'Gymnasiet' ? 'Exempel: Matematik 1b' : 'Exempel: Matematik åk 7'} required /></label>
   <label>Läsår<SchoolYearPicker value={coursePicker.schoolYear || ''} onChange={schoolYear => setCoursePicker({...coursePicker, schoolYear})} /></label>
-  <div className="textbook-picker-actions"><button type="button" onClick={() => setCoursePicker(null)}>← Tillbaka</button><button type="submit" disabled={!coursePicker.course.trim() || busy}>Skapa kurs</button></div>
+  {materialIntake({
+    materials: coursePicker.materials || [], pasted: coursePicker.pastedMaterial || '',
+    onPaste: value => setCoursePicker(p => p && ({ ...p, pastedMaterial: value })),
+    onAdd: list => setCoursePicker(p => p && ({ ...p, materials: [...(p.materials || []), ...list] })),
+    onRemove: material => removeDraftMaterial(material, updater => setCoursePicker(p => p && ({ ...p, materials: updater(p.materials || []) }))),
+    message: intakeMessage, setMessage: setIntakeMessage,
+  })}
+  <div className="textbook-picker-actions"><button type="button" onClick={() => void cancelDraft(coursePicker.materials || [], () => setCoursePicker(null))}>← Tillbaka</button><button type="submit" disabled={!coursePicker.course.trim() || busy}>Skapa kurs</button></div>
 </form></div>}</div>
 }
 

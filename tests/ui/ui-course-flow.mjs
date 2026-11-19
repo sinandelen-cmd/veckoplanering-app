@@ -153,7 +153,7 @@ await check('gamla kurser öppnas och visar sina veckor, lärobok och klass', as
   await openCourseSettings(page1.page)
   assert.equal(await page1.page.locator('details.course-more-settings input[list="course-textbook-choices"]').inputValue(), 'Matematik 2c – fiktiv bok', 'läroboken i den gamla kursen ändrades')
 })
-await check('"Skapa planering" visar bara namn och läsår, och ingen startdatum eller material finns i formuläret', async () => {
+await check('"Skapa planering" visar namn, läsår och material, men inget startdatum', async () => {
   await openLibrary(page1.page)
   await openLibrary(page1.page)
   await btn(page1.page, '＋ Ny planering').evaluate(e => e.click())
@@ -162,7 +162,10 @@ await check('"Skapa planering" visar bara namn och läsår, och ingen startdatum
   assert.equal(await card.count(), 1, 'formuläret "Skapa planering" öppnades inte')
   assert.ok(await card.locator('input[list="planning-subject-choices"]').count() === 1, 'ämnesfältet saknas när ämnet inte är valt')
   assert.equal(await card.locator('input[type="date"]').count(), 0, 'startdatum finns i formuläret, men ska ligga i kursen')
-  assert.equal(await card.locator('.material-disclosure, input[type="file"]').count(), 0, 'material finns i formuläret, men ska ligga i kursen')
+  // Materialet kan bifogas och klistras in redan i formuläret. Den fällbara materialsektionen ligger kvar i kursen.
+  assert.equal(await card.locator('input[type="file"]').count(), 1, 'bifogning av filer saknas i formuläret')
+  assert.equal(await card.locator('.material-paste textarea').count(), 1, 'inklistrad text saknas i formuläret')
+  assert.equal(await card.locator('.material-disclosure').count(), 0, 'den fällbara materialsektionen ska ligga i kursen, inte i formuläret')
 })
 await check('arkivering och återställning av ämnet behåller båda kurserna med alla veckor och lektioner', async () => {
   // Mät kursen 1b före arkivering, och jämför med samma kurs efter arkivering och återställning.
