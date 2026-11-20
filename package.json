@@ -24,7 +24,9 @@
     "test:ui:subject-safety": "node tests/ui/ui-subject-safety.mjs",
     "test:real": "node tests/real/real-supabase.mjs",
     "test:real-ui": "node tests/real/real-ui.mjs",
-    "test:real-perf": "node tests/real/real-perf.mjs"
+    "test:real-perf": "node tests/real/real-perf.mjs",
+    "test:real-hang": "node tests/real/real-hang.mjs",
+    "test:real-legacy": "node tests/real/real-legacy.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",

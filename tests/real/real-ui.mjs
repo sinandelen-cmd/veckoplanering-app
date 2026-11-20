@@ -40,7 +40,7 @@ async function login(page, key) {
   await page.locator('input[type="email"]').fill(users[key].email)
   await page.locator('input[type="password"]').fill(users[key].password)
   await page.locator('button.login-submit').click()
-  await page.waitForSelector('.library-card, .library-crumbs', { timeout: 30000 })
+  await page.waitForSelector('.library-card', { timeout: 30000 })
   await page.waitForTimeout(500)
 }
 const btn = (page, text) => page.locator('button:visible', { hasText: text }).first()

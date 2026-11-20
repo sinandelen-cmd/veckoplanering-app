@@ -42,7 +42,9 @@ assert.match(app, /JSON\.stringify\(latestPlanRef\.current\) === savedPlanRef\.c
 // Draft saves must not overwrite the snapshot students currently see.
 assert.match(app, /\.\.\.\(publish \|\| !selectedId \? publicationFields\(publish, false, slug, publishedPayload\) : \{\}\)/)
 assert.match(app, /const publishedPayload = publish \? sanitizeForStudents\(payload\) : null/)
-assert.match(app, /if \(busy\) return\s+if \(!String\(plan\.title/)
+assert.match(app, /if \(busy\) return\s+if \(plan\.legacyFormat\)[^\n]*\s+if \(!String\(plan\.title/)
+// Äldre planeringar (veckoplaneringar m.fl.) sparas aldrig över från appen.
+assert.match(app, /äldre format och sparas inte över/)
 assert.match(app, /\.eq\('id', row\.id\)\.eq\('user_id', session\.user\.id\)\.select\('id'\)\.single\(\)/)
 assert.doesNotMatch(app, /max="52"/)
 // Execute the pure date/week functions against real year-boundary examples.

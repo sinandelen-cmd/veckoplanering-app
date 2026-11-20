@@ -633,6 +633,8 @@ function planFromRow(row) {
   }
   return {
     ...emptyPlan(),
+    // Äldre format visas men sparas aldrig över. Se save() och updateRowContent().
+    legacyFormat: true,
     title: row.title || 'Äldre planering',
     subject: row.subject || '',
     schoolYear: row.school_year || '',
@@ -1948,8 +1950,10 @@ const addNewTeacherWeek = () => setPlan(p => {
       setStatus(`Kunde inte hämta planeringar: ${error.message}`)
       return false
     }
-    const annualPlans = (data || []).filter(isAnnualRow)
-    setPlans(annualPlans)
+    // Äldre rader (till exempel veckoplaneringar med kind veckoplanering-v1, eller JSON som inte går att tolka)
+    // visas också, under Övriga planeringar. Ingen rad döljs bara för att formatet är äldre.
+    const libraryPlans = (data || []).filter(row => isAnnualRow(row) || !isSubjectRow(row))
+    setPlans(libraryPlans)
     setSubjectRows((data || []).filter(isSubjectRow))
     void migrateSubjectRows(data || [])
     void applyRowRepairs()
@@ -2054,6 +2058,7 @@ const addNewTeacherWeek = () => setPlan(p => {
 
   async function save(publish, automatic = false) {
     if (busy) return
+    if (plan.legacyFormat) return setStatus('Den här planeringen är i äldre format och sparas inte över. Den ligger kvar oförändrad. Skapa en ny planering om du vill arbeta vidare med innehållet.')
     if (!String(plan.title || '').trim()) return setStatus('Skriv ett namn på årsplaneringen.')
     if (!String(plan.subject || '').trim()) return setStatus('Skriv ämne.')
     if (simpleSetup && !['Grundskola', 'Gymnasiet'].includes(plan.schoolForm)) return setStatus('Välj skolstadium, Grundskola eller Gymnasiet, innan du skapar planeringen.')
@@ -2452,7 +2457,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         <h2 className="library-title">{showArchive ? 'Arkiv' : 'Mina planeringar'}</h2>
         <div className="library-list">
           {schoolCounts.map(({ school, subjects, courses }) => <button key={school} type="button" className="library-folder" onClick={() => navigateLibrary(school, '')}>
-            <span>📁 {school}</span><small>{subjects.length} ämnen · {courses} kurser</small>
+            <span>📁 {school}</span><small>{subjects.length} {subjects.length === 1 ? 'ämne' : 'ämnen'} · {courses} {courses === 1 ? 'kurs' : 'kurser'}</small>
           </button>)}
         </div>
         {!schoolCounts.length && <p className="muted">Skolformerna är dolda i inställningen ⚙ Visa skolformer.</p>}
@@ -2637,6 +2642,11 @@ const addNewTeacherWeek = () => setPlan(p => {
     const { data: current, error: readError } = await supabase.from('veckoplanering').select('content,updated_at')
       .eq('id', row.id).eq('user_id', session.user.id).single()
     if (readError || !current) throw readError || new Error('En rad kunde inte läsas.')
+    // Äldre format (till exempel veckoplaneringar) ändras aldrig från biblioteket. Då skrivs inget över.
+    const storedKind = parseContent(current.content)?.kind
+    if (storedKind !== SUBJECT_KIND && storedKind !== 'arsplanering-v1' && storedKind !== 'arsplanering-v2') {
+      throw new Error('En äldre planering kan inte ändras från biblioteket. Den ligger kvar oförändrad.')
+    }
     const stored = parseContent(current.content)
     if (!stored || typeof stored !== 'object') throw new Error('En rad kunde inte läsas.')
     const { data, error } = await supabase.from('veckoplanering').update({ ...extra, content: JSON.stringify({ ...stored, ...changes }), updated_at: new Date().toISOString() })
