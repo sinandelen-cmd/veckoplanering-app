@@ -86,15 +86,36 @@ try {
   results.inloggning_ms = Date.now() - loginStart
 
   // 3. Hela vägen till klassvyn. Tiden räknas från första mappklicket, inte efter att sidan laddats färdigt.
+  const steg = {}
   const folder = async name => { await page.locator('button.library-folder:visible', { hasText: name }).first().evaluate(e => e.click()) }
   const vagStart = Date.now()
+  const vagStartPerf = await page.evaluate(() => performance.now())
+  // Nätverksanrop under öppningen av kursen: antal, och hur länge de tog sammanlagt.
+  const openReqs = []
+  const onOpenReq = req => { if (!req.url().startsWith('data:')) openReqs.push({ url: req.url().replace(/\?.*$/, '').replace(sbUrl, '').slice(0, 90), t: Date.now(), method: req.method() }) }
+  const onOpenRes = res => { const r = openReqs.find(x => x.url === res.url().replace(/\?.*$/, '').replace(sbUrl, '').slice(0, 90) && !x.done); if (r) { r.done = Date.now() - r.t } }
+  page.on('request', onOpenReq); page.on('response', onOpenRes)
   await page.waitForSelector('button.library-folder:visible', { timeout: 60000 })
+  const t0 = Date.now()
   await folder(SCHOOL)
+  steg.skolform_ms = Date.now() - t0
+  const t1 = Date.now()
   await page.waitForSelector('button.library-folder:visible', { hasText: SUBJECT, timeout: 60000 })
   await folder(SUBJECT)
+  steg.amne_ms = Date.now() - t1
+  const t2 = Date.now()
   await page.locator('button.library-course-open:visible').first().evaluate(e => e.click())
+  steg.kurs_klick_ms = Date.now() - t2
+  const t3 = Date.now()
   await page.waitForFunction(() => document.querySelectorAll('.week-card').length > 0 && document.querySelectorAll('.class-mini-chip').length > 0, null, { timeout: 90000 })
+  steg.veckor_och_klassknappar_ms = Date.now() - t3
+  results.steg = steg
+  // Nedladdningen av planeringslistan vid inloggning: storlek och tid för anropet mot tabellen veckoplanering.
+  results.hamtning_planeringslista = await page.evaluate(() => performance.getEntriesByType('resource').filter(e => e.name.includes('/rest/v1/veckoplanering')).map(e => ({ kb: Math.round((e.encodedBodySize || e.transferSize || 0) / 1024), ms: Math.round(e.duration), start_ms: Math.round(e.startTime) })))
   results.oppna_kurs_hela_vagen_ms = Date.now() - vagStart
+  results.resurser_under_oppning = await page.evaluate(t0 => performance.getEntries().filter(e => e.startTime >= t0 && (e.entryType === 'resource' || e.entryType === 'navigation')).map(e => ({ n: e.name.replace(/\?.*$/, '').slice(-70), start: Math.round(e.startTime - t0), dur: Math.round(e.duration) })).slice(0, 25), vagStartPerf)
+  page.off('request', onOpenReq); page.off('response', onOpenRes)
+  results.natverk_vid_oppning = openReqs.map(r => ({ url: r.url, method: r.method, ms: r.done ?? null }))
   results.klassknappar = await page.locator('.class-mini-chip').count()
 
   // 4. Scrollning i grundplaneringen, och att den återställs vid klassbyte.
@@ -102,6 +123,18 @@ try {
   await page.waitForTimeout(150)
   results.scroll_grund_y = await page.evaluate(() => Math.round(window.scrollY))
   results.scroll_fungerar = results.scroll_grund_y > 300
+
+  // 4b. Veckoplaneringen: öppna första veckan i grundplaneringen och mät tills den är öppen, sedan scrolla i den.
+  const veckoStart = Date.now()
+  const firstWeekToggle = page.locator('.teacher-collapsible-week').first().locator('button').first()
+  await firstWeekToggle.evaluate(e => e.click())
+  await page.waitForFunction(() => !!document.querySelector('.teacher-collapsible-week.teacher-week-open'), null, { timeout: 60000 })
+  results.oppna_vecka_ms = Date.now() - veckoStart
+  await page.evaluate(() => window.scrollTo({ top: 900, behavior: 'instant' }))
+  await page.waitForTimeout(150)
+  results.scroll_i_vecka_y = await page.evaluate(() => Math.round(window.scrollY))
+  results.scroll_i_vecka_fungerar = results.scroll_i_vecka_y > 300
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
 
   // 5. Klassbyten. Mäts från klick till att den nya klassen är aktiv.
   const switchTo = async label => {
@@ -167,6 +200,7 @@ try {
 console.log(JSON.stringify(results, null, 2))
 assert.equal(errors.length, 0, 'sidfel: ' + errors.join(' | '))
 assert.equal(results.scroll_fungerar, true, 'scrollning fungerar inte i grundplaneringen')
+assert.equal(results.scroll_i_vecka_fungerar, true, 'scrollning fungerar inte i veckoplaneringen')
 assert.ok(results.scroll_efter_klassbyte_y < 50, 'scrollen återställs inte vid klassbyte')
 assert.ok(results.klassbyte_max_ms < 2000, 'långsammaste klassbyte ' + results.klassbyte_max_ms + ' ms')
 console.log('PERF OK')

@@ -108,3 +108,11 @@ Testerna vägrar köra mot något annat än localhost. Det finns inget produktio
 - `supabase/proposals/2026-11-amnen-unikt-index-kontroller.sql` är skrivskyddade kontroller mot produktion. Del A körs före installation, del B efter.
 - `tests/real/stack/index-install-test.sh` testar lokalt: misslyckad installation rullas tillbaka helt, installation och återställning ändrar inga rader eller filer, och rättigheter och beteende stämmer. Kör med `STACK_DIR=<mappen med den lokala stacken> ./index-install-test.sh`. Skriptet kör bara mot den lokala Docker-databasen.
 - Verifierat lokalt, men ska inte köras mot produktion utan skriftligt godkännande och en kontroll efter dubbletter.
+
+### Förslag: listvy för planeringslistan (ännu inte i produktion)
+- `supabase/proposals/2026-11-lista-vy.sql` skapar vyn `veckoplanering_lista` och funktionen `planering_lista_innehall`. Vyn utelämnar `weeksData` ur innehållet, så att biblioteket laddar listan snabbt. Veckorna hämtas när en planering öppnas.
+- Appen använder vyn om den finns och faller tillbaka till tabellen annars. Därför kan appen köras både före och efter installation.
+- `supabase/proposals/2026-11-lista-vy-aterstall.sql` tar bort vyn och funktionen.
+- Lokalt verifierat: med vyn öppnas en kurs på 1,7 s på långsamt nät (400 ms latens, 1,6 Mbit/s), mot 7,7 s utan vy. Båda körningarna i `test:real-perf`, `test:real-ui` och `test:real-legacy` är gröna.
+- Ska inte köras mot produktion utan skriftligt godkännande.
+

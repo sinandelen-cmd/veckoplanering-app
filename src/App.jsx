@@ -1941,15 +1941,28 @@ const addNewTeacherWeek = () => setPlan(p => {
     ...((plan.schoolClosures || []).some(item => !validSchoolClosure(item)) ? ['Kontrollera datum för lov och studiedagar.'] : []),
   ]
 
+  // Hämtar den fulla raden, med veckornas innehåll, för en rad från listan. Rader från listvyn saknar veckorna.
+  async function fullRowContent(row) {
+    if (!row?.lista) return row
+    const { data, error } = await supabase.from('veckoplanering').select('content').eq('id', row.id).eq('user_id', session.user.id).single()
+    if (error || !data) throw error || new Error('Planeringens innehåll kunde inte hämtas.')
+    return { ...row, content: data.content, lista: false }
+  }
+
   async function loadPlans() {
     await applyRowRepairs()
-    const { data, error } = await supabase.from('veckoplanering')
-      .select('id,title,content,week_start,created_at,updated_at,subject,school_year,class_name,start_date,weeks,published,public_slug')
-      .eq('user_id', session.user.id).order('created_at', { ascending: false })
+    // Listan hämtas från en vy som utelämnar veckornas innehåll. Finns inte vyn ännu används tabellen, som förut.
+    const listColumns = 'id,title,content,week_start,created_at,updated_at,subject,school_year,class_name,start_date,weeks,published,public_slug'
+    let { data, error } = await supabase.from('veckoplanering_lista').select(listColumns).eq('user_id', session.user.id).order('created_at', { ascending: false })
+    const fromView = !error
+    if (error) {
+      ({ data, error } = await supabase.from('veckoplanering').select(listColumns).eq('user_id', session.user.id).order('created_at', { ascending: false }))
+    }
     if (error) {
       setStatus(`Kunde inte hämta planeringar: ${error.message}`)
       return false
     }
+    data = (data || []).map(row => (fromView ? { ...row, lista: true } : row))
     // Äldre rader (till exempel veckoplaneringar med kind veckoplanering-v1, eller JSON som inte går att tolka)
     // visas också, under Övriga planeringar. Ingen rad döljs bara för att formatet är äldre.
     const libraryPlans = (data || []).filter(row => isAnnualRow(row) || !isSubjectRow(row))
@@ -1964,8 +1977,10 @@ const addNewTeacherWeek = () => setPlan(p => {
         const lastId = window.sessionStorage.getItem(`arsplanering-last-open-${session.user.id}`)
         const lastPlan = annualPlans.find(row => String(row.id) === lastId)
         if (lastPlan && JSON.stringify(latestPlanRef.current) === savedPlanRef.current) {
+          const restoredSource = await fullRowContent(lastPlan)
           // Skriv inte över ändringar som läraren hann göra medan listan laddades.
-          const restored = planFromRow(lastPlan)
+          if (JSON.stringify(latestPlanRef.current) !== savedPlanRef.current) return true
+          const restored = planFromRow(restoredSource)
           setSimpleSetup(false)
           setTeacherTab("arsplan")
           setCalendarOpen(false)
@@ -2529,8 +2544,26 @@ const addNewTeacherWeek = () => setPlan(p => {
   function loadPlan(row, className, navigationApproved = false) {
     if (busy) return
     if (!navigationApproved && !confirmNavigation()) return false
-    try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(row.id)) } catch { /* Lagring kan vara blockerad */ }
-    setOpenedFromLibrary(teacherTab === 'bibliotek')
+    void openLibraryPlan(row, className)
+    return true
+  }
+
+  async function openLibraryPlan(listRow, className) {
+    setBusy(true)
+    setStatus('Öppnar planeringen…')
+    try {
+      const row = await fullRowContent(listRow)
+      try { window.sessionStorage.setItem(`arsplanering-last-open-${session.user.id}`, String(row.id)) } catch { /* Lagring kan vara blockerad */ }
+      setOpenedFromLibrary(teacherTab === 'bibliotek')
+      applyOpenedPlan(row, className)
+    } catch (error) {
+      setStatus(`Kunde inte öppna planeringen: ${error.message || 'Okänt fel'}`)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  function applyOpenedPlan(row, className) {
     const openedPlan = planFromRow(row)
     setPendingImport(null)
     { const info = classifyPlanRow(row); const school = info.school === 'Grundskola' || info.school === 'Gymnasiet' ? info.school : ''; setLibrarySchool(school); setLibrarySubject(school ? school + '|' + info.subject : '') }
@@ -2581,7 +2614,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     if (archived && !window.confirm(`Arkivera "${row.title}"? Den sparas och kan återställas när som helst.`)) return
     setBusy(true)
     try {
-      const stored = parseContent(row.content)
+      const stored = parseContent((await fullRowContent(row)).content)
       if (!stored || typeof stored !== 'object') throw new Error('Planeringens innehåll kunde inte läsas.')
       const updated = { ...stored, archived }
       const { data, error } = await supabase.from('veckoplanering').update({ content: JSON.stringify(updated), updated_at: new Date().toISOString() })
@@ -2889,7 +2922,15 @@ const addNewTeacherWeek = () => setPlan(p => {
     if (!entry.archived) { setStatus('Arkivera ämnet först. Permanent radering görs bara från arkivet.'); return }
     if (entry.courses.some(item => !item.info.archived)) { setStatus('Det finns aktiva kurser i ämnet. Arkivera eller återställ dem innan du raderar ämnet.'); return }
     if (entry.courses.some(item => item.row.id === selectedId) && JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar i en planering som ska raderas. Radering tar även bort dem. Vill du fortsätta?')) return
-    if (!window.confirm(subjectDeleteSummary(entry))) return
+    // Bekräftelsen räknar veckor och lektioner, så den bygger på fullt innehåll för varje kurs.
+    let fullCourses
+    try {
+      fullCourses = await Promise.all(entry.courses.map(async item => ({ ...item, row: await fullRowContent(item.row) })))
+    } catch (error) {
+      setStatus(`Kunde inte läsa kurserna inför radering: ${error.message || 'Okänt fel'}`)
+      return
+    }
+    if (!window.confirm(subjectDeleteSummary({ ...entry, courses: fullCourses }))) return
     setBusy(true)
     let deletedCourses = 0
     let leftoverFiles = 0
@@ -2941,7 +2982,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     if (newTitle === row.title) return
     setBusy(true)
     try {
-      const stored = parseContent(row.content)
+      const stored = parseContent((await fullRowContent(row)).content)
       if (!stored || typeof stored !== 'object') throw new Error('Planeringens innehåll kunde inte läsas.')
       const updated = { ...stored, title: newTitle }
       const { error } = await supabase.from('veckoplanering').update({

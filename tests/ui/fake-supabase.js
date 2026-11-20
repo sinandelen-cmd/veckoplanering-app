@@ -47,7 +47,8 @@ const fakeBucket = {
 let fakeUpdateCount = 0
 const globalthis_ls = key => { try { return globalThis.localStorage?.getItem(key) || '' } catch { return '' } }
 class Query {
-  constructor(table) { this.table = table; this.filters = []; this.op = 'select'; this.payload = null; this.orders = []; this.wantSingle = null; this.limitN = null }
+  // Listvyn veckoplanering_lista visar samma rader som tabellen, så den modelleras som tabellen.
+  constructor(table) { this.table = table === 'veckoplanering_lista' ? 'veckoplanering' : table; this.filters = []; this.op = 'select'; this.payload = null; this.orders = []; this.wantSingle = null; this.limitN = null }
   select() { if (this.op === 'select') this.op = 'select'; return this }
   eq(col, val) { this.filters.push(r => r[col] === val); return this }
   neq(col, val) { this.filters.push(r => r[col] !== val); return this }
