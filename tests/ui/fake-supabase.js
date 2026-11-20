@@ -44,6 +44,7 @@ const fakeBucket = {
   },
 }
 
+let fakeUpdateCount = 0
 class Query {
   constructor(table) { this.table = table; this.filters = []; this.op = 'select'; this.payload = null; this.orders = []; this.wantSingle = null; this.limitN = null }
   select() { if (this.op === 'select') this.op = 'select'; return this }
@@ -68,7 +69,13 @@ class Query {
       persist()
       return this.shape(created)
     }
-    if (this.op === 'update') { matched.forEach(r => Object.assign(r, this.payload, { updated_at: new Date().toISOString() })); persist(); return this.shape(matched) }
+    if (this.op === 'update') {
+      // Testhjälp: den n:te uppdateringen efter fake-fail-update-at misslyckas en gång. Används för att testa återställning.
+      fakeUpdateCount += 1
+      const failAt = Number(globalThis.localStorage?.getItem('fake-fail-update-at') || 0)
+      if (failAt && fakeUpdateCount === failAt) { globalThis.localStorage.removeItem('fake-fail-update-at'); return { data: null, error: { message: 'Fiktiv klient: uppdateringen misslyckades' } } }
+      matched.forEach(r => Object.assign(r, this.payload, { updated_at: new Date().toISOString() })); persist(); return this.shape(matched)
+    }
     if (this.op === 'delete') { const ids = new Set(matched); store[this.table] = rows.filter(r => !ids.has(r)); persist(); return this.shape(matched) }
     let out = [...matched]
     for (const [col, asc] of this.orders.reverse()) out.sort((a, b) => (a[col] > b[col] ? 1 : -1) * (asc ? 1 : -1))
@@ -97,5 +104,5 @@ export const supabase = {
   },
 }
 // Testhjälp: lägg in fiktiva rader före start.
-export const __fake = { store, files, fakeLog, FAKE_TEACHER_ID }
+export const __fake = { store, files, fakeLog, FAKE_TEACHER_ID, resetUpdateCount: () => { fakeUpdateCount = 0 } }
 if (typeof window !== 'undefined') window.__fake = __fake

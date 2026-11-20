@@ -124,6 +124,23 @@ await check('samtidiga skrivningar: databasen släpper bara in en ämnesrad för
   await A.client.from('veckoplanering').delete().like('title', 'TEST Samtidig')
 })
 
+await check('unikt index: versaler och extra mellanslag ger samma ämne (btrim och lower)', async () => {
+  const first = await A.client.from('veckoplanering').insert(subjectPayload(A.id, 'Gymnasiet', 'TEST Mellanslag')).select('id').single()
+  assert.equal(first.error, null, first.error?.message)
+  const variant = { ...subjectPayload(A.id, 'gymnasiet', '  test mellanslag '), title: 'TEST Mellanslag 2' }
+  const second = await A.client.from('veckoplanering').insert(variant).select('id').single()
+  assert.equal(second.error?.code, '23505', 'varianten med versaler och mellanslag släpptes in')
+  await A.client.from('veckoplanering').delete().like('title', 'TEST Mellanslag%')
+})
+
+const svcClient = createClient(url, process.env.REAL_SUPABASE_SERVICE_KEY || '', { auth: { persistSession: false } })
+// En rad med ogiltig JSON i content påverkas inte av indexets predikat.
+await check('unikt index: en rad med ogiltig JSON i content kan fortfarande sparas (påverkar inte planeringar)', async () => {
+  const { error } = await svcClient.from('veckoplanering').insert({ user_id: A.id, title: 'TEST Ogiltig', week_start: '2026-08-10', content: 'inte json', subject: 'x', weeks: 0 })
+  assert.equal(error, null, error?.message)
+  await svcClient.from('veckoplanering').delete().like('title', 'TEST Ogiltig%')
+})
+
 // Planeringar påverkas inte av indexet: två kurser med samma ämne och namn ska kunna sparas.
 await check('indexet gäller bara ämnesrader: två kurser med samma ämne och namn kan sparas', async () => {
   const w = weeks21('Dubbel')

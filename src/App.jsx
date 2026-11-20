@@ -2652,6 +2652,8 @@ const addNewTeacherWeek = () => setPlan(p => {
     }
   }
   // Byter namn på ett ämne och på alla dess kurser. Ingen annan planering eller annat ämne påverkas.
+  // Byter namn på ett ämne och på alla dess kurser. Om något steg misslyckas återställs de rader som redan ändrats,
+  // så att ämnesraden och kurserna aldrig hamnar i olika namn. Ingen annan planering påverkas.
   async function renameSubject(entry, rawName) {
     if (busy) return
     const name = capitalizeFirstSwedish(String(rawName || '').trim())
@@ -2660,28 +2662,41 @@ const addNewTeacherWeek = () => setPlan(p => {
       setStatus('Spara ändringarna i den öppna planeringen innan du byter ämnesnamn.')
       return
     }
-    const normalized = value => String(value).toLocaleLowerCase('sv')
+    const normalized = value => String(value).trim().toLocaleLowerCase('sv')
     if (buildSubjectEntries().some(other => other.school === entry.school && other.key !== entry.key && normalized(other.subject) === normalized(name))) {
       setStatus('Det finns redan ett ämne med det namnet.')
       return
     }
     setBusy(true)
+    const changed = []
+    let subjectRowChanged = false
+    const previous = entry.subject
     try {
-      if (entry.row) await updateRowContent(entry.row, { subject: name }, { subject: name, title: name })
+      // Ämnesraden först: en krock med det unika indexet stoppar då innan någon kurs ändrats.
+      if (entry.row) { await updateRowContent(entry.row, { subject: name }, { subject: name, title: name }); subjectRowChanged = true }
       for (const item of entry.courses) {
         await updateRowContent(item.row, { subject: name }, { subject: name })
-        if (item.row.id === selectedId) {
-          setPlan(current => ({ ...current, subject: name }))
-          savedPlanRef.current = JSON.stringify({ ...plan, subject: name })
-          setSavedRevision(value => value + 1)
-        }
+        changed.push(item)
+      }
+      if (entry.courses.some(item => item.row.id === selectedId)) {
+        setPlan(current => ({ ...current, subject: name }))
+        savedPlanRef.current = JSON.stringify({ ...plan, subject: name })
+        setSavedRevision(value => value + 1)
       }
       setLibrarySubject(entry.school + '|' + name)
       await loadPlans()
       setStatus('Ämnet har bytt namn till ' + name + '.')
     } catch (error) {
+      // Återställ det som hann ändras. Återställningen kan i sin tur misslyckas, och då visas det för användaren.
+      let restoreFailed = 0
+      for (const item of changed) {
+        try { await updateRowContent(item.row, { subject: previous }, { subject: previous }) } catch { restoreFailed += 1 }
+      }
+      if (subjectRowChanged) {
+        try { await updateRowContent(entry.row, { subject: previous }, { subject: previous, title: previous }) } catch { restoreFailed += 1 }
+      }
       await loadPlans()
-      setStatus('Namnbytet kunde inte slutföras: ' + (error.message || 'Okänt fel'))
+      setStatus('Namnbytet kunde inte slutföras: ' + (error.message || 'Okänt fel') + (restoreFailed ? `. ${restoreFailed} rader kunde inte återställas. Ladda om och kontrollera ämnet.` : '. Inga ändringar kvarstår.'))
     } finally {
       setBusy(false)
     }

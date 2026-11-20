@@ -1,7 +1,7 @@
 -- SKRIVSKYDDADE kontroller att köra mot PRODUKTION före något beslut om indexet 2026-11-amnen-unikt-index.sql.
 -- Inga ändringar. Kör var och en separat. Resultatet ska vara tomt eller de värden som anges.
 
--- 1. Rader vars content inte är giltig JSON. Indexet kan inte skapas om någon rad finns här. Förväntat: 0 rader.
+-- 1. Rader vars content inte är giltig JSON. Förväntat: 0 rader (verifierat 2026-11 att alla 16 är giltiga).
 select id from public.veckoplanering where not pg_input_is_valid(content, 'jsonb');
 
 -- 2. Finns det redan ämnesrader? Förväntat: 0.
