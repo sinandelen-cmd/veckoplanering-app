@@ -87,3 +87,32 @@ Admin är hårdkodad på två ställen: klienten (`src/App.jsx`, `isAdmin`) och 
 - Storage-bucketens inställningar (till exempel `file_size_limit`), som bara finns i Supabase Storage.
 - En riktig Supabase-instans eller Supabase-kompatibel stack för auth och PostgREST. Docker-avbilder blockeras i sessionen.
 - Fiktiva konton med testlösenord, skapade i testmiljöns Auth. Inga riktiga lärarkonton används.
+
+## Lokal riktig Supabase-stack (kostnadsfri, ingen produktion)
+
+Sedan dess körs en lokal stack på den egna datorn med samma avbilder som Supabase: PostgreSQL, Auth, PostgREST, Storage och en nginx-gateway. Den beskrivs i `tests/real/stack/README.md`.
+
+- `npm run test:real`: integrationstest mot databas, RLS, Storage och åtkomst mellan konton (22 kontroller).
+- `npm run test:real-ui`: browsertest med riktig inloggning, skapande, import, omladdning, annan dator, arkiv och radering, samt migrering med fyra samtidiga flikar (12 kontroller).
+
+Testerna vägrar köra mot något annat än localhost. Det finns inget produktionsnyckel i testmiljön.
+
+### Lokala justeringar som kräver verifiering mot produktion
+- `teacher_access` saknar `timer_period`, `expires_at` och `extension_requested` i repots migrationer, men appen läser dem. De läggs till lokalt. Verifiera mot produktion med skrivskyddad export innan något ändras i repot.
+- Adminens UUID i migrationen byts mot en fiktiv admin i den lokala kopian.
+- Storage-rollerna får standardrättigheter, som Supabase-plattformen sätter i produktion.
+
+### Förslag, ännu inte applicerat
+- `supabase/proposals/2026-11-amnen-unikt-index.sql` hindrar dubbla ämnesrader vid samtidiga skrivningar. Den gäller bara `amne-v1`-rader. Installationen körs i en transaktion. Den fångar bara tre namngivna JSON-fel (22P02, 22P05, 54001) och returnerar NULL för dem. Alla andra fel fortplantas. EXECUTE dras in från PUBLIC och anon, men behålls för authenticated och service_role, eftersom vanliga skrivningar annars nekas.
+- `supabase/proposals/2026-11-amnen-unikt-index-aterstall.sql` tar bort exakt det installationen skapar, i en transaktion.
+- `supabase/proposals/2026-11-amnen-unikt-index-kontroller.sql` är skrivskyddade kontroller mot produktion. Del A körs före installation, del B efter.
+- `tests/real/stack/index-install-test.sh` testar lokalt: misslyckad installation rullas tillbaka helt, installation och återställning ändrar inga rader eller filer, och rättigheter och beteende stämmer. Kör med `STACK_DIR=<mappen med den lokala stacken> ./index-install-test.sh`. Skriptet kör bara mot den lokala Docker-databasen.
+- Verifierat lokalt, men ska inte köras mot produktion utan skriftligt godkännande och en kontroll efter dubbletter.
+
+### Förslag: listvy för planeringslistan (ännu inte i produktion)
+- `supabase/proposals/2026-11-lista-vy.sql` skapar vyn `veckoplanering_lista` och funktionen `planering_lista_innehall`. Vyn utelämnar `weeksData` ur innehållet, så att biblioteket laddar listan snabbt. Veckorna hämtas när en planering öppnas.
+- Appen använder vyn om den finns och faller tillbaka till tabellen annars. Därför kan appen köras både före och efter installation.
+- `supabase/proposals/2026-11-lista-vy-aterstall.sql` tar bort vyn och funktionen.
+- Lokalt verifierat: med vyn öppnas en kurs på 1,7 s på långsamt nät (400 ms latens, 1,6 Mbit/s), mot 7,7 s utan vy. Båda körningarna i `test:real-perf`, `test:real-ui` och `test:real-legacy` är gröna.
+- Ska inte köras mot produktion utan skriftligt godkännande.
+- `npm run test:real-weeks` kontrollerar att veckoinnehållet (21 veckor, markörer, lektioner, klasser) är oförändrat efter namnbyte, arkivering och återställning, och efter omladdning. Körs mot lokal stack.

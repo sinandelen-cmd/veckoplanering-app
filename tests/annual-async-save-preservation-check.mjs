@@ -9,7 +9,7 @@ const start = source.indexOf('  async function save(publish, automatic = false) 
 const end = source.indexOf('\n  useEffect(', start)
 assert.ok(start !== -1 && end > start, 'Kunde inte hitta årsplaneringens sparfunktion')
 const saveSource = source.slice(start, end)
-const helpers = await loadFunctions(appUrl, ['validSchoolClosure', 'resourceInfo', 'sanitizeForStudents', 'buildSlug', 'publicationFields', 'planTheme', 'PLAN_THEMES'])
+const helpers = await loadFunctions(appUrl, ['validSchoolClosure', 'resourceInfo', 'sanitizeForStudents', 'buildSlug', 'publicationFields', 'planTheme', 'PLAN_THEMES', 'leftoverNote'])
 
 async function scenario({ editDuringSave }) {
   const originalPlan = { title: 'Matematik', subject: 'Matematik', startDate: '2026-08-17', weeks: 1,
@@ -29,7 +29,7 @@ async function scenario({ editDuringSave }) {
     Date, Intl, DEFAULT_WEEKS: 1, WEEKDAYS: ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'],
     plan: originalPlan, weeks: originalPlan.weeksData, latestPlanRef,
     session: { user: { id: 'test-user' } }, supabase,
-    uploadPendingMaterials, deleteStoredFiles: async () => {}, pendingRemovals: [], setPendingRemovals: () => {},
+    uploadPendingMaterials, deleteStoredFiles: async () => [], pendingRemovals: [], setPendingRemovals: () => {},
     busy: false, simpleSetup: false, isDirty: false, teacherTab: 'arsplan',
     get selectedId() { return selectedId }, set selectedId(value) { selectedId = value },
     setSelectedId: value => { selectedId = value },
@@ -63,6 +63,6 @@ async function scenario({ editDuringSave }) {
 }
 await scenario({ editDuringSave: true })
 await scenario({ editDuringSave: false })
-assert.match(source, /<button type="button" disabled=\{busy\} title=\{row\.title\|\|displayName\}[\s\S]{0,300}?onClick=\{\(\)=>loadPlan\(row\)\}/,
+assert.match(source, /className="library-course-open" disabled=\{busy\} onClick=\{\(\) => loadPlan\(item\.row\)\}/,
   'Man ska inte kunna byta planering under sparning')
 console.log('Annual async save preserves new edits and normal save behavior: OK')

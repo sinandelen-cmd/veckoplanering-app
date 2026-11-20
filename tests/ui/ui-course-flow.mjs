@@ -1,6 +1,6 @@
 // Förenklat kursflöde med FIKTIV Supabase-klient. Körning: npm run test:ui:course-flow
 // Kontrollerar:
-//  - "Ny kurs" frågar bara efter kursens namn och läsår. Ämne och skolform är redan valda
+//  - "Lägg till kurs" frågar bara efter kursens namn och läsår. Ämne och skolform är redan valda
 //  - kursen skapas och planeringsvyn öppnas direkt, med alla 21 veckor
 //  - "Fler inställningar" inne i kursen: läsår, lärobok, årskurs och startdatum
 //  - ett ändrat startdatum flyttar veckorna men behåller lektioner och innehåll
@@ -54,30 +54,17 @@ async function openCourseSettings(page) {
 }
 // Går tillbaka med "←"-knapparna tills ämnesraden syns. Används när en kurs är öppen.
 async function openLibrary(page) {
-  for (let i = 0; i < 4; i++) {
-    if (await page.locator('button:visible', { hasText: 'Ny kurs' }).count() || await page.locator('button:visible', { hasText: '📚 Matematik' }).count()) return
-    const back = page.locator('button:visible', { hasText: /^← / }).first()
-    if (!(await back.count())) return
-    await back.evaluate(e => e.click())
-    await page.waitForTimeout(400)
-  }
+  const root = page.locator('.library-crumbs .crumb-link', { hasText: 'Mina planeringar' })
+  if (await root.count()) { await root.first().evaluate(e => e.click()); await page.waitForTimeout(300) }
 }
 // Öppnar ämnet Matematik. Ämnesraden kan visas ihopfälld, och en andra klick fäller ihop den igen,
 // så vi kontrollerar om ämnet är öppet och klickar bara när det inte är det.
 async function goToSubject(page, expectCourses = true) {
   await openLibrary(page)
-  const open = async () => (await page.locator('button:visible', { hasText: /^📁 Matematik/ }).count()) > 0
-    || (!expectCourses && (await page.locator('button:visible', { hasText: 'Ny kurs' }).count()) > 0)
-  if (await open()) return
-  if (!(await page.locator('button:visible', { hasText: '📚 Matematik' }).count())) {
-    await btn(page, 'Gymnasiet').evaluate(e => e.click()).catch(() => {})
-    await page.waitForTimeout(400)
-  }
-  // Ett klick öppnar ämnet. Då byter ämnesraden utseende, så vi klickar bara en gång.
-  if (!(await open())) {
-    const subject = page.locator('button:visible', { hasText: '📚 Matematik' })
-    if (await subject.count()) { await subject.first().evaluate(e => e.click()); await page.waitForTimeout(400) }
-  }
+  if ((await page.locator('button:visible', { hasText: 'Lägg till kurs' }).count()) > 0) return
+  await page.locator('button.library-folder:visible', { hasText: 'Gymnasiet' }).first().evaluate(e => e.click()); await page.waitForTimeout(300)
+  await page.locator('button.library-folder:visible', { hasText: 'Matematik' }).first().evaluate(e => e.click()); await page.waitForTimeout(300)
+  if (expectCourses) await page.waitForSelector('.library-course-open', { timeout: 10000 }).catch(() => {})
 }
 async function countWeeks(page) {
   await btn(page, 'Visa alla veckor').evaluate(e => e.click()).catch(() => {})
@@ -92,9 +79,9 @@ async function countWeeks(page) {
 
 const page1 = await open([oldRow])
 const errors = page1.errors
-await check('"Ny kurs" frågar bara efter kursens namn och läsår, ämne och skolform visas som text', async () => {
+await check('"Lägg till kurs" frågar bara efter kursens namn och läsår, ämne och skolform visas som text', async () => {
   await goToSubject(page1.page, false)
-  await btn(page1.page, 'Ny kurs').evaluate(e => e.click())
+  await btn(page1.page, 'Lägg till kurs').evaluate(e => e.click())
   await page1.page.waitForTimeout(300)
   const dialog = page1.page.locator('[aria-label="Skapa ny kurs"]')
   assert.equal(await dialog.count(), 1, 'kursdialogen öppnas inte')
@@ -153,19 +140,17 @@ await check('gamla kurser öppnas och visar sina veckor, lärobok och klass', as
   await openCourseSettings(page1.page)
   assert.equal(await page1.page.locator('details.course-more-settings input[list="course-textbook-choices"]').inputValue(), 'Matematik 2c – fiktiv bok', 'läroboken i den gamla kursen ändrades')
 })
-await check('"Skapa planering" visar namn, läsår och material, men inget startdatum', async () => {
+await check('"Nytt ämne" visar bara skolform och ämnesnamn, utan startdatum, material eller läsår', async () => {
   await openLibrary(page1.page)
-  await openLibrary(page1.page)
-  await btn(page1.page, '＋ Ny planering').evaluate(e => e.click())
-  await page1.page.waitForTimeout(400)
-  const card = page1.page.locator('.simple-setup-card')
-  assert.equal(await card.count(), 1, 'formuläret "Skapa planering" öppnades inte')
-  assert.ok(await card.locator('input[list="planning-subject-choices"]').count() === 1, 'ämnesfältet saknas när ämnet inte är valt')
-  assert.equal(await card.locator('input[type="date"]').count(), 0, 'startdatum finns i formuläret, men ska ligga i kursen')
-  // Materialet kan bifogas och klistras in redan i formuläret. Den fällbara materialsektionen ligger kvar i kursen.
-  assert.equal(await card.locator('input[type="file"]').count(), 1, 'bifogning av filer saknas i formuläret')
-  assert.equal(await card.locator('.material-paste textarea').count(), 1, 'inklistrad text saknas i formuläret')
-  assert.equal(await card.locator('.material-disclosure').count(), 0, 'den fällbara materialsektionen ska ligga i kursen, inte i formuläret')
+  await btn(page1.page, '＋ Nytt ämne').evaluate(e => e.click())
+  await page1.page.waitForSelector('.library-subject-form form', { timeout: 15000 })
+  const form = page1.page.locator('.library-subject-form')
+  assert.equal(await form.locator('select').count(), 1, 'skolformen saknas')
+  assert.equal(await form.locator('input').count(), 1, 'formuläret ska bara ha ämnesnamn')
+  assert.equal(await form.locator('input[type="date"], input[type="file"], textarea').count(), 0, 'startdatum, material eller fler fält finns i formuläret')
+  assert.match(await form.innerText(), /Skapa ämne/)
+  await btn(page1.page, 'Avbryt').evaluate(e => e.click())
+  await page1.page.waitForTimeout(300)
 })
 await check('arkivering och återställning av ämnet behåller båda kurserna med alla veckor och lektioner', async () => {
   // Mät kursen 1b före arkivering, och jämför med samma kurs efter arkivering och återställning.
@@ -197,13 +182,8 @@ await check('arkivering och återställning av ämnet behåller båda kurserna m
 
 // Går upp till skolformsnivån, där antalet kurser per skolform visas (t.ex. "📁 Gymnasiet (2)").
 async function toSchoolLevel(page) {
-  for (let i = 0; i < 4; i++) {
-    if (await page.locator('button:visible', { hasText: /^📁 Gymnasiet/ }).count()) return
-    const back = page.locator('button:visible', { hasText: /^← / }).first()
-    if (!(await back.count())) return
-    await back.evaluate(e => e.click())
-    await page.waitForTimeout(400)
-  }
+  await openLibrary(page)
+  await page.locator('button.library-folder:visible', { hasText: 'Gymnasiet' }).first().evaluate(e => e.click()); await page.waitForTimeout(300)
 }
 await check('siduppdatering: biblioteket och kurserna visas direkt efter omladdning och ny inloggning', async () => {
   // Omladdning öppnar den senast öppnade kursen, som tidigare. Därifrån går vi upp till skolformsnivån.
@@ -213,13 +193,13 @@ await check('siduppdatering: biblioteket och kurserna visas direkt efter omladdn
   assert.ok(!/Vad vill du göra/.test(text), 'mellanvyn visas efter siduppdatering')
   await toSchoolLevel(page1.page)
   // Den falska databasen laddas om från fixturen vid omladdning, så här finns bara den gamla kursen kvar.
-  assert.ok(/Gymnasiet \(1\)/.test(await page1.page.locator('body').innerText()), 'den gamla kursen syns inte i Gymnasiet efter omladdning')
+  assert.ok(await page1.page.locator('button.library-folder:visible', { hasText: 'Matematik' }).count() === 1, 'den gamla kursens ämne syns inte i Gymnasiet efter omladdning')
   // Ny inloggning: utloggad och inloggad igen i samma session.
   await page1.page.evaluate(() => { localStorage.removeItem('fake-session'); localStorage.setItem('fake-session', 'on') })
   await page1.page.reload({ waitUntil: 'networkidle' })
   await page1.page.waitForTimeout(800)
   await toSchoolLevel(page1.page)
-  assert.ok(/Gymnasiet \(1\)/.test(await page1.page.locator('body').innerText()), 'den gamla kursen syns inte i Gymnasiet efter ny inloggning')
+  assert.ok(await page1.page.locator('button.library-folder:visible', { hasText: 'Matematik' }).count() === 1, 'den gamla kursens ämne syns inte i Gymnasiet efter ny inloggning')
 })
 await check('inga sidfel i kursflödet', async () => assert.deepEqual(errors, [], 'fel: ' + errors.join(' | ')))
 await page1.page.close()

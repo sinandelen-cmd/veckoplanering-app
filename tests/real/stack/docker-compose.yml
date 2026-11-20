@@ -1,0 +1,74 @@
+# Lokal Supabase-liknande stack för fiktiv testdata. Ingen koppling till produktion.
+name: arsplanering-local
+services:
+  db:
+    image: supabase/postgres:17.6.1.166
+    environment:
+      POSTGRES_PASSWORD: ${PGPASS}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXP: 3600
+    ports: ["54322:5432"]
+    command: ["postgres", "-c", "wal_level=logical", "-c", "listen_addresses=*"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -h localhost"]
+      interval: 3s
+      retries: 60
+  auth:
+    image: supabase/gotrue:v2.177.0
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: http://localhost:8000
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${PGPASS}@db:5432/postgres
+      GOTRUE_SITE_URL: http://localhost:8000
+      GOTRUE_URI_ALLOW_LIST: "*"
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_SECRET: ${JWT_SECRET}
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_SMTP_HOST: localhost
+      GOTRUE_SMTP_PORT: 2525
+  rest:
+    image: postgrest/postgrest:v12.2.3
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${PGPASS}@db:5432/postgres
+      PGRST_DB_SCHEMAS: public,storage
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+  storage:
+    image: supabase/storage-api:v1.14.6
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      ANON_KEY: ${ANON_KEY}
+      SERVICE_KEY: ${SERVICE_KEY}
+      POSTGREST_URL: http://rest:3000
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: postgres://supabase_storage_admin:${PGPASS}@db:5432/postgres
+      FILE_SIZE_LIMIT: 52428800
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: local
+      REGION: local
+      GLOBAL_S3_BUCKET: local
+      ENABLE_IMAGE_TRANSFORMATION: "false"
+    volumes:
+      - storage-data:/var/lib/storage
+  gateway:
+    image: nginx:alpine
+    depends_on: [auth, rest, storage]
+    ports: ["8000:8000"]
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+volumes:
+  storage-data: {}

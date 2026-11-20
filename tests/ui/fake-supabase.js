@@ -37,11 +37,18 @@ const fakeBucket = {
     const blob = new Blob([bytes], { type })
     return { data: { signedUrl: URL.createObjectURL(blob) }, error: null }
   },
-  remove: async paths => { paths.forEach(path => { delete files[path]; fakeLog.removals.push(path) }); persistFiles(); return { data: paths.map(path => ({ name: path })), error: null } },
+  remove: async paths => {
+    // Sökvägar med "radera-fel" kan inte raderas. Används för att testa att misslyckad radering visas för användaren.
+    if (paths.some(path => path.includes('radera-fel')) || globalthis_ls('fake-storage-down') === 'on') return { data: null, error: { message: 'Fiktiv klient: radering misslyckades' } }
+    paths.forEach(path => { delete files[path]; fakeLog.removals.push(path) }); persistFiles(); return { data: paths.map(path => ({ name: path })), error: null }
+  },
 }
 
+let fakeUpdateCount = 0
+const globalthis_ls = key => { try { return globalThis.localStorage?.getItem(key) || '' } catch { return '' } }
 class Query {
-  constructor(table) { this.table = table; this.filters = []; this.op = 'select'; this.payload = null; this.orders = []; this.wantSingle = null; this.limitN = null }
+  // Listvyn veckoplanering_lista visar samma rader som tabellen, så den modelleras som tabellen.
+  constructor(table) { this.table = table === 'veckoplanering_lista' ? 'veckoplanering' : table; this.filters = []; this.op = 'select'; this.payload = null; this.orders = []; this.wantSingle = null; this.limitN = null }
   select() { if (this.op === 'select') this.op = 'select'; return this }
   eq(col, val) { this.filters.push(r => r[col] === val); return this }
   neq(col, val) { this.filters.push(r => r[col] !== val); return this }
@@ -64,7 +71,19 @@ class Query {
       persist()
       return this.shape(created)
     }
-    if (this.op === 'update') { matched.forEach(r => Object.assign(r, this.payload, { updated_at: new Date().toISOString() })); persist(); return this.shape(matched) }
+    if (this.op === 'update') {
+      // Testhjälp: den n:te uppdateringen efter fake-fail-update-at misslyckas en gång. Används för att testa återställning.
+      fakeUpdateCount += 1
+      fakeLog.updates = [...(fakeLog.updates || []), { n: fakeUpdateCount, title: (matched[0] && matched[0].title) || '?', subject: matched[0] ? (() => { try { return JSON.parse(matched[0].content).subject } catch { return '' } })() : '' }]
+      // Flera nummer kan anges, till exempel "2,3". Varje nummer misslyckas en gång.
+      const failSet = new Set(String(globalthis_ls('fake-fail-update-at')).split(',').filter(Boolean).map(Number))
+      if (failSet.has(fakeUpdateCount)) {
+        failSet.delete(fakeUpdateCount)
+        globalThis.localStorage?.setItem('fake-fail-update-at', [...failSet].join(','))
+        return { data: null, error: { message: 'Fiktiv klient: uppdateringen misslyckades' } }
+      }
+      matched.forEach(r => Object.assign(r, this.payload, { updated_at: new Date().toISOString() })); persist(); return this.shape(matched)
+    }
     if (this.op === 'delete') { const ids = new Set(matched); store[this.table] = rows.filter(r => !ids.has(r)); persist(); return this.shape(matched) }
     let out = [...matched]
     for (const [col, asc] of this.orders.reverse()) out.sort((a, b) => (a[col] > b[col] ? 1 : -1) * (asc ? 1 : -1))
@@ -93,5 +112,5 @@ export const supabase = {
   },
 }
 // Testhjälp: lägg in fiktiva rader före start.
-export const __fake = { store, files, fakeLog, FAKE_TEACHER_ID }
+export const __fake = { store, files, fakeLog, FAKE_TEACHER_ID, resetUpdateCount: () => { fakeUpdateCount = 0 } }
 if (typeof window !== 'undefined') window.__fake = __fake
