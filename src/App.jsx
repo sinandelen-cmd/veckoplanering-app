@@ -568,6 +568,10 @@ function classifyPlanRow(row) {
   const subject = isGymnasium ? (subjectName || courseName.replace(/\s+(?:nivå\s+)?\d+[a-z]?.*$/i, '') || 'Övriga ämnen') : (schoolSubject || 'Övriga ämnen')
   return { school, subject, course: courseName || title, archived: Boolean(data.archived) }
 }
+// Varning när filer inte gick att radera. Texten visas i statusraden efter sparning eller radering.
+function leftoverNote(count) {
+  return count ? ` ${count} ${count === 1 ? 'fil' : 'filer'} kunde inte raderas från lagringen. De ligger kvar utan koppling till någon planering och försöker raderas igen vid nästa sparning.` : ''
+}
 function isAnnualRow(row) {
   const data = parseContent(row.content)
   return data?.kind === 'arsplanering-v2' || data?.kind === 'arsplanering-v1'
@@ -2094,13 +2098,13 @@ const addNewTeacherWeek = () => setPlan(p => {
         const newerEdits = latestPlanRef.current !== plan
         setPlan(current => current === plan ? payload : current)
         // Borttagna filer raderas först nu, när borttagningen är sparad.
-        setPendingRemovals(list => list.filter(path => !removalsToApply.includes(path)))
-        await deleteStoredFiles(removalsToApply)
-        const message = !refreshed ? 'Sparad, men listan kunde inte uppdateras. Ladda om för att kontrollera.' : publish
+        const failedRemovals = await deleteStoredFiles(removalsToApply)
+        setPendingRemovals(list => list.filter(path => !removalsToApply.includes(path) || failedRemovals.includes(path)))
+        const message = (!refreshed ? 'Sparad, men listan kunde inte uppdateras. Ladda om för att kontrollera.' : publish
           ? `Publicerad: ${window.location.origin}/elev/${slug}`
           : keepPublished
             ? 'Ändringarna är sparade. Eleverna ser fortfarande den senast publicerade versionen.'
-            : 'Planeringen är sparad.'
+            : 'Planeringen är sparad.') + leftoverNote(failedRemovals.length)
         setStatus(newerEdits ? `${message} Nya ändringar i redigeraren är ännu inte sparade.` : message)
         return !newerEdits
       }
@@ -2194,8 +2198,11 @@ const addNewTeacherWeek = () => setPlan(p => {
     }
   }
   // Tar bort filer från lagringen. Används när en sparning misslyckas, eller efter att en borttagning sparats.
+  // Returnerar sökvägarna som inte gick att radera. Raden i databasen är redan borttagen eller sparad, så ingen planering blir felaktig.
   async function deleteStoredFiles(paths) {
-    for (const path of paths || []) { try { await removeMaterialFile(path) } catch { /* Filen ligger kvar i lagringen men hör inte till någon planering */ } }
+    const failed = []
+    for (const path of paths || []) { try { await removeMaterialFile(path) } catch { failed.push(path) } }
+    return failed
   }
   // Tar bort ett material ur listan. Ett sparat material raderas från lagringen först när planeringen sparas.
   function dropMaterial(material, setList) {
@@ -2261,7 +2268,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       <ImportSplitSuggestions pendingImport={pendingImport} onDecide={decideImportSplit} />
       {(pendingImport.weeksData || []).slice(0, 5).map((week, i) => <div key={i}><strong>Vecka {week.weekNumber}</strong><pre style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'auto' }}>{week.content || '(Tom vecka)'}</pre></div>)}
       <div className="button-row">
-        <button type="button" className="primary" onClick={() => { if (pendingImport.planId !== selectedId) return setStatus('Förhandsgranskningen hör till en annan planering och används inte här.'); if (!confirmReplacingWeeks(plan)) return; const imported = pendingImport.weeksData || []; const existing = plan.weeksData || []; const merged = [...imported, ...existing.slice(imported.length)]; setPlan(p => ({ ...p, weeksData: merged, weeks: merged.length })); setPendingImport(null); setStatus('Importen är inlagd i planeringen. Veckor som importen inte berörde finns kvar. Ändringarna sparas automatiskt.') }}>Använd import</button>
+        <button type="button" className="primary" onClick={() => { if (pendingImport.planId !== selectedId) return setStatus('Förhandsgranskningen hör till en annan planering och används inte här.'); const imported = pendingImport.weeksData || []; const existing = plan.weeksData || []; const filled = existing.slice(0, imported.length).map((week, i) => ({ week, i })).filter(({ week, i }) => hasWeekWork(week, i)); if (filled.length && !window.confirm(`Importen ersätter innehållet i ${filled.length} ifyllda ${filled.length === 1 ? 'vecka' : 'veckor'}: ${filled.map(({ week, i }) => 'vecka ' + (week.weekNumber ?? i + 1)).join(', ')}. Övriga veckor behålls. Vill du fortsätta?`)) return; const merged = [...imported, ...existing.slice(imported.length)]; setPlan(p => ({ ...p, weeksData: merged, weeks: merged.length })); setPendingImport(null); setStatus('Importen är inlagd i planeringen. Veckor som importen inte berörde finns kvar. Ändringarna sparas automatiskt.') }}>Använd import</button>
         <button type="button" className="secondary" onClick={() => { setPendingImport(null); setStatus('Importen avbröts. Veckorna är oförändrade.') }}>Avbryt</button>
       </div>
     </section>
@@ -2314,7 +2321,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     const visibleSchools = ['Grundskola', 'Gymnasiet', 'Övriga planeringar'].filter(school => (school === 'Övriga planeringar' ? entries.some(item => item.school === school) : visibleSchoolForms.includes(school)))
     const entry = librarySubject ? entries.find(item => item.key === librarySubject) : null
     const schoolEntries = librarySchool ? entries.filter(item => item.school === librarySchool && inView(item) && matches(item)) : []
-    const toolbar = <div className="library-toolbar">
+    const toolbar = <><div className="library-toolbar">
       <button type="button" className="primary" disabled={busy} onClick={() => openSubjectForm(librarySchool)}>＋ Nytt ämne</button>
       <div className="school-filter">
         <button type="button" className="secondary school-filter-toggle" aria-expanded={schoolFilterOpen} onClick={() => setSchoolFilterOpen(value => !value)}>⚙ Visa skolformer</button>
@@ -2327,6 +2334,8 @@ const addNewTeacherWeek = () => setPlan(p => {
         {[...new Set(plans.map(row => String(row.school_year || parseContent(row.content)?.schoolYear || '').trim()).filter(Boolean))].sort((a, b) => b.localeCompare(a, 'sv', { numeric: true })).map(year => <option key={year} value={year}>{year}</option>)}
       </select></label>
     </div>
+      {status && <p className="status library-status" role="status">{status}</p>}
+    </>
     if (!librarySchool) {
       const schoolCounts = visibleSchools.map(school => {
         const subjects = entries.filter(item => item.school === school && inView(item) && matches(item))
@@ -2658,6 +2667,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     }
     setBusy(true)
     try {
+      if (entry.row) await updateRowContent(entry.row, { subject: name }, { subject: name, title: name })
       for (const item of entry.courses) {
         await updateRowContent(item.row, { subject: name }, { subject: name })
         if (item.row.id === selectedId) {
@@ -2666,7 +2676,6 @@ const addNewTeacherWeek = () => setPlan(p => {
           setSavedRevision(value => value + 1)
         }
       }
-      if (entry.row) await updateRowContent(entry.row, { subject: name }, { subject: name, title: name })
       setLibrarySubject(entry.school + '|' + name)
       await loadPlans()
       setStatus('Ämnet har bytt namn till ' + name + '.')
@@ -2745,13 +2754,16 @@ const addNewTeacherWeek = () => setPlan(p => {
     if (entry.courses.some(item => item.row.id === selectedId) && JSON.stringify(plan) !== savedPlanRef.current && !window.confirm('Du har osparade ändringar i en planering som ska raderas. Radering tar även bort dem. Vill du fortsätta?')) return
     if (!window.confirm(subjectDeleteSummary(entry))) return
     setBusy(true)
+    let deletedCourses = 0
+    let leftoverFiles = 0
     try {
       for (const item of entry.courses) {
         const materialPaths = (parseContent(item.row.content)?.materials || []).map(m => m.path).filter(Boolean)
         const { error } = await supabase.from('veckoplanering').delete().eq('id', item.row.id).eq('user_id', session.user.id).select('id').single()
         if (error) throw error
+        deletedCourses += 1
         // Filerna i kursen raderas först när kursraden är borta, så att de aldrig blir föräldralösa.
-        await deleteStoredFiles(materialPaths)
+        leftoverFiles += (await deleteStoredFiles(materialPaths)).length
         if (selectedId === item.row.id) {
           const fresh = { ...emptyPlan(), themeId: PLAN_THEMES[plans.length % PLAN_THEMES.length].id }
           setSelectedId(null)
@@ -2770,10 +2782,10 @@ const addNewTeacherWeek = () => setPlan(p => {
       setLibrarySubject('')
       await loadPlans()
       const count = entry.courses.length
-      setStatus(count ? `${count === 1 ? '1 kurs' : `${count} kurser`} i ${entry.subject} är raderade. Ämnet är borttaget.` : `Ämnet ${entry.subject} är raderat.`)
+      setStatus((count ? `${count === 1 ? '1 kurs' : `${count} kurser`} i ${entry.subject} är raderade. Ämnet är borttaget.` : `Ämnet ${entry.subject} är raderat.`) + leftoverNote(leftoverFiles))
     } catch (error) {
       await loadPlans()
-      setStatus(`Kunde inte radera ämnet: ${error.message || 'Okänt fel'}`)
+      setStatus(`Kunde inte radera ämnet: ${error.message || 'Okänt fel'}. ${deletedCourses} av ${entry.courses.length} kurser raderades innan felet. Ämnet finns kvar, och du kan försöka igen.` + leftoverNote(leftoverFiles))
     } finally {
       setBusy(false)
     }
@@ -2824,7 +2836,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       const materialPaths = (parseContent(row.content)?.materials || []).map(m => m.path).filter(Boolean)
       const { error } = await supabase.from('veckoplanering').delete().eq('id', row.id).eq('user_id', session.user.id).select('id').single()
       if (error) throw error
-      await deleteStoredFiles(materialPaths)
+      const failedFiles = await deleteStoredFiles(materialPaths)
       if (selectedId === row.id) {
         const fresh = { ...emptyPlan(), themeId: PLAN_THEMES[plans.length % PLAN_THEMES.length].id }
         setSelectedId(null)
@@ -2836,7 +2848,7 @@ const addNewTeacherWeek = () => setPlan(p => {
         if (window.sessionStorage.getItem(`arsplanering-last-open-${session.user.id}`) === String(row.id)) window.sessionStorage.removeItem(`arsplanering-last-open-${session.user.id}`)
       } catch { /* Lagring kan vara blockerad */ }
       const refreshed = await loadPlans()
-      setStatus(refreshed ? 'Planeringen är raderad.' : 'Planeringen raderades, men listan kunde inte uppdateras. Ladda om för att kontrollera.')
+      setStatus((refreshed ? 'Planeringen är raderad.' : 'Planeringen raderades, men listan kunde inte uppdateras. Ladda om för att kontrollera.') + leftoverNote(failedFiles.length))
     } catch (error) {
       setStatus(`Kunde inte radera: ${error.message || 'Okänt fel'}`)
     } finally {

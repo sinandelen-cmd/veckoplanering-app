@@ -37,7 +37,11 @@ const fakeBucket = {
     const blob = new Blob([bytes], { type })
     return { data: { signedUrl: URL.createObjectURL(blob) }, error: null }
   },
-  remove: async paths => { paths.forEach(path => { delete files[path]; fakeLog.removals.push(path) }); persistFiles(); return { data: paths.map(path => ({ name: path })), error: null } },
+  remove: async paths => {
+    // Sökvägar med "radera-fel" kan inte raderas. Används för att testa att misslyckad radering visas för användaren.
+    if (paths.some(path => path.includes('radera-fel'))) return { data: null, error: { message: 'Fiktiv klient: radering misslyckades' } }
+    paths.forEach(path => { delete files[path]; fakeLog.removals.push(path) }); persistFiles(); return { data: paths.map(path => ({ name: path })), error: null }
+  },
 }
 
 class Query {

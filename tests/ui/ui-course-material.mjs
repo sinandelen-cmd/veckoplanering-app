@@ -39,7 +39,9 @@ const ctxA = await browser.newContext({ viewport: { width: 1366, height: 900 } }
 const page = await ctxA.newPage()
 const errors = []
 page.on('pageerror', e => errors.push(e.message))
-page.on('dialog', d => d.accept())
+let dialogMode = 'accept'
+let lastDialog = ''
+page.on('dialog', d => { lastDialog = d.message(); if (dialogMode === 'accept') d.accept(); else d.dismiss() })
 await ctxA.route(/^https?:\/\/(?!localhost)/, r => r.abort())
 await ctxA.addInitScript(seed => { localStorage.setItem('fake-session', 'on'); localStorage.setItem('fake-persist', 'on'); localStorage.setItem('fake-seed', seed) }, JSON.stringify({ veckoplanering: [] }))
 await page.goto(base + '/', { waitUntil: 'networkidle' })
@@ -185,6 +187,22 @@ await check('inklistrad text ger en förhandsgranskning, och originaltexten finn
   await page.waitForTimeout(300)
   await scrollThroughPlan(page)
   assert.match(await page.locator('#lararvy').innerText(), /ekvationer/, 'importen skapade inga veckor med texten')
+})
+
+// 4b. Import över ifyllda veckor kräver tydlig bekräftelse, och avbryt ändrar inte veckorna.
+await check('import över ifyllda veckor frågar vilka veckor som ersätts, och avbryt ändrar ingenting', async () => {
+  await openCourse('Matematik 1a')
+  const before = JSON.stringify((await rowContent('Matematik 1a')).weeksData)
+  await expandMaterial()
+  await btn('Skapa veckor av inklistrad text', page.locator('details.material-disclosure')).evaluate(e => e.click())
+  await page.waitForSelector('.import-preview', { timeout: 10000 })
+  dialogMode = 'dismiss'; lastDialog = ''
+  await btn('Använd import', page.locator('.import-preview')).evaluate(e => e.click())
+  await page.waitForTimeout(500)
+  dialogMode = 'accept'
+  assert.match(lastDialog, /ifyllda/, 'bekräftelsen säger inte att ifyllda veckor ersätts: ' + lastDialog)
+  assert.match(lastDialog, /vecka \d+/, 'bekräftelsen nämner inte vilka veckor: ' + lastDialog)
+  assert.equal(JSON.stringify((await rowContent('Matematik 1a')).weeksData), before, 'veckorna ändrades trots avbrott')
 })
 
 // 5. Avbruten dialog: Tillbaka laddar inte upp något.
