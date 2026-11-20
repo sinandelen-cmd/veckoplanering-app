@@ -103,4 +103,8 @@ Testerna vägrar köra mot något annat än localhost. Det finns inget produktio
 - Storage-rollerna får standardrättigheter, som Supabase-plattformen sätter i produktion.
 
 ### Förslag, ännu inte applicerat
-- `supabase/proposals/2026-11-amnen-unikt-index.sql` hindrar dubbla ämnesrader vid samtidiga skrivningar. Den gäller bara `amne-v1`-rader. Den är verifierad lokalt, men ska inte köras mot produktion utan godkännande och en kontroll efter dubbletter.
+- `supabase/proposals/2026-11-amnen-unikt-index.sql` hindrar dubbla ämnesrader vid samtidiga skrivningar. Den gäller bara `amne-v1`-rader. Installationen körs i en transaktion. Den fångar bara tre namngivna JSON-fel (22P02, 22P05, 54001) och returnerar NULL för dem. Alla andra fel fortplantas. EXECUTE dras in från PUBLIC och anon, men behålls för authenticated och service_role, eftersom vanliga skrivningar annars nekas.
+- `supabase/proposals/2026-11-amnen-unikt-index-aterstall.sql` tar bort exakt det installationen skapar, i en transaktion.
+- `supabase/proposals/2026-11-amnen-unikt-index-kontroller.sql` är skrivskyddade kontroller mot produktion. Del A körs före installation, del B efter.
+- `tests/real/stack/index-install-test.sh` testar lokalt: misslyckad installation rullas tillbaka helt, installation och återställning ändrar inga rader eller filer, och rättigheter och beteende stämmer. Kör med `STACK_DIR=<mappen med den lokala stacken> ./index-install-test.sh`. Skriptet kör bara mot den lokala Docker-databasen.
+- Verifierat lokalt, men ska inte köras mot produktion utan skriftligt godkännande och en kontroll efter dubbletter.
