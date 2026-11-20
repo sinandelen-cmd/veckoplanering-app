@@ -110,6 +110,9 @@
 
   /* Kurser i ett ämne: en tydlig rad per kurs med öppna-knapp till vänster. */
   .library-course-row { padding: 12px 16px; border-radius: 14px; }
-  .library-course-open { flex: 1 1 360px; padding: 6px 4px; }
+  .library-course-open { flex: 1 1 360px; padding: 8px 10px; border-radius: 10px; cursor: pointer; transition: background .12s ease; }
+  .library-course-open:hover { background: #f1f7fc; }
+  .library-course-open:focus-visible { outline: 2px solid #2b5a7a; outline-offset: 2px; }
+  .library-course-row:hover { border-color: #b9d2e4; }
   .library-course-actions { justify-content: flex-end; }
 }

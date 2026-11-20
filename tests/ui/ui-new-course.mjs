@@ -44,19 +44,19 @@ async function openLibrary(page) {
   const root = page.locator('.library-crumbs .crumb-link', { hasText: 'Mina planeringar' })
   if (await root.count()) { await root.first().evaluate(e => e.click()); await page.waitForTimeout(300) }
 }
-// Öppnar ämnet Matematik under Gymnasiet. Med expectCourses = false räcker att "Ny kurs" syns.
+// Öppnar ämnet Matematik under Gymnasiet. Med expectCourses = false räcker att "Lägg till kurs" syns.
 async function goToSubject(page, expectCourses = true) {
   await openLibrary(page)
-  const atSubject = async () => (await page.locator('button:visible', { hasText: 'Ny kurs' }).count()) > 0
+  const atSubject = async () => (await page.locator('button:visible', { hasText: 'Lägg till kurs' }).count()) > 0
   if (await atSubject()) return
   await page.locator('button.library-folder:visible', { hasText: 'Gymnasiet' }).first().evaluate(e => e.click()); await page.waitForTimeout(300)
   await page.locator('button.library-folder:visible', { hasText: 'Matematik' }).first().evaluate(e => e.click()); await page.waitForTimeout(300)
   if (expectCourses) await page.waitForSelector('.library-course-open', { timeout: 10000 }).catch(() => {})
 }
-// Skapar en kurs via "Ny kurs". Läsåret kan sättas i dialogen (startår).
+// Skapar en kurs via "Lägg till kurs". Läsåret kan sättas i dialogen (startår).
 async function createCourse(page, name, startYear = null) {
   await goToSubject(page, false)
-  await btn(page, 'Ny kurs').evaluate(e => e.click())
+  await btn(page, 'Lägg till kurs').evaluate(e => e.click())
   await page.waitForTimeout(300)
   const dialog = page.locator('[aria-label="Skapa ny kurs"]')
   await dialog.locator('input').first().fill(name)

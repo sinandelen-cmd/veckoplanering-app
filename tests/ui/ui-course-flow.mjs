@@ -1,6 +1,6 @@
 // Förenklat kursflöde med FIKTIV Supabase-klient. Körning: npm run test:ui:course-flow
 // Kontrollerar:
-//  - "Ny kurs" frågar bara efter kursens namn och läsår. Ämne och skolform är redan valda
+//  - "Lägg till kurs" frågar bara efter kursens namn och läsår. Ämne och skolform är redan valda
 //  - kursen skapas och planeringsvyn öppnas direkt, med alla 21 veckor
 //  - "Fler inställningar" inne i kursen: läsår, lärobok, årskurs och startdatum
 //  - ett ändrat startdatum flyttar veckorna men behåller lektioner och innehåll
@@ -61,7 +61,7 @@ async function openLibrary(page) {
 // så vi kontrollerar om ämnet är öppet och klickar bara när det inte är det.
 async function goToSubject(page, expectCourses = true) {
   await openLibrary(page)
-  if ((await page.locator('button:visible', { hasText: 'Ny kurs' }).count()) > 0) return
+  if ((await page.locator('button:visible', { hasText: 'Lägg till kurs' }).count()) > 0) return
   await page.locator('button.library-folder:visible', { hasText: 'Gymnasiet' }).first().evaluate(e => e.click()); await page.waitForTimeout(300)
   await page.locator('button.library-folder:visible', { hasText: 'Matematik' }).first().evaluate(e => e.click()); await page.waitForTimeout(300)
   if (expectCourses) await page.waitForSelector('.library-course-open', { timeout: 10000 }).catch(() => {})
@@ -79,9 +79,9 @@ async function countWeeks(page) {
 
 const page1 = await open([oldRow])
 const errors = page1.errors
-await check('"Ny kurs" frågar bara efter kursens namn och läsår, ämne och skolform visas som text', async () => {
+await check('"Lägg till kurs" frågar bara efter kursens namn och läsår, ämne och skolform visas som text', async () => {
   await goToSubject(page1.page, false)
-  await btn(page1.page, 'Ny kurs').evaluate(e => e.click())
+  await btn(page1.page, 'Lägg till kurs').evaluate(e => e.click())
   await page1.page.waitForTimeout(300)
   const dialog = page1.page.locator('[aria-label="Skapa ny kurs"]')
   assert.equal(await dialog.count(), 1, 'kursdialogen öppnas inte')

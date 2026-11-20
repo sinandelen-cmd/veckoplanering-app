@@ -2,7 +2,7 @@
 // Körning: npm run test:ui:course-material
 // Ingen produktionsdata, inga riktiga konton, inga externa anrop.
 // Bifogade filer laddas upp först när kursen sparas. Testerna kontrollerar:
-//  - "Ny kurs" i ett ämne sparar bifogad fil och inklistrad text med kursen
+//  - "Lägg till kurs" i ett ämne sparar bifogad fil och inklistrad text med kursen
 //  - en kurs kan skapas utan bilagor
 //  - inklistrad text ger en förhandsgranskning, och veckor skrivs först när användaren väljer Använd import
 //  - avbruten dialog, navigering bort och siduppdatering laddar inte upp något
@@ -82,7 +82,7 @@ async function openCourse(name) {
 }
 async function openCourseDialog() {
   await goSubject()
-  await btn('Ny kurs').evaluate(e => e.click())
+  await btn('Lägg till kurs').evaluate(e => e.click())
   await page.waitForSelector('[aria-label="Skapa ny kurs"]', { timeout: 15000 })
   return page.locator('[aria-label="Skapa ny kurs"]')
 }
@@ -128,8 +128,8 @@ await check('ämnet Matematik skapas i Gymnasiet utan kurser eller material', as
   assert.match(await page.locator('.library-title').first().innerText(), /Matematik/, 'ämnesvyn visas inte efter att ämnet skapats')
 })
 
-// 1. Ny kurs i ämnet: bifogad fil och inklistrad text sparas med kursen. Inget laddas upp innan kursen sparas.
-await check('Ny kurs: bifogad fil och inklistrad text sparas med kursen', async () => {
+// 1. Lägg till kurs i ämnet: bifogad fil och inklistrad text sparas med kursen. Inget laddas upp innan kursen sparas.
+await check('Lägg till kurs: bifogad fil och inklistrad text sparas med kursen', async () => {
   const dialog = await openCourseDialog()
   await dialog.locator('label', { hasText: 'Kursens namn' }).locator('input').fill('Matematik 1a')
   await dialog.locator('input[type="file"]').setInputFiles(txt(FILE_NAME))
@@ -146,7 +146,7 @@ await check('Ny kurs: bifogad fil och inklistrad text sparas med kursen', async 
   assert.equal((await rowContent('Matematik 1a')).weeksData.length, 21, 'kursen har inte 21 veckor')
 })
 
-await check('Ny kurs: en andra kurs med bifogad fil och inklistrad text', async () => {
+await check('Lägg till kurs: en andra kurs med bifogad fil och inklistrad text', async () => {
   const dialog = await openCourseDialog()
   await dialog.locator('label', { hasText: 'Kursens namn' }).locator('input').fill('Matematik 2b')
   await dialog.locator('input[type="file"]').setInputFiles(txt(FILE_B))

@@ -48,10 +48,10 @@ const archiveBtn = () => page.locator('button:visible', { hasText: /^(Arkivera|�
 await check('ämnesmappen visar knappen "Arkivera ämne"', async () => {
   assert.equal((await archiveBtn().innerText()).trim(), 'Arkivera ämne')
 })
-await check('i aktiva vyn finns ingen "Radera ämne" och ingen "Ta bort ämne", men "Ny kurs" finns', async () => {
+await check('i aktiva vyn finns ingen "Radera ämne" och ingen "Ta bort ämne", men "Lägg till kurs" finns', async () => {
   assert.equal(await page.locator('button:visible', { hasText: 'Radera ämne' }).count(), 0, '"Radera ämne" syns i den aktiva vyn')
   assert.equal(await page.locator('button:visible', { hasText: 'Ta bort ämne' }).count(), 0, '"Ta bort ämne" finns kvar i den aktiva listan')
-  assert.ok(await page.locator('button:visible', { hasText: 'Ny kurs' }).count() > 0, '"Ny kurs" saknas')
+  assert.ok(await page.locator('button:visible', { hasText: 'Lägg till kurs' }).count() > 0, '"Lägg till kurs" saknas')
 })
 await check('Arkivera ämne flyttar båda kurserna till arkivet', async () => {
   await archiveBtn().click()
@@ -65,7 +65,7 @@ await check('i arkivvyn visas bara "Återställ ämne" och "Radera ämne", utan 
   await page.waitForTimeout(300)
   await openSubject()
   await page.waitForTimeout(300)
-  assert.equal(await page.locator('button:visible', { hasText: 'Ny kurs' }).count(), 0, '"Ny kurs" syns i arkivet')
+  assert.equal(await page.locator('button:visible', { hasText: 'Lägg till kurs' }).count(), 0, '"Lägg till kurs" syns i arkivet')
   assert.equal(await page.locator('button:visible', { hasText: 'Ta bort ämne' }).count(), 0, '"Ta bort ämne" syns i arkivet')
   const boxes = await page.locator('button:visible', { hasText: /ämne$/ }).evaluateAll(els => els.map(e => e.getBoundingClientRect()).map(r => ({ l: r.left, r: r.right, t: r.top, b: r.bottom })))
   for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {

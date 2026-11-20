@@ -90,7 +90,7 @@ await check('inloggning med riktiga konton och skapande av ämnet TEST Matematik
 const weekText = Array.from({ length: 1 }, () => 'Fiktiv planering: vecka 1 om nämnare.').join('')
 await check('kurs i ämnet med fil, PDF och inklistrad text sparas med 21 veckor i riktig databas', async () => {
   await subjectLevel(pageA, 'Gymnasiet', 'TEST Matematik')
-  await btn(pageA, 'Ny kurs').evaluate(e => e.click())
+  await btn(pageA, 'Lägg till kurs').evaluate(e => e.click())
   await pageA.waitForSelector('[aria-label="Skapa ny kurs"]', { timeout: 10000 })
   const dialog = pageA.locator('[aria-label="Skapa ny kurs"]')
   await dialog.locator('label', { hasText: 'Kursens namn' }).locator('input').fill('TEST Matematik 1b')
@@ -155,7 +155,7 @@ await check('annan dator: ny webbläsarkontext utan lokal lagring visar samma ä
 
 await check('förhandsgranskning av en kurs följer inte med till en annan kurs i riktig databas', async () => {
   await subjectLevel(pageA, 'Gymnasiet', 'TEST Matematik')
-  await btn(pageA, 'Ny kurs').evaluate(e => e.click())
+  await btn(pageA, 'Lägg till kurs').evaluate(e => e.click())
   await pageA.waitForSelector('[aria-label="Skapa ny kurs"]', { timeout: 10000 })
   const dialog = pageA.locator('[aria-label="Skapa ny kurs"]')
   await dialog.locator('label', { hasText: 'Kursens namn' }).locator('input').fill('TEST Matematik 2c')

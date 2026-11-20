@@ -2368,7 +2368,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     setStatus('Underlaget är klart för förhandsgranskning. Inget har ersatts ännu.')
   }
 
-  // Frivillig materialdel för "Skapa planering" och "Ny kurs". Filerna laddas upp först när planeringen sparas.
+  // Frivillig materialdel för "Skapa planering" och "Lägg till kurs". Filerna laddas upp först när planeringen sparas.
   function materialIntake({ materials, pasted, onPaste, onAdd, onRemove, message, setMessage }) {
     return <section className="material-panel material-intake" aria-label="Material till planeringen (valfritt)">
       <h3>Material till planeringen <span className="muted">(valfritt)</span></h3>
@@ -2491,13 +2491,14 @@ const addNewTeacherWeek = () => setPlan(p => {
         </div>
       </section>
     }
-    const courses = coursesOf(entry)
-    return <section className="card library-card" id="mina-arsplaneringar">
+    // Sökningen filtrerar också kurserna i ämnet. Ett ämne som matchar visar alla sina kurser.
+    const courses = coursesOf(entry).filter(item => !query || normalized(entry.subject).includes(query) || [item.row.title, item.info.course].some(value => normalized(value).includes(query)))
+    return <section className="card library-card" id="mina-arsplaneringar" id="mina-arsplaneringar">
       {toolbar}
       <h2 className="library-title">{entry.subject}</h2>
       <p className="muted library-subtitle">{entry.school}{entry.archived ? ' · arkiverat ämne' : ''}</p>
       <div className="library-actions">
-        {!showArchive && <button type="button" className="primary" disabled={busy} onClick={() => { setIntakeMessage(''); setCoursePicker({ school: entry.school, subject: entry.subject, course: '', year: '', schoolYear: libraryYear === 'alla' ? defaultSchoolYear() : libraryYear, materials: [], pastedMaterial: '' }) }}>＋ Ny kurs</button>}
+        {!showArchive && <button type="button" className="primary" disabled={busy} onClick={() => { setIntakeMessage(''); setCoursePicker({ school: entry.school, subject: entry.subject, course: '', year: '', schoolYear: libraryYear === 'alla' ? defaultSchoolYear() : libraryYear, materials: [], pastedMaterial: '' }) }}>＋ Lägg till kurs</button>}
         {!showArchive && <button type="button" className="secondary" disabled={busy} onClick={() => setSubjectArchived(entry, true)}>Arkivera ämne</button>}
         {showArchive && entry.archived && <button type="button" className="secondary" disabled={busy} onClick={() => setSubjectArchived(entry, false)}>Återställ ämne</button>}
         {showArchive && entry.archived && <button type="button" className="danger" disabled={busy || entry.courses.some(item => !item.info.archived)} title="Raderar ämnet och alla dess kurser permanent. Kan inte ångras." onClick={() => deleteArchivedSubject(entry)}>Radera ämne permanent</button>}
@@ -2512,7 +2513,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       </div>}
       {showArchive && entry.archived && entry.courses.some(item => !item.info.archived) && <p className="muted">Ämnet är arkiverat. Återställ det för att kunna radera det.</p>}
       <div className="library-list">
-        {!courses.length && <p className="muted">{showArchive ? 'Inga arkiverade kurser i ämnet.' : 'Inga kurser ännu. Skapa en kurs med ＋ Ny kurs.'}</p>}
+        {!courses.length && <p className="muted">{showArchive ? 'Inga arkiverade kurser i ämnet.' : 'Inga kurser ännu. Skapa en kurs med ＋ Lägg till kurs.'}</p>}
         {courses.map(item => {
           const archivedCourse = Boolean(item.info.archived)
           return <div key={item.row.id} className="library-course-row">
@@ -2800,7 +2801,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       setLibrarySchool(school)
       setLibrarySubject(school + '|' + name)
       await loadPlans()
-      setStatus(`Ämnet ${name} är skapat under ${school}. Skapa en kurs i ämnet med ＋ Ny kurs.`)
+      setStatus(`Ämnet ${name} är skapat under ${school}. Skapa en kurs i ämnet med ＋ Lägg till kurs.`)
     } catch (error) {
       setStatus(`Kunde inte skapa ämnet: ${error.message || 'Okänt fel'}`)
     } finally {
@@ -3126,7 +3127,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     if (!String(item.course || '').trim()) return setStatus('Ange kursens namn.')
     if (!confirmNavigation()) return
     const schoolYearValue = item.schoolYear || (libraryYear === 'alla' ? defaultSchoolYear() : libraryYear)
-    // Ny kurs får alltid 21 veckor, med datum som följer läsåret. Befintliga kurser ändras inte här.
+    // Lägg till kurs får alltid 21 veckor, med datum som följer läsåret. Befintliga kurser ändras inte här.
     const fresh = {
       ...emptyPlan(), schoolYear: schoolYearValue, startDate: schoolStartDate(schoolYearValue, emptyPlan().startDate), weeks: 21,
       schoolForm:item.school === 'Gymnasiet' ? 'Gymnasieskola' : 'Grundskola',

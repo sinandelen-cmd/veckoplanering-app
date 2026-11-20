@@ -5,7 +5,7 @@
 //  - huvudmappen Mina planeringar > Grundskola/Gymnasiet > ämne > kurs, med klickbar sökväg
 //  - "Nytt ämne" har bara skolform och ämnesnamn och skapar inga kurser
 //  - ämnet syns direkt och finns kvar efter omladdning och ny inloggning
-//  - "Ny kurs" i ämnet har kursnamn och läsår, skapar 21 veckor och visas under rätt ämne
+//  - "Lägg till kurs" i ämnet har kursnamn och läsår, skapar 21 veckor och visas under rätt ämne
 //  - gamla kurser och ämnesmappar från lokal lagring fungerar efter migreringen
 //  - arkivera, återställa och radera permanent från arkivet, utan påverkan på andra ämnen
 //  - inga knappar, mappar eller texter överlappar vid 1024, 1366 och 1920 px
@@ -71,7 +71,7 @@ async function createSubject(school, name) {
 }
 async function createCourse(school, subject, name, startYear = null) {
   await subjectLevel(school, subject)
-  await btn('Ny kurs').evaluate(e => e.click())
+  await btn('Lägg till kurs').evaluate(e => e.click())
   await page.waitForSelector('[aria-label="Skapa ny kurs"]', { timeout: 10000 })
   const dialog = page.locator('[aria-label="Skapa ny kurs"]')
   await dialog.locator('label', { hasText: 'Kursens namn' }).locator('input').fill(name)
@@ -125,9 +125,9 @@ await check('ämnet finns kvar efter omladdning och ny inloggning', async () => 
   assert.ok((await subjectRowsDb()).some(r => JSON.parse(r.content).subject === 'Svenska'), 'ämnet finns inte i databasen')
 })
 
-await check('"Ny kurs" i ämnet: kursnamn och läsår, 21 veckor, och kursen visas under rätt ämne', async () => {
+await check('"Lägg till kurs" i ämnet: kursnamn och läsår, 21 veckor, och kursen visas under rätt ämne', async () => {
   await subjectLevel('Gymnasiet', 'Matematik')
-  await btn('Ny kurs').evaluate(e => e.click())
+  await btn('Lägg till kurs').evaluate(e => e.click())
   await page.waitForSelector('[aria-label="Skapa ny kurs"]', { timeout: 10000 })
   const dialog = page.locator('[aria-label="Skapa ny kurs"]')
   assert.equal(await dialog.locator('input[type="date"]').count(), 0, 'startdatum finns i kursdialogen')
@@ -267,7 +267,7 @@ await check('ett tomt ämne arkiveras, syns bara i arkivet och raderas permanent
   await page.locator('button.library-folder:visible', { hasText: 'Gymnasiet' }).first().evaluate(e => e.click()); await page.waitForTimeout(300)
   assert.equal(await vis('button.library-folder', 'Biologi').count(), 1, 'tomt ämne syns inte i arkivet')
   await page.locator('button.library-folder:visible', { hasText: 'Biologi' }).first().evaluate(e => e.click()); await page.waitForTimeout(300)
-  assert.equal(await page.locator('button:visible', { hasText: 'Ny kurs' }).count(), 0, '"Ny kurs" ska inte finnas i arkivet')
+  assert.equal(await page.locator('button:visible', { hasText: 'Lägg till kurs' }).count(), 0, '"Lägg till kurs" ska inte finnas i arkivet')
   dialogMode = 'dismiss'; lastDialog = ''
   await btn('Radera ämne permanent').evaluate(e => e.click()); await page.waitForTimeout(400)
   dialogMode = 'accept'
