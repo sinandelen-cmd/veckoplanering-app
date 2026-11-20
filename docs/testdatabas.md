@@ -115,4 +115,4 @@ Testerna vägrar köra mot något annat än localhost. Det finns inget produktio
 - `supabase/proposals/2026-11-lista-vy-aterstall.sql` tar bort vyn och funktionen.
 - Lokalt verifierat: med vyn öppnas en kurs på 1,7 s på långsamt nät (400 ms latens, 1,6 Mbit/s), mot 7,7 s utan vy. Båda körningarna i `test:real-perf`, `test:real-ui` och `test:real-legacy` är gröna.
 - Ska inte köras mot produktion utan skriftligt godkännande.
-
+- `npm run test:real-weeks` kontrollerar att veckoinnehållet (21 veckor, markörer, lektioner, klasser) är oförändrat efter namnbyte, arkivering och återställning, och efter omladdning. Körs mot lokal stack.

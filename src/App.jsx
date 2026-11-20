@@ -2984,7 +2984,8 @@ const addNewTeacherWeek = () => setPlan(p => {
     try {
       const stored = parseContent((await fullRowContent(row)).content)
       if (!stored || typeof stored !== 'object') throw new Error('Planeringens innehåll kunde inte läsas.')
-      const updated = { ...stored, title: newTitle }
+      // Biblioteket visar kursfältet före titeln, så ett namnbyte måste uppdatera båda. Annars syns ingen ändring.
+      const updated = { ...stored, title: newTitle, ...(stored.course ? { course: newTitle } : {}) }
       const { error } = await supabase.from('veckoplanering').update({
         title: newTitle,
         content: JSON.stringify(updated),
