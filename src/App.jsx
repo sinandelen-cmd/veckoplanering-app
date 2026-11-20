@@ -4,10 +4,6 @@ import { installMeasureRules, measureWeeks, planPrintGroups } from './printFit.j
 import { Component, Fragment, memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { createPortal } from 'react-dom'
-import * as XLSX from 'xlsx'
-import mammoth from 'mammoth'
-import * as pdfjsLib from 'pdfjs-dist'
-import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url'
 import { supabase } from './supabase'
 import './App.css'
 import Navigation from './Navigation.jsx'
@@ -31,7 +27,25 @@ function ImportSplitSuggestions({ pendingImport, onDecide }) {
 }
 
 const APP_TITLE = 'Årsplanering'
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker
+// Dokumentbiblioteken (Excel, Word, PDF) laddas först när en fil läses in. Startsidan blir därmed mindre.
+let documentLibsPromise = null
+function loadDocumentLibs() {
+  if (!documentLibsPromise) {
+    documentLibsPromise = Promise.all([
+      import('xlsx'),
+      import('mammoth'),
+      import('pdfjs-dist'),
+      import('pdfjs-dist/build/pdf.worker.mjs?url'),
+    ]).then(([xlsx, mammothModule, pdfjs, worker]) => {
+      pdfjs.GlobalWorkerOptions.workerSrc = worker.default
+      return { XLSX: xlsx, mammoth: mammothModule.default, pdfjsLib: pdfjs }
+    }).catch(error => {
+      documentLibsPromise = null
+      throw error
+    })
+  }
+  return documentLibsPromise
+}
 const DEFAULT_WEEKS = 1
 const WEEK_COLORS = ['#fffcf5', '#fff9fa', '#fafaff', '#f8fcf9', '#f8fbff', '#fffbf7']
 const DAY_COLORS = ['#fff6f8', '#fffdf3', '#f6f8ff', '#f4fcf7', '#f8f6ff', '#fffaf5', '#f5fbfc']
@@ -337,7 +351,7 @@ function unitsFromText(text) {
   return units
 }
 
-function unitsFromWorkbook(workbook) {
+function unitsFromWorkbook(workbook, XLSX) {
   const units=[]
   for(const sheetName of workbook.SheetNames) {
     const rows=XLSX.utils.sheet_to_json(workbook.Sheets[sheetName],{header:1,defval:''})
@@ -380,7 +394,7 @@ function unitsFromWorkbook(workbook) {
 }
 
 function distributeText(plan,text){return distributeUnits(plan,unitsFromText(text))}
-function distributeChapterWorkbook(plan,workbook){return distributeUnits(plan,unitsFromWorkbook(workbook))}
+function distributeChapterWorkbook(plan,workbook,XLSX){return distributeUnits(plan,unitsFromWorkbook(workbook,XLSX))}
 
 // OCR laddas först när en bild eller en skannad PDF behöver tolkas.
 let ocrScriptPromise
@@ -443,14 +457,17 @@ async function extractText(file) {
   const name = file.name.toLowerCase()
   if (name.endsWith('.txt') || name.endsWith('.csv')) return file.text()
   if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
+    const { XLSX } = await loadDocumentLibs()
     const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array' })
     return workbook.SheetNames.map(sheet => `## ${sheet}\n${XLSX.utils.sheet_to_csv(workbook.Sheets[sheet])}`).join('\n\n')
   }
   if (name.endsWith('.docx')) {
+    const { mammoth } = await loadDocumentLibs()
     const result = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() })
     return result.value
   }
   if (name.endsWith('.pdf')) {
+    const { pdfjsLib } = await loadDocumentLibs()
     const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise
     const pages = []
     for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
@@ -2160,7 +2177,9 @@ const addNewTeacherWeek = () => setPlan(p => {
     if (!file) return
     setBusy(true); setStatus(`Läser ${file.name}...`); setPendingImport(null); setFileImportState({phase:'loading',message:`Läser ${file.name}…`})
     try {
-      const chapterWeeks = /[.]xlsx?$/i.test(file.name) ? distributeChapterWorkbook(plan, XLSX.read(await file.arrayBuffer(),{type:'array'})) : null
+      const isWorkbook = /[.]xlsx?$/i.test(file.name)
+      const { XLSX } = isWorkbook ? await loadDocumentLibs() : { XLSX: null }
+      const chapterWeeks = isWorkbook ? distributeChapterWorkbook(plan, XLSX.read(await file.arrayBuffer(),{type:'array'}), XLSX) : null
       const text = chapterWeeks ? '' : await extractText(file)
       const weeksData = chapterWeeks || distributeText(plan,text)
       setPendingImport({ planId: selectedId, source: file.name, weeksData, structured: true })
@@ -2317,8 +2336,9 @@ const addNewTeacherWeek = () => setPlan(p => {
     if (/^xlsx?$/.test(material.ext)) {
       try {
         const buffer = material.file ? await material.file.arrayBuffer() : await (await fetch(await materialSignedUrl(material.path))).arrayBuffer()
+        const { XLSX } = await loadDocumentLibs()
         const workbook = XLSX.read(buffer, { type: 'array' })
-        setPendingImport({ planId: selectedId, source: material.name, weeksData: distributeChapterWorkbook(plan, workbook), structured: true })
+        setPendingImport({ planId: selectedId, source: material.name, weeksData: distributeChapterWorkbook(plan, workbook, XLSX), structured: true })
         return setStatus('Kapitel och delmoment är fördelade på planeringens lektioner. Granska före import.')
       } catch (error) { return setStatus(error.message) }
     }
