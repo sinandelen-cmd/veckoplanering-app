@@ -2249,21 +2249,43 @@ const addNewTeacherWeek = () => setPlan(p => {
     queueRunRef.current.removals = false
   }
   // Återställningar som inte hann göras vid ett misslyckat namnbyte. Körs igen vid nästa laddning.
-  function queueRowRepair(rowId, changes, extra) {
+  // expect är namnet som namnbytet satte. Återställningen görs bara om namnet fortfarande är det. Annars har någon
+  // annan ändrat raden, till exempel på en annan enhet, och då skrivs inget över.
+  function queueRowRepair(rowId, expect, restore, withTitle) {
     const uid = session?.user?.id
     if (!uid) return
-    writeQueue(ROW_REPAIR_QUEUE, uid, [...readQueue(ROW_REPAIR_QUEUE, uid), { id: rowId, changes, extra }])
+    writeQueue(ROW_REPAIR_QUEUE, uid, [...readQueue(ROW_REPAIR_QUEUE, uid), { id: rowId, expect, restore, withTitle: Boolean(withTitle), attempts: 0 }])
   }
+  // Returnerar 'done', 'stale' (raden är borta eller ändrad, inget görs) eller 'retry'.
+  async function repairRow(item) {
+    const { data: current, error } = await supabase.from('veckoplanering').select('content,updated_at').eq('id', item.id).eq('user_id', session.user.id).maybeSingle()
+    if (error) return 'retry'
+    if (!current) return 'stale'
+    const stored = parseContent(current.content)
+    if (!stored || typeof stored !== 'object' || stored.subject !== item.expect) return 'stale'
+    try {
+      await updateRowContent({ id: item.id }, { subject: item.restore }, item.withTitle ? { subject: item.restore, title: item.restore } : { subject: item.restore })
+      return 'done'
+    } catch { return 'retry' }
+  }
+  // En återställning får högst fem försök. Därefter tas den bort, så att migreringen inte blockeras för alltid.
+  const REPAIR_ATTEMPTS = 5
   async function applyRowRepairs() {
     const uid = session?.user?.id
     if (!uid || queueRunRef.current.repairs) return
     queueRunRef.current.repairs = true
     const remaining = []
+    let gaveUp = 0
     try {
       for (const item of readQueue(ROW_REPAIR_QUEUE, uid)) {
-        try { await updateRowContent({ id: item.id }, item.changes, item.extra || {}) } catch { remaining.push(item) }
+        const outcome = await repairRow(item)
+        if (outcome === 'retry') {
+          if ((item.attempts || 0) + 1 < REPAIR_ATTEMPTS) remaining.push({ ...item, attempts: (item.attempts || 0) + 1 })
+          else gaveUp += 1
+        }
       }
       writeQueue(ROW_REPAIR_QUEUE, uid, remaining)
+      if (gaveUp) setRepairNotice('En återställning av ett namnbyte kunde inte göras automatiskt. Kontrollera ämnets namn och kurserna i ämnet.')
     } finally {
       queueRunRef.current.repairs = false
     }
@@ -2760,10 +2782,10 @@ const addNewTeacherWeek = () => setPlan(p => {
       // Återställ det som hann ändras. Återställningen kan i sin tur misslyckas, och då visas det för användaren.
       let restoreFailed = 0
       for (const item of changed) {
-        try { await updateRowContent(item.row, { subject: previous }, { subject: previous }) } catch { restoreFailed += 1; queueRowRepair(item.row.id, { subject: previous }, { subject: previous }) }
+        try { await updateRowContent(item.row, { subject: previous }, { subject: previous }) } catch { restoreFailed += 1; queueRowRepair(item.row.id, name, previous, false) }
       }
       if (subjectRowChanged) {
-        try { await updateRowContent(entry.row, { subject: previous }, { subject: previous, title: previous }) } catch { restoreFailed += 1; queueRowRepair(entry.row.id, { subject: previous }, { subject: previous, title: previous }) }
+        try { await updateRowContent(entry.row, { subject: previous }, { subject: previous, title: previous }) } catch { restoreFailed += 1; queueRowRepair(entry.row.id, name, previous, true) }
       }
       await loadPlans()
       setStatus('Namnbytet kunde inte slutföras: ' + (error.message || 'Okänt fel') + (restoreFailed ? `. ${restoreFailed} rader kunde inte återställas direkt. Återställningen görs om automatiskt vid nästa laddning.` : '. Inga ändringar kvarstår.'))
@@ -3020,6 +3042,8 @@ const addNewTeacherWeek = () => setPlan(p => {
   const returnToPlanningTree = () => { setTeacherTab('bibliotek'); setCalendarOpen(false); setOpenedFromLibrary(false); window.scrollTo({ top: 0, behavior: 'smooth' }) }
   const [coursePicker, setCoursePicker] = useState(null)
   const [intakeMessage, setIntakeMessage] = useState('')
+  // Varning som syns i alla vyer, till exempel när en återställning gav upp. Användaren stänger den.
+  const [repairNotice, setRepairNotice] = useState('')
   // Sparade filer som tagits bort ur listan. De raderas från lagringen först när planeringen sparas.
   const [pendingRemovals, setPendingRemovals] = useState([])
   // Skapar en kurs direkt från kursdialogen. Ämne och skolform följer med från ämnesmappen och valideras här.
@@ -3144,6 +3168,7 @@ const addNewTeacherWeek = () => setPlan(p => {
   }
   return <div style={planThemeStyle(plan, selectedId)} className={`planning-layout ${teacherTab === "mina" ? "view-home" : teacherTab === "elevvy" ? "view-student" : teacherTab === "new" ? "view-new" : "view-teacher"}${teacherTab === "arsplan" && editingClassView ? " view-class" : ""}`}>{teacherTab !== "mina" && <Navigation planTitle={teacherTab === "bibliotek" ? "Mina planeringar" : (teacherTab === "arsplan" || teacherTab === "elevvy") && selectedId ? (plan.title || plan.subject || "Min planering") : ""} previousLabel={previousStepLabel} onPrevious={atLibraryRoot ? undefined : goToPreviousStep} onAllWeeks={() => { setFocusedTeacherWeek(null); setFocusedTeacherLesson(null); setShowPastTeacherWeeks(value => !value); setTeacherWeekOverview(true); setTeacherTab("arsplan"); setCalendarOpen(false) }} allWeeksOpen={showPastTeacherWeeks} active={teacherTab} plans={plans.filter(row => !parseContent(row.content)?.archived)} selectedId={selectedId} getPlanTheme={row => planTheme(parseContent(row.content), row.id)} onOpenPlan={loadPlan} onDeletePlan={deletePlan} onNavigate={(id, planningHome = false) => { if (!confirmNavigation()) return false; if (planningHome) window.dispatchEvent(new Event('planning-home')); if (id === 'bibliotek') { setLibrarySchool(''); setLibrarySubject(''); setLibraryBoardPage(0); setShowArchive(false) } setTeacherTab(id); setCalendarOpen(false); if (id === 'elevvy') { setPreviewStudents(true); setCalendarOpen(false) } else { setPreviewStudents(false) } }} onOpenExample={() => { if (!confirmNavigation()) return false; return openExample() }} onOpenArchive={() => { if (!confirmNavigation()) return false; setShowArchive(true); setTeacherTab('bibliotek') }} onToggleCalendar={() => { if (!confirmNavigation()) return false; setTeacherTab('arsplan'); setCalendarOpen(true) }} calendarOpen={calendarOpen} hasOpenPlan={Boolean(selectedId && teacherTab === 'arsplan')} isAdmin={isAdmin} adminOpen={adminOpen} onOpenAdmin={() => { if (!confirmNavigation()) return false; onToggleAdmin?.(); return true }} onCloseAdmin={() => { if (adminOpen) onToggleAdmin?.() }} onSignOut={() => { if (!confirmNavigation()) return false; return supabase.auth.signOut() }} pendingCount={pendingCount} planSearch={planSearch} onPlanSearchChange={setPlanSearch} showArchive={showArchive} planContext={selectedId && teacherTab === 'arsplan' ? {subject:plan.subject || plan.title, textbook:plan.textbook, grade:plan.grade || plan.course} : null} onPrintPlan={selectedId && teacherTab === 'arsplan' ? () => setPrintingPlan(true) : null} /> }<main className={`shell${adminOpen ? " admin-workspace" : ""}`} id="lararvy">
   {!adminOpen && teacherTab !== "elevvy" && libraryCrumbs()}
+  {repairNotice && <div className="status repair-notice" role="alert"><span>{repairNotice}</span> <button type="button" className="secondary" onClick={() => setRepairNotice('')}>Stäng</button></div>}
   {printingPlan && <section className="preview-panel teacher-print-host" aria-hidden="true"><StudentView plan={sanitizeForStudents(plan)} preview hideSelector initialClass={editingClassView || ""} includePast={showPastTeacherWeeks} /></section>}
   {adminOpen ? adminContent : <>
     {teacherTab !== "elevvy" && teacherTab !== "mina" && <header className="topbar">

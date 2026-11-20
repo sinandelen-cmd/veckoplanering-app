@@ -340,6 +340,71 @@ await check('filer som inte kunde raderas ligger kvar i kön över omladdning, o
   assert.ok(!queueAfter || !queueAfter.includes(stored), 'den raderade filen ligger kvar i kön')
 })
 
+await check('återställning gäller inte om någon annan ändrat namnet, till exempel på en annan enhet', async () => {
+  if (await page.locator('button:visible', { hasText: '📂 Visa aktiva' }).count()) await btn('📂 Visa aktiva').evaluate(e => e.click())
+  await goRoot()
+  await btn('Nytt ämne').evaluate(e => e.click())
+  await page.waitForSelector('.library-subject-form form', { timeout: 15000 })
+  await page.locator('.library-subject-form select').selectOption('Gymnasiet')
+  await page.locator('.library-subject-form input').fill('Historia')
+  await page.locator('.library-subject-form button[type="submit"]').evaluate(e => e.click())
+  await page.waitForTimeout(800)
+  await btn('Ny kurs').evaluate(e => e.click()); await page.waitForSelector('[aria-label="Skapa ny kurs"]', { timeout: 10000 })
+  await page.locator('[aria-label="Skapa ny kurs"] label', { hasText: 'Kursens namn' }).locator('input').fill('Historia 1')
+  await page.locator('[aria-label="Skapa ny kurs"] button', { hasText: 'Skapa kurs' }).evaluate(e => e.click())
+  await page.waitForSelector('#lararvy .week-card', { timeout: 20000 })
+  await subjectLevel('Gymnasiet', 'Historia')
+  await page.evaluate(() => { localStorage.setItem('fake-fail-update-at', '2,3,4,5,6,7'); window.__fake.resetUpdateCount() })
+  await btn('Byt namn').evaluate(e => e.click()); await page.waitForTimeout(200)
+  await page.locator('.library-rename input').fill('Historia nytt')
+  await btn('Spara namn').evaluate(e => e.click()); await page.waitForTimeout(1200)
+  assert.ok((await page.evaluate(() => localStorage.getItem('arsplanering-radreparationer'))).includes('Historia nytt'), 'återställningen köades inte')
+  // En annan enhet döper om ämnet medan återställningen väntar.
+  await page.evaluate(() => {
+    for (const r of window.__fake.store.veckoplanering) { const c = JSON.parse(r.content); if (c.kind === 'amne-v1' && c.subject === 'Historia nytt') { c.subject = 'Annan enhet'; r.content = JSON.stringify(c); r.updated_at = new Date().toISOString() } }
+    // Skrivs till databasen, som en annan enhet skulle göra. Annars läses den gamla versionen in vid omladdningen.
+    localStorage.setItem('fake-db', JSON.stringify(window.__fake.store))
+  })
+  await page.reload({ waitUntil: 'networkidle' }); await page.waitForTimeout(1200)
+  const subj = (await subjectRows()).find(r => JSON.parse(r.content).subject === 'Annan enhet')
+  assert.ok(subj, 'den andra enhetens namnbyte skrevs över')
+  assert.equal(await page.evaluate(() => localStorage.getItem('arsplanering-radreparationer')), '{}', 'en föråldrad återställning ligger kvar i kön')
+})
+
+await check('en återställning som aldrig kan göras ger upp efter fem försök, och migreringen blockeras inte för alltid', async () => {
+  await page.evaluate(() => { localStorage.removeItem('fake-storage-down'); localStorage.setItem('fake-fail-update-at', '2,3') })
+  await goRoot()
+  await btn('Nytt ämne').evaluate(e => e.click())
+  await page.waitForSelector('.library-subject-form form', { timeout: 15000 })
+  await page.locator('.library-subject-form select').selectOption('Grundskola')
+  await page.locator('.library-subject-form input').fill('Geografi')
+  await page.locator('.library-subject-form button[type="submit"]').evaluate(e => e.click())
+  await page.waitForTimeout(800)
+  await btn('Ny kurs').evaluate(e => e.click()); await page.waitForSelector('[aria-label="Skapa ny kurs"]', { timeout: 10000 })
+  await page.locator('[aria-label="Skapa ny kurs"] label', { hasText: 'Kursens namn' }).locator('input').fill('Geografi 1')
+  await page.locator('[aria-label="Skapa ny kurs"] button', { hasText: 'Skapa kurs' }).evaluate(e => e.click())
+  await page.waitForSelector('#lararvy .week-card', { timeout: 20000 })
+  await subjectLevel('Grundskola', 'Geografi')
+  await page.evaluate(() => { localStorage.setItem('fake-fail-update-at', '2,3,4,5,6,7'); window.__fake.resetUpdateCount() })
+  await btn('Byt namn').evaluate(e => e.click()); await page.waitForTimeout(200)
+  await page.locator('.library-rename input').fill('Geografi nytt')
+  await btn('Spara namn').evaluate(e => e.click()); await page.waitForTimeout(1200)
+  // Varje omladdning försöker återställa en gång, och varje försök misslyckas.
+  let notice = false
+  // Omladdningen kör återställningen två gånger, så båda försöken i varje omladdning ska misslyckas.
+  for (let i = 0; i < 4; i++) {
+    await page.evaluate(() => localStorage.setItem('fake-fail-update-at', '1,2,3,4'))
+    await page.reload({ waitUntil: 'networkidle' })
+    // Återställningen körs asynkront efter att planeringarna lästs in. Vi väntar tills kön är tom eller tills varningen finns.
+    await page.waitForFunction(() => /kunde inte göras automatiskt/.test(document.body.innerText) || (localStorage.getItem('arsplanering-radreparationer') || '{}') === '{}', null, { timeout: 15000 }).catch(() => {})
+    if (/kunde inte göras automatiskt/.test(await page.locator('body').innerText())) notice = true
+  }
+  assert.equal(await page.evaluate(() => localStorage.getItem('arsplanering-radreparationer')), '{}', 'återställningen ligger kvar efter fem försök')
+  assert.ok(notice, 'användaren fick ingen varning när återställningen gav upp')
+  await page.reload({ waitUntil: 'networkidle' }); await page.waitForTimeout(800)
+  assert.equal(await page.evaluate(() => localStorage.getItem('arsplanering-radreparationer')), '{}', 'kön växer igen')
+})
+
 await check('inga sidfel', async () => assert.deepEqual(errors, [], 'fel: ' + errors.join(' | ')))
 await ctx.close()
 await browser.close()

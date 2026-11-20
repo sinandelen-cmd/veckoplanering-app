@@ -119,6 +119,7 @@ const variants = {
   'annat skolformsnamn': '{"kind":"amne-v1","schoolForm":"Gymnasieskola","subject":"TEST Bio"}',
   'versaler och extra mellanslag i namnet': '{"kind":"amne-v1","schoolForm":"gymnasiet","subject":"  test   bio "}',
   'stor bokstav i kind': '{"kind":"AMNE-V1","schoolForm":"Gymnasiet","subject":"TEST Bio"}',
+  'unicode-escape i kind': '{"kind":"\\u0061mne-v1","schoolForm":"Gymnasiet","subject":"TEST Bio"}',
 }
 await A.client.from('veckoplanering').delete().like('title', 'TEST Bio%')
 await A.client.from('veckoplanering').insert(subjectPayload(A.id, 'Gymnasiet', 'TEST Bio')).select('id').single()
@@ -142,11 +143,12 @@ await check('samtidiga skrivningar med olika JSON-formatering: exakt en lyckas',
   await A.client.from('veckoplanering').delete().like('title', 'TEST Samtidig%')
 })
 
-// Ogiltig JSON avvisas. Indexet tolkar JSON för varje skriven rad, och appen skriver alltid giltig JSON.
-await check('unikt index: en rad med ogiltig JSON i content avvisas (dokumenterat designval)', async () => {
+// Ogiltig JSON i en vanlig planering släpps in. Indexet tolkar bara JSON via amne_json_text, som returnerar NULL vid fel.
+await check('unikt index: ogiltig JSON i en vanlig planering släpps in (påverkar inte planeringar)', async () => {
   const svc = createClient(url, process.env.REAL_SUPABASE_SERVICE_KEY || '', { auth: { persistSession: false } })
   const { error } = await svc.from('veckoplanering').insert({ user_id: A.id, title: 'TEST Ogiltig', week_start: '2026-08-10', content: 'inte json', subject: 'x', weeks: 0 })
-  assert.ok(error, 'ogiltig JSON släpptes in')
+  assert.equal(error, null, error?.message)
+  await svc.from('veckoplanering').delete().like('title', 'TEST Ogiltig%')
 })
 
 // Planeringar påverkas inte av indexet: två kurser med samma ämne och namn ska kunna sparas.
