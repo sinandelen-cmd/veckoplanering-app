@@ -111,34 +111,42 @@ await check('permanent radering av ett arkiverat ämne tar bort bara ämnets rad
   assert.equal(matStill.length, 1, 'ämnet Matematik påverkades av raderingen av Svenska')
 })
 
-await check('samtidiga skrivningar: databasen släpper bara in en ämnesrad för samma ämne (unikt index)', async () => {
+// Samma ämne i olika skrivsätt. Varje variant ska stoppas av det unika indexet.
+const rawPayload = (content, title) => ({ user_id: A.id, title, week_start: '2026-08-10', content, subject: 'TEST Bio', school_year: null, class_name: null, start_date: null, weeks: 0, published: false, public_slug: null, published_content: null })
+const variants = {
+  'omvänd nyckelordning': '{"schoolForm":"Gymnasiet","subject":"TEST Bio","kind":"amne-v1"}',
+  'mellanslag och radbrytningar i JSON': '{ "kind" : "amne-v1",\n  "schoolForm": "Gymnasiet",\n  "subject": "TEST Bio" }',
+  'annat skolformsnamn': '{"kind":"amne-v1","schoolForm":"Gymnasieskola","subject":"TEST Bio"}',
+  'versaler och extra mellanslag i namnet': '{"kind":"amne-v1","schoolForm":"gymnasiet","subject":"  test   bio "}',
+  'stor bokstav i kind': '{"kind":"AMNE-V1","schoolForm":"Gymnasiet","subject":"TEST Bio"}',
+}
+await A.client.from('veckoplanering').delete().like('title', 'TEST Bio%')
+await A.client.from('veckoplanering').insert(subjectPayload(A.id, 'Gymnasiet', 'TEST Bio')).select('id').single()
+for (const [label, content] of Object.entries(variants)) {
+  await check('unikt index stoppar: ' + label, async () => {
+    const { error } = await A.client.from('veckoplanering').insert(rawPayload(content, 'TEST Bio dubblett')).select('id').single()
+    assert.equal(error?.code, '23505', 'varianten släpptes in: ' + label + ' ' + (error?.code || 'ingen felkod'))
+  })
+}
+await A.client.from('veckoplanering').delete().like('title', 'TEST Bio%')
+
+// Två samtidiga skrivningar med olika formatering: exakt en ska lyckas.
+await check('samtidiga skrivningar med olika JSON-formatering: exakt en lyckas', async () => {
   const [x, y] = await Promise.all([
-    A.client.from('veckoplanering').insert(subjectPayload(A.id, 'Gymnasiet', 'TEST Samtidig')).select('id').single(),
-    A.client.from('veckoplanering').insert(subjectPayload(A.id, 'Gymnasiet', 'TEST Samtidig')).select('id').single(),
+    A.client.from('veckoplanering').insert(rawPayload('{"kind":"amne-v1","schoolForm":"Grundskola","subject":"TEST Samtidig"}', 'TEST Samtidig 1')).select('id').single(),
+    A.client.from('veckoplanering').insert(rawPayload('{ "schoolForm": "Grundskola", "subject": " test samtidig", "kind": "amne-v1" }', 'TEST Samtidig 2')).select('id').single(),
   ])
   const errors = [x.error, y.error].filter(Boolean)
   assert.equal(errors.length, 1, 'fel antal lyckade skrivningar: ' + (2 - errors.length))
-  assert.equal(errors[0].code, '23505', 'fel är inte ett unikhetsfel: ' + errors[0].code)
-  const { data: rows } = await A.client.from('veckoplanering').select('id').like('title', 'TEST Samtidig')
-  assert.equal(rows.length, 1, 'dubbla ämnesrader trots unikt index')
-  await A.client.from('veckoplanering').delete().like('title', 'TEST Samtidig')
+  assert.equal(errors[0].code, '23505')
+  await A.client.from('veckoplanering').delete().like('title', 'TEST Samtidig%')
 })
 
-await check('unikt index: versaler och extra mellanslag ger samma ämne (btrim och lower)', async () => {
-  const first = await A.client.from('veckoplanering').insert(subjectPayload(A.id, 'Gymnasiet', 'TEST Mellanslag')).select('id').single()
-  assert.equal(first.error, null, first.error?.message)
-  const variant = { ...subjectPayload(A.id, 'gymnasiet', '  test mellanslag '), title: 'TEST Mellanslag 2' }
-  const second = await A.client.from('veckoplanering').insert(variant).select('id').single()
-  assert.equal(second.error?.code, '23505', 'varianten med versaler och mellanslag släpptes in')
-  await A.client.from('veckoplanering').delete().like('title', 'TEST Mellanslag%')
-})
-
-const svcClient = createClient(url, process.env.REAL_SUPABASE_SERVICE_KEY || '', { auth: { persistSession: false } })
-// En rad med ogiltig JSON i content påverkas inte av indexets predikat.
-await check('unikt index: en rad med ogiltig JSON i content kan fortfarande sparas (påverkar inte planeringar)', async () => {
-  const { error } = await svcClient.from('veckoplanering').insert({ user_id: A.id, title: 'TEST Ogiltig', week_start: '2026-08-10', content: 'inte json', subject: 'x', weeks: 0 })
-  assert.equal(error, null, error?.message)
-  await svcClient.from('veckoplanering').delete().like('title', 'TEST Ogiltig%')
+// Ogiltig JSON avvisas. Indexet tolkar JSON för varje skriven rad, och appen skriver alltid giltig JSON.
+await check('unikt index: en rad med ogiltig JSON i content avvisas (dokumenterat designval)', async () => {
+  const svc = createClient(url, process.env.REAL_SUPABASE_SERVICE_KEY || '', { auth: { persistSession: false } })
+  const { error } = await svc.from('veckoplanering').insert({ user_id: A.id, title: 'TEST Ogiltig', week_start: '2026-08-10', content: 'inte json', subject: 'x', weeks: 0 })
+  assert.ok(error, 'ogiltig JSON släpptes in')
 })
 
 // Planeringar påverkas inte av indexet: två kurser med samma ämne och namn ska kunna sparas.

@@ -544,6 +544,26 @@ function parseContent(value) {
 // Ämnen sparas som egna rader i tabellen veckoplanering (content.kind = 'amne-v1'). Då finns de på alla enheter.
 const SUBJECT_KIND = 'amne-v1'
 function isSubjectRow(row) { return parseContent(row.content)?.kind === SUBJECT_KIND }
+// Samma regel som det unika indexet i databasen: skolform och ämne jämförs utan skiftläge, med trimmade och
+// sammanslagna mellanslag, och "Gymnasieskola" räknas som "Gymnasiet".
+function subjectKeyOf(school, subject) {
+  const text = String(school || '').trim().toLocaleLowerCase('sv')
+  const schoolKey = /gymnas/.test(text) ? 'gymnasiet' : /grundskol/.test(text) ? 'grundskola' : text
+  return schoolKey + '|' + String(subject || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('sv')
+}
+// Köer i lokal lagring per konto. Ingen innehållsdata: bara sökvägar till filer och återställningar av rader.
+function readQueue(key, uid) {
+  try { return JSON.parse(localStorage.getItem(key) || '{}')[uid] || [] } catch { return [] }
+}
+function writeQueue(key, uid, items) {
+  try {
+    const all = JSON.parse(localStorage.getItem(key) || '{}')
+    if (items.length) all[uid] = items; else delete all[uid]
+    localStorage.setItem(key, JSON.stringify(all))
+  } catch { /* Lokal lagring kan vara blockerad. Då finns kön inte kvar efter omladdning. */ }
+}
+const STORED_REMOVAL_QUEUE = 'arsplanering-filer-att-radera'
+const ROW_REPAIR_QUEUE = 'arsplanering-radreparationer'
 // Skolform från lagrat värde. "Gymnasieskola" och "Gymnasiet" blir båda "Gymnasiet".
 function schoolFromForm(value) {
   const text = String(value || '').toLocaleLowerCase('sv')
@@ -1559,6 +1579,8 @@ function TeacherApp({ session, isAdmin = false, adminOpen = false, onToggleAdmin
   const [libraryYear, setLibraryYear] = useState('alla')
   const [subjectRows, setSubjectRows] = useState([])
   const subjectMigrationRef = useRef(false)
+  // Vakter så att en kö bara körs en gång åt gången, även när planeringarna laddas två gånger.
+  const queueRunRef = useRef({ removals: false, repairs: false })
   const [newSubject, setNewSubject] = useState({ school: '', name: '' })
   const [personalSchool, setPersonalSchool] = useState(() => { try { return localStorage.getItem('arsplanering-personal-school') || 'Grundskola' } catch { return 'Grundskola' } })
   const [personalSubjects, setPersonalSubjects] = useState(() => { try { return JSON.parse(localStorage.getItem('arsplanering-personal-subjects') || '[]') } catch { return [] } })
@@ -1901,6 +1923,7 @@ const addNewTeacherWeek = () => setPlan(p => {
   ]
 
   async function loadPlans() {
+    await applyRowRepairs()
     const { data, error } = await supabase.from('veckoplanering')
       .select('id,title,content,week_start,created_at,updated_at,subject,school_year,class_name,start_date,weeks,published,public_slug')
       .eq('user_id', session.user.id).order('created_at', { ascending: false })
@@ -1912,6 +1935,8 @@ const addNewTeacherWeek = () => setPlan(p => {
     setPlans(annualPlans)
     setSubjectRows((data || []).filter(isSubjectRow))
     void migrateSubjectRows(data || [])
+    void applyRowRepairs()
+    void reconcileStoredRemovals(data || [])
     if (!initialPlansLoadedRef.current) {
       initialPlansLoadedRef.current = true
       try {
@@ -2202,7 +2227,46 @@ const addNewTeacherWeek = () => setPlan(p => {
   async function deleteStoredFiles(paths) {
     const failed = []
     for (const path of paths || []) { try { await removeMaterialFile(path) } catch { failed.push(path) } }
+    const uid = session?.user?.id
+    if (failed.length && uid) writeQueue(STORED_REMOVAL_QUEUE, uid, [...new Set([...readQueue(STORED_REMOVAL_QUEUE, uid), ...failed])])
     return failed
+  }
+  // Försöker radera köade filer igen. En fil som fortfarande ligger i någon planering raderas aldrig.
+  async function reconcileStoredRemovals(rows) {
+    const uid = session?.user?.id
+    if (!uid || queueRunRef.current.removals) return
+    const queue = readQueue(STORED_REMOVAL_QUEUE, uid)
+    if (!queue.length) return
+    queueRunRef.current.removals = true
+    const referenced = new Set()
+    for (const row of rows || []) for (const m of (parseContent(row.content)?.materials || [])) if (m?.path) referenced.add(m.path)
+    const remaining = []
+    for (const path of queue) {
+      if (referenced.has(path)) continue
+      try { await removeMaterialFile(path) } catch { remaining.push(path) }
+    }
+    writeQueue(STORED_REMOVAL_QUEUE, uid, remaining)
+    queueRunRef.current.removals = false
+  }
+  // Återställningar som inte hann göras vid ett misslyckat namnbyte. Körs igen vid nästa laddning.
+  function queueRowRepair(rowId, changes, extra) {
+    const uid = session?.user?.id
+    if (!uid) return
+    writeQueue(ROW_REPAIR_QUEUE, uid, [...readQueue(ROW_REPAIR_QUEUE, uid), { id: rowId, changes, extra }])
+  }
+  async function applyRowRepairs() {
+    const uid = session?.user?.id
+    if (!uid || queueRunRef.current.repairs) return
+    queueRunRef.current.repairs = true
+    const remaining = []
+    try {
+      for (const item of readQueue(ROW_REPAIR_QUEUE, uid)) {
+        try { await updateRowContent({ id: item.id }, item.changes, item.extra || {}) } catch { remaining.push(item) }
+      }
+      writeQueue(ROW_REPAIR_QUEUE, uid, remaining)
+    } finally {
+      queueRunRef.current.repairs = false
+    }
   }
   // Tar bort ett material ur listan. Ett sparat material raderas från lagringen först när planeringen sparas.
   function dropMaterial(material, setList) {
@@ -2525,21 +2589,29 @@ const addNewTeacherWeek = () => setPlan(p => {
     // 23505 betyder att ämnet redan finns, till exempel från en annan flik. Det är inget fel för användaren.
     if (error && error.code !== '23505') throw error
   }
+  // Läser raden på nytt från databasen, så att en ändring i en annan flik inte skrivs över av en gammal kopia.
+  // Uppdateringen villkoras av updated_at. Har raden ändrats sedan läsningen stoppas skrivningen.
   async function updateRowContent(row, changes, extra = {}) {
-    const stored = parseContent(row.content)
+    const { data: current, error: readError } = await supabase.from('veckoplanering').select('content,updated_at')
+      .eq('id', row.id).eq('user_id', session.user.id).single()
+    if (readError || !current) throw readError || new Error('En rad kunde inte läsas.')
+    const stored = parseContent(current.content)
     if (!stored || typeof stored !== 'object') throw new Error('En rad kunde inte läsas.')
     const { data, error } = await supabase.from('veckoplanering').update({ ...extra, content: JSON.stringify({ ...stored, ...changes }), updated_at: new Date().toISOString() })
-      .eq('id', row.id).eq('user_id', session.user.id).select('id').single()
-    if (error || !data) throw error || new Error('En rad uppdaterades inte.')
+      .eq('id', row.id).eq('user_id', session.user.id).eq('updated_at', current.updated_at).select('id').single()
+    // 0 rader utan felkod betyder att villkoret inte längre gäller, alltså att raden ändrats. Annars visas det verkliga felet.
+    if (error && error.code !== 'PGRST116') throw new Error(error.message || 'Uppdateringen misslyckades.')
+    if (error || !data) throw new Error('Planeringen ändrades i en annan flik eller på en annan enhet. Ladda om och försök igen.')
   }
   // Ämnen som bara fanns i den lokala inställningen, eller som bara finns via kurser, får en ämnesrad i databasen.
   // Befintliga planeringar ändras inte. De lokala mapparna rörs bara när alla ämnen har skrivits till databasen.
   async function migrateSubjectRows(data) {
     const uid = session?.user?.id
     if (!uid || subjectMigrationRef.current) return
+    // Så länge en återställning väntar ser ämnen och kurser ut att ha olika namn. Då får inga rader skapas.
+    if (readQueue(ROW_REPAIR_QUEUE, uid).length) return
     // Jämförelsen är skiftlägesoberoende, så "matematik" och "Matematik" blir samma ämne.
-    const norm = value => String(value || '').trim().toLocaleLowerCase('sv')
-    const keyOf = (school, subject) => norm(school) + '|' + norm(subject)
+    const keyOf = (school, subject) => subjectKeyOf(school, subject)
     const existingFrom = rows => new Set(rows.filter(isSubjectRow).map(row => {
       const d = parseContent(row.content) || {}
       return keyOf(schoolFromForm(d.schoolForm), d.subject)
@@ -2630,8 +2702,7 @@ const addNewTeacherWeek = () => setPlan(p => {
     const name = capitalizeFirstSwedish(String(newSubject.name || '').trim())
     if (!['Grundskola', 'Gymnasiet'].includes(school)) return setStatus('Välj skolform, Grundskola eller Gymnasiet.')
     if (!name) return setStatus('Skriv ämnets namn.')
-    const normalized = value => String(value).toLocaleLowerCase('sv')
-    if (buildSubjectEntries().some(entry => entry.school === school && normalized(entry.subject) === normalized(name))) {
+    if (buildSubjectEntries().some(entry => subjectKeyOf(entry.school, entry.subject) === subjectKeyOf(school, name))) {
       return setStatus(`Ämnet ${name} finns redan under ${school}. Öppna det i listan i stället.`)
     }
     setBusy(true)
@@ -2662,8 +2733,7 @@ const addNewTeacherWeek = () => setPlan(p => {
       setStatus('Spara ändringarna i den öppna planeringen innan du byter ämnesnamn.')
       return
     }
-    const normalized = value => String(value).trim().toLocaleLowerCase('sv')
-    if (buildSubjectEntries().some(other => other.school === entry.school && other.key !== entry.key && normalized(other.subject) === normalized(name))) {
+    if (buildSubjectEntries().some(other => other.key !== entry.key && subjectKeyOf(other.school, other.subject) === subjectKeyOf(entry.school, name))) {
       setStatus('Det finns redan ett ämne med det namnet.')
       return
     }
@@ -2690,13 +2760,13 @@ const addNewTeacherWeek = () => setPlan(p => {
       // Återställ det som hann ändras. Återställningen kan i sin tur misslyckas, och då visas det för användaren.
       let restoreFailed = 0
       for (const item of changed) {
-        try { await updateRowContent(item.row, { subject: previous }, { subject: previous }) } catch { restoreFailed += 1 }
+        try { await updateRowContent(item.row, { subject: previous }, { subject: previous }) } catch { restoreFailed += 1; queueRowRepair(item.row.id, { subject: previous }, { subject: previous }) }
       }
       if (subjectRowChanged) {
-        try { await updateRowContent(entry.row, { subject: previous }, { subject: previous, title: previous }) } catch { restoreFailed += 1 }
+        try { await updateRowContent(entry.row, { subject: previous }, { subject: previous, title: previous }) } catch { restoreFailed += 1; queueRowRepair(entry.row.id, { subject: previous }, { subject: previous, title: previous }) }
       }
       await loadPlans()
-      setStatus('Namnbytet kunde inte slutföras: ' + (error.message || 'Okänt fel') + (restoreFailed ? `. ${restoreFailed} rader kunde inte återställas. Ladda om och kontrollera ämnet.` : '. Inga ändringar kvarstår.'))
+      setStatus('Namnbytet kunde inte slutföras: ' + (error.message || 'Okänt fel') + (restoreFailed ? `. ${restoreFailed} rader kunde inte återställas direkt. Återställningen görs om automatiskt vid nästa laddning.` : '. Inga ändringar kvarstår.'))
     } finally {
       setBusy(false)
     }

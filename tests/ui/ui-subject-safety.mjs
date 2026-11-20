@@ -267,6 +267,79 @@ await check('namnbyte som misslyckas mitt i återställs: ämnesraden och kurser
   assert.deepEqual(after, ['Kemi bio'], 'det nya namnbytet lyckades inte')
 })
 
+await check('namnbyte skriver inte över en ändring som gjorts i en annan flik, och kursen behåller den ändringen', async () => {
+  if (await page.locator('button:visible', { hasText: '📂 Visa aktiva' }).count()) await btn('📂 Visa aktiva').evaluate(e => e.click())
+  await subjectLevel('Gymnasiet', 'Kemi')
+  // Simulerar en annan flik: kursen ändras i databasen efter att listan lästes.
+  await page.evaluate(() => {
+    const row = window.__fake.store.veckoplanering.find(r => JSON.parse(r.content).course === 'Kemi 1')
+    const c = JSON.parse(row.content); c.chapterFromOtherTab = 'Ändrat i annan flik'
+    row.content = JSON.stringify(c); row.updated_at = new Date().toISOString()
+  })
+  await btn('Byt namn').evaluate(e => e.click()); await page.waitForTimeout(200)
+  await page.locator('.library-rename input').fill('Kemi konflikt')
+  await btn('Spara namn').evaluate(e => e.click()); await page.waitForTimeout(1200)
+  const course = (await courseRows()).find(r => JSON.parse(r.content).course === 'Kemi 1')
+  assert.equal(JSON.parse(course.content).chapterFromOtherTab, 'Ändrat i annan flik', 'den andra flikens ändring skrevs över')
+})
+
+await check('återställning som också misslyckas görs om vid nästa laddning', async () => {
+  await page.evaluate(() => localStorage.setItem('fake-fail-update-at', '2,3,4,5'))
+  await page.evaluate(() => window.__fake.resetUpdateCount())
+  await btn('Byt namn').evaluate(e => e.click()); await page.waitForTimeout(200)
+  await page.locator('.library-rename input').fill('Kemi reparerad')
+  await btn('Spara namn').evaluate(e => e.click()); await page.waitForTimeout(1200)
+  // Ämnesraden fick inte tillbaka sitt namn, och återställningen misslyckas även vid nästa körning. Den ligger kvar i kön.
+  const queued = await page.evaluate(() => localStorage.getItem('arsplanering-radreparationer'))
+  assert.ok(queued && queued.includes('Kemi'), 'återställningen köades inte: ' + queued)
+  await page.reload({ waitUntil: 'networkidle' }); await page.waitForTimeout(1200)
+  await page.waitForTimeout(1500)
+  // Återställningen går tillbaka till namnet som gällde före namnbytet, och det ska finnas exakt en ämnesrad med det namnet.
+  const subjRows = (await subjectRows()).filter(r => JSON.parse(r.content).subject === 'Kemi konflikt')
+  assert.equal(subjRows.length, 1, 'fel antal ämnesrader med det återställda namnet: ' + subjRows.length)
+  const course = (await courseRows()).find(r => JSON.parse(r.content).course === 'Kemi 1')
+  assert.equal(JSON.parse(course.content).subject, 'Kemi konflikt', 'kursen har fel ämne efter återställningen')
+  const repairsLeft = await page.evaluate(() => localStorage.getItem('arsplanering-radreparationer'))
+  assert.ok(!repairsLeft || !repairsLeft.includes('Kemi'), 'reparationskön töms inte: ' + repairsLeft)
+})
+
+await check('filer som inte kunde raderas ligger kvar i kön över omladdning, och raderas när lagringen är uppe igen', async () => {
+  await page.evaluate(() => localStorage.setItem('fake-storage-down', 'on'))
+  await goRoot()
+  await btn('Nytt ämne').evaluate(e => e.click())
+  await page.waitForSelector('.library-subject-form form', { timeout: 15000 })
+  await page.locator('.library-subject-form select').selectOption('Grundskola')
+  await page.locator('.library-subject-form input').fill('Musik')
+  await page.locator('.library-subject-form button[type="submit"]').evaluate(e => e.click())
+  await page.waitForTimeout(800)
+  await btn('Ny kurs').evaluate(e => e.click()); await page.waitForSelector('[aria-label="Skapa ny kurs"]', { timeout: 10000 })
+  const dialog = page.locator('[aria-label="Skapa ny kurs"]')
+  await dialog.locator('label', { hasText: 'Kursens namn' }).locator('input').fill('Musik 1')
+  await dialog.locator('input[type="file"]').setInputFiles({ name: 'kvarligger.txt', mimeType: 'text/plain', buffer: Buffer.from('Fiktiv fil för köntest') })
+  await page.waitForSelector('[aria-label="Skapa ny kurs"] .material-list li', { timeout: 15000 })
+  await dialog.locator('button', { hasText: 'Skapa kurs' }).evaluate(e => e.click())
+  await page.waitForSelector('#lararvy .week-card', { timeout: 20000 })
+  const stored = JSON.parse((await courseRows()).find(r => JSON.parse(r.content).course === 'Musik 1').content).materials[0].path
+  await subjectLevel('Grundskola', 'Musik')
+  await btn('Arkivera').evaluate(e => e.click()); await page.waitForTimeout(600)
+  await btn('🗃 Arkiv').evaluate(e => e.click()); await page.waitForTimeout(300)
+  await page.locator('button.library-folder:visible', { hasText: 'Grundskola' }).first().evaluate(e => e.click()); await page.waitForTimeout(300)
+  await page.locator('button.library-folder:visible', { hasText: 'Musik' }).first().evaluate(e => e.click()); await page.waitForTimeout(300)
+  await page.locator('.library-course-actions button', { hasText: 'Radera' }).first().evaluate(e => e.click()); await page.waitForTimeout(800)
+  assert.equal(await page.evaluate(p => Boolean(window.__fake.files[p]), stored), true, 'filen raderades trots att lagringen var nere')
+  assert.ok((await page.evaluate(() => localStorage.getItem('arsplanering-filer-att-radera'))).includes(stored), 'filen köades inte')
+  await page.reload({ waitUntil: 'networkidle' }); await page.waitForTimeout(1000)
+  assert.ok((await page.evaluate(() => localStorage.getItem('arsplanering-filer-att-radera'))).includes(stored), 'kön försvann vid omladdning')
+  // Utloggning och ny inloggning: kön ligger kvar per konto.
+  await page.evaluate(() => { localStorage.removeItem('fake-session'); localStorage.setItem('fake-session', 'on') })
+  await page.evaluate(() => localStorage.setItem('fake-storage-down', 'off'))
+  await page.reload({ waitUntil: 'networkidle' }); await page.waitForTimeout(1200)
+  assert.equal(await page.evaluate(p => Boolean(window.__fake.files[p]), stored), false, 'filen raderades inte när lagringen blev tillgänglig')
+  // Den nya filen är borta ur kön. Filen från föregående kontroll ("radera-fel") är avsiktligt kvar, eftersom den aldrig kan raderas.
+  const queueAfter = await page.evaluate(() => localStorage.getItem('arsplanering-filer-att-radera'))
+  assert.ok(!queueAfter || !queueAfter.includes(stored), 'den raderade filen ligger kvar i kön')
+})
+
 await check('inga sidfel', async () => assert.deepEqual(errors, [], 'fel: ' + errors.join(' | ')))
 await ctx.close()
 await browser.close()

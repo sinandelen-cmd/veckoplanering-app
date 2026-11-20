@@ -39,12 +39,13 @@ const fakeBucket = {
   },
   remove: async paths => {
     // Sökvägar med "radera-fel" kan inte raderas. Används för att testa att misslyckad radering visas för användaren.
-    if (paths.some(path => path.includes('radera-fel'))) return { data: null, error: { message: 'Fiktiv klient: radering misslyckades' } }
+    if (paths.some(path => path.includes('radera-fel')) || globalthis_ls('fake-storage-down') === 'on') return { data: null, error: { message: 'Fiktiv klient: radering misslyckades' } }
     paths.forEach(path => { delete files[path]; fakeLog.removals.push(path) }); persistFiles(); return { data: paths.map(path => ({ name: path })), error: null }
   },
 }
 
 let fakeUpdateCount = 0
+const globalthis_ls = key => { try { return globalThis.localStorage?.getItem(key) || '' } catch { return '' } }
 class Query {
   constructor(table) { this.table = table; this.filters = []; this.op = 'select'; this.payload = null; this.orders = []; this.wantSingle = null; this.limitN = null }
   select() { if (this.op === 'select') this.op = 'select'; return this }
@@ -72,8 +73,14 @@ class Query {
     if (this.op === 'update') {
       // Testhjälp: den n:te uppdateringen efter fake-fail-update-at misslyckas en gång. Används för att testa återställning.
       fakeUpdateCount += 1
-      const failAt = Number(globalThis.localStorage?.getItem('fake-fail-update-at') || 0)
-      if (failAt && fakeUpdateCount === failAt) { globalThis.localStorage.removeItem('fake-fail-update-at'); return { data: null, error: { message: 'Fiktiv klient: uppdateringen misslyckades' } } }
+      fakeLog.updates = [...(fakeLog.updates || []), { n: fakeUpdateCount, title: (matched[0] && matched[0].title) || '?', subject: matched[0] ? (() => { try { return JSON.parse(matched[0].content).subject } catch { return '' } })() : '' }]
+      // Flera nummer kan anges, till exempel "2,3". Varje nummer misslyckas en gång.
+      const failSet = new Set(String(globalthis_ls('fake-fail-update-at')).split(',').filter(Boolean).map(Number))
+      if (failSet.has(fakeUpdateCount)) {
+        failSet.delete(fakeUpdateCount)
+        globalThis.localStorage?.setItem('fake-fail-update-at', [...failSet].join(','))
+        return { data: null, error: { message: 'Fiktiv klient: uppdateringen misslyckades' } }
+      }
       matched.forEach(r => Object.assign(r, this.payload, { updated_at: new Date().toISOString() })); persist(); return this.shape(matched)
     }
     if (this.op === 'delete') { const ids = new Set(matched); store[this.table] = rows.filter(r => !ids.has(r)); persist(); return this.shape(matched) }

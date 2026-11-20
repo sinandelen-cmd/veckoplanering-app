@@ -1,15 +1,26 @@
 -- FÖRSLAG. Ännu inte applicerat i någon databas. Får INTE köras mot produktion utan godkännande.
--- Hindrar dubbla ämnesrader per konto och skolform, även vid samtidiga skrivningar (två flikar eller enheter).
+-- Hindrar dubbla ämnen per konto, oberoende av JSON-ordning, mellanslag, skiftläge och skrivsätt för skolform.
 --
 -- Verifierat i produktion (skrivskyddat, rapporterat): 16 rader, alla med giltig JSON i content,
 -- 0 rader med kind = 'amne-v1', inget index med detta namn.
 --
--- Designval:
---  * Predikatet är en TEXTmatchning på prefixet som appen alltid skriver först: {"kind":"amne-v1",
---    Därför tolkas JSON bara för ämnesrader. Planeringar påverkas inte, även om någon rad skulle ha ogiltig JSON.
---  * btrim + lower gör att "Matematik " och "matematik" räknas som samma ämne, precis som appen gör.
---    Appen använder toLocaleLowerCase('sv') och databasen lower() med databasens kollation. För svenska bokstäver ger de samma resultat.
---  * Inre mellanslag normaliseras inte, varken i appen eller här. "Matematik  1" och "Matematik 1" är olika ämnen.
+-- Nyckeln:
+--  * kind: lower(btrim(...)) = 'amne-v1'. Gäller alla rader som är ämnen, oavsett nyckelordning och formatering.
+--  * schoolForm: "Gymnasiet" och "Gymnasieskola" blir samma värde, och "Grundskola" och "Grundskolan" likaså.
+--  * subject: btrim, lower och inre mellanslag komprimeras till ett. Samma regel används i appen.
+--  * coalesce gör att ett ämne utan skolform också omfattas.
+--
+-- Konsekvens: content::jsonb tolkas för varje skriven rad. En rad med ogiltig JSON kan därför inte skrivas.
+-- Appen skriver alltid giltig JSON med JSON.stringify.
 create unique index if not exists veckoplanering_unikt_amne
-  on public.veckoplanering (user_id, lower(btrim(content::jsonb->>'schoolForm')), lower(btrim(content::jsonb->>'subject')))
-  where content like '{"kind":"amne-v1",%';
+  on public.veckoplanering (
+    user_id,
+    (coalesce(
+      case
+        when lower(btrim(content::jsonb->>'schoolForm')) like 'gymnas%' then 'gymnasiet'
+        when lower(btrim(content::jsonb->>'schoolForm')) like 'grundskol%' then 'grundskola'
+        else lower(btrim(content::jsonb->>'schoolForm'))
+      end, '')),
+    (regexp_replace(lower(btrim(coalesce(content::jsonb->>'subject', ''))), '\s+', ' ', 'g'))
+  )
+  where lower(btrim(content::jsonb->>'kind')) = 'amne-v1';
